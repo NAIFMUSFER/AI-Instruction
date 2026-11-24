@@ -193,6 +193,7 @@ class Builder:
         self.parts = []   # (pos, nrm, idx, mat_name, node_name)
         self._door_pairs = {}
         self._opening_sources = {}
+        self._declared_pair_ids = {}
         self._stair_sources = {}
         self._object_sources = {}
         self._presentation_wall_finishes = {}
@@ -311,6 +312,8 @@ class Builder:
             sources = self._opening_sources.get(part_index, [])
             if len(sources) > 1:
                 nodes[-1]['extras'] = {'acs_opening_sources': sources}
+            if part_index in self._declared_pair_ids:
+                nodes[-1]['extras']['acs_door_pair_id'] = self._declared_pair_ids[part_index]
             if part_index in self._presentation_wall_finishes:
                 nodes[-1].setdefault('extras', {})['acs_optional_wall_finish'] = self._presentation_wall_finishes[part_index]
             if part_index in self._stair_sources:
@@ -804,6 +807,71 @@ def build_objects(bld, room, fkey, base_y, acc=None):
 # ---------------------------------------------------------------------------
 # بناء غرفة
 # ---------------------------------------------------------------------------
+_PAIR_KEYS = {'id', 'edge', 'offset', 'width', 'height', 'material', 'color', 'acs_door_pair'}
+_OPPOSITE_EDGE = {'N': 'S', 'E': 'W', 'S': 'N', 'W': 'E'}
+
+
+def _paired_door_point(room, door):
+    def number(value):
+        return type(value) in (int, float) and math.isfinite(value)
+
+    rect, edge = room.get('rect'), door.get('edge')
+    if (not isinstance(rect, list) or len(rect) != 4 or not all(map(number, rect))
+            or not isinstance(edge, str) or edge not in _OPPOSITE_EDGE
+            or not all(number(door.get(k)) for k in ('width', 'height', 'offset'))
+            or door['width'] <= 0 or door['height'] <= 0 or not _PAIR_KEYS.issuperset(door)):
+        return None
+    x, z, w, d = rect
+    half, offset = door['width'] / 2, door['offset']
+    side = edge in ('E', 'W')
+    if min(w, d) <= 0 or offset < half or offset + half > (d if side else w):
+        return None
+    if side:
+        return (x + (w if edge == 'E' else 0), z + offset)
+    return (x + offset, z + (d if edge == 'S' else 0))
+
+
+def _declared_door_pairs(rooms, floor_key):
+    """Validate an explicit two-host claim against the geometry of this floor."""
+    groups, seen, duplicates, result = {}, set(), set(), {}
+    for room in rooms:
+        if not isinstance(room, dict) or not isinstance(room.get('id'), str):
+            continue
+        rid = room['id']
+        if rid in seen:
+            duplicates.add(rid)
+        seen.add(rid)
+        for index, door in enumerate(room.get('doors') or []):
+            claim = door.get('acs_door_pair') if isinstance(door, dict) else None
+            pair_id = claim.get('id') if isinstance(claim, dict) else None
+            if isinstance(pair_id, str) and 0 < len(pair_id) <= 160:
+                groups.setdefault(pair_id, []).append((room, door, index))
+    for pair_id, claims in groups.items():
+        if len(claims) != 2:
+            continue
+        claims.sort(key=lambda c: c[0]['id'].encode('utf-16-be', 'surrogatepass'))
+        (ra, a, _), (rb, b, _) = claims
+        if (ra['id'] == rb['id'] or ra['id'] in duplicates or rb['id'] in duplicates
+                or a['acs_door_pair'].get('peer_room_id') != rb['id']
+                or b['acs_door_pair'].get('peer_room_id') != ra['id']
+                or not all(isinstance(dr.get('id'), str) and dr['id'] for dr in (a, b))
+                or a['id'] == b['id'] or not isinstance(a.get('edge'), str)
+                or _OPPOSITE_EDGE.get(a['edge']) != b.get('edge')
+                or any((k in a) != (k in b) or a.get(k) != b.get(k)
+                       for k in ('width', 'height', 'material', 'color'))):
+            continue
+        p, q = _paired_door_point(ra, a), _paired_door_point(rb, b)
+        # The local author rounds independent offsets to a millimetre.
+        if p is None or q is None or any(abs(u-v) > 0.00101 for u, v in zip(p, q)):
+            continue
+        sources = [{'node_name': f"DOOR|{floor_key}|{r['id']}|{i}", 'room_id': r['id'],
+                    'opening_id': dr['id'], 'opening_index': i, 'edge': dr['edge']}
+                   for r, dr, i in claims]
+        for position, (r, _, i) in enumerate(claims):
+            result[(r['id'], i)] = (position == 0, pair_id, sources)
+    return result
+
+
 def build_room(bld, room, fkey, base_y, defaults):
     rect = room["rect"]; x, z, w, d = rect
     H = room.get("wall_h", defaults["wall_h"])
@@ -890,12 +958,16 @@ def build_room(bld, room, fkey, base_y, defaults):
         mat = tinted(mat, dr.get("color"))
         axis, fixed, _, _ = edge_geom(e, rect)
         cy = base_y + dh/2.0
-        if axis == 'x':
-            bld.add_door_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
-                             fkey, name, e, dr, i)
-        else:
-            bld.add_door_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
-                             fkey, name, e, dr, i)
+        leaf = (uc, cy, fixed, wdt, dh, 0.05) if axis == 'x' else (fixed, cy, uc, 0.05, dh, wdt)
+        leaf_name = f"DOOR|{fkey}|{name}|{i}"
+        claim = defaults.get('declared_door_pairs', {}).get((name, i))
+        if claim is None:
+            # Legacy exact-match consolidation remains independent of declared pairs.
+            bld.add_door_box(*leaf, mat, leaf_name, fkey, name, e, dr, i)
+        elif claim[0]:
+            part_index = bld.add_box(*leaf, mat, leaf_name)
+            bld._opening_sources[part_index] = claim[2]
+            bld._declared_pair_ids[part_index] = claim[1]
 
     # زجاج النوافذ
     for i, wn in enumerate(windows):
@@ -996,8 +1068,11 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None, ceili
     for k, s in enumerate(strips):
         bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
                     s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
+    room_defaults = {**defaults, 'holes': holes, 'ceiling_holes': ceiling_holes,
+                     'declared_door_pairs': (_declared_door_pairs(rooms, fkey)
+                                             if defaults.get('apartment_pair_schema') else {})}
     for room in rooms:
-        build_room(bld, room, fkey, base_y, {**defaults,'holes':holes,'ceiling_holes':ceiling_holes})
+        build_room(bld, room, fkey, base_y, room_defaults)
 
 
 # تقرير تغطية العناصر لآخر عملية تجميع (يقرأه المُختبِر) — دلالات:
@@ -1011,12 +1086,15 @@ def compile_building(data, out_path):
         stair_connections(data)  # Fail closed before rendering declared stair forms.
     _OBJ_ACC = {"requested": 0, "generated": 0, "generic_box": [], "unsupported": [], "by_kind": {}}
     bld = Builder()
-    _bt = str((data.get("meta") or {}).get("type", "residential")).lower()
+    meta = data.get("meta") or {}
+    _bt = str(meta.get("type", "residential")).lower()
+    apartment = meta.get("acs_apartment")
     defaults = {
         "site": data.get("site", {"w": 30.0, "d": 25.0}),
         "wall_h": data.get("wall_h", 3.0),
         "wall_t": data.get("wall_t", 0.15),
         "industrial": _bt in ("warehouse", "industrial", "factory", "logistics"),
+        "apartment_pair_schema": isinstance(apartment, dict) and apartment.get("schema") == "acs.local-apartment/1",
     }
     floors = data.get("floors", {})
     fh = data.get("floor_height", defaults["wall_h"] + 0.2)

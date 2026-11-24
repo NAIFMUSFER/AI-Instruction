@@ -4,7 +4,7 @@
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
 import { __ACS_LATE } from '../late-bindings.js';
-import { _mnid, _snum, compileArchitecture, compileFls, compileMep, compileStructure, flsElementById, flsRenderItems, mepElementById, mepRenderItems, structElementById, structRenderItems } from '../core/disciplines.js';
+import { architecturalDrawingValue, projectArchitecturalLevel, _mnid, _snum, compileArchitecture, compileFls, compileMep, compileStructure, flsElementById, flsRenderItems, mepElementById, mepRenderItems, structElementById, structRenderItems } from '../core/disciplines.js';
 import { _scmp, modelHash, sha256Hex } from '../core/standards.js';
 import { FLOOR_NAMES, RoomEnvironment, Sky, THREE, _pyRound, getMat } from '../core/viewer.js';
 
@@ -801,12 +801,7 @@ function _vSort(v){ if(Array.isArray(v)) return v.map(_vSort);
   return v; }
 function _vSha16(o){ return sha256Hex(_vCanon(o)).slice(0,16); }
 /* قيمة مذكورة إن وُجدت، وإلّا احتياط عرض — مع الإفصاح عن أيّهما استُعمل */
-function _vVal(field,fallbackOk){
-  if(!field||typeof field!=='object') return [null,'unknown'];
-  if(field.value!==null&&field.value!==undefined) return [Number(field.value),'model'];
-  if(fallbackOk!==false&&field.render_fallback!==null&&field.render_fallback!==undefined)
-    return [Number(field.render_fallback),'display_fallback'];
-  return [null,'unknown']; }
+function _vVal(field,fallbackOk){ return architecturalDrawingValue(field,fallbackOk); }
 function _vMode(m){ m=String(m||'PRESENTATION').toUpperCase();
   return VIS_MODES.indexOf(m)>=0?m:'PRESENTATION'; }
 function _vTheme(t){ t=String(t===null||t===undefined?VIS_DEFAULT_THEME:t);
@@ -1463,63 +1458,13 @@ function _vCounts(scene){
 
 /* ------------------------------------------- المسقط ثنائي الأبعاد ----- */
 function visFloorPlan(arch,levelIndex,style,buildingId){
-  style=_vStyle(style);
-  levelIndex=(levelIndex===null||levelIndex===undefined)?0:levelIndex;
-  const out={schema:VIS_SCHEMA,compiler_version:VIS_COMPILER_VERSION,kind:'FLOOR_PLAN_2D',
-    building_id:buildingId||'bld_0',level_index:levelIndex,style:style,
-    walls:[],openings:[],spaces:[],stairs:[],fixtures:[],dimensions:[],extent:null,
+  const index=levelIndex??0;
+  return {schema:VIS_SCHEMA,compiler_version:VIS_COMPILER_VERSION,kind:'FLOOR_PLAN_2D',
+    building_id:buildingId||'bld_0',level_index:index,style:_vStyle(style),
+    ...projectArchitecturalLevel(arch,index),
     note:'a derived drawing projected from the same architectural geometry as the 3D view; '+
          'it makes no CAD-grade claim'};
-  if(!arch) return out;
-  let lv=null;
-  (arch.levels||[]).forEach(l=>{ if(l.index===levelIndex) lv=l; });
-  if(lv===null){ out.level_exists=false; return out; }
-  out.level_exists=true; out.level_id=lv.id; out.level_name=lv.name;
-  (arch.walls||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(w=>{
-    if(w.level_index!==levelIndex) return;
-    const tv=_vVal(w.thickness_m);
-    out.walls.push({id:w.id,x1:_vQ(w.start.x),z1:_vQ(w.start.z),x2:_vQ(w.end.x),
-      z2:_vQ(w.end.z),thickness_m:tv[0]===null?null:_vQ(tv[0]),thickness_source:tv[1],
-      length_m:_vQ(w.length_m),exposure:w.exposure}); });
-  (arch.openings||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(o=>{
-    if(o.level_index!==levelIndex) return;
-    const wv=_vVal(o.width_m), wdt=wv[0]===null?0:wv[0];
-    let x1,z1,x2,z2;
-    if(o.axis==='x'){ x1=o.u_center-wdt/2; z1=o.fixed; x2=o.u_center+wdt/2; z2=o.fixed; }
-    else { x1=o.fixed; z1=o.u_center-wdt/2; x2=o.fixed; z2=o.u_center+wdt/2; }
-    out.openings.push({id:o.id,type:o.type,x1:_vQ(x1),z1:_vQ(z1),x2:_vQ(x2),z2:_vQ(z2),
-      width_m:wv[0]===null?null:_vQ(wv[0]),width_source:wv[1],
-      host_wall_id:(o.host_wall_id===undefined)?null:o.host_wall_id,
-      swing_direction:(o.swing_direction===undefined)?null:o.swing_direction,
-      swing_status:(o.swing_status===undefined)?null:o.swing_status}); });
-  (arch.spaces||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(s=>{
-    if(s.level_index!==levelIndex) return;
-    const r=s.rect;
-    out.spaces.push({id:s.id,space_id:s.space_id,name:s.name,
-      x:_vQ(r[0]),z:_vQ(r[1]),w:_vQ(r[2]),d:_vQ(r[3]),area_m2:_vQ(s.area_m2),
-      boundary_basis:s.boundary_basis,label_x:_vQ(r[0]+r[2]/2),label_z:_vQ(r[1]+r[3]/2)});
-    out.dimensions.push({subject:s.id,kind:'space_width',value_m:_vQ(r[2]),source:'model'});
-    out.dimensions.push({subject:s.id,kind:'space_depth',value_m:_vQ(r[3]),source:'model'}); });
-  (arch.cores||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(c=>{
-    if((c.served_levels||[]).indexOf(levelIndex)<0) return;
-    const fw=_vVal(c.footprint_w_m), fd=_vVal(c.footprint_d_m);
-    out.stairs.push({id:c.id,type:c.type,x:_vQ(c.x),z:_vQ(c.z),
-      w:fw[0]===null?null:_vQ(fw[0]),d:fd[0]===null?null:_vQ(fd[0]),
-      w_source:fw[1],d_source:fd[1]}); });
-  out.walls.forEach(w=>{ out.dimensions.push({subject:w.id,kind:'wall_length',
-    value_m:w.length_m,source:'model'}); });
-  out.openings.forEach(o=>{ out.dimensions.push({subject:o.id,kind:'opening_width',
-    value_m:o.width_m,source:(o.width_source==='model')?'model':'unknown'}); });
-  const xs=[], zs=[];
-  out.walls.forEach(w=>{ xs.push(w.x1,w.x2); zs.push(w.z1,w.z2); });
-  if(xs.length&&zs.length) out.extent=[_vQ(Math.min.apply(null,xs)),
-    _vQ(Math.min.apply(null,zs)),_vQ(Math.max.apply(null,xs)),_vQ(Math.max.apply(null,zs))];
-  out.dimensions.sort((a,b)=>_scmp(String(a.kind),String(b.kind))
-    ||_scmp(String(a.subject),String(b.subject)));
-  out.counts={walls:out.walls.length,openings:out.openings.length,spaces:out.spaces.length,
-    stairs:out.stairs.length,dimensions:out.dimensions.length,
-    unknown_dimensions:out.dimensions.filter(d=>d.source!=='model').length};
-  return out; }
+}
 
 /* ------------------------------------------------------------ القطاع -- */
 function visSection(arch,axis,positionM,buildingId){
@@ -3012,6 +2957,7 @@ const scene=new THREE.Scene();
 /* علامة تصحيح لتقاطع تعارض — كائن مؤقّت في المشهد فقط. لا تدخل النموذج،
    ولا تُخبز في أي تصدير GLB، ولا تُحتسب في أي بصمة مراجعة. */
 window.__ACS_ADD_MARKER__=(m)=>{
+  globalThis.window?.ACS?.requestGuestRender?.();
   try{
     const g=new THREE.Mesh(new THREE.BoxGeometry(Math.max(m.ex,0.02),Math.max(m.ey,0.02),
       Math.max(m.ez,0.02)),
@@ -3024,7 +2970,8 @@ window.__ACS_ADD_MARKER__=(m)=>{
     scene.add(g);
     return g;
   }catch(e){ return null; } };
-window.__ACS_DEL_MARKER__=(g)=>{ try{ if(g&&g.parent) g.parent.remove(g);
+window.__ACS_DEL_MARKER__=(g)=>{
+  globalThis.window?.ACS?.requestGuestRender?.(); try{ if(g&&g.parent) g.parent.remove(g);
   if(g&&g.geometry) g.geometry.dispose(); if(g&&g.material) g.material.dispose(); }catch(e){} };
 const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
@@ -3048,6 +2995,7 @@ function _visColorOf(o){
   const m=VIS_MATERIALS[o.material];
   return m?m.base_color:'#cccccc'; }
 function _visRestore(){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(VIS_ORIGINAL){ VIS_ORIGINAL.forEach(e=>{
     try{ e.mesh.material=e.material; e.mesh.visible=e.visible; }catch(err){} });
     VIS_ORIGINAL=null; }
@@ -3058,6 +3006,7 @@ function _visRestore(){
   try{ renderer.clippingPlanes=[]; }catch(err){}
   VIS_STATE=null; }
 function applyVisualMode(mode,opts){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(!__ACS_LATE.lastBuilding||!__ACS_LATE.model) return null;
   _visRestore();
   opts=Object.assign({},opts||{},{mode:mode});

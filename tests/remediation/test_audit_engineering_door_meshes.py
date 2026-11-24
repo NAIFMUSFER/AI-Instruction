@@ -64,6 +64,52 @@ class SharedDoorMeshes(unittest.TestCase):
         self.assertEqual(m, before)
         self.assertEqual(g, render(m))
 
+    def test_explicit_leaf_claim_needs_two_coincident_reciprocal_hosts(self):
+        base = model()
+        a, b = rooms(base)
+        for room, peer in ((a, b), (b, a)):
+            room['doors'][0]['acs_door_pair'] = {'id': 'leaf', 'peer_room_id': peer['id']}
+        b['doors'][0]['offset'] += .001
+        self.assertEqual(len(doors(render(base))), 2, 'unmarked imports keep exact legacy semantics')
+        base['meta'] = {'acs_apartment': {'schema': 'acs.local-apartment/1'}}
+        leaf, = doors(render(base))
+        self.assertEqual(leaf['extras']['acs_door_pair_id'], 'leaf')
+        self.assertEqual([ref['opening_id'] for ref in leaf['extras']['acs_opening_sources']],
+                         ['left-door', 'right-door'])
+        rooms(base).reverse()
+        self.assertEqual(doors(render(base))[0]['extras'], leaf['extras'], 'stable primary host independent of room order')
+        rooms(base).reverse()
+        for field, value in [('offset', 2.01), ('height', 2.3), ('color', '#ffffff'),
+                             ('swing', 'out'), ('edge', 'E'),
+                             ('acs_door_pair', {'id': 'leaf', 'peer_room_id': 'unrelated'})]:
+            with self.subTest(field=field):
+                altered = copy.deepcopy(base)
+                rooms(altered)[1]['doors'][0][field] = value
+                self.assertEqual(len(doors(render(altered))), 2)
+        third = copy.deepcopy(base)
+        rooms(third)[0]['doors'].append(copy.deepcopy(rooms(third)[0]['doors'][0]))
+        self.assertEqual(len(doors(render(third))), 3)
+        shifted = copy.deepcopy(base)
+        rooms(shifted)[1]['rect'][0] += .02
+        self.assertEqual(len(doors(render(shifted))), 2)
+
+    def test_generated_apartment_leaf_count_and_source_links(self):
+        script = '''import {apartmentSample} from './public/app/core/local-apartment.mjs';
+                    console.log(JSON.stringify(apartmentSample()));'''
+        apartment = json.loads(subprocess.check_output(
+            ['node', '--input-type=module', '-e', script], cwd=ROOT, text=True))
+        leaves = doors(render(apartment))
+        self.assertEqual(len(leaves), 107)
+        self.assertEqual(collections.Counter(n['name'].split('|')[1] for n in leaves),
+                         {'F0': 35, 'F1': 36, 'F2': 36})
+        refs = [(n['name'].split('|')[1], s['room_id'], s['opening_id'])
+                for n in leaves for s in n['extras']['acs_opening_sources']]
+        source = [(f"F{level['index']}", r['id'], dr['id'])
+                  for level in apartment['levels']
+                  for r in apartment['floors'][level['template']]['rooms']
+                  for dr in r['doors']]
+        self.assertCountEqual(refs, source)
+
     def test_north_south_reciprocal_pair_is_also_one_mesh(self):
         m = model()
         rooms(m)[1]["rect"] = [0, 4, 4, 4]

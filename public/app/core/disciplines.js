@@ -8,6 +8,67 @@ import { hasUStairs, stairConnections } from './stairs.mjs';
 import { ARCH_COMPILER_VERSION, ARCH_DEFAULTS, ARCH_SCHEMA, _A_EPS, _aBbox, _aClassifyExposure, _aCores, _aHost, _aLevels, _aOpeningsOf, _aRect, _aRoomsOf, _aShapeSupported, _aVal, _aWallSegments, _aq, _pyT, _scmp } from './standards.js';
 import { _pyRound, buildRelationships, extractExits, findEgress } from './viewer.js';
 
+// Shared orthographic projection. Geometry-only callers can read the same
+// level packet without creating a canvas, camera or WebGL renderer.
+function architecturalDrawingValue(field,fallbackOk){
+  if(!field||typeof field!=='object') return [null,'unknown'];
+  if(field.value!==null&&field.value!==undefined) return [Number(field.value),'model'];
+  if(fallbackOk!==false&&field.render_fallback!==null&&field.render_fallback!==undefined)
+    return [Number(field.render_fallback),'display_fallback'];
+  return [null,'unknown']; }
+function projectArchitecturalLevel(arch,levelIndex){
+  const out={level_index:levelIndex,walls:[],openings:[],spaces:[],stairs:[],fixtures:[],dimensions:[],extent:null};
+  if(!arch) return out;
+  let lv=null;
+  (arch.levels||[]).forEach(l=>{ if(l.index===levelIndex) lv=l; });
+  if(lv===null){ out.level_exists=false; return out; }
+  out.level_exists=true; out.level_id=lv.id; out.level_name=lv.name;
+  (arch.walls||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(w=>{
+    if(w.level_index!==levelIndex) return;
+    const tv=architecturalDrawingValue(w.thickness_m);
+    out.walls.push({id:w.id,x1:_aq(w.start.x),z1:_aq(w.start.z),x2:_aq(w.end.x),
+      z2:_aq(w.end.z),thickness_m:tv[0]===null?null:_aq(tv[0]),thickness_source:tv[1],
+      length_m:_aq(w.length_m),exposure:w.exposure}); });
+  (arch.openings||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(o=>{
+    if(o.level_index!==levelIndex) return;
+    const wv=architecturalDrawingValue(o.width_m), wdt=wv[0]===null?0:wv[0];
+    let x1,z1,x2,z2;
+    if(o.axis==='x'){ x1=o.u_center-wdt/2; z1=o.fixed; x2=o.u_center+wdt/2; z2=o.fixed; }
+    else { x1=o.fixed; z1=o.u_center-wdt/2; x2=o.fixed; z2=o.u_center+wdt/2; }
+    out.openings.push({id:o.id,type:o.type,x1:_aq(x1),z1:_aq(z1),x2:_aq(x2),z2:_aq(z2),
+      width_m:wv[0]===null?null:_aq(wv[0]),width_source:wv[1],
+      host_wall_id:(o.host_wall_id===undefined)?null:o.host_wall_id,
+      swing_direction:(o.swing_direction===undefined)?null:o.swing_direction,
+      swing_status:(o.swing_status===undefined)?null:o.swing_status}); });
+  (arch.spaces||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(s=>{
+    if(s.level_index!==levelIndex) return;
+    const r=s.rect;
+    out.spaces.push({id:s.id,space_id:s.space_id,name:s.name,
+      x:_aq(r[0]),z:_aq(r[1]),w:_aq(r[2]),d:_aq(r[3]),area_m2:_aq(s.area_m2),
+      boundary_basis:s.boundary_basis,label_x:_aq(r[0]+r[2]/2),label_z:_aq(r[1]+r[3]/2)});
+    out.dimensions.push({subject:s.id,kind:'space_width',value_m:_aq(r[2]),source:'model'});
+    out.dimensions.push({subject:s.id,kind:'space_depth',value_m:_aq(r[3]),source:'model'}); });
+  (arch.cores||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(c=>{
+    if((c.served_levels||[]).indexOf(levelIndex)<0) return;
+    const fw=architecturalDrawingValue(c.footprint_w_m), fd=architecturalDrawingValue(c.footprint_d_m);
+    out.stairs.push({id:c.id,type:c.type,x:_aq(c.x),z:_aq(c.z),
+      w:fw[0]===null?null:_aq(fw[0]),d:fd[0]===null?null:_aq(fd[0]),
+      w_source:fw[1],d_source:fd[1]}); });
+  out.walls.forEach(w=>{ out.dimensions.push({subject:w.id,kind:'wall_length',
+    value_m:w.length_m,source:'model'}); });
+  out.openings.forEach(o=>{ out.dimensions.push({subject:o.id,kind:'opening_width',
+    value_m:o.width_m,source:(o.width_source==='model')?'model':'unknown'}); });
+  const xs=[], zs=[];
+  out.walls.forEach(w=>{ xs.push(w.x1,w.x2); zs.push(w.z1,w.z2); });
+  if(xs.length&&zs.length) out.extent=[_aq(Math.min.apply(null,xs)),
+    _aq(Math.min.apply(null,zs)),_aq(Math.max.apply(null,xs)),_aq(Math.max.apply(null,zs))];
+  out.dimensions.sort((a,b)=>_scmp(String(a.kind),String(b.kind))
+    ||_scmp(String(a.subject),String(b.subject)));
+  out.counts={walls:out.walls.length,openings:out.openings.length,spaces:out.spaces.length,
+    stairs:out.stairs.length,dimensions:out.dimensions.length,
+    unknown_dimensions:out.dimensions.filter(d=>d.source!=='model').length};
+  return out; }
+
 function compileArchitecture(building,buildingId,position,rotationDeg){
   const bid=buildingId||'bld_0';
   const levels=_aLevels(building,bid);
@@ -3792,4 +3853,4 @@ function flsSummary(fls){
 Object.assign(__ACS_LATE, { archDoorConnectsConfirmed, archOpeningAnchor, compileArchitecture, compileFls, compileMep, compileStructure, flsRenderItems, mepRenderItems, structRenderItems });
 
 
-export { ACS_FLS_SPEC, ACS_MEP_SPEC, ACS_STRUCT_SPEC, FLS_ADAPTER_ORIGINS, FLS_BARRIER_TYPES, FLS_COMPILER_VERSION, FLS_DEVICE_CATEGORIES, FLS_DEVICE_CATEGORY, FLS_DEVICE_TYPES, FLS_ELEMENT_TYPES, FLS_FALLBACKS, FLS_FORBIDDEN_PROVENANCE, FLS_ISSUE_CODES, FLS_MEP_DEVICE_MAP, FLS_MEP_EQUIPMENT_MAP, FLS_MODEL_STATUS, FLS_OPENING_TYPES, FLS_PROTECTION_STATUSES, FLS_PROVENANCE, FLS_REFERENCED_MEP_SYSTEMS, FLS_REL_STATUSES, FLS_REL_TYPES, FLS_RENDER_LAYERS, FLS_SCHEMA, FLS_SEVERITIES, FLS_SMOKE_CONTROL_KINDS, FLS_VERIFIED_SOURCES, MEP_COMPILER_VERSION, MEP_DISCIPLINES, MEP_DISCIPLINE_OF, MEP_ELEMENT_TYPES, MEP_EQUIPMENT_TYPES, MEP_FALLBACKS, MEP_ISSUE_CODES, MEP_MEDIA, MEP_MODEL_STATUS, MEP_NODE_KINDS, MEP_PENETRATION_HOSTS, MEP_PORT_TYPES, MEP_PROVENANCE, MEP_REL_STATUSES, MEP_REL_TYPES, MEP_RISER_KINDS, MEP_ROUTING_STATUSES, MEP_SCHEMA, MEP_SEGMENT_KINDS, MEP_SEVERITIES, MEP_SYSTEM_TYPES, MEP_TERMINAL_TYPES, MEP_VERIFIED_SOURCES, STRUCT_ALIGNMENT_STATES, STRUCT_COMPILER_VERSION, STRUCT_ELEMENT_TYPES, STRUCT_FALLBACKS, STRUCT_FOUNDATION_TYPES, STRUCT_ISSUE_CODES, STRUCT_MATERIALS, STRUCT_MODEL_STATUS, STRUCT_PROVENANCE, STRUCT_REL_STATUSES, STRUCT_REL_TYPES, STRUCT_ROLES, STRUCT_SCHEMA, STRUCT_SECTION_SHAPES, STRUCT_SEVERITIES, STRUCT_VERIFIED_SOURCES, _FLS_LAYER_OF, _F_EPS, _F_TOL, _MEP_DISC_TAG, _MEP_P1, _M_EPS, _M_TOL, _S_EPS, _S_OFFSET_TOL, _S_POS_TOL, _byId, _fBadNumber, _fBarriers, _fDeviceCommon, _fDevices, _fExits, _fIntegrity, _fLevelOf, _fLevelsIndex, _fMepHas, _fOpenings, _fPoints, _fRelationships, _fShafts, _fSigns, _fSmokeControl, _fSpaceIndex, _fStairs, _fSystems, _fZones, _fnid, _fnum, _fprops, _frating, _fraw, _fsrc, _mBadNumber, _mCross, _mDims, _mDisciplineOf, _mEquipment, _mInterference, _mLevelOf, _mLevelsIndex, _mNodes, _mPenetrations, _mPoint3, _mPolyline, _mPorts, _mPropMap, _mRelationships, _mRenderSize, _mRisers, _mSeg2d, _mSegHitsBox, _mSegments, _mSize, _mSpaceIndex, _mSystems, _mTerminals, _mfallback, _mnid, _mnum, _mraw, _msrc, _sBadNumber, _sBeams, _sColumns, _sCores, _sFoundations, _sGridIndex, _sGrids, _sInterference, _sKey, _sKeyCmp, _sLevelOf, _sLevelsIndex, _sMaterialName, _sMaterials, _sNodes, _sOutline, _sRelationships, _sRenderSection, _sSection, _sSlabs, _sSortNum, _sStacks, _sWalls, _sfallback, _snid, _snum, _sprop, _sraw, _ssrc, adaptPhase1Terminals, archDoorConnectsConfirmed, archElementById, archOpeningAnchor, archOpeningByRef, archSharedWallBetween, archSummary, archToWorld, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSeverityOf, flsSummary, flsToWorld, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSeverityOf, mepSummary, mepSystemById, mepToWorld, structColumnsInside, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSeverityOf, structSummary, structToWorld, suggestStructuralGrid, validateArchitecture, validateFls, validateMep, validateStructure };
+export { architecturalDrawingValue, projectArchitecturalLevel, ACS_FLS_SPEC, ACS_MEP_SPEC, ACS_STRUCT_SPEC, FLS_ADAPTER_ORIGINS, FLS_BARRIER_TYPES, FLS_COMPILER_VERSION, FLS_DEVICE_CATEGORIES, FLS_DEVICE_CATEGORY, FLS_DEVICE_TYPES, FLS_ELEMENT_TYPES, FLS_FALLBACKS, FLS_FORBIDDEN_PROVENANCE, FLS_ISSUE_CODES, FLS_MEP_DEVICE_MAP, FLS_MEP_EQUIPMENT_MAP, FLS_MODEL_STATUS, FLS_OPENING_TYPES, FLS_PROTECTION_STATUSES, FLS_PROVENANCE, FLS_REFERENCED_MEP_SYSTEMS, FLS_REL_STATUSES, FLS_REL_TYPES, FLS_RENDER_LAYERS, FLS_SCHEMA, FLS_SEVERITIES, FLS_SMOKE_CONTROL_KINDS, FLS_VERIFIED_SOURCES, MEP_COMPILER_VERSION, MEP_DISCIPLINES, MEP_DISCIPLINE_OF, MEP_ELEMENT_TYPES, MEP_EQUIPMENT_TYPES, MEP_FALLBACKS, MEP_ISSUE_CODES, MEP_MEDIA, MEP_MODEL_STATUS, MEP_NODE_KINDS, MEP_PENETRATION_HOSTS, MEP_PORT_TYPES, MEP_PROVENANCE, MEP_REL_STATUSES, MEP_REL_TYPES, MEP_RISER_KINDS, MEP_ROUTING_STATUSES, MEP_SCHEMA, MEP_SEGMENT_KINDS, MEP_SEVERITIES, MEP_SYSTEM_TYPES, MEP_TERMINAL_TYPES, MEP_VERIFIED_SOURCES, STRUCT_ALIGNMENT_STATES, STRUCT_COMPILER_VERSION, STRUCT_ELEMENT_TYPES, STRUCT_FALLBACKS, STRUCT_FOUNDATION_TYPES, STRUCT_ISSUE_CODES, STRUCT_MATERIALS, STRUCT_MODEL_STATUS, STRUCT_PROVENANCE, STRUCT_REL_STATUSES, STRUCT_REL_TYPES, STRUCT_ROLES, STRUCT_SCHEMA, STRUCT_SECTION_SHAPES, STRUCT_SEVERITIES, STRUCT_VERIFIED_SOURCES, _FLS_LAYER_OF, _F_EPS, _F_TOL, _MEP_DISC_TAG, _MEP_P1, _M_EPS, _M_TOL, _S_EPS, _S_OFFSET_TOL, _S_POS_TOL, _byId, _fBadNumber, _fBarriers, _fDeviceCommon, _fDevices, _fExits, _fIntegrity, _fLevelOf, _fLevelsIndex, _fMepHas, _fOpenings, _fPoints, _fRelationships, _fShafts, _fSigns, _fSmokeControl, _fSpaceIndex, _fStairs, _fSystems, _fZones, _fnid, _fnum, _fprops, _frating, _fraw, _fsrc, _mBadNumber, _mCross, _mDims, _mDisciplineOf, _mEquipment, _mInterference, _mLevelOf, _mLevelsIndex, _mNodes, _mPenetrations, _mPoint3, _mPolyline, _mPorts, _mPropMap, _mRelationships, _mRenderSize, _mRisers, _mSeg2d, _mSegHitsBox, _mSegments, _mSize, _mSpaceIndex, _mSystems, _mTerminals, _mfallback, _mnid, _mnum, _mraw, _msrc, _sBadNumber, _sBeams, _sColumns, _sCores, _sFoundations, _sGridIndex, _sGrids, _sInterference, _sKey, _sKeyCmp, _sLevelOf, _sLevelsIndex, _sMaterialName, _sMaterials, _sNodes, _sOutline, _sRelationships, _sRenderSection, _sSection, _sSlabs, _sSortNum, _sStacks, _sWalls, _sfallback, _snid, _snum, _sprop, _sraw, _ssrc, adaptPhase1Terminals, archDoorConnectsConfirmed, archElementById, archOpeningAnchor, archOpeningByRef, archSharedWallBetween, archSummary, archToWorld, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSeverityOf, flsSummary, flsToWorld, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSeverityOf, mepSummary, mepSystemById, mepToWorld, structColumnsInside, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSeverityOf, structSummary, structToWorld, suggestStructuralGrid, validateArchitecture, validateFls, validateMep, validateStructure };

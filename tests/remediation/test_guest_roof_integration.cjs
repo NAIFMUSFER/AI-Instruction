@@ -39,7 +39,7 @@ context.lastBuilding=context.removeAutoRoof(fresh);assert.equal(context.localGen
 assert.throws(()=>context.parseDescription('غرفة 4x5',30,25,64),/LOCAL_LEVEL_LIMIT_EXCEEDED/);
 const generated=context.parseDescription('غرفة 4x5',30,25,2);assert.equal(generated.levels.length,3);assert.equal(generated.floors.roof,undefined);assert.equal(generated.floors.typical.rooms.length,1);
 const setter=fn('setModel');assert.ok(!/withDefaultRoof|carryAutoRoof|localGeneratedModel/.test(setter),'generic import/recovery setter never adds roof');
-assert.match(source,/setModel\(localGeneratedModel\(EXAMPLE,\{freshSample:true\}\)\)/);assert.match(source,/applyLocalEdit\(buildLocal\(txt,W,D,nF\),\{generated:true\}\)/,'actual local generation uses edit boundary');
+assert.match(fn('showResidentialExample'),/setModel\(localGeneratedModel\(example,\{freshSample:true\}\)\)/);assert.match(source,/applyLocalEdit\(buildLocal\(txt,W,D,nF\),\{generated:true\}\)/,'actual local generation uses edit boundary');
 assert.match(fn('buildLocalRoofControl'),/className='btn ghost acs-u-15'/,'toggle uses existing44px class');
 assert.match(fs.readFileSync('public/app/styles/app.css','utf8'),/\.acs-u-15\{[^}]*min-height:44px/);
 assert.match(context.localGenerationError(new Error('ROOF_LEVEL_LIMIT_EXCEEDED')),/64.*السطح/);assert.match(context.localGenerationError(new Error('LOCAL_LEVEL_LIMIT_EXCEEDED')),/64/);assert.match(context.localGenerationError(new Error('LOCK_CONTEXT_CHANGED')),/مقفول/);

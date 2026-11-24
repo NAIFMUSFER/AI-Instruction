@@ -59,7 +59,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Google redirect and existing account UI on desktop and mobile
         run: node tests/remediation/test_auth_shipped_page.cjs
-      - name: Retain masked synthetic auth failure evidence
+      - name: Retain masked synthetic auth recovery and failure evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -67,6 +67,7 @@ jobs:
           path: |
             logs/auth-failure-*.json
             logs/auth-failure-*.png
+            logs/auth-service-unavailable-*.png
             logs/guest-diagnostics/*.json
           if-no-files-found: ignore
           retention-days: 14

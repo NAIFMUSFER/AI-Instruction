@@ -4,10 +4,11 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('public/app/ui/guest-workspace.js', 'utf8');
+const { stripModuleSyntax } = require('../lib/app_source.js');
+const source = stripModuleSyntax(fs.readFileSync('public/app/ui/guest-workspace.js', 'utf8'), 'guest-workspace');
 
-async function guest(recovery, interact) {
-  const nodes = new Map();
+async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
+  const nodes = new Map(), events = new Map();
   let boot, release;
   function element(id) {
     if (nodes.has(id)) return nodes.get(id);
@@ -16,7 +17,8 @@ async function guest(recovery, interact) {
       dataset: {}, classList: { add() {}, remove() {} },
       setAttribute() {}, closest() { return null; }, before() {}, focus() {},
       addEventListener(name, fn) { listeners[name] = fn; },
-      click() { listeners.click?.(); },
+      dispatch(name, event) { listeners[name]?.(event); },
+      click() { this.dispatch('click'); },
     };
     nodes.set(id, node);
     return node;
@@ -30,16 +32,20 @@ async function guest(recovery, interact) {
     addEventListener(name, fn) { if (name === 'DOMContentLoaded') boot = fn; },
     removeEventListener() {},
   };
+  let model = null;
   const ACS = {
-    guest: true, showExample() {}, setModel() {},
+    guest: true,
+    exportModel: () => model,
+    showExample() { this.setModel({ meta: { acs_apartment: { source: 'synthetic_sample' } }, site: { w: 20, d: 25 } }); },
+    setModel(value) { model = value; this.guestWorkspace?.modelChanged(); },
     persistence: { recover: () => new Promise(resolve => { release = resolve; }) },
   };
-  vm.runInNewContext(source, { document, window: { ACS, ACS_AUTH: { storageScope: () => 'guest' } }, innerWidth: 1440, setTimeout, clearTimeout });
+  vm.runInNewContext(source, { document, window: { addEventListener: (name, callback) => events.set(name, callback), ACS, ACS_AUTH: { storageScope: () => scope } }, innerWidth: 1440, setTimeout, clearTimeout });
   const ready = boot();
   if (interact) ACS.guestWorkspace.sample('warehouse');
   release(recovery);
   await ready;
-  return { ACS, element };
+  return { ACS, element, emit: (name, detail) => events.get(name)?.({ detail }) };
 }
 
 // A committed selection must match the sample that the guest labels as ready.
@@ -74,6 +80,35 @@ function verifyWarehouseSelection() {
     element('genText').click();
     assert.equal(ACS.guestAutosaveReady, false, 'a subsequent edit cannot rearm autosave');
   }
+  // A click or rejected build must not relabel the existing sample as generated.
+  const studio = await guest({ ok: false, code: 'NO_RECORDS' }, false, 'acs_guest_apartment_20x25_v1');
+  assert.equal(studio.element('guestSignin').href, '/?signin=1&example=apartment-20x25');
+  assert.equal(studio.element('guestStorageNote').hidden, false);
+  // Native Quick Look always serves a fixed file. A copied marker or retained link
+  // cannot authorize a changed room/width, even between opening the menu and tapping.
+  const options = studio.element('guestOptions'), preview = studio.element('guestNativeSample');
+  options.open = true; options.dispatch('toggle');
+  assert.equal(preview.hidden, false);
+  let prevented = false;
+  preview.dispatch('click', { preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, false);
+  studio.ACS.exportModel().site.w = 22;
+  preview.dispatch('click', { preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(preview.hidden, true);
+  options.dispatch('toggle'); assert.equal(preview.hidden, true);
+  studio.ACS.guestWorkspace.sample('residential'); options.dispatch('toggle'); assert.equal(preview.hidden, false);
+  const altered = structuredClone(studio.ACS.exportModel());
+  altered.site.d = 28;
+  studio.ACS.setModel(altered); options.dispatch('toggle'); assert.equal(preview.hidden, true);
+  studio.ACS.guestWorkspace.sample('residential');
+  studio.element('genText').click();
+  studio.emit('acs:local-generation', { ok: false, message: 'لم يكتمل الوصف' });
+  assert.equal(studio.element('acsGuestStatus').textContent, 'عمارة تجريبية');
+  assert.equal(studio.element('guestFeedback').textContent, 'لم يكتمل الوصف');
+  studio.emit('acs:local-generation', { ok: true });
+  assert.equal(studio.element('acsGuestStatus').textContent, 'تصميم محلي أولي');
+  assert.equal(studio.element('guestFeedback').textContent, '');
   for (const result of [{ ok: false, code: 'NO_RECORDS' }, { ok: true, project: { model: { site: {} } } }]) {
     const { ACS } = await guest(result, true);
     assert.equal(ACS.guestAutosaveReady, true, 'successful storage resolution admits local saves');

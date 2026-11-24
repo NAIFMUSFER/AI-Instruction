@@ -1,0 +1,351 @@
+[
+  {
+    "path": "public/app/core/local-apartment.mjs",
+    "purpose": "Construct and validate bounded residential briefs with connected physical units, levels and apertures.",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_local_apartment.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/app/render/frame-bounds.mjs",
+    "purpose": "Frame actual geometry above grade and derive removable architectural presentation.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-FRAMING"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_cutaway.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/app/render/guest-presentation.mjs",
+    "purpose": "Frame actual geometry above grade and derive removable architectural presentation.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-FRAMING"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_cutaway.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/app/ui/guest-floor-plan.mjs",
+    "purpose": "Present the selected physical floor and derive printable drawings from the same local sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_floor_plan.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/app/styles/guest-floor-plan.css",
+    "purpose": "Present the selected physical floor and derive printable drawings from the same local sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_floor_plan.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "tools/build_guest_apartment_plans.py",
+    "purpose": "Present the selected physical floor and derive printable drawings from the same local sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_floor_plan.mjs",
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-0.svg",
+    "purpose": "Generated offline drawing for one physical floor of the public apartment.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-1.svg",
+    "purpose": "Generated offline drawing for one physical floor of the public apartment.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-2.svg",
+    "purpose": "Generated offline drawing for one physical floor of the public apartment.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "tests/fixtures/briefs/riyadh-apartment-ar.txt",
+    "purpose": "Enter the Arabic description through the actual guest UI and inspect the rendered building and its exported files.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": ".github/workflows/public-apartment-journey.yml",
+    "purpose": "Enter the Arabic description through the actual guest UI and inspect the rendered building and its exported files.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_public_apartment_journey.cjs",
+    "purpose": "Enter the Arabic description through the actual guest UI and inspect the rendered building and its exported files.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_local_apartment.mjs",
+    "purpose": "Regression checks for residential geometry, drawing identity and framing.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_floor_plan.mjs",
+    "purpose": "Regression checks for residential geometry, drawing identity and framing.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_cutaway.mjs",
+    "purpose": "Regression checks for residential geometry, drawing identity and framing.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-APARTMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_public_apartment_journey.cjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-0-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-1-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-2-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "assets/guest/apartment-20x25.usdz.gz",
+    "purpose": "Verified compressed USDZ and technical receipt for the public sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "tools/guest_apartment_usdz.mjs",
+      "tools/build_guest_apartment_usdz.py"
+    ]
+  },
+  {
+    "path": "assets/guest/apartment-20x25.usdz.json",
+    "purpose": "Verified compressed USDZ and technical receipt for the public sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "tools/guest_apartment_usdz.mjs",
+      "tools/build_guest_apartment_usdz.py"
+    ]
+  },
+  {
+    "path": "tools/guest_apartment_usdz.mjs",
+    "purpose": "Build the Apple viewer asset from public model geometry and verify package contents.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "tools/build_guest_apartment_usdz.py",
+    "purpose": "Build the Apple viewer asset from public model geometry and verify package contents.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-iphone.html",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-iphone.css",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_quicklook.py",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-20x25-preview.jpg",
+    "purpose": "Offline camera view rendered from the public sample GLB.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "Blender Cycles (offline still)"
+    ]
+  }
+]

@@ -4,16 +4,19 @@ function loadLocalStudio(){
   if(loading)return loading;
   loading=(async()=>{
     await import('../core/stairs.mjs');
+    await import('../core/apartment-door-pairs.mjs');
     await import('../core/context-details.mjs');
     await import('../core/viewer.js');
     await import('../core/standards.js');
     await import('../core/roof.mjs');
+    await import('../core/local-apartment.mjs');
     await import('../core/disciplines.js');
     await import('../generated/runtime.js');
     await import('../generated/authoring.js');
     await import('../generated/pbr.js');
     await import('../render/scene.js');
     await import('../render/warehouse-canonical-identity.js');
+    await import('../render/guest-presentation.mjs');
     await import('../generated/pbr-bridge.js');
     await import('../ui/workspace-ui-wiring.js');
     await import('../trust/core.js');
@@ -23,8 +26,15 @@ function loadLocalStudio(){
     await import('../ui/workspace-viewport-selection-runtime.js');
     await import('../ui/residential-quality.js');
     await import('../ui/generation-jobs.js');
+    await import('../ui/guest-floor-plan.mjs');
     await import('../ui/guest-workspace.js');
-  })().catch(error=>{
+  })().catch(async error=>{
+    if(window.ACS_AUTH?.guestProjectId){
+      await import('../trust/guest-draft-store.mjs');
+      await import('../render/guest-software-view.mjs');
+      const software = await import('../ui/guest-software-studio.mjs');
+      return software.openGuestSoftwareStudio();
+    }
     window.ACS?.guestBootFailure?.();
     const status=document.getElementById('status');if(status)status.textContent='تعذّر تشغيل المشهد المحلي. أعد المحاولة أو استخدم المخطط البديل.';
     throw error;

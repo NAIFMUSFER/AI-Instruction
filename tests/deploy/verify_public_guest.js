@@ -31,6 +31,21 @@ function progressRecorder(output){
  };
 }
 
+async function openGuestOptions(page) {
+ const options = page.locator('#guestOptions');
+ // The earlier public release exposes the same sample and sign-in buttons inline.
+ if (await options.count() && !await options.evaluate(element => element.open)) {
+  await page.locator('#guestTools').click();
+ }
+}
+
+async function assertTouchTargets(page, selectors) {
+ for (const selector of selectors) {
+  const box = await page.locator(selector).boundingBox();
+  assert.ok(box && box.height>=44 && box.width>=44, selector+' is at least 44 CSS pixels');
+ }
+}
+
 async function downloadProject(page,mobile,begin){
  const toggle=page.locator('#panelToggle');
  if(mobile){
@@ -80,9 +95,13 @@ async function run(target,{expectSha=process.env.ACS_VERIFY_EXPECT_SHA||""}={}){
    begin('guest_layout_and_isolation');assert.equal(await page.locator('#login').isVisible(),false,'fresh entry has no blocking sign-in');
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.deepEqual(await page.evaluate(()=>({lang:document.documentElement.lang,dir:document.documentElement.dir})),{lang:'ar',dir:'rtl'});
-   for(const selector of ['#guestExample','#guestWarehouse','#guestCreate','#guestSignin']){
-    const box=await page.locator(selector).boundingBox();assert.ok(box&&box.height>=44&&box.width>=44,'primary touch control is at least 44 CSS pixels');
+   if(await page.locator('#guestTools').count()){
+    await assertTouchTargets(page,['#guestCreate','#guestPlan','#guestViewToggle','#guestTools']);
+    if(width===393)assert.ok((await page.locator('#acsGuestBanner').boundingBox()).height<=80,'compact mobile guest toolbar');
+    assert.equal(await page.locator('#guestSignin').isVisible(),false);
    }
+   await openGuestOptions(page);
+   await assertTouchTargets(page,['#guestExample','#guestWarehouse','#guestCreate','#guestSignin']);
    await page.locator('#guestWarehouse').focus();assert.equal(await page.evaluate(()=>document.activeElement.id),'guestWarehouse');
    assert.match(await page.locator('#acsGuestStatus').textContent(),/محلي|الجهاز|تجريبي/);
    assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_guest_project_v1');
@@ -90,7 +109,7 @@ async function run(target,{expectSha=process.env.ACS_VERIFY_EXPECT_SHA||""}={}){
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    const views=[];
    for(const [kind,id] of [['residential','guestExample'],['warehouse','guestWarehouse']]){
-    begin('select_'+kind);await page.locator('#'+id).click();
+    begin('select_'+kind);await openGuestOptions(page);await page.locator('#'+id).click();
     if(kind==='warehouse')await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
     await page.waitForFunction(()=>window.ACS?.renderDiagnosticsDetail?.().canonical_meshes>0);
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -112,7 +131,7 @@ async function run(target,{expectSha=process.env.ACS_VERIFY_EXPECT_SHA||""}={}){
    if(expectSha)assert.equal(build.git_sha,expectSha);
    // Sign-in is a distinct journey. It may read public auth configuration; no
    // credentials are supplied and no account or private project is created.
-   begin('open_signin');signinChosen=true;await page.locator('#guestSignin').click();
+   begin('open_signin');await openGuestOptions(page);signinChosen=true;await page.locator('#guestSignin').click();
    begin('signin_controls');await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
    assert.deepEqual(forbidden,[]);assert.equal(guest,false,'explicit sign-in must complete a distinct same-origin navigation');
    runs.push({width,height:width===393?852:900,views,build,guest_forbidden_requests:forbidden.length,local_save_reload:true,json_download:true,signin_ui:true});

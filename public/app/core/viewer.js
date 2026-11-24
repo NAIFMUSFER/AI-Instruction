@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { apartmentDoorPairs } from './apartment-door-pairs.mjs';
 import { hasStairForms, resolveStairGeometry, stairConnections } from './stairs.mjs';
 
 import * as THREE from 'three';
@@ -580,7 +581,7 @@ function buildRoom(group,room,fkey,baseY,def){
     wn.edge=normEdge(wn.edge);
     per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
   const dk=dockOpenings(room);
-  for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e]);
+  for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e],def.hostedDocks?.[e]||[]);
 
   /* نمط الجدار: مناطق المستودع وحدها مفتوحة (دهان أرضي).
      الغرف السكنية/المكتبية تبقى بجدران كاملة حتى لو حملت role. */
@@ -600,7 +601,8 @@ function buildRoom(group,room,fkey,baseY,def){
     addBox(group,x+w/2,baseY+0.01,z+d/2,Math.min(w*0.5,6),0.014,Math.min(d*0.22,2.2),'paint_zone',
       `FLOOR|${fkey}|${name}|label`,false,zc);
   }else{
-    for(const e of['N','S','E','W']){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
+    const edges=['N','S','E','W'].filter(edge=>!Array.isArray(wallsMode)||wallsMode.includes(edge));
+    for(const e of edges){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
       wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
         wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
   }
@@ -612,11 +614,18 @@ function buildRoom(group,room,fkey,baseY,def){
   if(ccol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.ceilingHoles||[]).forEach((s,i)=>
     addBox(group,s[0]+s[2]/2,baseY+H-0.03,s[1]+s[3]/2,s[2],0.05,s[3],
       'ceiling',`FLOOR|${fkey}|${name}|ceil${i||''}`,false,ccol));
-  acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
+  acsList(room,'doors').forEach((dr,i)=>{
+    // Both hosts always cut their wall above. Only a validated explicit pair
+    // shares a physical leaf; anonymous/imported co-planar leaves stay separate.
+    const pair=def.doorPairs?.get(dr);
+    if(pair&&!pair.primary)return;
+    const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
     const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
-    const dcol=normHex(dr.color);
-    if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
-    else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
+    const dcol=normHex(dr.color),tag=`DOOR|${fkey}|${name}|${i}`;
+    const mesh=axis==='x'?addBox(group,uc,cy,fixed,wd,dh,0.06,mat,tag,true,dcol):
+      addBox(group,fixed,cy,uc,0.06,dh,wd,mat,tag,true,dcol);
+    if(mesh&&pair)mesh.userData.acs_door_pair={pair_id:pair.pair_id,floor_key:fkey,hosts:pair.hosts};
+  });
   acsList(room,'windows').forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
     const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
     if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
@@ -1079,6 +1088,28 @@ function dockOpenings(room){
   return out;
 }
 
+// The authored shell and dock equipment have separate owners. Cut the shell
+// from the dock's world interval without duplicating its door mesh or identity.
+function hostedDockCuts(shell,rooms){
+  const result={N:[],S:[],E:[],W:[]},rect=acsRoomRect(shell);
+  if(!rect)return result;
+  for(const room of rooms){
+    if(room===shell||!room?.docks?.length)continue;
+    const zone=acsRoomRect(room);
+    if(!zone)continue;
+    const openings=dockOpenings(room);
+    for(const edge of ['N','S','W','E']){
+      if(!openings[edge].length)continue;
+      const [,line,start,end]=edgeGeom(edge,rect);
+      if(Math.abs(edgeGeom(edge,zone)[1]-line)>.015)continue;
+      for(const interval of openings[edge]){
+        if(interval[0]-interval[1]/2>=start-.015&&interval[0]+interval[1]/2<=end+.015)result[edge].push(interval);
+      }
+    }
+  }
+  return result;
+}
+
 const ADMIN_ROLES={office:1,admin:1,it:1,staff:1,maintenance:1,meeting:1};
 /* يقصّ مستطيلات الفراغ من بلاطة مستطيلة بشرائح محاذية للمحاور — لا CSG ولا
    تقريب: كل شريحة صلبة فعلاً، وما تحت النواة يبقى مفتوحاً. */
@@ -1233,9 +1264,11 @@ function compile(data){
     (_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes)).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
-    acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,
-               'ROOMS_CAPPED','level.rooms')
-      .forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles:physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening)}));
+    const rooms=acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,'ROOMS_CAPPED','level.rooms');
+    const ceilingHoles=physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening);
+    const doorPairs=data.meta?.acs_apartment?.schema==='acs.local-apartment/1'?apartmentDoorPairs(rooms):null;
+    const host=industrial?rooms.find(r=>r?.id==='envelope'):null;
+    rooms.forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles,doorPairs,hostedDocks:host&&r===host?hostedDockCuts(host,rooms):null}));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */
@@ -2109,8 +2142,11 @@ function activeBuilding(data){
   return a?a.building:null;
 }
 /* غلاف تصدير: هرمية المشروع + حقول المرحلة 1 في مكانها (توافق كامل للخلف) */
-function projectEnvelope(b){
-  const pr=toProject(b); if(!pr) return b;
+function projectEnvelope(selected){
+  if(!isBuildingModel(selected)&&!isProjectModel(selected))return selected;
+  // toProject fills legacy identifiers in place. Enrich the download's copy.
+  const b=typeof structuredClone==='function'?structuredClone(selected):JSON.parse(JSON.stringify(selected));
+  const pr=toProject(b);
   const bt=String((b.meta||{}).type||'residential').toLowerCase();
   const env=Object.assign({}, b);                       // كل حقول المرحلة 1 كما هي
   env.schema=ACS_PROJECT_SCHEMA;

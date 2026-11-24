@@ -62,3 +62,6 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 supabase/.temp/
+
+# Materialized from the hash-verified named guest asset by the frontend build.
+/public/guest-plans/apartment-20x25.usdz

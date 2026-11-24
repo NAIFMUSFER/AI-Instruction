@@ -150,6 +150,50 @@ chk('account entry cannot statically load any local GPU route module',localLeaks
 const routeSource=mods['ui/local-studio-entry.mjs'];
 const routeImports=[...routeSource.matchAll(/import\('\.\.\/(.+?)'\)/g)].map(match=>match[1]);
 chk('local route declaration matches actual import calls in order',JSON.stringify(routeImports)===JSON.stringify(local));
+const recoveryImports=[],webglImports=[];
+B.traverse(astOf['ui/local-studio-entry.mjs'],{
+  CallExpression(p){
+    if(p.node.callee.type!=='Import')return;
+    const target=p.node.arguments[0];
+    if(target?.type!=='StringLiteral')return;
+    const recovery=p.findParent(parent=>{
+      const call=parent.parentPath?.node;
+      return parent.isArrowFunctionExpression()&&parent.node.async&&
+        call?.type==='CallExpression'&&call.callee.type==='MemberExpression'&&
+        !call.callee.computed&&call.callee.property.name==='catch';
+    });
+    (recovery?recoveryImports:webglImports).push(target.value.replace(/^\.\.\//,''));
+  }
+});
+chk('the three declared recovery modules are exactly the real route catch-branch imports',
+    APP.LOCAL_FALLBACK.length===3&&JSON.stringify(recoveryImports)===JSON.stringify(APP.LOCAL_FALLBACK),
+    JSON.stringify(recoveryImports));
+chk('every remaining local module belongs to the successful WebGL path',
+    JSON.stringify(webglImports)===JSON.stringify(local.filter(f=>!APP.LOCAL_FALLBACK.includes(f))),
+    JSON.stringify(webglImports));
+const fallbackLeaks=edges.filter(([from,to])=>APP.LOCAL_FALLBACK.includes(to)&&!APP.LOCAL_FALLBACK.includes(from));
+chk('no WebGL or account module statically imports a recovery-only module',
+    fallbackLeaks.length===0,JSON.stringify(fallbackLeaks));
+// Exercise the actual browser readiness predicate without launching a GPU.
+// Missing any one successful-path import must still block readiness, while
+// the separately tested software branch is legitimately absent in this path.
+const bootSource=fs.readFileSync(path.join(ROOT,'tests/deploy/verify_page_boot.js'),'utf8');
+const readyDeclaration=parse(bootSource,'verify_page_boot.js',false).program.body
+  .find(node=>node.type==='FunctionDeclaration'&&node.id.name==='localStudioReady');
+const requiredWebglPaths=webglImports.map(file=>'/app/'+file);
+let resources=requiredWebglPaths.map(file=>({name:'http://localhost'+file,responseEnd:1}));
+const readyPredicate=require('node:vm').runInNewContext(
+  bootSource.slice(readyDeclaration.start,readyDeclaration.end)+';localStudioReady;',
+  {URL,window:{ACS:{ready:true,openWorkspace(){}}},performance:{getEntriesByType(){return resources;}}});
+chk('successful WebGL readiness does not require recovery-only resources',
+    readyPredicate(requiredWebglPaths));
+const missingImportWitness=requiredWebglPaths.every(missing=>{
+  resources=requiredWebglPaths.filter(file=>file!==missing)
+    .map(file=>({name:'http://localhost'+file,responseEnd:1}));
+  return !readyPredicate(requiredWebglPaths);
+});
+chk('NEGATIVE WITNESS — omitting ANY successful-path module blocks boot readiness',
+    requiredWebglPaths.length>20&&missingImportWitness);
 
 
 console.log('\n== §2 — THE FIRST-PARTY IMPORT GRAPH IS ACYCLIC ==');

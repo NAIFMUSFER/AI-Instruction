@@ -1,16 +1,19 @@
 # Local guest/test studio. Dynamically loaded by ui/local-studio-entry.mjs.
 # Static edges inside this route are allowed; eager account modules must not import it.
 core/stairs.mjs
+core/apartment-door-pairs.mjs
 core/context-details.mjs
 core/viewer.js
 core/standards.js
 core/roof.mjs
+core/local-apartment.mjs
 core/disciplines.js
 generated/runtime.js
 generated/authoring.js
 generated/pbr.js
 render/scene.js
 render/warehouse-canonical-identity.js
+render/guest-presentation.mjs
 generated/pbr-bridge.js
 ui/workspace-ui-wiring.js
 trust/core.js
@@ -20,4 +23,8 @@ ui/workspace-viewport-selection.js
 ui/workspace-viewport-selection-runtime.js
 ui/residential-quality.js
 ui/generation-jobs.js
+ui/guest-floor-plan.mjs
 ui/guest-workspace.js
+trust/guest-draft-store.mjs
+render/guest-software-view.mjs
+ui/guest-software-studio.mjs

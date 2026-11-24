@@ -67,6 +67,23 @@ jobs:
         with:
           ref: ${{ env.ACS_VERIFIER_SHA }}
           persist-credentials: false
+      - name: Check out the asset contract for the published base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.ACS_VERIFY_EXPECT_SHA }}
+          path: published-source
+          persist-credentials: false
+      - name: Locate the exact source for published asset checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_path="$GITHUB_WORKSPACE"
+          if [[ "$ACS_RELEASE_SCOPE" == 'monitor-on-base' ]]; then
+            source_path="$GITHUB_WORKSPACE/published-source"
+          fi
+          test "$(git -C "$source_path" rev-parse HEAD)" = "$ACS_VERIFY_EXPECT_SHA"
+          echo "ACS_PUBLISHED_SOURCE_ROOT=$source_path" >> "$GITHUB_ENV"
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
@@ -92,7 +109,7 @@ jobs:
           Path('logs/published/public-journey-scope.json').write_text(json.dumps(rec, indent=2) + '\n')
           print('Public journey scope:', rec)
           PY_SCOPE
-          python tests/remediation/test_delivery_published.py 2>&1 | tee logs/published/wait-contracts.log
+          env -u ACS_PUBLISHED_SOURCE_ROOT python tests/remediation/test_delivery_published.py 2>&1 | tee logs/published/wait-contracts.log
           node tests/remediation/test_public_guest_monitor.cjs 2>&1 | tee logs/published/guest-controls.log
       - name: Install locked Playwright and Chromium
         shell: bash

@@ -120,6 +120,17 @@ async function runAuthShippedPage(){
       await page.locator('#lgGo').click();
       await page.waitForFunction(()=>document.querySelector('#acsAuthStatus').textContent.includes('مؤقتًا'));
       assert.equal(await page.locator('#lgGo').isEnabled(),true);
+      const fallback=page.locator('#acsAuthGuestLink');
+      assert.equal(await fallback.textContent(),'فتح الاستوديو على هذا الجهاز');
+      assert.equal(await fallback.getAttribute('href'),'/?guest=1');
+      const fallbackBox=await fallback.boundingBox(), googleBox=await page.locator('#acsAuthGoogle').boundingBox();
+      assert.ok(fallbackBox&&fallbackBox.height>=44&&fallbackBox.y>=0&&fallbackBox.y+fallbackBox.height<=googleBox.y,
+        'local recovery must fit above sign-in as a full touch target');
+      const googleLabel=page.locator('#acsAuthGoogle span').last();
+      assert.equal(await googleLabel.evaluate(el=>getComputedStyle(el).color),
+        await page.locator('#acsAuthGoogle').evaluate(el=>getComputedStyle(el).color));
+      fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
+      await page.screenshot({path:path.join(ROOT,'logs','auth-service-unavailable-'+width+'.png'),mask:[page.locator('input')]});
       failSignin=false;await page.locator('#lgGo').click();
       await page.locator('#acsAuthProjectField').waitFor({state:'visible'});
       assert.equal(await page.locator('#lgPassword').inputValue(),'');

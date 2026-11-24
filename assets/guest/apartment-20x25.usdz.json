@@ -1,0 +1,22 @@
+{
+  "sha256": "becf0660f739cb3d6ad685d39173c6a18d5d1ba34fb64a90c750a88b06a1b94f",
+  "bytes": 3471541,
+  "verification": {
+    "sourceComponents": 1564,
+    "triangles": 18768,
+    "batches": 44,
+    "bytes": 3471541,
+    "bounds": [
+      [
+        0,
+        -0.15000000596046448,
+        0
+      ],
+      [
+        20,
+        11.100000381469727,
+        25
+      ]
+    ]
+  }
+}

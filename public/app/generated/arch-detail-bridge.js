@@ -27,6 +27,7 @@ function _adSaveMat(mesh){
   window.__ACS_AD__.savedMats.push([mesh,mesh.material]); }
 
 function _adClearAll(){
+  globalThis.window?.ACS?.requestGuestRender?.();
   const A=window.__ACS_AD__;
   Object.keys(A.groups).forEach(k=>{
     const g=A.groups[k]; scene.remove(g);
@@ -239,6 +240,7 @@ window.ACS.adModelMeta=function(){
     ?window.__ACS_MODEL_TYPE__:null,indoor:false}; };
 
 window.ACS.adApply=function(cfg){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(!cfg||cfg.writes_to_model!==false)
     return {applied:false,issues:[adIssue('AD_INVALID_MODE','ERROR',
       'config','refused: configuration must declare writes_to_model '

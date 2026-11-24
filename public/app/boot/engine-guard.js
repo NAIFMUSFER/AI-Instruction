@@ -29,9 +29,19 @@
     return false;
   }
   var entryQuery=new URLSearchParams(location.search||"");
+  var apartmentExample=entryQuery.getAll("example").length===1 && entryQuery.get("example")==="apartment-20x25";
   var guestEntry=entryQuery.get("guest")==="1"
     ||(!googleCallback&&!callbackHash&&entryQuery.get("signin")!=="1"
       &&!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY));
+  var guestProjectId=null;
+  if(guestEntry && entryQuery.get("guest")==="1" && !apartmentExample){
+    if(entryQuery.get("new")==="1"){
+      guestProjectId=crypto.randomUUID();
+      history.replaceState(null,"",location.pathname+"?guest=1&project="+guestProjectId);
+    }else if(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(entryQuery.get("project"))){
+      guestProjectId=entryQuery.get("project");
+    }
+  }
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.
@@ -39,7 +49,19 @@
     return a && typeof a.configured==="string" ? a.configured.replace(/\/+$/,"")+path : "";
   }
   function error(message,code,status){var e=new Error(message);e.code=code;e.status=status||0;return e;}
-  function setStatus(text,bad){var e=byId("acsAuthStatus");if(!e)return;e.textContent=text||"";e.setAttribute("role",bad?"alert":"status");e.classList.toggle("bad",!!bad);}
+  function setStatus(text,bad,unavailable){
+    var status=byId("acsAuthStatus"),login=byId("login"),guest=byId("acsAuthGuestLink");
+    if(status){status.setAttribute("role",bad?"alert":"status");status.textContent=text||"";status.classList.toggle("bad",!!bad);}
+    if(login)login.classList.toggle("auth-outage",!!unavailable);
+    if(guest)guest.textContent=unavailable?"فتح الاستوديو على هذا الجهاز":"متابعة بدون حساب";
+    if(unavailable&&guest&&guest.parentElement)guest.parentElement.scrollIntoView({block:"nearest"});
+  }
+  function showAuthError(failure,fallback){
+    var unavailable=failure.code==="AUTH_UPSTREAM_UNAVAILABLE"||failure.code==="AUTH_NETWORK"||failure.code==="AUTH_NOT_CONFIGURED";
+    var message=unavailable?"خدمة الحسابات غير متاحة مؤقتًا. يمكنك فتح مساحة العمل المحلية أو إعادة محاولة الدخول.":failure.message||fallback;
+    if(failure.code==="AUTH_NETWORK")message="تعذّر الاتصال بخدمة الحسابات. يمكنك فتح الاستوديو على جهازك أو المحاولة مجددًا.";
+    setStatus(message,true,unavailable);
+  }
   function setBusy(value){
     busy=!!value;
     ["lgGo","lgSignup","acsAuthGoogle","acsAuthRecover","acsAuthResend"].forEach(function(id){var e=byId(id);if(e)e.disabled=busy;});
@@ -84,7 +106,7 @@
       if(!data||typeof data!=="object"||Array.isArray(data))throw error("استجابة خدمة الدخول غير صالحة.","AUTH_INVALID_RESPONSE",502);
       return data;
     }catch(e){
-      if(e&&e.code)throw e;
+      if(e&&typeof e.code==="string"&&typeof e.status==="number")throw e;
       throw error("تعذّر الاتصال. تحقق من الإنترنت وحاول مجددًا؛ لم تُحذف جلستك.","AUTH_NETWORK",0);
     }finally{clearTimeout(timer);}
   }
@@ -193,7 +215,7 @@
       pending.redirect_to=callback.href;sessionStorage.setItem(GOOGLE_KEY,JSON.stringify(pending));
       location.assign(dest.href);googleNavigation=true;
     }catch(e){
-      forgetGoogle();setStatus(typeof e.code==="string"?e.message:"تعذّر بدء الدخول باستخدام Google. اسمح بتخزين بيانات الموقع وحاول مجددًا.",true);
+      forgetGoogle();showAuthError(typeof e.code==="string"?e:{},"تعذّر بدء الدخول باستخدام Google. اسمح بتخزين بيانات الموقع وحاول مجددًا.");
     }finally{if(!googleNavigation)setBusy(false);}
   }
   function acceptGoogleCallback(){
@@ -224,7 +246,7 @@
       await finishSession(session,"");
     }catch(e){
       if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");
-      setStatus(e.message||"تعذّر إكمال الدخول باستخدام Google. ابدأ المحاولة من جديد.",true);
+      showAuthError(e,"تعذّر إكمال الدخول باستخدام Google. ابدأ المحاولة من جديد.");
     }finally{setBusy(false);}
     return true;
     })();
@@ -245,7 +267,7 @@
         var out=await acsFetchJSON(mode==="confirm"?"/v1/auth/resend-confirmation":"/v1/auth/recover",{email:v.email});
         setStatus(out.message||"تحقق من بريدك الإلكتروني.",false);
       }
-    }catch(e){setStatus(e.message,true);}finally{setBusy(false);}
+    }catch(e){showAuthError(e,"تعذّر إكمال الطلب.");}finally{setBusy(false);}
   }
   async function finishSession(session,projectName,name){
     try{
@@ -270,7 +292,7 @@
       if(!v.project){setStatus("اكتب اسم مشروعك.",true);byId("lgProject").focus();return;}
       setBusy(true);setStatus("جارٍ فتح المشروع…",false);
       try{var current=await freshSession();if(!current){setMode("signin");throw error("انتهت الجلسة. سجّل الدخول مجددًا.","AUTH_REQUIRED",401);}await finishSession(current,v.project);}
-      catch(e){setStatus(e.message,true);}finally{setBusy(false);}return;
+      catch(e){showAuthError(e,"تعذّر إكمال الطلب.");}finally{setBusy(false);}return;
     }
     if(!v.email||!byId("lgEmail").validity.valid||!v.password){setStatus("أدخل بريدًا إلكترونيًا صحيحًا وكلمة المرور.",true);return;}
     if(mode==="signup"&&v.password.length<8){setStatus("كلمة المرور يجب أن تكون 8 أحرف على الأقل.",true);return;}
@@ -285,7 +307,7 @@
         clearPassword();setMode("signin");setStatus("إذا كان الحساب يحتاج تأكيدًا، افتح رسالة التأكيد في البريد نفسه. إذا كان لديك حساب، سجّل الدخول أو استخدم استعادة كلمة المرور.",false);return;
       }
       clearPassword();await finishSession(session,v.project,v.name);
-    }catch(e){if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");setStatus((e.message||"تعذّر تسجيل الدخول.")+(e.code==="invalid_credentials"?" استخدم بريد إنشاء الحساب نفسه، أو اختر استعادة كلمة المرور.":""),true);}finally{setBusy(false);}
+    }catch(e){if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");if(e.code==="invalid_credentials")setStatus("تحقّق من البريد وكلمة المرور، أو اختر استعادة كلمة المرور.",true);else showAuthError(e,"تعذّر تسجيل الدخول.");}finally{setBusy(false);}
   }
   async function acceptEmailCallback(){
     var googleResult=acceptGoogleCallback();if(googleResult){await googleResult;return;}
@@ -303,7 +325,7 @@
           try{localStorage.setItem(RECOVERY_KEY,s.user.id);}catch(e){}
           setMode("update");setStatus("تم التحقق. أدخل كلمة مرور جديدة.",false);byId("lgPassword").focus();
         }else await finishSession(s,"");
-      }catch(e){setStatus(e.message,true);}finally{setBusy(false);}
+      }catch(e){showAuthError(e,"تعذّر إكمال الطلب.");}finally{setBusy(false);}
       return;
     }
     var current=loadSession();
@@ -320,7 +342,7 @@
     }catch(e){
       if(e.status===401||e.status===403){clearSession();setMode("signin");}
       else setMode("resume");
-      setStatus(e.message||"تعذّر فتح المشروع. حاول مجددًا.",true);return false;
+      showAuthError(e,"تعذّر فتح المشروع. حاول مجددًا.");return false;
     }finally{setBusy(false);}
   }
   function addLogout(){
@@ -342,6 +364,8 @@
     onEntry=callback;
     if(guestEntry){onEntry({mode:"guest",name:"ضيف · محلي"});return;}
     setMode("signin");
+    var guestLink=byId("acsAuthGuestLink");
+    if(guestLink&&apartmentExample)guestLink.setAttribute("href","/?guest=1&example=apartment-20x25");
     var form=byId("acsAuthForm");
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
@@ -364,13 +388,17 @@
     acceptEmailCallback();
   }
   function storageScope(){
-    if(guestEntry)return "acs_guest_project_v1";
+    if(guestEntry){
+      if(guestProjectId)return "acs_guest_draft_"+guestProjectId;
+      if(apartmentExample&&entryQuery.get("guest")==="1")return "acs_guest_apartment_20x25_v1";
+      return "acs_guest_project_v1";
+    }
     if(localHost())return "acs_local_project";
     var a=window.ACS, uid=a&&a.authSession&&a.authSession.user&&a.authSession.user.id, pid=a&&a.projectId;
     return typeof uid==="string"&&uid&&typeof pid==="string"&&pid ? "acs_local_project:"+uid+":"+pid : null;
   }
   window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,acsFetchJSON:acsFetchJSON,
-    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;}};
+    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;},guestProjectId:guestProjectId};
 })();
 
 window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_AUTH.isGuest()) };
@@ -384,26 +412,64 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
   function guestFallback(){
     if(!window.ACS.guest||window.ACS.guestWorkspaceReady||byId('acsGuestFallback'))return;
     document.body.classList.add('acs-guest-fallback-active');
+    if(window.ACS_AUTH.guestProjectId){
+      var loading=document.createElement('section');loading.id='acsGuestFallback';
+      loading.innerHTML='<div class="guest-fallback-card"><div><h1>مشروعك المحلي</h1><p id="acsGuestFallbackStatus" role="status">جارٍ فتح مساحة التصميم…</p><button type="button" id="guestFallbackReload">إعادة المحاولة</button></div></div>';
+      document.body.appendChild(loading);
+      byId('guestFallbackReload').onclick=function(){location.reload();};
+      window.ACS.guestBootFailure=function(){byId('acsGuestFallbackStatus').textContent='تعذّر تشغيل الاستوديو. جرّب متصفحًا يدعم العرض ثلاثي الأبعاد.';};
+      if((window.ACS_BOOT_ERRORS||[]).length)window.ACS.guestBootFailure();
+      return;
+    }
     var controls=document.querySelectorAll('#left button,#left input,#left textarea,#left select,#camBar button');
     for(var i=0;i<controls.length;i++)if(!controls[i].disabled){controls[i].disabled=true;controls[i].setAttribute('data-guest-boot-disabled','1');}
     var panel=document.createElement('section');panel.id='acsGuestFallback';panel.setAttribute('aria-label','تجربة محلية ثنائية الأبعاد');
-    panel.innerHTML='<div class="guest-fallback-card"><span class="guest-fallback-brand">ACS</span><h1>تجربة بدون تسجيل</h1>'
+    panel.innerHTML='<div class="guest-fallback-card"><div class="guest-fallback-controls"><h1>مخطط المبنى</h1>'
       +'<p id="acsGuestFallbackStatus" role="status">جارٍ تجهيز العرض ثلاثي الأبعاد. يمكنك استعراض المثال التوضيحي أدناه الآن.</p>'
-      +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="villa">فيلا سكنية</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div>'
-      +'<p>مثال محلي جاهز للقراءة. يعرض حدود الفراغات بالمتر. لا يتغيّر مشروعك المحفوظ عند استعراضه.</p>'
+      +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="apartment">عمارة 20 × 25 م</button><button type="button" data-plan="villa">فيلا</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div></div>'
+      +'<section id="guestApartmentSheet"><p>٣ أدوار · شقتان في كل دور</p>'
+      +'<div id="guestInlinePlan" tabindex="0" role="region" aria-label="معاينة مخطط الدور"><img id="guestApartmentDrawing" decoding="async" alt=""></div>'
+      +'<a id="guestFallbackNative" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون"><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>'
+      +'<div class="guest-fallback-actions"><button type="button" id="guestSheetZoom" aria-pressed="false" aria-controls="guestInlinePlan">تكبير المخطط</button><a id="guestFullSheet" target="_blank" rel="noopener" aria-label="فتح المخطط الكامل وجدول الغرف في علامة تبويب جديدة">المخطط وجدول الغرف</a><a id="guestSheetDownload" download>تنزيل المخطط</a></div></section>'
+      +'<div id="guestReferenceSheet">'
       +'<svg id="acsGuestFallbackPlan" xmlns="http://www.w3.org/2000/svg" role="img"></svg>'
       +'<div id="guestFallbackRooms" class="guest-fallback-actions" aria-label="تفاصيل الفراغات"></div>'
       +'<p id="acsGuestFallbackRoom" role="status"></p>'
-      +'<button id="guestPlanDownload" type="button">تنزيل مخطط هذا الطابق (SVG)</button>'
-      +'<div class="guest-fallback-actions"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
+      +'<button id="guestPlanDownload" type="button">تنزيل مخطط هذا الطابق (SVG)</button></div>'
+      +'<div class="guest-fallback-actions guest-fallback-account"><a href="/?guest=1&amp;new=1">ابدأ تصميم مبناك</a><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
       +'<button id="guestFallbackReload" type="button">إعادة محاولة العرض</button></div>'
       +'<p class="guest-fallback-note">التوليد والتعديل والاستيراد غير متاحة في هذا العرض البديل. لا تُرسل بيانات إلى الخادم.</p></div>';
     document.body.appendChild(panel);
-    var active = 'villa';
+    var active = 'apartment';
     var floor = byId('guestFallbackFloor');
     var svg = byId('acsGuestFallbackPlan');
     var ns = 'http://www.w3.org/2000/svg';
+    function setPlanZoom(enlarged) {
+      var preview = byId('guestInlinePlan'), control = byId('guestSheetZoom');
+      preview.classList.toggle('expanded-plan', enlarged);
+      control.setAttribute('aria-pressed', String(enlarged));
+      control.textContent = enlarged ? 'عرض المخطط كاملًا' : 'تكبير المخطط';
+      if (enlarged) preview.focus({preventScroll:true});
+    }
+    byId('guestSheetZoom').addEventListener('click', function() {
+      setPlanZoom(this.getAttribute('aria-pressed') !== 'true');
+    });
     function renderPlan(){
+      var apartment = active === 'apartment';
+      byId('guestApartmentSheet').hidden = !apartment;
+      byId('guestReferenceSheet').hidden = apartment;
+      if (apartment) {
+        var filename = 'apartment-floor-' + floor.value + '.svg';
+        var path = '/guest-plans/' + filename;
+        var image = byId('guestApartmentDrawing');
+        image.alt = 'توزيع الشقتين في ' + floor.options[floor.selectedIndex].text + ' ضمن عمارة 20 × 25 مترًا';
+        image.src = '/guest-plans/apartment-floor-' + floor.value + '-preview.svg';
+        setPlanZoom(false);
+        byId('guestFullSheet').href = path;
+        byId('guestSheetDownload').href = path;
+        byId('guestSheetDownload').download = filename;
+        return;
+      }
       var sample = guestPlans[active];
       var level = sample.levels[floor.selectedIndex];
       var rooms = sample.rooms[level.template];
@@ -442,9 +508,10 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     }
     function setPlan(key){
       active=key; floor.replaceChildren();
-      guestPlans[key].levels.forEach(function(level){
+      var levels = key === 'apartment' ? [{index:0,name:'الأرضي'},{index:1,name:'الأول'},{index:2,name:'الثاني'}] : guestPlans[key].levels;
+      levels.forEach(function(level){
         var option=document.createElement('option'); option.value=level.index;
-        option.textContent=level.index===0?'الأرضي':'الطابق '+level.index;
+        option.textContent=level.name || (level.index===0?'الأرضي':'الطابق '+level.index);
         floor.append(option);
       });
       panel.querySelectorAll('[data-plan]').forEach(function(button){button.setAttribute('aria-pressed',String(button.dataset.plan===key));});
@@ -460,7 +527,7 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     setPlan(active);
     byId('guestFallbackReload').addEventListener('click',function(){location.reload();});
     function failure(message){var status=byId('acsGuestFallbackStatus');if(status){status.textContent=message;status.setAttribute('role','alert');panel.setAttribute('data-engine-state','unavailable');}}
-    window.ACS.guestBootFailure=function(){failure('تعذّر تشغيل العرض ثلاثي الأبعاد في هذه الجلسة. المثال ثنائي الأبعاد متاح، ويمكنك تسجيل الدخول إلى مشروعاتك.');};
+    window.ACS.guestBootFailure=function(){failure('تعذّر تشغيل العرض ثلاثي الأبعاد في هذا المتصفح. يمكنك تكبير مخطط كل دور وتنزيله.');};
     var errors=window.ACS_BOOT_ERRORS||[];
     if(errors.some(function(e){return /WebGL|creating.*context/i.test(e.message||'');}))window.ACS.guestBootFailure();
     window.addEventListener('error',function(e){if(/WebGL|creating.*context/i.test(e.message||''))window.ACS.guestBootFailure();});

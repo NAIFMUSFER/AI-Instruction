@@ -4,6 +4,10 @@ import contextlib
 import io
 import json
 import re
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -20,6 +24,21 @@ spec.loader.exec_module(live)
 
 
 class ServedModuleImportTests(unittest.TestCase):
+    def test_asset_contract_reads_target_deployment_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            deployed = Path(directory)
+            (deployed / 'public/app').mkdir(parents=True)
+            (deployed / 'tools').mkdir()
+            shutil.copy(ROOT / 'tools/app_source.py', deployed / 'tools/app_source.py')
+            (deployed / 'public/index.html').write_text('<html></html>')
+            (deployed / 'public/app/main.js').write_text("import './deployed-only.mjs';")
+            (deployed / 'public/app/deployed-only.mjs').write_text('export const active = true;')
+            result = subprocess.run([sys.executable, '-c',
+                "import json, runpy; print(json.dumps(runpy.run_path('tests/production/verify_live.py')['critical_assets']()[3]))"],
+                cwd=ROOT, env={**os.environ, 'ACS_PUBLISHED_SOURCE_ROOT': directory},
+                check=True, capture_output=True, text=True)
+            self.assertEqual(json.loads(result.stdout), ['/app/main.js', '/app/deployed-only.mjs'])
+
     def verdict(self, missing_prefix=False, missing_vendor=False):
         shell = (ROOT / 'public/index.html').read_text()
         if missing_prefix:

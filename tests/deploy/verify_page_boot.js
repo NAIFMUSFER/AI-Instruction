@@ -90,6 +90,7 @@ function serve() {
 /* المصدر الوحيد الذي يعرف تخطيط الواجهة بعد F-09 — لا قائمة وحدات ثانية
    تُكتب هنا وتتقادم في أوّل إضافة. */
 const APPSRC = require(path.join(ROOT, 'tests', 'lib', 'app_source.js'));
+const SOFTWARE_FALLBACK = new Set(APPSRC.LOCAL_FALLBACK);
 
 function fixtures() {
   const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'phase3',
@@ -237,7 +238,8 @@ function localStudioReady(requiredPaths) {
   boot('the production CSP raised NO violation during boot',
     shape.csp.length === 0, JSON.stringify(shape.csp));
   let ready = false;
-  const requiredLocalPaths = APPSRC.localOrder().map(path => '/app/' + path);
+  const requiredLocalPaths = APPSRC.localOrder()
+    .filter(path => !SOFTWARE_FALLBACK.has(path)).map(path => '/app/' + path);
   try {
     /* A function predicate, not a string: Playwright re-evaluates a string
        predicate with eval inside the page while polling, and the production CSP
@@ -262,11 +264,13 @@ function localStudioReady(requiredPaths) {
   if (!TARGET) {
     const lazy = new Set(APPSRC.lazyOrder());
     const want = Object.keys(APPSRC.modules())
-      .filter(k => k.indexOf('boot/') !== 0 && !lazy.has(k));
+      .filter(k => k.indexOf('boot/') !== 0 && !lazy.has(k) && !SOFTWARE_FALLBACK.has(k));
     const missing = want.filter(k => !served.has('/app/' + k));
-    boot('EVERY eager module under public/app/ was fetched during boot',
+    boot('EVERY eager WebGL-path module under public/app/ was fetched during boot',
       missing.length === 0,
       missing.length + ' not fetched: ' + missing.slice(0, 5).join(', '));
+    boot('the three recovery-only modules remain deferred during successful WebGL boot',
+      SOFTWARE_FALLBACK.size === 3 && [...SOFTWARE_FALLBACK].every(k => !served.has('/app/' + k)));
     boot('declared lazy modules are not fetched before a panel is opened',
       lazy.size > 0 && [...lazy].every(k => !served.has('/app/' + k)));
   }
@@ -367,9 +371,11 @@ function localStudioReady(requiredPaths) {
         loaded.pbr && loaded.ad);
       if (!TARGET) {
         const missing = Object.keys(APPSRC.modules())
-          .filter(k => k.indexOf('boot/') !== 0 && !served.has('/app/' + k));
-        boot('EVERY shipped module was fetched after opening its panel',
+          .filter(k => k.indexOf('boot/') !== 0 && !SOFTWARE_FALLBACK.has(k) && !served.has('/app/' + k));
+        boot('EVERY shipped WebGL-path module was fetched after opening its panel',
           missing.length === 0, missing.join(', '));
+        boot('opening WebGL panels does not load the software-only recovery branch',
+          [...SOFTWARE_FALLBACK].every(k => !served.has('/app/' + k)));
       }
       if (!loaded.pbr || !loaded.ad) {
         await b.close(); if (srv) srv.close();

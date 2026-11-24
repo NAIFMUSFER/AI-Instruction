@@ -530,7 +530,7 @@ rediscover it.
 
 **Proof, in three independent places.**
 
-* `tests/remediation/test_module_graph.js` — 45 assertions, up from 38. §1 now
+* `tests/remediation/test_module_graph.js` — 50 assertions, up from 38. §1 now
   requires every module to be *either* imported once by `main.js` *or* declared
   lazy, and the two sets to be disjoint. §3 adds the property that makes the
   deferral real: **no eager module may statically import a declared lazy
@@ -2170,28 +2170,31 @@ and is not expected to track the present.
 
 | | |
 |---|---|
-| index shell (`public/index.html`) | **53,078 B** |
-| first-party JavaScript, all modules | **2,312,282 B in 47 modules** |
-| account/sign-in entry (static modules + boot) | **280,434 B** |
-|   of which core modules | **217,855 B in 14 modules** |
-| additional when the local guest studio is entered | **1,558,788 B in 21 modules** |
-| optional panels, after local studio entry | **473,060 B in 6 modules** |
-| share of first-party JS deferred from account entry | **87.9 %** |
+| index shell (`public/index.html`) | **52,876 B** |
+| first-party JavaScript, all modules | **2,442,714 B in 55 modules** |
+| account/sign-in entry (static modules + boot) | **286,349 B** |
+|   of which core modules | **218,492 B in 15 modules** |
+| additional when the local guest studio is entered | **1,683,205 B in 28 modules** |
+| optional panels, after local studio entry | **473,160 B in 6 modules** |
+| share of first-party JS deferred from account entry | **88.3 %** |
 | largest single module | **229,312 B of a 307,200 B cap** |
 
 Local guest studio modules, in load order:
 
 * `public/app/core/stairs.mjs`
+* `public/app/core/apartment-door-pairs.mjs`
 * `public/app/core/context-details.mjs`
 * `public/app/core/viewer.js`
 * `public/app/core/standards.js`
 * `public/app/core/roof.mjs`
+* `public/app/core/local-apartment.mjs`
 * `public/app/core/disciplines.js`
 * `public/app/generated/runtime.js`
 * `public/app/generated/authoring.js`
 * `public/app/generated/pbr.js`
 * `public/app/render/scene.js`
 * `public/app/render/warehouse-canonical-identity.js`
+* `public/app/render/guest-presentation.mjs`
 * `public/app/generated/pbr-bridge.js`
 * `public/app/ui/workspace-ui-wiring.js`
 * `public/app/trust/core.js`
@@ -2201,7 +2204,11 @@ Local guest studio modules, in load order:
 * `public/app/ui/workspace-viewport-selection-runtime.js`
 * `public/app/ui/residential-quality.js`
 * `public/app/ui/generation-jobs.js`
+* `public/app/ui/guest-floor-plan.mjs`
 * `public/app/ui/guest-workspace.js`
+* `public/app/trust/guest-draft-store.mjs`
+* `public/app/render/guest-software-view.mjs`
+* `public/app/ui/guest-software-studio.mjs`
 
 Optional panel modules, in load order:
 

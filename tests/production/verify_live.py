@@ -49,7 +49,9 @@ import urllib.parse
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HERE))
+# On a pull request the monitor executes from the candidate, while the public
+# URLs still serve the immutable base revision. Resolve asset expectations there.
+ROOT = os.path.realpath(os.environ.get("ACS_PUBLISHED_SOURCE_ROOT") or os.path.dirname(os.path.dirname(HERE)))
 OUTDIR = os.path.join(HERE, "outputs")
 
 # F-09 — الواجهة صارت قشرة + وحدات ES. المصدر الوحيد الذي يعرف هذا التخطيط هو

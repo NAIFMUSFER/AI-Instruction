@@ -788,8 +788,15 @@ const slabsOf = (R) => R.names.filter(n => n.indexOf('|slab|') >= 0).length;
 });
 (() => {
   const R = build(warehouseModel(120, 80, { clear: 12 }));
-  chk('ومستودع ١٢٠×٨٠ المشحون: ٣٨٠١ شبكة غير البلاطات + ٢٢ قطعة بلاطة بلا تدهور',
-      R.err === null && R.meshes - slabsOf(R) === 3801 && slabsOf(R) === 22
+  const docks=boxes.filter(b=>/^DOOR\|F0\|[^|]+\|dock/.test(b.name));
+  const shell=boxes.filter(b=>/^WALL\|F0\|envelope\|/.test(b.name));
+  const overlaps=(a,b)=>['x','y','z'].every((axis,j)=>
+    Math.abs(a.position[axis]-b.position[axis])<(a.g.p[j]+b.g.p[j])/2-.001);
+  chk('تظهر فتحات أرصفة المستودع التسع عشرة كاملة ولا يسدّ الغلاف أي باب',
+      docks.length===19&&docks.every(d=>shell.every(w=>!overlaps(d,w))));
+  // Each of the 19 hosted doors splits one former solid into two jambs and a lintel.
+  chk('ومستودع ١٢٠×٨٠ المشحون: ٣٨٣٩ شبكة غير البلاطات + ٢٢ قطعة بلاطة بلا تدهور',
+      R.err === null && R.meshes - slabsOf(R) === 3839 && slabsOf(R) === 22
       && R.summary.degraded === false,
       R.meshes + ' slabs=' + slabsOf(R) + ' degraded=' + (R.summary || {}).degraded);
 })();
