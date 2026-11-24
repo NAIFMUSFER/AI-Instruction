@@ -83,6 +83,7 @@ const withCourt=apartmentFromRevision('خلّ وسط العمارة فناء م�
 const rotated=apartmentFromRevision('خل المدخل شرقي',withCourt);
 const {compileArchitecture,projectArchitecturalLevel}=new Function(APP.nodeBundle()+';return {compileArchitecture,projectArchitecturalLevel};')();
 for(const building of [withCourt,rotated]) {
+  const source=JSON.stringify(building);
   const architecture=compileArchitecture(building);
   const firstCourt=building.floors[building.levels[0].template].courtyards[0];
   for(const level of building.levels) {
@@ -109,6 +110,7 @@ for(const building of [withCourt,rotated]) {
     if (building===rotated) assert.ok(sheet.includes('شمال') && sheet.includes('الشقة الشمالية'));
   }
   assert.equal(stairConnections(building).length,3,'four levels must have three real stair connections');
+  assert.equal(JSON.stringify(building),source,'compiling, selecting and projecting every floor must preserve the active revision byte for byte');
 }
 assert.ok(closed.levels.every(level=>!closed.floors[level.template].courtyards),'revision must preserve the previous model');
 console.log('PASS aligned open court and independent common routes to both apartments, lift and ground garden');

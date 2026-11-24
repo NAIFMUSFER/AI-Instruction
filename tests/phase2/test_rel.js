@@ -99,7 +99,10 @@ chk('source=rule rejected (no rule evidence)', hit(/source=rule requires real ru
 
 console.log('\n== PART 12/13 — export additive + backward compatible ==');
 const p1=JSON.parse(JSON.stringify(FX.villa));
+const liveBeforeExport=JSON.stringify(p1);
 const env=projectEnvelope(p1);
+chk('downloading a project never assigns export IDs on the live building',JSON.stringify(p1)===liveBeforeExport);
+chk('export normalizes missing room IDs on the downloadable copy',Object.values(env.floors).flatMap(f=>f.rooms||[]).every(r=>r.space_id));
 chk('Phase 1 fields still at root', !!(env.site&&env.levels&&env.floors&&env.meta));
 chk('project hierarchy present', !!(env.project&&env.project.buildings.length===1));
 chk('relationships exported additively', Array.isArray(env.relationships)&&env.relationships.length>0, (env.relationships||[]).length);

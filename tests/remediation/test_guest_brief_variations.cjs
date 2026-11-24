@@ -208,6 +208,7 @@ async function run(browser,width){
       assert.deepEqual(model.floors,expectedFloors,'download retains all selected floor geometry, including its derived export IDs');
       Object.assign(row,inspect(model,c));
       row.modelHash=digest(bytes);
+      await camera(page,'arch');await shot(page,dirNow,'facade.png');
       await camera(page,'bird');await shot(page,dirNow,'aerial.png');
       const scene=await runtime(page);
       assert.ok(scene.triangles>0&&scene.kinds.WALL>0&&scene.kinds.DOOR>0&&scene.kinds.WINDOW>0,'rendered building');
