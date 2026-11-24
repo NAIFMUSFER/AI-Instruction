@@ -41,6 +41,13 @@ export async function openGuestSoftwareStudio() {
   const css = document.createElement('link');
   css.rel='stylesheet'; css.href='/app/styles/guest-software-studio.css';
   document.head.append(css);
+  // Load the reusable plan dialog before the first user opens it. The full
+  // renderer may have stopped before any guest presentation styles loaded.
+  if (!$('guestPlanStyle')) {
+    const planCss=document.createElement('link');planCss.id='guestPlanStyle';
+    planCss.rel='stylesheet';planCss.href=new URL('../styles/guest-floor-plan.css',import.meta.url).href;
+    document.head.append(planCss);
+  }
   const studio=document.createElement('main');
   studio.id='guestSoftwareStudio';studio.dir='rtl';studio.lang='ar';
   studio.innerHTML=`

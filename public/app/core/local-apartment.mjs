@@ -4,7 +4,8 @@
 import { withDefaultStairs } from './stairs.mjs';
 import { withContextDetails } from './context-details.mjs';
 import { withDefaultRoof } from './roof.mjs';
-export { apartmentDoorPairs } from './apartment-door-pairs.mjs';
+import { apartmentDoorPairs } from './apartment-door-pairs.mjs';
+export { apartmentDoorPairs };
 
 const round = value => Math.round(value * 1000) / 1000;
 const wallThickness=0.18;

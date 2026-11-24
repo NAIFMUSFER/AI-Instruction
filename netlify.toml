@@ -82,7 +82,7 @@
     X-Robots-Tag = "index, follow"
 
 [[headers]]
-  for = "/guest-plans/*.usdz"
+  for = '/guest-plans/*.usdz'
   [headers.values]
     Content-Type = "model/vnd.usdz+zip"
     Content-Disposition = "inline"

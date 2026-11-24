@@ -216,7 +216,7 @@ async function run(browser,width){
       if(c.edit)assert.equal(project,previous.project,'edit remained in same guest project');
       else if(previous)assert.notEqual(project,previous.project,'new independent guest project');
       const build=await page.evaluate(()=>window.ACS_BUILD_INFO?.git_sha||null);
-      if(process.env.ACS_APARTMENT_LIVE==='1')assert.equal(build,process.env.ACS_VERIFY_EXPECT_SHA);
+      assert.equal(build,sourceSHA,'revision journey must render the exact candidate or published source SHA');
       const row={name:c.name,request:c.text,project,build,sourceSHA};report.cases.push(row);
       await submit(page,c);
       const bytes=await download(page,()=>menu(page,'guestExport'),dirNow,'model.json');

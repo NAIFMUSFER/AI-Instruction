@@ -264,35 +264,61 @@ async function nativeEntry(ctx,report){
   }finally{await phone.close();}
 }
 async function idleFrames(page){
-  const snapshot=await page.waitForFunction(async()=>{
-    const before=window.ACS.guestRenderStats();
-    if(before.owner!=='guest'||before.pending)return false;
-    await new Promise(resolve=>setTimeout(resolve,350));
-    const after=window.ACS.guestRenderStats();
-    return !after.pending&&after.draws===before.draws&&after.rendererFrames===before.rendererFrames?after:false;
-  },null,{polling:100,timeout:25000});
-  return snapshot.jsonValue();
+  // Playwright checks the predicate's immediate truthiness. An async predicate
+  // returns a truthy Promise even when that Promise later resolves to false,
+  // ending polling early. Keep the predicate synchronous and its idle sample
+  // private to this call; observe counters without asking the app to redraw.
+  const sample=await page.evaluateHandle(()=>({since:null,draws:null,rendererFrames:null}));
+  let snapshot;
+  try{
+    snapshot=await page.waitForFunction(sample=>{
+      const current=window.ACS.guestRenderStats(),now=performance.now();
+      if(current.owner!=='guest'||current.pending||!Number.isFinite(current.draws)||!Number.isFinite(current.rendererFrames)){
+        sample.since=null;return false;
+      }
+      if(sample.since===null||sample.draws!==current.draws||sample.rendererFrames!==current.rendererFrames){
+        Object.assign(sample,{since:now,draws:current.draws,rendererFrames:current.rendererFrames});
+        return false;
+      }
+      return now-sample.since>=350?current:false;
+    },sample,{polling:100,timeout:25000});
+    return await snapshot.jsonValue();
+  }finally{await snapshot?.dispose();await sample.dispose();}
 }
-async function inspectOrbit(page,original,report){
-  const before=await idleFrames(page);
-  const point=await page.evaluate(()=>{
-    const y=Math.round(innerHeight*.52);
-    for(const ratio of [.35,.48,.62]){
-      const x=Math.round(innerWidth*ratio);
-      if(document.elementFromPoint(x,y)?.matches('#app canvas'))return {x,y};
-    }
-    return null;
-  });
-  assert.ok(point,'viewer must be available to orbit');
-  await page.mouse.move(point.x,point.y);await page.mouse.down();
-  await page.mouse.move(point.x+28,point.y-10,{steps:5});await page.mouse.up();
-  await page.waitForFunction(async eye=>{
-    const {camera}=await import('/app/ui/workspace-ui-wiring.js');
-    return Math.hypot(camera.position.x-eye[0],camera.position.z-eye[2])>.10;
-  },original.eye,{timeout:15000});
-  const after=await idleFrames(page);
-  assert.ok(after.draws>before.draws&&after.rendererFrames>before.rendererFrames,'real orbit gesture must submit a rendered frame');
-  report.orbitFrames={before,after};
+async function inspectOrbit(page,report){
+  report.orbitFrames={phase:'initial_idle'};
+  let camera;
+  try{
+    const before=await idleFrames(page);
+    camera=await page.evaluateHandle(async()=>{
+      const {camera}=await import('/app/ui/workspace-ui-wiring.js');return camera;
+    });
+    const eye=await camera.evaluate(camera=>camera.position.toArray());
+    Object.assign(report.orbitFrames,{before,eyeBefore:eye,phase:'gesture'});
+    const point=await page.evaluate(()=>{
+      const y=Math.round(innerHeight*.52);
+      for(const ratio of [.35,.48,.62]){
+        const x=Math.round(innerWidth*ratio);
+        if(document.elementFromPoint(x,y)?.matches('#app canvas'))return {x,y};
+      }
+      return null;
+    });
+    report.orbitFrames.point=point;
+    assert.ok(point,'viewer must be available to orbit');
+    await page.mouse.move(point.x,point.y);await page.mouse.down();
+    await page.mouse.move(point.x+28,point.y-10,{steps:5});await page.mouse.up();
+    await page.waitForFunction(({camera,eye})=>Math.hypot(camera.position.x-eye[0],camera.position.z-eye[2])>.10,
+      {camera,eye},{timeout:15000});
+    const after=await idleFrames(page);
+    Object.assign(report.orbitFrames,{after,eyeAfter:await camera.evaluate(camera=>camera.position.toArray()),phase:'frame_growth'});
+    console.log(report.caseId+' '+report.width+' orbit counters '+JSON.stringify(report.orbitFrames));
+    assert.ok(after.draws>before.draws&&after.rendererFrames>before.rendererFrames,'real orbit gesture must submit a rendered frame');
+    report.orbitFrames.phase='passed';
+  }catch(error){
+    report.orbitFrames.failureStats=await page.evaluate(()=>window.ACS.guestRenderStats()).catch(()=>null);
+    console.log(report.caseId+' '+report.width+' orbit failure '+JSON.stringify(report.orbitFrames));
+    throw error;
+  }finally{await camera?.dispose();}
 }
 async function publishedQuickLook(){
   const asset='/guest-plans/apartment-20x25.usdz';
@@ -490,7 +516,7 @@ async function checkedViewport(browser,width,spec){
     page.on('pageerror',e=>errors.push(e.name));
     await page.goto(origin+'/');await ready(page);
     const identity=await page.evaluate(()=>window.ACS_BUILD_INFO?.git_sha||null);
-    if(live)assert.equal(identity,process.env.ACS_VERIFY_EXPECT_SHA);
+    assert.equal(identity,sourceSHA,'rendered build stamp must match the exact candidate or published source SHA');
     report.checkedBuild=identity;
     assert.equal(await page.locator('#login').isVisible(),false);
     const banner=await page.locator('#acsGuestBanner').boundingBox();
@@ -498,7 +524,7 @@ async function checkedViewport(browser,width,spec){
     assert.ok(!(await page.locator('#guestSignin').isVisible()),'login CTA must not dominate the fresh entry');
     const fresh=await capture(page,report,'fresh-entry','exterior');
     if(spec.baseline){
-      await inspectOrbit(page,fresh,report);
+      await inspectOrbit(page,report);
       step('warehouse_cutaway');await menu(page,'guestWarehouse');
       await page.waitForFunction(()=>window.ACS.exportModel().site.w===120);
       const warehouse=await capture(page,report,'warehouse-workfloor','cutaway');
@@ -507,8 +533,9 @@ async function checkedViewport(browser,width,spec){
       step('warehouse_exterior');await page.locator('#guestViewToggle').click();
       await capture(page,report,'warehouse-exterior','exterior');
       const afterToggle=await idleFrames(page);
-      assert.ok(afterToggle.draws>beforeToggle.draws&&afterToggle.rendererFrames>beforeToggle.rendererFrames,'cutaway toggle must redraw then settle');
       report.toggleFrames={before:beforeToggle,after:afterToggle};
+      console.log(report.caseId+' '+report.width+' toggle counters '+JSON.stringify(report.toggleFrames));
+      assert.ok(afterToggle.draws>beforeToggle.draws&&afterToggle.rendererFrames>beforeToggle.rendererFrames,'cutaway toggle must redraw then settle');
       await cameraControl(page,'bird');await capture(page,report,'warehouse-aerial','aerial');
       await cameraControl(page,'arch');await capture(page,report,'warehouse-eye-level','street');
       await detailAndInterior(page,report,'warehouse');

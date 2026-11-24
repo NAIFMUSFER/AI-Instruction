@@ -94,6 +94,8 @@ jobs:
           test -s "$RUNNER_TEMP/acs-numpy.txt"
           python3 -m pip install --require-hashes --only-binary=:all: --no-deps -r "$RUNNER_TEMP/acs-numpy.txt"
       - name: Install pinned browser libraries and Chromium
+        env:
+          COMMIT_REF: ${{ env.ACS_VERIFY_EXPECT_SHA }}
         run: |
           bash tools/netlify-build.sh
           python3 tools/ci_prepare_apt.py

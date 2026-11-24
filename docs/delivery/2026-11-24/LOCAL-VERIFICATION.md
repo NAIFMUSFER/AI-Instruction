@@ -39,7 +39,8 @@ browser slab tessellator independently preserves the court and roof opening.
 * Unsupported mixed requests and incompatible preservation instructions are
   rejected in Arabic before replacing the project.
 * Shared-door projection was extracted into a pure leaf, avoiding an import
-  cycle. The module graph passed all 45 assertions.
+  cycle. The module graph passed its initial 45 assertions and all 50 after
+  adding recovery-branch and required-module negative checks.
 * JSON and every-floor SVG projection preserve the selected source and its
   authored identifiers. A false courtyard overlapping an occupied room is
   not drawn. Default SVG sheets and the native USDZ asset remain reproducible.
@@ -61,6 +62,25 @@ Local Chromium was unavailable, so no local browser screenshots, downloaded
 browser GLB, or browser-raycast pass is claimed here. GitHub Actions must
 complete on the final source before merge. Published runs must confirm both
 Netlify and Render revision stamps before exercising the public URLs.
+
+The first integrated candidate, `0d865535ea2260ca6e96cb96cb86811beec631de`,
+completed six of eight public matrix jobs: both sizes for the larger scheme,
+central court and west entrance. Both baseline jobs passed the interactive
+revision and software recovery journeys, then failed the initial orbit
+assertion. The locked browser harness treated an asynchronous polling
+predicate as immediately truthy; the correction uses synchronous polling of
+real counters and retains both frame-growth assertions. Initial core gates
+also exposed the viewer-only Node extractor's old generator dependency and
+a deployment guard interpreting a double-quoted header URL as an absolute
+build path. The boot contract also expected recovery-only modules to load on
+successful WebGL; it now distinguishes the actual recovery branch while
+rejecting omission of any required normal-route module. These initial failures do not
+count as successful final acceptance. [Candidate matrix](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45314948451)
+
+The same candidate's Google/auth browser job passed the shipped UI at both
+sizes, including the original failing real-response fallback downloads.
+This is synthetic authentication evidence; the production upstream status
+below remains a separate finding. [Candidate auth](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45314948359/job/138179532803)
 
 ## External services
 

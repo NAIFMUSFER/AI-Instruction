@@ -48,6 +48,14 @@ function lazyOrder() {
 function localOrder() {
   return fs.readFileSync(path.join(ROOT,'tools','frontend_local.txt'),'utf8').split('\n').map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));
 }
+// These modules belong to the local route but run only from its recovery
+// catch branch. The module-graph gate checks this exact declaration against
+// the actual dynamic imports; successful WebGL boot must not fetch them.
+const LOCAL_FALLBACK = Object.freeze([
+  'trust/guest-draft-store.mjs',
+  'render/guest-software-view.mjs',
+  'ui/guest-software-studio.mjs'
+]);
 function fullOrder() {
   return order().concat(localOrder(),lazyOrder());
 }
@@ -132,11 +140,11 @@ function nodeBundle(files) {
   for (const f of list) {
     if (REGISTRIES.indexOf(f) >= 0) continue;
     if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
-    if(f==='core/viewer.js'&&!list.includes('core/local-apartment.mjs')){
+    if(f==='core/viewer.js'&&!list.includes('core/apartment-door-pairs.mjs')){
       // Browser ESM resolves this import even when an older geometry test asks
-      // for viewer.js explicitly. Keep the apartment parser's private names
-      // module-local in the otherwise flattened test bundle.
-      const dependency='core/local-apartment.mjs';
+      // for viewer.js explicitly. Import only the shared-door leaf and keep its
+      // private names module-local; the viewer does not depend on generation.
+      const dependency='core/apartment-door-pairs.mjs';
       parts.push('const apartmentDoorPairs=(()=>{\n'+stripModuleSyntax(mods[dependency],dependency)+'\nreturn apartmentDoorPairs;})();');
     }
     parts.push('/* ==== ' + f + ' ==== */\n' + stripModuleSyntax(mods[f], f));
@@ -144,7 +152,7 @@ function nodeBundle(files) {
   return parts.join('\n\n');
 }
 
-module.exports = { localOrder, ROOT, PUB, APP, PURE, REGISTRIES, order, lazyOrder,
+module.exports = { localOrder, LOCAL_FALLBACK, ROOT, PUB, APP, PURE, REGISTRIES, order, lazyOrder,
                    fullOrder, shell, modules,
                    appText, pageText, nodeBundle, registryPrelude,
                    stripModuleSyntax };

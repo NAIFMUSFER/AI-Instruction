@@ -1,4 +1,5 @@
 #guestPlanDialog {
+  margin: auto;
   width: min(46rem, calc(100% - 16px));
   max-width: calc(100% - 16px);
   max-height: 91dvh;

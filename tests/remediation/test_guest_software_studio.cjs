@@ -31,7 +31,7 @@ async function run(){
     await page.locator(loaded).waitFor();
     const initialUrl=page.url();
     report.checkedBuild=await page.evaluate(()=>window.ACS_BUILD_INFO?.git_sha||null);
-    if(process.env.ACS_APARTMENT_LIVE==='1')assert.equal(report.checkedBuild,sourceSHA,'fallback runs against the same published source SHA');
+    assert.equal(report.checkedBuild,sourceSHA,'fallback runs against the exact candidate or published source SHA');
     assert.match(initialUrl,/project=[a-f0-9-]{36}/);
     assert.equal(await page.evaluate(()=>window.ACS.exportModel()),null);
     assert.equal(await page.locator('#descText').inputValue(),'');
@@ -65,6 +65,38 @@ async function run(){
     const svg=page.locator('#guestPlanViewport svg');
     assert.equal(await svg.getAttribute('data-level-index'),'1');
     assert.equal(await svg.locator('[data-courtyard-id]').count(),1);
+    // Wait for a usable rendered sheet, including its asynchronously loaded
+    // styling. This checks the actual dialog, not a stylesheet/link marker.
+    await page.waitForFunction(()=>{
+      const dialog=document.getElementById('guestPlanDialog');
+      return dialog?.open && parseFloat(getComputedStyle(dialog).borderRadius)>=6 &&
+        [...dialog.querySelectorAll('button,select')].every(el=>el.getBoundingClientRect().height>=43);
+    });
+    report.planLayout=await page.evaluate(()=>{
+      const dialog=document.getElementById('guestPlanDialog'),view=document.getElementById('guestPlanViewport');
+      const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
+      const style=getComputedStyle(dialog);
+      return {modal:dialog.matches(':modal'),viewport:{width:innerWidth,height:innerHeight},
+        documentWidth:document.documentElement.scrollWidth,bounds:rect(dialog),view:rect(view),svg:rect(view.querySelector('svg')),
+        scrollWidth:dialog.scrollWidth,clientWidth:dialog.clientWidth,
+        style:{fontSize:parseFloat(style.fontSize),borderWidth:parseFloat(style.borderTopWidth),borderRadius:parseFloat(style.borderRadius),display:style.display},
+        controls:[...dialog.querySelectorAll('button,select')].map(el=>{
+          const box=rect(el),hit=document.elementFromPoint((box.left+box.right)/2,(box.top+box.bottom)/2);
+          return {id:el.id,...box,enabled:!el.disabled,reachable:el===hit||el.contains(hit)};
+        })};
+    });
+    await page.screenshot({path:path.join(out,'upper-plan.png')});
+    const layout=report.planLayout;
+    assert.equal(layout.modal,true,'upper-floor plan must be a real visible modal');
+    assert.ok(layout.style.fontSize>=14&&layout.style.borderWidth<=2&&layout.style.borderRadius>=6,'plan must display readable application styling, not an unstyled native dialog');
+    assert.ok(layout.bounds.left>=4&&layout.bounds.right<=layout.viewport.width-4&&layout.bounds.top>=0&&layout.bounds.bottom<=layout.viewport.height+1,'whole plan dialog must fit the actual viewport');
+    assert.ok(Math.abs((layout.bounds.left+layout.bounds.right)/2-layout.viewport.width/2)<=2,'plan dialog must be centered at both viewport sizes');
+    assert.ok(layout.scrollWidth<=layout.clientWidth+1&&layout.documentWidth<=layout.viewport.width+1,'plan must not cause horizontal page or dialog overflow');
+    assert.ok(layout.view.height>=120&&layout.svg.width>200&&layout.svg.left>=layout.view.left-1&&layout.svg.right<=layout.view.right+1,'upper-floor drawing must be visible and fit the plan viewport');
+    for(const control of layout.controls){
+      assert.ok(control.height>=43&&control.width>=43&&control.enabled&&control.reachable,'plan control must be usable: '+control.id);
+      assert.ok(control.left>=layout.bounds.left&&control.right<=layout.bounds.right+1&&control.top>=layout.bounds.top&&control.bottom<=layout.bounds.bottom+1,'plan control must remain within dialog: '+control.id);
+    }
     fs.writeFileSync(path.join(out,'upper-plan.svg'),await svg.evaluate(el=>el.outerHTML));
     await page.locator('#guestPlanClose').click();
     assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),model,'software plan view must not modify source');

@@ -167,6 +167,21 @@ console.log('\n== د · المديات على كل وحدة مشحونة: مرت
             + 'ولا شيفرة بينها ==');
 const APP = require(path.join(ROOT, 'tests', 'lib', 'app_source.js'));
 const mods = APP.modules();
+// A viewer-only consumer must get its actual leaf dependency, without loading
+// the apartment generator or its roof/context dependencies into the test VM.
+const viewerOnly = vm.runInNewContext(APP.nodeBundle(['core/viewer.js'])+
+  '\n;({pair:apartmentDoorPairs,generator:typeof apartmentFromBrief});',{},
+  {filename:'viewer-shared-door-leaf.js'});
+const pairRooms=[
+  {id:'a',rect:[0,0,4,4],doors:[{id:'a-door',edge:'E',offset:2,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'b'}}]},
+  {id:'b',rect:[4,0,4,4],doors:[{id:'b-door',edge:'W',offset:2,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'a'}}]}
+];
+const projectedPairs=viewerOnly.pair(pairRooms);
+chk('viewer-only bundle resolves a reciprocal door from the real pure leaf',
+    projectedPairs.size===2&&[...projectedPairs.values()].filter(pair=>pair.primary).length===1);
+chk('viewer-only bundle does not load the apartment generator',viewerOnly.generator==='undefined');
+pairRooms[1].doors[0].offset+=.02;
+chk('viewer-only leaf retains separate leaves for noncoincident apertures',viewerOnly.pair(pairRooms).size===0);
 let checked = 0, ordered = true, disjoint = true, gapClean = true;
 let firstBad = '';
 for (const f of Object.keys(mods).sort()) {
