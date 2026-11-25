@@ -29,6 +29,39 @@ def _resumable_failure(code):
     return isinstance(code, str) and (code in RESUMABLE_ERRORS or code.startswith("PLAN_GEOMETRY_"))
 
 
+# A RUNNING receipt is only true while some process can still finish it. The
+# worker deadline terminates the child and its parent then writes a receipt, so
+# beyond deadline + grace nobody can: the owning process died (deploy, OOM,
+# crash) or its terminal receipt write was lost. Report INTERRUPTED with an
+# uncertain provider outcome instead of RUNNING forever. Read-only: nothing is
+# resubmitted and the stored receipt is not rewritten.
+ORPHAN_GRACE_S = 300
+OWN_ORPHAN_AFTER_S = 60
+
+
+def _started_at(row):
+    value = row.get("created_at")
+    if not isinstance(value, str):
+        return None
+    try:
+        started = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return started if started.tzinfo else started.replace(tzinfo=timezone.utc)
+
+
+def _orphaned(row, now=None):
+    if row.get("state") != "RUNNING" or row.get("id") in ACTIVE_JOBS:
+        return False
+    started = _started_at(row)
+    if started is None:
+        return False
+    from acs_generation_job import DEFAULT_TIMEOUT_S
+    own = row.get("worker_id") == WORKER_ID
+    limit = OWN_ORPHAN_AFTER_S if own else DEFAULT_TIMEOUT_S + ORPHAN_GRACE_S
+    return ((now or datetime.now(timezone.utc)) - started).total_seconds() > limit
+
+
 
 def _id(value):
     try:
@@ -219,6 +252,8 @@ class WorkspaceMiddleware:
                         if (revision.get("note") or "").endswith("task:" + row["id"]):
                             row = dict(row, state="SUCCEEDED", revision_id=revision["revision_id"])
                             break
+                if _orphaned(row):
+                    row = dict(row, state="INTERRUPTED", error_code="PROVIDER_OUTCOME_UNKNOWN")
                 result = _job_view(row)
             elif action == "edit_geometry":
                 result = await asyncio.to_thread(SERVICE.edit_geometry, store, project_id, actor_id, command)
