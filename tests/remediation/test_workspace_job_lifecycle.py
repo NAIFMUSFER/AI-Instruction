@@ -153,5 +153,51 @@ class OrphanedReceipts(Harness):
         self.assertEqual((await self.poll())["state"], "RUNNING")
 
 
+class ProgressReceipts(Harness):
+    """A progress PATCH is advisory; losing one must not discard paid work."""
+
+    async def run_job(self, execute, payload=None):
+        with patch.object(H.SERVICE, "generate_and_save", execute), patch.object(H.SERVICE, "chat_and_save", execute):
+            status, body = await call(self.middleware, payload or command())
+            self.assertEqual(status, 202, body)
+            await asyncio.gather(*list(self.middleware.tasks))
+        return self.table.rows[(payload or command())["job_id"]]
+
+    async def test_transient_progress_failure_after_a_paid_request_keeps_the_result(self):
+        self.table.fail_progress = 1
+
+        def execute(store, project_id, actor_id, cmd, *, on_progress):
+            on_progress({"phase": "UNDERSTANDING", "provider_calls": 1})   # this write is lost
+            on_progress({"phase": "LAYOUT", "provider_calls": 2})
+            return "plan_saved"
+        row = await self.run_job(execute)
+        self.assertEqual((row["state"], row["revision_id"]), ("SUCCEEDED", "plan_saved"))
+        self.assertEqual(row["provider_calls"], 2)
+
+    async def test_terminal_receipt_keeps_the_last_count_when_the_last_progress_write_is_lost(self):
+        def execute(store, project_id, actor_id, cmd, *, on_progress):
+            on_progress({"phase": "UNDERSTANDING", "provider_calls": 1})
+            self.table.fail_progress = 1
+            on_progress({"phase": "REVIEW", "provider_calls": 3})          # lost
+            raise PlanError("PLAN_GEOMETRY_ROOM_OVERLAP", "synthetic")
+        row = await self.run_job(execute)
+        self.assertEqual((row["state"], row["error_code"], row["provider_calls"]),
+                         ("FAILED", "PLAN_GEOMETRY_ROOM_OVERLAP", 3))
+
+    async def test_authorization_failure_still_stops_the_job(self):
+        def denied(*a, **k):
+            raise PlanError("PROJECT_ACCESS_DENIED", "Authenticated actor lacks project access")
+        reached = []
+
+        def execute(store, project_id, actor_id, cmd, *, on_progress):
+            with patch.object(self.table, "_request", denied):
+                on_progress({"phase": "UNDERSTANDING", "provider_calls": 1})
+            reached.append(True)
+            return "plan_saved"
+        row = await self.run_job(execute)
+        self.assertEqual(reached, [])
+        self.assertEqual((row["state"], row["error_code"]), ("FAILED", "PROJECT_ACCESS_DENIED"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

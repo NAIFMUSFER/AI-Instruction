@@ -104,6 +104,7 @@ class WorkspaceMiddleware:
 
     async def _finish(self, store, project_id, actor_id, command):
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
+        spent = {}
         try:
             execute = SERVICE.chat_and_save if command["action"] == "chat_edit" else SERVICE.generate_and_save
             def progress(event):
@@ -112,10 +113,19 @@ class WorkspaceMiddleware:
                 update = {"phase":event["phase"], "progress":{k:v for k,v in event.items()
                           if k in {"completed", "total"} and type(v) is int and v >= 0}}
                 if type(event.get("provider_calls")) is int:
-                    update["provider_calls"] = event["provider_calls"]
+                    update["provider_calls"] = spent["provider_calls"] = event["provider_calls"]
                 if isinstance(event.get("checkpoint"), dict):
                     update["checkpoint"] = event["checkpoint"]
-                store._request("PATCH", _job_query(project_id, command["job_id"]), update)
+                try:
+                    store._request("PATCH", _job_query(project_id, command["job_id"]), update)
+                except PlanError as exc:
+                    # Progress is advisory and cumulative: the next event rewrites
+                    # counts and the latest checkpoint. A transient store failure
+                    # must not kill a worker that may already have paid provider
+                    # requests. Authorization failures still stop the job.
+                    if exc.code != "STORE_UNAVAILABLE":
+                        raise
+                    LOG.warn("workspace_progress_write_failed", request_id=command["job_id"], error_code=exc.code)
             controls = {"on_progress":progress} if command["action"] == "generate" else {}
             rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, **controls)
             payload = {"state": "SUCCEEDED", "revision_id": rid, "error_code": None}
@@ -129,6 +139,7 @@ class WorkspaceMiddleware:
             LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__, error_code=payload["error_code"])
         LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
         payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+        payload.update(spent)  # the terminal receipt carries the last known provider count
         try:
             await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), payload)
         except Exception:
