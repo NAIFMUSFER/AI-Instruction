@@ -26,7 +26,7 @@ jobs:
       - name: Verify immutable owner-scoped Supabase schema
         run: python tests/remediation/test_supabase_plan_store_schema.py
       - name: Plan RPCs deny non-members on real PostgreSQL
-        # Exit 2 (PostgreSQL unavailable) is NOT VERIFIED and fails this step.
+        # Missing PostgreSQL fails this step (exit 1); it is never reported as skipped.
         env:
           PG_BINDIR: /usr/lib/postgresql/16/bin
         shell: bash

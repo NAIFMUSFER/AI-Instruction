@@ -3,10 +3,16 @@
 
 Applies every migration in supabase/migrations to an isolated, socket-less
 cluster (`postgres --single`) with synthetic auth/storage stubs and synthetic
-users, then calls the PostgREST-exposed plan RPCs as a non-member, a viewer,
-an editor, the owner and an anonymous caller. Never touches a configured
-database. Missing PostgreSQL, or initdb refusing to run (for example as root),
-is NOT VERIFIED (exit 2), never a success.
+users, then calls the PostgREST-exposed plan RPCs, and the acs_private bodies
+behind them directly as `authenticated`, as a non-member, a viewer, an editor,
+the owner and an anonymous caller. A refusal counts only as ACS_PROJECT_ACCESS_DENIED
+or insufficient_privilege, never as an unrelated error. Never touches a
+configured database.
+
+Run as root, the cluster is created and run by an unprivileged account
+(ACS_PG_TEST_USER, else postgres, else nobody), because initdb refuses root.
+Missing PostgreSQL or a cluster that cannot start is a FAILURE (exit 1): this
+check is never reported as skipped or "not verified".
 
     PG_BINDIR=/usr/lib/postgresql/16/bin python tests/remediation/test_plan_rpc_membership_postgres.py
 """
@@ -14,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import pwd
 import subprocess
 import sys
 import tempfile
@@ -78,39 +85,71 @@ def expect(expr, label):
 
 
 def denied(expr, label):
+    # Only an authorization refusal counts; a stale head or chain error must not
+    # pass for one.
     global count
     count += 1
     return ("do $t$ declare refused boolean := false; begin begin perform %s; exception when others then "
-            "if sqlstate not in ('P0001','42501') then raise; end if; refused := true; end; "
+            "if not (sqlstate = '42501' or (sqlstate = 'P0001' and sqlerrm = 'ACS_PROJECT_ACCESS_DENIED')) "
+            "then raise; end if; refused := true; end; "
             "if not refused then raise exception 'SECURITY_REGRESSION: %s'; end if; "
             "raise notice 'PASS %s'; end $t$;" % (expr, label, label))
+
+
+def fail(message):
+    print("FAIL: %s. This check cannot be skipped." % message)
+    raise SystemExit(1)
 
 
 def bindir():
     configured = os.environ.get("PG_BINDIR")
     if configured:
+        if not (Path(configured) / "postgres").is_file():
+            fail("PG_BINDIR=%s has no postgres binary" % configured)
         return Path(configured)
     for path in sorted(Path("/usr/lib/postgresql").glob("*/bin"), reverse=True):
         if (path / "postgres").is_file():
             return path
-    print("NOT VERIFIED: PostgreSQL binaries unavailable; set PG_BINDIR")
-    raise SystemExit(2)
+    fail("PostgreSQL binaries are unavailable; install postgresql-16 or set PG_BINDIR")
+
+
+def cluster_owner():
+    """None when unprivileged; otherwise the account that must own the cluster."""
+    if os.geteuid() != 0:
+        return None
+    for name in filter(None, (os.environ.get("ACS_PG_TEST_USER"), "postgres", "nobody")):
+        try:
+            entry = pwd.getpwnam(name)
+        except KeyError:
+            continue
+        if entry.pw_uid != 0:
+            return entry
+    fail("running as root and no unprivileged account (ACS_PG_TEST_USER, postgres, nobody) exists")
 
 
 def main():
     binary = bindir()
-    with tempfile.TemporaryDirectory(prefix="acs-rpc-membership-") as temp:
+    owner = cluster_owner()
+    # As root, drop to the owner for every PostgreSQL process, under a directory
+    # that account can traverse.
+    as_owner = ({} if owner is None else
+                {"user": owner.pw_uid, "group": owner.pw_gid, "extra_groups": []})
+    base = None if owner is None else ("/var/tmp" if os.path.isdir("/var/tmp") else "/tmp")
+    with tempfile.TemporaryDirectory(prefix="acs-rpc-membership-", dir=base) as temp:
+        if owner is not None:
+            os.chown(temp, owner.pw_uid, owner.pw_gid)
+            print("running PostgreSQL as unprivileged account %r (caller is root)" % owner.pw_name)
         data = Path(temp) / "data"
         init = subprocess.run([str(binary / "initdb"), "-D", str(data), "--auth=trust",
-                               "--no-locale", "--encoding=UTF8"], capture_output=True, text=True)
+                               "--no-locale", "--encoding=UTF8"], capture_output=True, text=True,
+                              cwd=temp, **as_owner)
         if init.returncode:
-            print("NOT VERIFIED: PostgreSQL initdb failed", init.stderr[-1000:])
-            return 2
+            fail("PostgreSQL initdb failed: %s" % init.stderr[-1000:].strip())
 
         def execute(sql, label):
             sql = "\n".join(line for line in sql.splitlines() if line.strip()) + "\n\n"
             done = subprocess.run([str(binary / "postgres"), "--single", "-j", "-c", "log_min_messages=notice", "-D", str(data), "postgres"],
-                                  input=sql, capture_output=True, text=True)
+                                  input=sql, capture_output=True, text=True, cwd=temp, **as_owner)
             output = done.stdout + done.stderr
             if done.returncode or any(mark in output for mark in ("ERROR:", "FATAL:", "PANIC:")):
                 print("FAIL", label)
@@ -149,6 +188,23 @@ def main():
             sql += as_user(who, denied("public.acs_save_plan_approval(%s,'r1',%s)" % (p, approval("r1", "1")),
                                        label + " cannot set the approved baseline"))
         sql += as_user(STRANGER, denied("public.acs_plan_project_state(%s)" % p, "non-member cannot read project state"))
+        # The SECURITY DEFINER bodies behind the wrappers are executable by
+        # `authenticated` (USAGE on acs_private). They must refuse on their own.
+        for who, label in ((STRANGER, "non-member"), (VIEWER, "viewer")):
+            sql += as_user(who, denied("acs_private.acs_save_plan_revision(%s,'r1',%s)"
+                                       % (p, revision("y-" + label, 2, "r1", "8")),
+                                       label + " cannot append through the private body"))
+            sql += as_user(who, denied("acs_private.acs_plan_workspace_snapshot(%s)" % p,
+                                       label + " cannot read documents through the private body"))
+            sql += as_user(who, denied("acs_private.acs_save_plan_approval(%s,'r1',%s)" % (p, approval("r1", "1")),
+                                       label + " cannot approve through the private body"))
+        sql += as_user(STRANGER, denied("acs_private.acs_plan_project_state(%s)" % p,
+                                        "non-member cannot read project state through the private body"))
+        sql += as_user(VIEWER, expect("(acs_private.acs_plan_project_state(%s))->>'role'='viewer'" % p,
+                                      "viewer still reads project metadata through the private body"))
+        sql += expect("not exists (select 1 from pg_proc f join pg_namespace n on n.oid=f.pronamespace "
+                      "where n.nspname='acs_private' and f.prosrc ~* 'if[[:space:]]+role_name[[:space:]]+not[[:space:]]+in')",
+                      "no acs_private body keeps a NULL-admitting role test")
         sql += as_user(STRANGER, denied("public.acs_plan_project_state(%s)" % quote(MISSING),
                                         "missing project is denied like an inaccessible one"))
         sql += as_user("", denied("public.acs_plan_project_state(%s)" % p, "anonymous caller denied"), role="anon")
