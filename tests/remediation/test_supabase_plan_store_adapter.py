@@ -22,7 +22,7 @@ def transport(**kwargs):
 
 store = SupabasePlanStore(
     "https://example.supabase.co", "sb_publishable_test", "user-access-token",
-    actor_id=ACTOR, transport=transport,
+    actor_id=ACTOR, transport=transport, write_secret="ab" * 32,
 )
 
 # PostgREST inserts default to a minimal response. Project creation depends on
@@ -95,10 +95,10 @@ rev_doc = revision_document(revision)
 responses.append((200, rev_doc))
 out = store.save_revision(PROJECT, actor_id=ACTOR, revision=revision, expected_head=None)
 assert out == rev_doc
-payload = json.loads(calls[-1]["body"])
-assert payload["p_project"] == PROJECT
-assert payload["p_expected_head"] is None
-assert payload["p_revision"]["model_hash"] == model_hash
+payload = json.loads(json.loads(calls[-1]["body"])["p_payload"])
+assert payload["project_id"] == PROJECT
+assert payload["expected_head"] is None
+assert payload["document"]["model_hash"] == model_hash
 
 approval = SimpleNamespace(
     revision_id="rev-1", revision_content_hash=content_hash,
@@ -110,7 +110,7 @@ approval = SimpleNamespace(
 app_doc = approval_document(approval)
 responses.append((200, app_doc))
 assert store.save_approval(PROJECT, actor_id=ACTOR, approval=approval, expected_head="rev-1") == app_doc
-assert calls[-1]["url"].endswith("/rest/v1/rpc/acs_save_plan_approval")
+assert calls[-1]["url"].endswith("/rest/v1/rpc/acs_write_plan_receipt")
 
 # Known atomic RPC errors map to existing Plan-first error contracts; unknown
 # backend errors fail closed without reflecting remote text.

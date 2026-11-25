@@ -180,7 +180,14 @@ def _child(target, kwargs, conn):                               # pragma: no cov
         mod = importlib.import_module(mod_name)
         fn = getattr(mod, fn_name)
         from acs_workspace_progress import channel
-        with channel(lambda event: conn.send(("progress", event))):
+        def durable_progress(event):
+            conn.send(("progress", event))
+            # A provider budget event is an admission boundary, not best-effort
+            # telemetry. Do not advance to outbound work until the trusted parent
+            # has persisted it. EOF/parent rejection stops this worker.
+            if conn.recv() != ("progress_ack", None):
+                raise RuntimeError("Progress admission was not acknowledged")
+        with channel(durable_progress):
             value = fn(**(kwargs or {}))
         conn.send(("ok", value))
     except BaseException as exc:                                # noqa: BLE001
@@ -339,7 +346,7 @@ class JobRunner(object):
     def _execute(self, job, kwargs, on_event, on_progress=None):
         if self.executor == EXECUTOR_THREAD:
             return self._execute_thread(job, kwargs, on_event, on_progress)
-        parent, child = self._ctx.Pipe(duplex=False)
+        parent, child = self._ctx.Pipe(duplex=True)
         proc = self._ctx.Process(target=_child, args=(job.target, kwargs, child),
                                  daemon=True)
         job._proc = proc
@@ -365,6 +372,11 @@ class JobRunner(object):
                     break
                 if on_progress:
                     on_progress(payload)
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                    job.cancel(STATE_TIMED_OUT)
+                    break
+                parent.send(("progress_ack", None))
         except (EOFError, OSError) as exc:
             if timed_out:                       # لا نُخفي المهلة خلف خطأ أنبوب
                 raise
@@ -391,6 +403,18 @@ class JobRunner(object):
                 "the generation worker died before returning a result "
                 "(child exit code: %s)" % ("unknown" if code is None else code),
                 type(exc).__name__)
+        except Exception as exc:
+            # Durable progress/admission rejection is a failed job, even though
+            # the child is deliberately still blocked before outbound work.
+            job.state = STATE_FAILED
+            job.error_class = type(exc).__name__
+            job.error_code = getattr(exc, "code", None)
+            job.finished_at = time.time()
+            with self._lock:
+                self._stats["failed"] += 1
+            if on_event:
+                on_event(job)
+            raise
         finally:
             try:
                 parent.close()

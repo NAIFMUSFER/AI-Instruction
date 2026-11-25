@@ -99,17 +99,60 @@ def application(database):
                     query=urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
                     documents=[json.loads(row[0]) for row in con.execute('select document from ci_sources')]
                     return [d for d in documents if d['project_id']==query['project_id'][0][3:] and ('id' not in query or d['id']==query['id'][0][3:])]
-                if method=='POST':
-                    cur=con.execute('insert or ignore into ci_jobs values(?,?)',(payload['id'],json.dumps(payload)))
-                    return [copy.deepcopy(payload)] if cur.rowcount else []
-                query=urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
-                job_id=query['id'][0].removeprefix('eq.')
-                row=con.execute('select document from ci_jobs where id=?',(job_id,)).fetchone()
-                if not row:return []
-                data=json.loads(row[0])
-                if method=='PATCH':
-                    data.update(payload);con.execute('update ci_jobs set document=? where id=?',(json.dumps(data),job_id))
-                return [data]
+                if method != "GET" or not path.startswith("/rest/v1/acs_workspace_jobs?"):
+                    raise AssertionError("Unexpected browser-fixture request")
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
+                project_id = query["project_id"][0].removeprefix("eq.")
+                job_id = query["id"][0].removeprefix("eq.")
+                db.project_state(project_id, actor_id=ACTOR)
+                row = con.execute("select document from ci_jobs where id=?", (job_id,)).fetchone()
+                job = json.loads(row[0]) if row else None
+                return [job] if job and job["project_id"] == project_id and job["created_by"] == ACTOR else []
+
+        def _signed_rpc(self, name, kind, project_id, expected_head, document):
+            # This SQLite fixture implements delivery receipts for browser tests.
+            # Signature/expiry/RLS assertions run on real PostgreSQL independently.
+            if (name, kind) != ("acs_workspace_job_mutate", "workspace_job"):
+                raise AssertionError("Unexpected mutation in the connected browser fixture")
+            db.project_state(project_id, actor_id=ACTOR)
+            job_id, op = document["job_id"], document["operation"]
+            with sqlite3.connect(database) as con:
+                con.execute("begin immediate")
+                row = con.execute("select document from ci_jobs where id=?", (job_id,)).fetchone()
+                job = json.loads(row[0]) if row else None
+                if job and (job["project_id"] != project_id or job["created_by"] != ACTOR):
+                    raise H.PlanError("PROJECT_ACCESS_DENIED", "Fixture project mismatch")
+                if op == "reserve":
+                    if job:
+                        if job["input_hash"] != document["input_hash"]:
+                            raise H.PlanError("STALE_REVISION", "Fixture replay mismatch")
+                        return {"created": False, "job": job}
+                    job = {"id": job_id, "project_id": project_id, "created_by": ACTOR,
+                           "expected_head": expected_head, "resume_command": document["command"],
+                           "state": "RUNNING", "phase": "UNDERSTANDING", "provider_calls": 0,
+                           "lease_token": document["lease_token"], "worker_id": document["worker_id"],
+                           "input_hash": document["input_hash"]}
+                    con.execute("insert into ci_jobs values (?,?)", (job_id, json.dumps(job)))
+                    return {"created": True, "job": job}
+                if not job:
+                    raise H.PlanError("REVISION_NOT_FOUND", "Unknown fixture job")
+                if op == "expire":
+                    return {"job": job}  # No simulated clock expiry in this browser fixture.
+                if op == "cancel":
+                    if job["state"] == "RUNNING":
+                        job.update(state="CANCELLED", error_code="PROVIDER_OUTCOME_UNKNOWN")
+                else:
+                    if job["state"] != "RUNNING" or document.get("lease_token") != job["lease_token"]:
+                        raise H.PlanError("JOB_LEASE_LOST", "Fixture worker no longer owns this job")
+                    if op == "heartbeat":
+                        return {"job": job}
+                    fields = {"progress": ("phase", "progress", "checkpoint", "provider_calls"),
+                              "finish": ("state", "revision_id", "error_code")}
+                    if op not in fields:
+                        raise AssertionError("Unsupported browser-fixture job operation")
+                    job.update({key: document[key] for key in fields[op] if key in document})
+                con.execute("update ci_jobs set document=? where id=?", (json.dumps(job), job_id))
+                return {"job": job}
 
     async def authorize(scope,send):
         headers=dict(scope.get('headers',[]))
