@@ -137,6 +137,7 @@ function guestView(name,floorKey){
   guestCameraMode=name;
   for(const button of document.querySelectorAll('#floors [data-floor]')){
     button.classList.toggle('active',button.dataset.floor===floorSel);
+    button.setAttribute('aria-pressed',String(button.dataset.floor===floorSel));
   }
   updateVis();guestFrame();
   window.dispatchEvent(new CustomEvent('acs:guest-view',{detail:guestViewState()}));return true;
@@ -297,7 +298,9 @@ function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHT
   const mk=(k,l)=>{const b=document.createElement('button');b.className='ghost';b.textContent=l;
     b.dataset.floor=k;
     if(k===floorSel)b.classList.add('active');
-    b.onclick=()=>{if(window.ACS?.guest){guestView(k==='all'?'exterior':'cutaway',k);return;}floorSel=k;[...wrap.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');updateVis();};
+    b.setAttribute('aria-pressed',String(k===floorSel));
+    b.onclick=()=>{if(window.ACS?.guest){guestView(k==='all'?'exterior':'cutaway',k);return;}floorSel=k;
+      for(const c of wrap.querySelectorAll('[data-floor]')){c.classList.toggle('active',c===b);c.setAttribute('aria-pressed',String(c===b));}updateVis();};
     wrap.appendChild(b);};
   mk('all','الكل');
   /* ═══ KI-26/F-46 · ترتيب الأدوار طبيعيّ لا معجميّ ═══════════════════════
@@ -449,6 +452,7 @@ function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHT
     const col=document.createElement('input');col.type='color';col.value=r.color;
     col.oninput=()=>{r.color=col.value;r.meshes.forEach(m=>{m.material.color.set(col.value);if(l==='DOOR')m.material.map=null;m.material.needsUpdate=true;});};
     const nm=document.createElement('span');nm.className='nm';nm.textContent=LAYER_NAMES[l]||l;
+    cb.setAttribute('aria-label','إظهار طبقة '+nm.textContent);col.setAttribute('aria-label','لون طبقة '+nm.textContent);
     const ct=document.createElement('span');ct.className='ct';ct.textContent=r.meshes.length;
     row.append(cb,col,nm,ct);wrap.appendChild(row);});}
 function updateVis(){globalThis.window?.ACS?.requestGuestRender?.();

@@ -15,7 +15,7 @@
 #guestPlanDialog[open] { display: flex; flex-direction: column; gap: 8px; }
 #guestPlanDialog header, #guestPlanDialog footer, .guest-plan-fields { display: flex; align-items: center; gap: 8px; }
 #guestPlanDialog header { justify-content: space-between; }
-#guestPlanDialog h2 { margin: 0; font-size: 1.12rem; }
+#guestPlanDialog h2 { margin: 0; font-size: 1.12rem; color: inherit; border: 0; padding: 0; }
 #guestPlanDialog button, #guestPlanDialog select { min-height: 44px; border: 1px solid #a0b1ab; border-radius: 7px; color: #1e383a; background: #fffdf8; font: inherit; }
 #guestPlanDialog button { min-width: 44px; padding: 4px 12px; cursor: pointer; }
 #guestPlanDialog label { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: .85rem; }

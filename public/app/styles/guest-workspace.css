@@ -48,10 +48,12 @@
 #acsGuestBanner :is(#guestCreate,#guestRevise,#guestApplyRevision) { background: #234e40; color: #fff; }
 #acsGuestBanner button:hover, #acsGuestBanner a:hover, #guestTools:hover, #guestOptions[open] > summary { background: #e7ebe3; }
 #acsGuestBanner #guestCreate:hover { background: #183e31; }
-#guestRevisionDialog { width:min(27rem, calc(100% - 24px)); box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:20px; background:#fffdf8; color:#213c40; font:15px/1.5 system-ui,sans-serif; }
+#guestRevisionDialog { margin:auto; width:min(27rem, calc(100% - 24px)); box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:20px; background:#fffdf8; color:#213c40; font:15px/1.5 system-ui,sans-serif; }
 #guestRevisionDialog::backdrop { background:rgb(13 27 35 / 65%); }
 #guestRevisionForm { display:grid; gap:10px; }
 #guestRevisionForm h2,#guestRevisionForm p { margin:0; }
+/* The dark panel's muted 12px h2 rule must not leak into this light dialog. */
+#guestRevisionForm h2 { font-size:1.12rem; color:inherit; border:0; padding:0; }
 #guestRevisionForm textarea { box-sizing:border-box; width:100%; padding:9px; font:inherit; color:#203a31; background:white; border:1px solid #9cafa5; border-radius:6px; }
 #guestRevisionError { color:#84391e; }
 #acsGuestBanner :is(button,a,summary):focus-visible { outline: 3px solid #0b72a0; outline-offset: 1px; }
