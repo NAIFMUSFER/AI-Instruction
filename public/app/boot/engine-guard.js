@@ -532,6 +532,17 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     if(errors.some(function(e){return /WebGL|creating.*context/i.test(e.message||'');}))window.ACS.guestBootFailure();
     window.addEventListener('error',function(e){if(/WebGL|creating.*context/i.test(e.message||''))window.ACS.guestBootFailure();});
   }
+  // A guest sees the read-only schematic as soon as the HTML is parsed.
+  // DOMContentLoaded waits for the whole static module graph (three.module.js
+  // included): about 4 s later on a slow phone link. guestFallback is idempotent,
+  // so the normal entry path at DOMContentLoaded finds the panel already there.
+  if(window.ACS.guest&&document.readyState==='loading'){
+    document.addEventListener('readystatechange',function early(){
+      if(document.readyState==='loading')return;
+      document.removeEventListener('readystatechange',early);
+      if(byId('login')&&!window.ACS.guestWorkspaceReady)guestFallback();
+    });
+  }
   window.ACS.finishGuestBoot=function(){
     window.ACS.guestWorkspaceReady=true;
     var panel=byId('acsGuestFallback');if(panel)panel.remove();
