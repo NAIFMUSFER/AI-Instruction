@@ -321,5 +321,55 @@ for(const mutate of [r=>r[1].doors[0].offset=2.01,r=>r[1].doors[0].acs_door_pair
   const edited=structuredClone(exampleClaims);mutate(edited);
   assert.equal(apartmentDoorPairs(edited).size,0,'invalid imported claim cannot suppress a leaf');
 }
+
+// Saudi phrasing: floor counts that add the ground floor, listed floors, plot
+// versus building, street width, number words and ambiguous decimals. Each was
+// read silently as a different building before (agent 03-09 phrase set).
+for(const [txt,w,d,n] of [
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاثة أدوار غير الأرضي، شقتين في كل دور',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاث أدوار بدون الأرضي',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي + دورين، شقتين بكل دور',24,28,3],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي + ٣ أدوار',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي وأول، شقتين بكل دور',24,28,2],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي وأول وثاني وثالث، شقتين بكل دور',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، عدد الأدوار أربعة، شقتين في كل دور',24,28,4],
+  ['عمارة سكنية واجهتها ٢٢ متر وطولها ٢٦ متر، ثلاث أدوار، شقتين بكل دور',22,26,3],
+  ['عمارة سكنية ٢٤×٢٨ على شارع عرضه ١٥ متر من الشمال، ثلاث أدوار',24,28,3],
+  ['عمارة سكنية ٢٤×٢٨، أربع أدوار، كل دور فيه شقتين، والمجموع ثمان شقق',24,28,4]
+]) validate(apartmentFromBrief(txt,{width:30,depth:30,levels:5}),w,d,n);
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين بكل دور، واجهتها جنوبية').meta.acs_apartment.street_edge,'S');
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨ على شارع عرضه ١٥ متر من الجنوب، ثلاث أدوار').meta.acs_apartment.street_edge,'S');
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، كل دور فيها شقتين','عمارة سكنية ٢٤×٢٨، أرضي وأول وثاني شقق، ومواقف أمامية','عمارة سكنية ٢٤×٢٨، عدد الأدوار ٣ شاملة الأرضي'])
+  validate(apartmentFromBrief(txt),24,28,3);
+for(const [txt,reason] of [
+  ['عمارة سكنية على قطعة ٢٠×٣٠، ثلاث أدوار، شقتين في كل دور','الأرض'],
+  ['أبغى عمارة سكنية في أرض صكها ٢٠ في ٣٠ متر، ثلاث أدوار','الأرض'],
+  ['أبغى عمارة سكنية مقاسها عشرين في خمسة وعشرين متر، ثلاث أدوار، شقتين بكل دور','بالأرقام'],
+  ['عمارة سكنية عرض المبنى 22,5 م وعمقه 26 م، 3 أدوار','بفاصلة'],
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاث أدوار فيها تسع شقق','9 شقق'],
+  ['عمارة سكنية ٢٤×٢٨، ثلاث أدوار، شقتين في كل دور، والمجموع عشر شقق','10 شقق'],
+  ['عمارة سكنية ٢٤×٢٨ م فيها ٤ شقق','4 شقق'],
+  ['عمارة سكنية ٢٤×٢٨، ٤ أدوار، شقتين بكل دور، مع منور في النص للتهوية','منور'],
+  ['عمارة سكنية ٢٤×٢٨، ثلاث أدوار وملحق علوي، شقتين بكل دور','ملحق'],
+  ['عمارة تجارية سكنية ٢٤×٢٨، الأرضي محلات وفوقه دورين شقق','تجاري'],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، الأرضي مواقف سيارات والشقق فوق','مواقف'],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين بكل دور، كل شقة غرفتين نوم','ثلاث غرف نوم']
+]) assert.throws(()=>apartmentFromBrief(txt),
+  error=>error.code==='LOCAL_APARTMENT_UNSUPPORTED'&&error.message.includes(reason),txt);
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون ملحق ولا منور','عمارة سكنية ٢٠×٢٥، أرضي ودورين وسطح، شقتين بكل دور'])
+  assert.ok(apartmentFromBrief(txt),'an excluded or default-roof feature does not block the plan: '+txt);
+// Unstated dimensions, floors and entrance are stated as editable assumptions.
+const unstated=apartmentFromBrief('أبغى عمارة سكنية').meta.acs_apartment.assumptions.join(' ');
+for(const phrase of ['لم تذكر عرض المبنى وعمقه','لم تذكر عدد الأدوار','لم تحدد جهة المدخل'])
+  assert.ok(unstated.includes(phrase),phrase);
+const stated=apartmentFromBrief('أبغى عمارة سكنية، عرض المبنى ٢٠ متر وعمقه ٢٥ متر، ثلاثة أدوار شاملة الأرضي، وفي كل دور شقتين، والمدخل شمالي').meta.acs_apartment.assumptions.join(' ');
+assert.ok(!/لم تذكر|لم تحدد/.test(stated),'stated values are not reported as assumptions');
+// Reference case 4 wording, and Saudi imperatives that must not be dropped from a revision.
+const saudiBase=apartmentFromBrief('عمارة سكنية مقاس المبنى ٢٢ في ٢٦ متر، أرضي ودورين، كل دور فيه شقتين');
+const east=apartmentFromRevision('غيّر المدخل وخله من الشرق',saudiBase);
+validate(east,22,26,3);assert.equal(east.meta.acs_apartment.street_edge,'E');
+assert.ok(!east.meta.acs_apartment.assumptions.some(line=>line.startsWith('لم تحدد جهة المدخل')),'a chosen entrance is no longer an assumption');
+for(const request of ['خل المدخل من الجنوب وزيد دور','خل المدخل جنوبي وضيف دور ثالث فوق','خل المدخل من الجنوب ونقص شقة'])
+  assert.throws(()=>apartmentFromRevision(request,saudiBase),error=>error.code==='LOCAL_APARTMENT_UNSUPPORTED'&&error.message.includes('افصل'),request);
 assert.equal(JSON.stringify(sample),original,'other local creations leave existing drafts untouched');
 console.log('PASS local apartment: four Arabic briefs, physical cardinal entries, open courtyard and roof, shared circulation, paired apertures, stairs, immutable default source and guarded revisions');
