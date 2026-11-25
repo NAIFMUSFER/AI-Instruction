@@ -13,6 +13,18 @@
       "label_ar": "عمق الموقع (م)",
       "brief_supported": true
     },
+    "building_width_m": {
+      "unit": "m",
+      "operator": "equal",
+      "label_ar": "عرض المبنى (م)",
+      "brief_supported": true
+    },
+    "building_depth_m": {
+      "unit": "m",
+      "operator": "equal",
+      "label_ar": "عمق المبنى (م)",
+      "brief_supported": true
+    },
     "level_count": {
       "unit": "count",
       "operator": "equal",

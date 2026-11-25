@@ -1,5 +1,6 @@
 /* Public, local-only workspace. No auth identity, provider call or cloud upload. */
 import { openGuestFloorPlan } from './guest-floor-plan.mjs';
+import { apartmentConfirmation } from '../core/local-apartment.mjs';
 
 const A = window.ACS;
 const $ = id => document.getElementById(id);
@@ -225,29 +226,162 @@ async function openGuestWorkspace() {
   }
   $('genLLM').hidden = true;
   $('descText').placeholder = 'عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ. شقتان في كل دور، وفي كل شقة ثلاث غرف نوم وصالة ومطبخ وحمام عائلي وحمام خاص ودورة مياه للضيوف.';
-  const widthLabel = document.querySelector('label[for="siteW"]');
-  const depthLabel = document.querySelector('label[for="siteD"]');
-  if (widthLabel) widthLabel.textContent = 'عرض المبنى (م)';
-  if (depthLabel) depthLabel.textContent = 'عمق المبنى (م)';
-  function suggestFormDimensions(model) {
-    const values = {
-      siteW: model?.site?.w,
-      siteD: model?.site?.d,
-      nFloors: model?.levels?.filter(level => level.kind !== 'roof').length,
-    };
-    for (const [id, value] of Object.entries(values)) {
-      const input = $(id);
-      if (Number.isFinite(value) && value > 0 && input.value === input.defaultValue) {
-        input.defaultValue = String(value);
-        input.value = String(value);
-      }
-    }
+  // Building size is its own pair of fields, separate from the land (owner decision 3).
+  // No field is prefilled: an empty field is a question, never a value (owner decision 1).
+  const siteRow = $('siteW').closest('.fld');
+  const buildingRow = document.createElement('div');
+  buildingRow.className = 'fld';
+  buildingRow.id = 'guestBuildingFields';
+  buildingRow.innerHTML = '<div><label for="bldW">عرض المبنى (م)</label><input id="bldW" type="number" min="0" step="any" inputmode="decimal" placeholder="من الوصف"></div>'
+    + '<div><label for="bldD">عمق المبنى (م)</label><input id="bldD" type="number" min="0" step="any" inputmode="decimal" placeholder="من الوصف"></div>';
+  (siteRow || $('siteW')).before(buildingRow);
+  for (const [id, label, placeholder] of [['siteW','عرض الأرض (م)','اختياري'],['siteD','عمق الأرض (م)','اختياري'],['nFloors','الأدوار مع الأرضي','من الوصف']]) {
+    const input = $(id), caption = document.querySelector('label[for="' + id + '"]');
+    if (caption) caption.textContent = label;
+    input.defaultValue = '';
+    input.value = '';
+    input.placeholder = placeholder;
   }
   const local = $('genText');
   local.textContent = 'إنشاء التصميم على جهازي';
   local.classList.remove('acs-u-05');
   local.classList.add('btn', 'g');
   $('genLLM').before(local);
+  // «فهمنا: …» before anything is drawn (owner decision 2). One tap on «ارسم» draws
+  // exactly the model summarised here; «عدّل» returns to the description.
+  const confirmCard = document.createElement('section');
+  confirmCard.id = 'guestConfirm';
+  confirmCard.className = 'guest-confirm';
+  confirmCard.dir = 'rtl';
+  confirmCard.hidden = true;
+  confirmCard.setAttribute('role', 'region');
+  confirmCard.setAttribute('aria-labelledby', 'guestConfirmTitle');
+  confirmCard.setAttribute('aria-live', 'polite');
+  confirmCard.innerHTML = '<h3 id="guestConfirmTitle">فهمنا:</h3><p id="guestConfirmQuestion" hidden></p><ul id="guestConfirmRows"></ul>'
+    + '<ul id="guestConfirmChoices" class="guest-confirm-choices" hidden></ul>'
+    + '<div id="guestConfirmUnsupported" class="guest-confirm-unsupported" hidden><p>غير مدعوم في المولّد المحلي بعد، ولن يُرسم:</p><ul></ul></div>'
+    + '<div class="guest-confirm-actions"><button id="guestConfirmDraw" type="button">ارسم</button><button id="guestConfirmEdit" type="button">عدّل</button></div>';
+  local.after(confirmCard);
+  let pendingDraw = null, askedFields = [];
+  function hideConfirm() {
+    confirmCard.hidden = true;
+    pendingDraw = null;
+  }
+  function showConfirm(summary, draw) {
+    pendingDraw = draw;
+    askedFields = [];
+    $('guestConfirmTitle').textContent = summary.title;
+    $('guestConfirmQuestion').hidden = true;
+    const rows = $('guestConfirmRows');
+    rows.replaceChildren(...summary.rows.map(row => {
+      const item = document.createElement('li');
+      item.dataset.key = row.key;
+      if (row.assumed) item.dataset.assumed = 'true';
+      const label = document.createElement('strong');
+      label.textContent = row.label + ': ';
+      const value = document.createElement('span');
+      value.textContent = row.value;
+      item.append(label, value);
+      if (row.assumed) {
+        const tag = document.createElement('em');
+        tag.className = 'guest-confirm-assumed';
+        tag.textContent = 'افتراض';
+        item.append(' ', tag);
+      }
+      if (row.note) {
+        const note = document.createElement('small');
+        note.textContent = row.note;
+        item.append(note);
+      }
+      return item;
+    }));
+    rows.hidden = false;
+    $('guestConfirmChoices').replaceChildren();
+    $('guestConfirmChoices').hidden = true;
+    // What the visitor asked for that this generator cannot draw yet, before drawing.
+    const unsupported = $('guestConfirmUnsupported');
+    unsupported.querySelector('ul').replaceChildren(...(summary.notDrawn || []).map(text => {
+      const item = document.createElement('li');
+      item.textContent = text;
+      return item;
+    }));
+    unsupported.hidden = !(summary.notDrawn || []).length;
+    $('guestConfirmDraw').hidden = false;
+    confirmCard.dataset.mode = 'confirm';
+    confirmCard.hidden = false;
+    $('guestConfirmDraw').scrollIntoView({ block: 'nearest' });
+    $('guestConfirmDraw').focus({ preventScroll: true });
+  }
+  function askQuestion(message, missing = []) {
+    pendingDraw = null;
+    askedFields = missing;
+    $('guestConfirmTitle').textContent = 'نحتاج معلومة قبل الرسم';
+    const question = $('guestConfirmQuestion');
+    question.textContent = message + ' اكتبها في الوصف أو في الحقول.';
+    question.hidden = false;
+    $('guestConfirmRows').replaceChildren();
+    $('guestConfirmRows').hidden = true;
+    $('guestConfirmChoices').hidden = true;
+    $('guestConfirmUnsupported').hidden = true;
+    $('guestConfirmDraw').hidden = true;
+    confirmCard.dataset.mode = 'question';
+    confirmCard.hidden = false;
+    $('guestConfirmEdit').scrollIntoView({ block: 'nearest' });
+    $('guestConfirmEdit').focus({ preventScroll: true });
+  }
+  // The description and a field disagree: the visitor picks one value for each; nothing is preferred silently.
+  A.guestFieldPreference = {};
+  function askConflict(conflicts) {
+    pendingDraw = null;
+    askedFields = [];
+    $('guestConfirmTitle').textContent = 'الوصف والحقول مختلفان';
+    const question = $('guestConfirmQuestion');
+    question.textContent = 'اختر القيمة المقصودة لكل بند، ثم نعرض عليك ما فهمناه قبل الرسم.';
+    question.hidden = false;
+    $('guestConfirmRows').hidden = true;
+    $('guestConfirmUnsupported').hidden = true;
+    $('guestConfirmDraw').hidden = true;
+    const choices = $('guestConfirmChoices');
+    choices.replaceChildren(...conflicts.map(conflict => {
+      const item = document.createElement('li');
+      item.dataset.key = conflict.key;
+      const label = document.createElement('strong');
+      label.textContent = conflict.label + ': ';
+      item.append(label);
+      for (const [choice, value, source] of [['text', conflict.text, 'من الوصف'], ['form', conflict.form, 'من الحقل']]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.choice = choice;
+        button.textContent = value + (conflict.unit || '') + ' ' + source;
+        button.addEventListener('click', () => {
+          A.guestFieldPreference = { ...A.guestFieldPreference, [conflict.key]: choice };
+          hideConfirm();
+          $('genText').click();
+        });
+        item.append(button);
+      }
+      return item;
+    }));
+    choices.hidden = false;
+    confirmCard.dataset.mode = 'conflict';
+    confirmCard.hidden = false;
+    choices.querySelector('button')?.scrollIntoView({ block: 'nearest' });
+    choices.querySelector('button')?.focus({ preventScroll: true });
+  }
+  A.confirmGuestApartment = (model, draw) => showConfirm(apartmentConfirmation(model), draw);
+  $('guestConfirmDraw').addEventListener('click', () => {
+    const draw = pendingDraw;
+    hideConfirm();
+    draw?.();
+  });
+  $('guestConfirmEdit').addEventListener('click', () => {
+    const target = askedFields.includes('width') ? 'bldW' : askedFields.includes('depth') ? 'bldD' : askedFields.includes('levels') ? 'nFloors' : 'descText';
+    hideConfirm();
+    $(target).focus();
+  });
+  // A summary of an earlier description is never drawn after the visitor changes it.
+  for (const id of ['descText','bldW','bldD','siteW','siteD','nFloors','bType'])
+    $(id)?.addEventListener('input', () => { A.guestFieldPreference = {}; if (!confirmCard.hidden) hideConfirm(); });
   const upload = $('impFile');
   upload.accept = '.json,.dxf,application/json';
   const uploadLabel = document.querySelector('label[for="impFile"]');
@@ -260,6 +394,7 @@ async function openGuestWorkspace() {
   if (firstNote) firstNote.textContent = 'يحوّل المصمم المحلي الأبعاد والفراغات المدعومة إلى مخطط أولي. يبقى الوصف وملفات JSON وDXF على جهازك.';
 
   function sample(kind, initial = false) {
+    hideConfirm();
     if (!initial) modelChanged();
     if (kind === 'warehouse') $('loadWarehouse').click();
     else A.showExample();
@@ -309,9 +444,13 @@ async function openGuestWorkspace() {
   window.addEventListener('acs:local-generation', event => {
     const result = event.detail;
     if (!result?.ok) {
+      // A missing value is a question in the card, not an error banner.
+      if (result?.conflicts?.length) { askConflict(result.conflicts); return; }
+      if (result?.question) { askQuestion(result.message, result.missing); return; }
       feedbackMessage(result?.message || 'تعذّر إنشاء التصميم. راجع وصف المبنى.');
       return;
     }
+    hideConfirm();
     if (A.guestRecoveryReadable) feedbackMessage('');
     notice('تصميم محلي أولي');
     facts(); syncViewButton();
@@ -327,7 +466,6 @@ async function openGuestWorkspace() {
     const recovery = A.persistence.recover();
     if (namedDraft) {
       notice('مشروع محلي');
-      suggestFormDimensions({site:{w:20,d:25}});
       facts();
       openPanel('acsTabMake');
     } else {
@@ -336,7 +474,6 @@ async function openGuestWorkspace() {
     }
     const freshExample = A.exportModel?.();
     if (freshExample?.meta?.acs_apartment?.source === 'synthetic_sample') referenceSample = JSON.stringify(freshExample);
-    suggestFormDimensions(freshExample);
     saveStatus.textContent = 'جارٍ استعادة المسودة…';
     timer=setTimeout(()=>{
       banner.dataset.recoveryStatus='slow';
@@ -357,7 +494,6 @@ async function openGuestWorkspace() {
     if (recoveredModel) {
       restoring = true;
       try { A.setModel(recoveredModel); } finally { restoring = false; }
-      suggestFormDimensions(recoveredModel);
       saveStatus.textContent = 'استُعيد من هذا الجهاز';
       notice('استُعيد المشروع المحلي'); facts(); syncViewButton();
       if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);

@@ -569,6 +569,7 @@ async function checkedViewport(browser,width,spec){
     }
     step('complete_arabic_brief');await page.locator('#guestCreate').click();
     await page.locator('#descText').fill(brief);await page.locator('#genText').click();
+    await page.locator('#guestConfirm[data-mode="confirm"]').waitFor();await page.locator('#guestConfirmDraw').click();
     await page.waitForFunction(expected=>{
       const model=window.ACS.exportModel(),apartment=model?.meta?.acs_apartment;
       return apartment?.source==='local_brief'&&apartment.units_total===expected.units&&

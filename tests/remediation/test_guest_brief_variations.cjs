@@ -135,6 +135,8 @@ async function submit(page,c){
   await input.fill(c.text);
   const seq=await page.evaluate(()=>window.__acceptanceGenerations.length);
   await page.locator(c.edit?'#guestApplyRevision':'#genText').click();
+  // A new brief is summarised («فهمنا: …») and drawn only after «ارسم».
+  if(!c.edit){await page.locator('#guestConfirm[data-mode="confirm"]').waitFor();await page.locator('#guestConfirmDraw').click();}
   await page.waitForFunction(n=>window.__acceptanceGenerations.length>n,seq,{timeout:90000});
   const event=await page.evaluate(n=>window.__acceptanceGenerations[n],seq);
   assert.equal(event.ok,true,event.message||'generation failed');

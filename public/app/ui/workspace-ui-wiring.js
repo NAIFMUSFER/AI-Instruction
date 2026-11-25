@@ -1542,17 +1542,23 @@ function localGeneratedModel(building,{freshSample=false}={}){
   }
   return next;
 }
+/* قيم كتبها الزائر في الحقول فقط. الحقل الفارغ ليس قيمة، ولا تُملأ الحقول مسبقاً. */
+function localFormValues(){
+  const value=id=>document.getElementById(id)?.value??'';
+  // prefer: the visitor's pick when the description and a field disagreed (never decided silently).
+  return {width:value('bldW'),depth:value('bldD'),levels:value('nFloors'),plotWidth:value('siteW'),plotDepth:value('siteD'),
+    prefer:{...(window.ACS?.guestFieldPreference||{})}};
+}
 /* المولّد المحلي الموحّد: يخدم «وصف نصّي» و«سريع» و«ملفات» بنفس القدرات */
-function buildLocal(txt,W,D,nF){
+function buildLocal(txt,W,D,nF,form=localFormValues()){
   const t=pickedType(txt);
   __ACS_SHARED.LAST_REQUEST_TEXT = txt||'';            // للتحقّق من ادّعاءات التقرير مقابل طلب العميل
   const selectedProgram=document.getElementById('bType')?.value||'auto';
   if(selectedProgram==='auto'||selectedProgram==='residential'){
-    const apartment=apartmentFromBrief(txt,{width:W,depth:D,levels:nF});
-    if(apartment){
-      showCoverage([],[],apartment.meta.acs_apartment.assumptions.join(' '));
-      return apartment;
-    }
+    // The apartment reads building size and floors from the text or the visitor's
+    // own fields, never from a fallback; its assumptions are shown once it is drawn.
+    const apartment=apartmentFromBrief(txt,form);
+    if(apartment) return apartment;
   }
   const oi=objectsFromText(txt);          // بشر/روبوتات/رافعات… من طلب العميل — لا تُسقَط
   if(isIndustrialProgram(t)){            // مسار البرنامج الصناعي (مستودع/مصنع/…) — واحد من عدّة برامج
@@ -1605,13 +1611,26 @@ document.getElementById('genText').onclick=()=>{
   const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
     nF=+document.getElementById('nFloors').value||3;
   statusEl.textContent='جارٍ التحليل والتوليد…';
-  try {
-    const building=applyLocalEdit(buildLocal(txt,W,D,nF),{generated:true});
-    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:true,building}}));
-  } catch(error) {
+  const failed=error=>{
     statusEl.textContent=localGenerationError(error);
-    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:false,message:statusEl.textContent}}));
-  }
+    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:false,message:statusEl.textContent,
+      question:error.question===true,missing:error.missing||[],conflicts:error.conflicts||[]}}));
+  };
+  try {
+    const candidate=buildLocal(txt,W,D,nF);
+    const draw=()=>{
+      try {
+        const building=applyLocalEdit(candidate,{generated:true});
+        if(candidate.meta?.acs_apartment) showCoverage([],[],candidate.meta.acs_apartment.assumptions.join(' '));
+        window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:true,building}}));
+      } catch(error) { failed(error); }
+    };
+    // Guests confirm what was understood before an apartment is drawn (owner decision 2).
+    if(window.ACS.guest&&candidate?.meta?.acs_apartment?.source==='local_brief'&&window.ACS.confirmGuestApartment){
+      statusEl.textContent='راجع ما فهمناه، ثم اضغط «ارسم».';
+      window.ACS.confirmGuestApartment(candidate,draw);
+    } else draw();
+  } catch(error) { failed(error); }
 };
 if(window.ACS.guest)window.ACS.reviseGuestApartment=text=>{
   let result;

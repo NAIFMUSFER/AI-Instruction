@@ -262,6 +262,13 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
             )
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    confirmed = {r.get('metric'): r.get('expected') for r in requirements if isinstance(r, dict)}
+    if confirmed.get('building_width_m') is not None and confirmed.get('building_depth_m') is not None:
+        # The building's confirmed size is the envelope; the land is context only.
+        prompt += ("\nغلاف المبنى المؤكد: اجعل site.w = " + str(confirmed['building_width_m']) + " وsite.d = "
+                   + str(confirmed['building_depth_m']) + " (أبعاد المبنى). أبعاد الأرض "
+                   + str(confirmed.get('site_width_m')) + " × " + str(confirmed.get('site_depth_m'))
+                   + " مرجع فقط، ولا تملأها بالغرف.")
     if warehouse:
         targets=[r.get('expected') for r in requirements if isinstance(r,dict) and r.get('metric')=='building_target_area_m2']
         target=targets[0] if len(targets)==1 and type(targets[0]) in (int,float) else None

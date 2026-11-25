@@ -84,6 +84,28 @@ export function analyzeBrief(brief) {
       if(/[0-9]/.test(text)||wordCounts.length)questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
       continue;
     }
+    // «٣ أدوار غير الأرضي» and «أرضي + ٣ أدوار» are four floors with the ground floor.
+    const groundAfter=/^\s+(?:غير|عدا|ماعدا|بخلاف|فوق)\s+(?:(?:ال)?(?:دور|طابق)\s+)?(?:ال)?ارضي(?![\p{L}\p{N}])/u;
+    const groundBefore=/(?:^|[\s،.,])(?:ال)?ارضي\s*(?:\+|و|زائد)\s*$/u;
+    const levelCount=(n,match)=>{
+      const after=text.slice(match.index+match[0].length).match(groundAfter);
+      const before=text.slice(0,match.index).match(groundBefore);
+      if(!after&&!before)return add('level_count',n,null,match,chunk.index);
+      const start=before?match.index-before[0].trimStart().length:match.index;
+      const end=match.index+match[0].length+(after?after[0].length:0);
+      add('level_count',Number(n)+1,null,{index:start,0:text.slice(start,end)},chunk.index);
+    };
+    // The building's own size, separate from the land («عرض المبنى ٢٠ م وعمقه ٢٥ م»، «والمبنى ٢٠×٢٥ م»).
+    const building='(?:المبنى|العمار[ةه]|البناء|البناي[ةه])';
+    for(const [metric,pattern] of [
+      ['building_width_m',`عرض\\s+${building}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+      ['building_depth_m',`(?:عمق\\s+${building}|(?<=عرض\\s+${building}[^،.\\n]{0,40})و?عمق(?:ه|ها))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+    ])for(const match of text.matchAll(new RegExp(pattern,'gu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
+    const buildingPair=`(?:ابعاد\\s+${building}|(?<![\\p{L}])و?(?:ال)?مبنى|العمار[ةه]\\s+(?:ابعادها|مقاسها))\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+    for(const match of text.matchAll(new RegExp(buildingPair,'gu'))){
+      add('building_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
+      add('building_depth_m',match.groups.d,match.groups.u,match,chunk.index,'inferred');
+    }
     const patterns=[
       ['site_width_m',`(?:عرض\\s+${site}|${site}\\s+(?:ب?عرض|width))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
       ['site_depth_m',`(?:عمق\\s+${site}|${site}\\s+(?:ب?عمق|depth))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
@@ -105,6 +127,7 @@ export function analyzeBrief(brief) {
         if(bounded.test(text)&&!minimum&&metric!=='min_rack_group_count'){
           questions.push('راجع الحد الأدنى أو الأعلى في: «'+chunk[0].trim().slice(0,200)+'». حدّد نوع المتطلب وقيمته قبل التوليد.');continue;
         }
+        if(metric==='level_count'){levelCount(match.groups.n,match);continue;}
         add(minimum?'min_dock_count':metric,match.groups.n,match.groups.u,match,chunk.index,'requested',role);
       }
     }
@@ -128,7 +151,7 @@ export function analyzeBrief(brief) {
         add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
         add('site_depth_m',match.groups.d,match.groups.du,match,chunk.index,'inferred');
       }
-      for(const match of text.matchAll(/(?<![\p{L}])(?:دورين|دوران|طابقين|طابقان)(?![\p{L}])/gu))add('level_count',2,null,match,chunk.index);
+      for(const match of text.matchAll(/(?<![\p{L}])(?:دورين|دوران|طابقين|طابقان)(?![\p{L}])/gu))levelCount(2,match);
     }
     const pair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
     for(const match of text.matchAll(new RegExp(pair,'giu'))){
@@ -155,6 +178,9 @@ export function buildBriefProgram(input) {
     {metric:'site_width_m',expected:input.width},
     {metric:'site_depth_m',expected:input.depth},
     {metric:'level_count',expected:input.levels},
+    // Optional: the building's own size. Empty means the building fills the land.
+    ...[['building_width_m',input.buildingWidth],['building_depth_m',input.buildingDepth]]
+      .filter(([,value])=>value!==undefined&&value!==null&&String(value).trim()!=='').map(([metric,expected])=>({metric,expected})),
     ...(input.rows||[]).map(r=>({...r})),
   ];
   if(values.length>100)throw new Error('عدد المتطلبات يتجاوز الحد المسموح.');
@@ -164,7 +190,7 @@ export function buildBriefProgram(input) {
     if(r.expected===''||r.expected===null||r.expected===undefined||(typeof r.expected==='string'&&!r.expected.trim()))throw new Error('حدّد '+requirementLabel(r)+'؛ القيمة غير محددة.');
     if(!['number','string'].includes(typeof r.expected))throw new Error('أدخل قيمة رقمية في '+requirementLabel(r)+'.');
     r.expected=Number(r.expected);
-    if(!Number.isFinite(r.expected)||r.expected<0||(['site_width_m','site_depth_m','level_count'].includes(r.metric)&&r.expected<=0))throw new Error('أدخل أبعادًا وأعداد أدوار موجبة، وقيم متطلبات غير سالبة.');
+    if(!Number.isFinite(r.expected)||r.expected<0||(['site_width_m','site_depth_m','building_width_m','building_depth_m','level_count'].includes(r.metric)&&r.expected<=0))throw new Error('أدخل أبعادًا وأعداد أدوار موجبة، وقيم متطلبات غير سالبة.');
     if(!['min_space_area_by_role_m2','building_target_area_m2'].includes(r.metric)&&!r.metric.endsWith('_m')&&!Number.isInteger(r.expected))throw new Error('أدخل عددًا صحيحًا في '+requirementLabel(r)+'.');
     if(['room_count','room_count_per_unit','min_space_area_by_role_m2'].includes(r.metric)){
       r.role=r.role?.trim();if(!r.role||r.role.length>80)throw new Error('حدد استخدام الفراغ للمتطلب.');
@@ -172,6 +198,10 @@ export function buildBriefProgram(input) {
     const key=requirementKey(r);
     if(known.has(key))throw new Error('تعارض أو تكرار في '+requirementLabel(r)+'. اجمعه في متطلب واحد.');
     known.set(key,r);
+  }
+  for(const [building,land] of [['building_width_m','site_width_m'],['building_depth_m','site_depth_m']]){
+    const b=known.get(requirementKey({metric:building})),l=known.get(requirementKey({metric:land}));
+    if(b&&l&&b.expected>l.expected+1e-8)throw new Error(requirementLabel(b)+' ('+b.expected+') أكبر من '+requirementLabel(l)+' ('+l.expected+'). المبنى يقع داخل الأرض؛ صحّح أحدهما.');
   }
   if(input.type==='warehouse'){
     const preflight=warehouseRequirementsPreflight(values);

@@ -352,15 +352,23 @@ const assumptions = [
   'الأثاث والتشطيبات اقتراحات للمقياس. مجاري الخدمات والمواقف والارتدادات والتحقق الإنشائي والتنظيمي تحتاج إلى مراجعة مستقلة.'
 ];
 
+// Each stated value is checked against the supported range; undefined values are left for a question.
+function supportedEnvelope(width,depth,levels,height) {
+  const known=value=>value!==undefined;
+  if((known(width)&&(!Number.isFinite(width)||width<18||width>32))||(known(depth)&&(!Number.isFinite(depth)||depth<22||depth>36)))
+    unsupported('أدخل أبعاد المبنى الخارجية. يدعم هذا التوزيع عرضاً بين 18 و32 م وعمقاً بين 22 و36 م.');
+  if(known(levels)&&(!Number.isInteger(levels)||levels<1||levels>6))
+    unsupported('يدعم مخطط الشقق المحلي من دور سكني واحد إلى ستة أدوار شاملة الأرضي.');
+  if(known(height)&&(!Number.isFinite(height)||height<2.8||height>3.6))
+    unsupported('يدعم الدرج المحلي ارتفاع دور موحّداً بين 2.8 و3.6 م.');
+}
+
 function design(width,depth,levels,height,source,{entrance='N',courtyard=null}={}) {
   const turns=cardinalEdges.indexOf(entrance), side=turns%2===1;
   const planWidth=side?depth:width, planDepth=side?width:depth;
-  if(!Number.isFinite(width)||width<18||width>32||!Number.isFinite(depth)||depth<22||depth>36)
+  if(!Number.isFinite(width)||!Number.isFinite(depth))
     unsupported('أدخل أبعاد المبنى الخارجية. يدعم هذا التوزيع عرضاً بين 18 و32 م وعمقاً بين 22 و36 م.');
-  if(!Number.isInteger(levels)||levels<1||levels>6)
-    unsupported('يدعم مخطط الشقق المحلي من دور سكني واحد إلى ستة أدوار شاملة الأرضي.');
-  if(!Number.isFinite(height)||height<2.8||height>3.6)
-    unsupported('يدعم الدرج المحلي ارتفاع دور موحّداً بين 2.8 و3.6 م.');
+  supportedEnvelope(width,depth,levels,height);
   const title='عمارة سكنية '+width+' × '+depth+' م';
   const model={
     meta:{name:title,type:'residential',north:'-Z',acs_apartment:{schema:'acs.local-apartment/1',source,width_m:width,depth_m:depth,
@@ -431,12 +439,16 @@ function dimensions(text) {
   text=text.replace(/(?:من\s+دون\s+|بدون\s+|بلا\s*|لا\s+(?:يوجد|توجد|اريد)\s+)(?:اي\s*)?(?:ال)?(?:فناء|حوش|باحه|courtyard|atrium)/g,'');
   text=withoutStreetWidth(text);
   const owner='(?:المبنى|العماره|البناء|البنايه)';
-  const sizeOfBuilding=new RegExp('(?:ابعاد|مقاس|مسطح|بصمه|واجهه|عرض|طول|عمق)\\s+'+owner);
+  // «والمبنى ٢٠×٢٥» and «عمارة سكنية أبعادها ٢٠×٢٥» also name the building's own size.
+  const sizeOfBuilding=new RegExp('(?:ابعاد|مقاس|مسطح|بصمه|واجهه|عرض|طول|عمق)\\s+'+owner+
+    '|(?:^|[\\s،.,])و?(?:ال)?(?:مبنى|عماره|بنايه)(?:\\s+سكني(?:ه)?)?\\s+(?:(?:ابعادها|ابعاده|مقاسها|مقاسه|بمقاس|بابعاد)\\s*)?(?=\\d)');
   // «قطعة ٢٠×٣٠» and deed («صك») dimensions describe the plot, not the building.
-  const lotTerms=/(?:قطعه\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?قطعه(?![ء-ي])|(?:^|[\s،.,])صك(?:ها|ه)?(?![ء-ي])|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها))/;
+  const lotTerms=/(?:قطعه\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?قطعه(?:\s+(?:ال)?ارض)?(?![ء-ي])|(?:^|[\s،.,])(?:ال)?صك(?:ها|ه)?(?![ء-ي])|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها))/;
   const opening=s=>s.split(/\n\s*\n|(?:مجلس|غرفه نوم|صاله عائليه|مطبخ|فناء|حوش|باحه|courtyard|atrium)/,1)[0].slice(0,650);
   const intro=opening(text), lot=lotTerms.exec(intro), building=sizeOfBuilding.exec(text);
-  if(lot&&!building) unsupported('ذكرت أبعاد الأرض. حدّد عرض المبنى وعمقه بعد الارتدادات لاستخدام مخطط الشقق المحلي.');
+  // The plot is context for the building, never its envelope.
+  const plotPair=lot&&intro.slice(lot.index+lot[0].length).slice(0,30).match(new RegExp('^\\s*'+decimal+'\\s*(?:مترا?|امتار|م)?\\s*(?:[×x*]|في|بـ?)\\s*'+decimal));
+  const plot=plotPair?{w:+plotPair[1],d:+plotPair[2]}:null;
   let scope=lot?intro.slice(0,lot.index):intro;
   // Later named building dimensions are admissible even if a separate lot or
   // room programme came first. Stop again at any following lot description.
@@ -471,10 +483,11 @@ function dimensions(text) {
   const buildingQualifier='\\s+'+owner+'(?:\\s+الخارجيه?)?\\s*[:=]?\\s*';
   const namedValues=axis=>[...text.matchAll(new RegExp(axis+buildingQualifier+decimal,'g'))].map(m=>Number(m[1]));
   const namedSizes=[...text.matchAll(new RegExp('(?:ابعاد|مقاس|بصمه)'+buildingQualifier+decimal+'\\s*'+metres+'\\s*(?:[×x*]|في)\\s*'+decimal,'g'))];
-  return [
-    singleRequestedValue([w,pair?+pair[1]:undefined,...namedValues('(?:عرض|واجهه)'),...namedSizes.map(m=>+m[1])],'عرض المبنى'),
-    singleRequestedValue([d,pair?+pair[2]:undefined,...namedValues('(?:عمق|طول)'),...namedSizes.map(m=>+m[2])],'عمق المبنى')
-  ];
+  return {
+    width:singleRequestedValue([w,pair?+pair[1]:undefined,...namedValues('(?:عرض|واجهه)'),...namedSizes.map(m=>+m[1])],'عرض المبنى'),
+    depth:singleRequestedValue([d,pair?+pair[2]:undefined,...namedValues('(?:عمق|طول)'),...namedSizes.map(m=>+m[2])],'عمق المبنى'),
+    plot,plotMentioned:Boolean(lot)
+  };
 }
 
 // «أرضي وأول وثاني وثالث» lists every occupied floor: count them instead of assuming three.
@@ -499,12 +512,19 @@ function occupiedFloorCount(text) {
     // «أرضي + دورين», «ثلاثة أدوار غير/بدون/عدا الأرضي» add the ground floor to the count.
     const addsGround=/(?:^|[\s،.,])(?:ال)?ارضي\s*[,،]?\s*(?:و\s*(?:(?:فوقه|فوقها)\s*)?|زائد\s*|\+\s*|بالاضافه\s+الى\s*)$/.test(before) ||
       /^(?:\s+(?:علويه?|اضافيه?))?\s+فوق(?:ه|ها|(?:\s+(?:(?:الدور|الطابق)\s+)?الارضي))/.test(after) ||
-      /^\s+(?:غير|بدون|دون|عدا|ماعدا|ما\s+عدا|بخلاف|من\s+غير|من\s+دون|علاوه\s+على|بالاضافه\s+الى|زائد|\+)\s*(?:(?:ال)?(?:دور|طابق)\s+)?(?:ال)?ارضي/.test(after);
+      /^\s+(?:غير|بدون|دون|عدا|ماعدا|ما\s+عدا|بخلاف|من\s+غير|من\s+دون|علاوه\s+على|بالاضافه\s+الى|زائد|\+)\s*(?:(?:ال)?(?:دور|طابق)\s+)?(?:ال)?ارضي/.test(after) ||
+      // «ثلاث أدوار والأرضي»: the ground floor is named in addition to the count.
+      /^\s+و\s*(?:(?:ال)?(?:دور|طابق)\s+)?الارضي(?![ء-ي])/.test(after) ||
+      // «بالإضافة للأرضي», «علاوة على الدور الأرضي».
+      /^\s+(?:بالاضافه|اضافه|علاوه)\s+(?:(?:الى|على)\s+(?:ال)?|لل)(?:(?:دور|طابق)\s+(?:ال)?)?ارضي(?![ء-ي])/.test(after);
     const inclusive=/^\s+(?:تشمل|تتضمن|شامله?|بما\s+فيها?)(?:\s+(?:الدور|الطابق))?\s+الارضي/.test(after);
     if(addsGround&&inclusive) unsupported('ذكرت الأرضي منفصلاً ثم شملته في العدد. حدّد إجمالي الأدوار شاملاً الأرضي، أو اذكر الأدوار التي تعلوه.');
-    counts.push(countValue+(addsGround?1:0));
+    counts.push({value:countValue+(addsGround?1:0),ground:addsGround?'added':inclusive?'stated_inclusive':'read_inclusive'});
   }
-  return singleRequestedValue(counts,'إجمالي الأدوار شاملة الأرضي');
+  const value=singleRequestedValue(counts.map(c=>c.value),'إجمالي الأدوار شاملة الأرضي');
+  if(value===undefined) return undefined;
+  const ground=['added','stated_inclusive','read_inclusive'].find(rule=>counts.some(c=>c.ground===rule));
+  return {value,ground};
 }
 
 const directions={شمال:'N',شرق:'E',جنوب:'S',غرب:'W'};
@@ -567,38 +587,107 @@ function courtyardChoice(text,previous=null) {
   const origins=[origin(namedWidth,old?.[2]),origin(namedDepth,old?.[3])];
   const size_source=origins.includes('unknown')?'not_recorded':origins.every(o=>o==='client')?'client_stated':
     origins.every(o=>o==='default')?'default_assumption':'partly_default_assumption';
-  return {width:Number(namedWidth?.[1]??pair?.[1]??old?.[2]??4),depth:Number(namedDepth?.[1]??pair?.[2]??old?.[3]??5),size_source};
+  return {width:Number(namedWidth?.[1]??pair?.[1]??old?.[2]??4),depth:Number(namedDepth?.[1]??pair?.[2]??old?.[3]??5),size_source,
+    sized:Boolean(namedWidth||namedDepth||pair)};
 }
 
-export function apartmentFromBrief(text,defaults={}) {
+// Values the visitor typed in the form: a positive number, or nothing. Never a prefilled default.
+function formValues(form) {
+  const value=key=>{const n=Number(form?.[key]);return form?.[key]!==''&&form?.[key]!=null&&Number.isFinite(n)&&n>0?n:undefined;};
+  // The visitor's choice between a text value and a field value that disagreed.
+  const prefer=Object.fromEntries(['width','depth','levels','plot'].filter(key=>['text','form'].includes(form?.prefer?.[key])).map(key=>[key,form.prefer[key]]));
+  return {width:value('width'),depth:value('depth'),levels:value('levels'),plotWidth:value('plotWidth'),plotDepth:value('plotDepth'),prefer};
+}
+
+// A question, not a refusal: the brief is supported once the missing value is given.
+function ask(message,missing) {
+  const error=new Error(message);
+  error.code='LOCAL_APARTMENT_UNSUPPORTED';error.question=true;error.missing=missing;
+  throw error;
+}
+
+export function apartmentFromBrief(text,form={}) {
   const t=normalize(text);
   if(!/(?:عماره|عمار[هة]|مبنى\s+سكني|بنايه\s+سكنيه|apartment\s+building|residential\s+building)/.test(t.slice(0,260))) return null;
   if(/^(?:صمم\s+|انشئ\s+|ابن\s+)?(?:مستودع|مصنع|فيلا|مدرسه)/.test(t.trim())) return null;
-  const defaulted=[], entrance=entranceDirection(t);
-  const model=buildRequestedApartment(t,defaults,{entrance,courtyard:courtyardChoice(t),defaulted});
+  const understanding={}, entrance=entranceDirection(t), courtyard=courtyardChoice(t);
+  const model=buildRequestedApartment(t,formValues(form),{entrance,courtyard,understanding});
   const meta=model.meta.acs_apartment;
-  // Say what the customer did not state instead of assuming it silently.
-  if(defaulted.includes('width')||defaulted.includes('depth'))
-    meta.assumptions.push('لم تذكر '+(defaulted.includes('width')&&defaulted.includes('depth')?'عرض المبنى وعمقه':defaulted.includes('width')?'عرض المبنى':'عمق المبنى')+'؛ استُخدم '+meta.width_m+' × '+meta.depth_m+' م افتراضاً قابلاً للتعديل.');
-  if(defaulted.includes('levels'))
-    meta.assumptions.push('لم تذكر عدد الأدوار؛ استُخدم '+meta.occupied_levels+' أدوار شاملة الأرضي افتراضاً قابلاً للتعديل.');
+  understanding.entrance={value:meta.street_edge,source:entrance===undefined?'assumed':'text'};
+  understanding.courtyard=courtyard?{value:{w:courtyard.width,d:courtyard.depth},source:courtyard.sized?'text':'assumed_size'}:
+    {value:null,source:courtyard===false?'text':'none'};
+  // The entrance side is the one value still assumed; say so.
   if(entrance===undefined)
     meta.assumptions.push('لم تحدد جهة المدخل؛ وُضع المدخل في الواجهة الشمالية افتراضاً قابلاً للتعديل.');
+  meta.understanding=understanding;
   meta.brief=String(text);
   return model;
 }
 
-function buildRequestedApartment(t,{width=20,depth=25,levels=3,height=3.4},options) {
-  const explicitSize=dimensions(t), defaulted=options.defaulted;
-  if(defaulted&&explicitSize[0]===undefined) defaulted.push('width');
-  if(defaulted&&explicitSize[1]===undefined) defaulted.push('depth');
-  width=explicitSize[0]??width; depth=explicitSize[1]??depth;
-  const statedFloors=occupiedFloorCount(t);
-  const listedFloors=listedFloorCount(t);
-  if(statedFloors!==undefined) levels=statedFloors;
-  else if(listedFloors!==undefined) levels=listedFloors;
-  else if(/(?:دور\s+|طابق\s+)?ارضي[^.\n]{0,70}(?:اول)[^.\n]{0,40}(?:ثان)/.test(t)) levels=3;
-  else if(defaulted) defaulted.push('levels');
+const sideAr={N:'الشمال',E:'الشرق',S:'الجنوب',W:'الغرب'};
+const floorsAr=n=>n===1?'دور واحد':n===2?'دوران':n+(n<=10?' أدوار':' دوراً');
+const flatsAr=n=>n===2?'شقتان':n+(n<=10?' شقق':' شقة');
+const metresAr=n=>String(Number(n.toFixed(2)));
+// The guest confirmation card «فهمنا: …», derived from the model that «ارسم» will draw.
+// Each row is plain Arabic; assumed rows are flagged for the visitor.
+export function apartmentConfirmation(model) {
+  const a=model?.meta?.acs_apartment, u=a?.understanding;
+  if(!u) return null;
+  const levels=a.occupied_levels, rows=[];
+  const groundNote={added:'أضفنا الأرضي إلى العدد الذي ذكرته',stated_inclusive:'شاملة الأرضي كما ذكرت',
+    listed:'حسب الأدوار التي عددتها',form:'من حقل عدد الأدوار (شاملة الأرضي)',
+    read_inclusive:'حسبنا الأرضي ضمن العدد لأنك لم تذكره'}[u.levels.ground];
+  rows.push({key:'levels',label:'الأدوار',
+    value:levels===1?'دور واحد (الأرضي فقط)':floorsAr(levels)+': الأرضي و'+floorsAr(levels-1)+' فوقه',
+    note:groundNote+(u.levels.chosen?' — اخترتَه حين اختلف الوصف عن الحقل':''),assumed:u.levels.ground==='read_inclusive'&&levels>1});
+  const from=source=>source==='form'?'من الحقول':'من وصفك';
+  rows.push({key:'building',label:'المبنى',value:'عرض '+metresAr(a.width_m)+' م × عمق '+metresAr(a.depth_m)+' م',
+    note:(u.width.source===u.depth.source?from(u.width.source):'العرض '+from(u.width.source)+' والعمق '+from(u.depth.source))+
+      (u.width.chosen||u.depth.chosen?' — اخترتَه حين اختلف الوصف عن الحقل':''),assumed:false});
+  if(u.plot) rows.push({key:'plot',label:'الأرض',value:metresAr(u.plot.w)+' × '+metresAr(u.plot.d)+' م',note:from(u.plot.source),assumed:false});
+  rows.push({key:'units',label:'الشقق',value:'شقتان في كل دور، '+flatsAr(a.units_total)+' في المجموع',
+    note:u.units.source==='assumed'?'يرسم المخطط المحلي شقتين في كل دور':null,assumed:u.units.source==='assumed'});
+  rows.push({key:'bedrooms',label:'غرف النوم',value:'3 في كل شقة',note:u.bedrooms.source==='assumed'?'لم تحدد عددها':null,assumed:u.bedrooms.source==='assumed'});
+  rows.push({key:'entrance',label:'المدخل',value:'من '+sideAr[a.street_edge],
+    note:u.entrance.source==='assumed'?'لم تحدد الجهة؛ يمكنك تغييرها بعد الرسم':null,assumed:u.entrance.source==='assumed'});
+  const court=u.courtyard;
+  rows.push({key:'courtyard',label:'الفناء',
+    value:court.value?'فناء مفتوح للسماء '+metresAr(court.value.w)+' × '+metresAr(court.value.d)+' م':'لا يوجد',
+    note:court.source==='assumed_size'?'لم تحدد مقاسه':null,assumed:court.source==='assumed_size'});
+  // Requests the local generator cannot honour yet: the visitor sees them before drawing.
+  const notDrawn=(u.not_drawn||[]).map(item=>item.text);
+  return {title:'فهمنا:',rows,notDrawn,assumed:rows.filter(row=>row.assumed).length};
+}
+
+function buildRequestedApartment(t,form,options) {
+  const brief=options.understanding, size=dimensions(t), stated=occupiedFloorCount(t), listedFloors=listedFloorCount(t);
+  // Text and form both stated must agree. A disagreement is never settled silently:
+  // it is offered to the visitor, whose choice comes back in form.prefer.
+  // (A revision passes the current model instead of a form.)
+  const conflicts=[], chosen={};
+  const choose=(key,fromText,fromForm,label,unit)=>{
+    if(brief&&fromText!==undefined&&fromForm!==undefined&&Math.abs(fromText-fromForm)>1e-9) {
+      const pick=form.prefer?.[key];
+      if(pick==='form'||pick==='text') { chosen[key]=pick; return pick==='form'?fromForm:fromText; }
+      conflicts.push({key,label,unit,text:fromText,form:fromForm});
+    }
+    return fromText??fromForm;
+  };
+  let width=choose('width',size.width,form.width,'عرض المبنى',' م'), depth=choose('depth',size.depth,form.depth,'عمق المبنى',' م');
+  let levels, ground, height=form.height??3.4;
+  if(stated) ({value:levels,ground}=stated);
+  else if(listedFloors!==undefined) {levels=listedFloors;ground='listed';}
+  else if(/(?:دور\s+|طابق\s+)?ارضي[^.\n]{0,70}(?:اول)[^.\n]{0,40}(?:ثان)/.test(t)) {levels=3;ground='listed';}
+  levels=choose('levels',levels,form.levels,'عدد الأدوار','');
+  if(levels!==undefined&&(ground===undefined||chosen.levels==='form')) ground='form';
+  let plot=size.plot;
+  if(brief&&form.plotWidth!==undefined&&form.plotDepth!==undefined) {
+    if(plot&&(plot.w!==form.plotWidth||plot.d!==form.plotDepth)&&form.prefer?.plot!=='text') {
+      if(form.prefer?.plot==='form') plot={w:form.plotWidth,d:form.plotDepth,source:'form'};
+      else conflicts.push({key:'plot',label:'أبعاد الأرض',unit:' م',text:plot.w+' × '+plot.d,form:form.plotWidth+' × '+form.plotDepth});
+    } else if(!plot||form.prefer?.plot!=='text') plot={w:form.plotWidth,d:form.plotDepth,source:plot?'text':'form'};
+    else plot={...plot,source:'text'};
+  } else if(plot) plot={...plot,source:'text'};
   const unitAmount='(?:'+count+'\\s*(?:شقق|شقه|وحدات\\s+سكنيه)|شقتان|شقتين|شقه(?:\\s+واحده)?|وحد(?:تان|تين|ه)\\s+سكني(?:تان|تين|ه))';
   const ordinal='(?:ال)?(?:ارضي|اول|ثان(?:ي)?|ثالث|رابع|خامس|اخير|علوي)';
   const floor='(?:(?:كل\\s+)?(?:ال)?(?:دور|طابق)(?:\\s+'+ordinal+')?|'+ordinal+')';
@@ -613,37 +702,80 @@ function buildRequestedApartment(t,{width=20,depth=25,levels=3,height=3.4},optio
   const totals=new RegExp('(?:ب?اجمالي|مجموع(?:ها)?|المبنى يضم|العماره تضم|(?<![ء-ي])(?<!(?:دور|طابق)(?:\\s+[ء-ي]+)?\\s+)(?:فيها|تضم))\\s*[:=]?\\s*('+unitAmount+')','g');
   if(distributions.some(re=>[...t.matchAll(re)].some(m=>numberOfUnits(m[1])!==2)))
     unsupported('يدعم هذا المخطط المحلي شقتين في كل دور بما فيه الأرضي. يلزم توزيع آخر عند اختلاف عدد الشقق بين الأدوار.');
-  const total=[...t.matchAll(totals)].map(m=>numberOfUnits(m[1])).find(n=>n!==2*levels);
+  const totalsStated=[...t.matchAll(totals)].map(m=>numberOfUnits(m[1]));
+  const unitsStated=totalsStated.length>0||distributions.some(re=>[...t.matchAll(re)].length>0);
+  const total=levels===undefined?undefined:totalsStated.find(n=>n!==2*levels);
   if(total!==undefined)
     unsupported('ذكرت '+total+' شقق إجمالاً، ويضع هذا المخطط المحلي شقتين في كل دور ('+2*levels+' شقق في '+levels+' أدوار). حدّد عدد الأدوار أو العدد الإجمالي الصحيح، أو اطلب توزيعاً آخر.');
-  const bedroomCount=t.match(new RegExp(count+'\\s*غرف(?:ه)?\\s*نوم(?:\\s+(?:في|ب|لكل)\\s*(?:كل\\s+)?شقه)')) ||
-    t.match(new RegExp('(?:في كل شقه|لكل شقه|تتكون كل شقه من)\\s*'+count+'\\s*غرف(?:ه)?\\s*نوم'));
-  if(bedroomCount && asCount(bedroomCount[1])!==3)
-    unsupported('يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
+  // Any stated bedroom count («أربع غرف نوم», «كل شقة فيها ٤ غرف نوم») is compared with the plan's three.
+  const bedroomCounts=[...t.matchAll(new RegExp('(?<![ء-ي\\d])و?'+count+'\\s*غرف(?:ه)?\\s*(?:ال)?نوم','g'))].map(m=>asCount(m[1]));
+  const bedroomsStated=bedroomCounts.length>0;
+  const notDrawn=[];
+  // In a brief the visitor sees these in «فهمنا» before drawing; a revision has no card, so it still refuses.
+  const cannotDraw=(key,text,refusal)=>{ if(brief) { if(!notDrawn.some(item=>item.key===key)) notDrawn.push({key,text}); } else unsupported(refusal); };
+  const otherBedrooms=bedroomCounts.find(n=>n!==3);
+  if(otherBedrooms!==undefined)
+    cannotDraw('bedrooms','غرف النوم: طلبت '+otherBedrooms+'، ويرسم المخطط المحلي 3 غرف نوم في كل شقة','يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
   // A restriction explicitly excluded in the brief should not prevent a supported plan.
-  const positive=t.replace(/(?:لا\s+(?:يوجد|توجد|اريد|ابي|يتضمن|يشمل)(?:\s+(?:بها|فيها|به|فيه))?\s+|(?<![ء-ي])و?لا\s+|بلا\s*|(?:ب|من\s+)?دون\s+)(?:اي\s*)?(?:ال)?(?:قبو|بدروم|افنيه|فناء|حوش|دوبلكس|دوبليكس|منور|مناور|ملحق|محلات|مواقف)/g,'');
+  const positive=t.replace(/(?:لا\s+(?:يوجد|توجد|اريد|ابي|يتضمن|يشمل)(?:\s+(?:بها|فيها|به|فيه))?\s+|(?<![ء-ي])و?لا\s+|بلا\s*|(?:ب|من\s+)?دون\s+)(?:اي\s*)?(?:ال)?(?:قبو|بدروم|افنيه|فناء|حوش|دوبلكس|دوبليكس|منور|مناور|ملحق|محلات|مواقف|مجلس|مسبح|غرفه\s+(?:خادمه|سائق))/g,'');
   if(/قبو|بدروم/.test(positive)) unsupported('يتضمن وصفك قبواً. يدعم مخطط الشقق المحلي الأدوار فوق الأرض فقط.');
-  // Requests the local plan cannot draw are refused, never dropped silently.
+  // Requests the local plan cannot draw are never dropped silently: listed before drawing, or refused.
   if(/(?<![ء-ي])(?:و|ب|ل)?(?:ال)?(?:منور|مناور)(?![ء-ي])/.test(positive))
-    unsupported('يتضمن وصفك منوراً. يرسم المخطط المحلي فناءً مركزياً مفتوحاً للسماء فقط (بين 3.6 و5 م × بين 4 و6 م)؛ اكتب «فناء» بأبعاده إن كان هذا مقصودك، أو احذف المنور.');
+    cannotDraw('lightwell','منور للتهوية: يرسم المخطط المحلي فناءً مركزياً مفتوحاً للسماء فقط (اكتب «فناء» بأبعاده إن كان هذا مقصودك)',
+      'يتضمن وصفك منوراً. يرسم المخطط المحلي فناءً مركزياً مفتوحاً للسماء فقط (بين 3.6 و5 م × بين 4 و6 م)؛ اكتب «فناء» بأبعاده إن كان هذا مقصودك، أو احذف المنور.');
   if(/(?<![ء-ي])(?:و|ب|ل)?(?:ال)?ملحق(?![ء-ي])/.test(positive))
-    unsupported('يتضمن وصفك ملحقاً. يضيف المخطط المحلي سطحاً بلا غرف فقط؛ الملحق العلوي يحتاج إلى توزيع آخر.');
-  if(/(?:^|[\s،.,])(?:الدور\s+)?(?:ال)?ارضي\s*(?:[:=]|كله|كامل|يكون|عباره\s+عن|فيه|فيها)?\s*(?:محلات|محل\s+تجاري|تجاري|معارض|مواقف|مظلات\s+سيارات)|(?:محلات|مواقف)[^.\n]{0,12}(?:في|ب)\s*(?:الدور\s+)?(?:ال)?ارضي|عماره\s+(?:سكنيه\s+)?تجاريه|تجاريه\s+سكنيه/.test(positive))
+    cannotDraw('annex','ملحق علوي: يضيف المخطط المحلي سطحاً بلا غرف فقط',
+      'يتضمن وصفك ملحقاً. يضيف المخطط المحلي سطحاً بلا غرف فقط؛ الملحق العلوي يحتاج إلى توزيع آخر.');
+  if(/مجلس\s+(?:لل)?(?:حريم|نساء|السيدات|النساء)|مجلس(?:ين|ان)(?![ء-ي])/.test(positive))
+    cannotDraw('ladies_majlis','مجلس حريم منفصل: يرسم المخطط المحلي مجلس ضيوف واحداً في كل شقة','يرسم المخطط المحلي مجلس ضيوف واحداً في كل شقة؛ مجلس الحريم المنفصل يحتاج إلى توزيع آخر.');
+  if(/غرف(?:ه|ة)?\s+(?:لل)?(?:خادمه|خدامه|عامله|سائق|سواق)/.test(positive))
+    cannotDraw('staff_room','غرفة خادمة أو سائق: لا يرسمها المخطط المحلي','يرسم المخطط المحلي غرف الشقة المعتادة فقط؛ غرفة الخادمة أو السائق تحتاج إلى توزيع آخر.');
+  if(/(?<![ء-ي])(?:و|ب)?(?:ال)?مسبح(?![ء-ي])/.test(positive))
+    cannotDraw('pool','مسبح: لا يرسمه المخطط المحلي','لا يرسم المخطط المحلي مسبحاً.');
+  if(/(?:^|[\s،.,])و?(?:الدور\s+)?(?:ال)?ارضي\s*(?:[:=]|كله|كامل|يكون|عباره\s+عن|فيه|فيها)?\s*(?:محلات|محل\s+تجاري|تجاري|معارض|مواقف|مظلات\s+سيارات)|(?:محلات|مواقف)[^.\n]{0,12}(?:في|ب)\s*(?:الدور\s+)?(?:ال)?ارضي|عماره\s+(?:سكنيه\s+)?تجاريه|تجاريه\s+سكنيه/.test(positive))
     unsupported('يتضمن وصفك أرضياً تجارياً أو مواقف. يضع المخطط المحلي شقتين في كل دور بما فيه الأرضي؛ الاستخدام المختلط يحتاج إلى توزيع آخر.');
   // «كل شقة غرفتين نوم» states two bedrooms per apartment («أضف غرفتي نوم» beside a master room does not).
   if(/(?:(?:في\s+|ل)?كل\s+شقه|لكل\s+شقه)\s*(?:فيها\s+|بها\s+|تتكون\s+من\s+)?(?:غرفتين|غرفتان|غرفتي)\s+نوم(?!\s+(?:اضافيه|اضافيتين|اخري|اخريين))|(?:غرفتين|غرفتان|غرفتي)\s+نوم\s+(?:في|ب|ل)\s*(?:كل\s+)?شقه/.test(positive))
-    unsupported('يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
+    cannotDraw('bedrooms','غرف النوم: طلبت 2، ويرسم المخطط المحلي 3 غرف نوم في كل شقة','يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
   if(/د[وي]بلي?كس|duplex|شقه\s+(?:من|على)\s+(?:طابقين|دورين)/.test(positive))
     unsupported('تتوزع كل شقة محلية على دور واحد. شقق الدوبلكس تحتاج إلى درج وتوزيع خاصين بكل وحدة.');
   const storey=t.match(new RegExp('ارتفاع\\s+(?:(?:كل|بين)\\s+)?(?:ال)?(?:دور|طابق)(?:\\s+الواحد)?\\s*[:=]?\\s*'+decimal));
   if(storey) height=+storey[1];
   // Respect the declared first-floor datum and flag inconsistent level series.
   const datum=(name)=>t.match(new RegExp('(?:منسوب\\s+|و)?'+name+'\\s*[:=]?\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*م'));
-  const first=datum('الاول'), second=datum('الثاني'), roof=datum('(?:بلاطه\\s+)?السطح'), ground=datum('الارضي');
+  const first=datum('الاول'), second=datum('الثاني'), roof=datum('(?:بلاطه\\s+)?السطح'), groundDatum=datum('الارضي');
   if(first && !storey) height=+first[1];
-  if((ground&&+ground[1]!==0)||(first&&Math.abs(+first[1]-height)>0.01)||(second&&Math.abs(+second[1]-2*height)>0.01)||(roof&&Math.abs(+roof[1]-levels*height)>0.01))
+  if((groundDatum&&+groundDatum[1]!==0)||(first&&Math.abs(+first[1]-height)>0.01)||(second&&Math.abs(+second[1]-2*height)>0.01)||(roof&&levels!==undefined&&Math.abs(+roof[1]-levels*height)>0.01))
     unsupported('المناسيب المحددة غير منتظمة. يدعم مخطط الشقق المحلي ارتفاعاً موحّداً يبدأ من منسوب أرضي 0.00 م.');
-  return design(width,depth,levels,height,'local_brief',options);
+  if(conflicts.length) {
+    const error=new Error('الوصف والحقول مختلفان في: '+conflicts.map(c=>c.label+' (في الوصف '+c.text+c.unit+'، وفي الحقل '+c.form+c.unit+')').join('، ')+'. أيهما المقصود؟');
+    error.code='LOCAL_APARTMENT_UNSUPPORTED';error.question=true;error.conflicts=conflicts;error.missing=[];
+    throw error;
+  }
+  // Refuse what cannot be drawn before asking for what is missing.
+  supportedEnvelope(width,depth,levels,height);
+  const missing=[...(width===undefined?['width']:[]),...(depth===undefined?['depth']:[]),...(levels===undefined?['levels']:[])];
+  if(missing.length) {
+    const sizeAsked=width===undefined&&depth===undefined?'كم عرض المبنى وعمقه بالمتر':width===undefined?'كم عرض المبنى بالمتر':depth===undefined?'كم عمق المبنى بالمتر':'';
+    const floorsAsked=levels===undefined?(sizeAsked?'، وكم عدد أدواره شاملة الأرضي':'كم عدد الأدوار شاملة الأرضي'):'';
+    const example=sizeAsked?' مثل: عرض المبنى ٢٠ م وعمقه ٢٥ م'+(plot?' بعد الارتدادات':'')+'.':'';
+    const unitsHint=levels===undefined&&totalsStated.length?' ذكرت '+totalsStated[0]+' شقق، والمخطط المحلي يضع شقتين في كل دور.':'';
+    ask((plot||size.plotMentioned)&&sizeAsked?'ذكرت الأرض فقط. '+sizeAsked+floorsAsked+'؟'+example+unitsHint:sizeAsked+floorsAsked+'؟'+example+unitsHint,missing);
+  }
+  if(plot&&(width>plot.w+1e-9||depth>plot.d+1e-9))
+    unsupported('المبنى ('+width+' × '+depth+' م) أكبر من الأرض ('+plot.w+' × '+plot.d+' م). صحّح أبعاد المبنى أو الأرض.');
+  const model=design(width,depth,levels,height,'local_brief',options);
+  if(notDrawn.length) model.meta.acs_apartment.assumptions.push('لم يُرسم لأنه غير مدعوم في المولّد المحلي بعد: '+notDrawn.map(item=>item.text).join('؛ ')+'.');
+  if(brief) Object.assign(brief,{
+    width:{value:width,source:size.width!==undefined&&chosen.width!=='form'?'text':'form',...(chosen.width?{chosen:true}:{})},
+    depth:{value:depth,source:size.depth!==undefined&&chosen.depth!=='form'?'text':'form',...(chosen.depth?{chosen:true}:{})},
+    not_drawn:notDrawn,
+    levels:{value:levels,ground,...(chosen.levels?{chosen:true}:{})},
+    plot:plot?{w:plot.w,d:plot.d,source:plot.source}:null,
+    units:{per_floor:2,total:2*levels,source:unitsStated?'text':'assumed'},
+    bedrooms:{per_unit:3,source:bedroomsStated?'text':'assumed'}
+  });
+  return model;
 }
 
 export function apartmentFromRevision(text,currentModel) {

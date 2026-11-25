@@ -19,6 +19,7 @@ on:
       - 'tests/remediation/test_guest_quicklook.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_confirm_card.cjs'
       - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
@@ -47,6 +48,7 @@ on:
       - 'tests/remediation/test_guest_quicklook.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_confirm_card.cjs'
       - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
@@ -125,6 +127,10 @@ jobs:
         if: matrix.brief == 'riyadh-20x25'
         timeout-minutes: 20
         run: node tests/remediation/test_guest_brief_variations.cjs
+      - name: Verify the guest confirmation card, questions and land versus building
+        if: ${{ !cancelled() && matrix.brief == 'riyadh-20x25' && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
+        timeout-minutes: 5
+        run: node tests/remediation/test_guest_confirm_card.cjs
       - name: Verify editing and recovery when WebGL is unavailable
         if: ${{ !cancelled() && matrix.brief == 'riyadh-20x25' && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
         timeout-minutes: 5

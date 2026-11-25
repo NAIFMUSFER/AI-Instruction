@@ -163,6 +163,27 @@ const cases = [
     const source=form('طلب بناء',{rows:[{metric:'room_count',role:'bedroom',expected:'2'}]});
     const snapshot=JSON.stringify(source);buildBriefProgram(source);assert.equal(JSON.stringify(source),snapshot);
   }],
+  ['Land and building are separate sizes; the ground floor is added when the count excludes it (owner decision 3)', () => {
+    const plot='عمارة سكنية على أرض ٢٥×٣٠ م، والمبنى ٢٠×٢٥ م، ثلاث أدوار';
+    assert.deepEqual(analyzeBrief(plot).candidates.map(r=>[r.metric,r.expected,r.source]),
+      [['building_width_m',20,'inferred'],['building_depth_m',25,'inferred'],['site_width_m',25,'inferred'],['site_depth_m',30,'inferred']]);
+    const p=buildBriefProgram(form(plot,{width:'25',depth:'30',buildingWidth:'20',buildingDepth:'25'}));evidence(p);
+    assert.deepEqual(Object.fromEntries(p.requirements.map(r=>[r.metric,r.expected])),
+      {site_width_m:25,site_depth_m:30,level_count:3,building_width_m:20,building_depth_m:25});
+    assert.throws(()=>buildBriefProgram(form(plot,{width:'25',depth:'30'})),/عرض المبنى.*في الوصف|ورد متطلب عرض المبنى/,'a building size in the brief must be confirmed, not dropped');
+    assert.throws(()=>buildBriefProgram(form('عمارة',{buildingWidth:'22'})),/أكبر من عرض الموقع/);
+    assert.deepEqual(analyzeBrief('عمارة. عرض المبنى ٢٠ م وعمقه ٢٥ م.').candidates.map(r=>[r.metric,r.expected,r.evidence]),
+      [['building_width_m',20,'عرض المبنى ٢٠ م'],['building_depth_m',25,'وعمقه ٢٥ م']]);
+    const optional=buildBriefProgram(form('عمارة سكنية'));
+    assert.ok(!optional.requirements.some(r=>r.metric.startsWith('building_')),'an empty building size stays unconfirmed');
+    const excluded='أبغى عمارة سكنية. عرض الأرض ٢٤ م. عمق الأرض ٢٨ م. ٣ أدوار غير الأرضي.';
+    assert.deepEqual(analyzeBrief(excluded).candidates.filter(r=>r.metric==='level_count').map(r=>[r.expected,r.evidence]),[[4,'٣ أدوار غير الأرضي']]);
+    evidence(buildBriefProgram(form(excluded,{width:'24',depth:'28',levels:'4'})));
+    assert.throws(()=>buildBriefProgram(form(excluded,{width:'24',depth:'28',levels:'3'})),/تعارض/);
+    for(const [text,n,quote] of [['عمارة سكنية. أرضي + ٣ أدوار.',4,'أرضي + ٣ أدوار'],['عمارة سكنية. دورين فوق الأرضي.',3,'دورين فوق الأرضي'],
+      ['عمارة. عدد الأدوار ٣ شاملة الأرضي.',3,'عدد الأدوار ٣']])
+      assert.deepEqual(analyzeBrief(text).candidates.filter(r=>r.metric==='level_count').map(r=>[r.expected,r.evidence]),[[n,quote]],text);
+  }],
 ];
 for(const [name,test] of cases){test();console.log('PASS '+name);}
 console.log('BRIEF PROGRAM: '+cases.length+' passed');

@@ -15,7 +15,7 @@ async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
     const listeners = {};
     const node = {
       dataset: {}, classList: { add() {}, remove() {} },
-      setAttribute() {}, closest() { return null; }, before() {}, focus() {},
+      setAttribute() {}, closest() { return null; }, before() {}, after() {}, focus() {},
       addEventListener(name, fn) { listeners[name] = fn; },
       dispatch(name, event) { listeners[name]?.(event); },
       click() { this.dispatch('click'); },
@@ -26,7 +26,8 @@ async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
   const document = {
     readyState: 'loading',
     body: { classList: { add() {} }, append(banner) { nodes.set(banner.id, banner); } },
-    createElement: () => element('banner'),
+    // Each created element is its own node (the guest card and building fields are created too).
+    createElement: () => element('created-' + nodes.size),
     getElementById: id => id === 'acsGuestBanner' ? nodes.get(id) : element(id),
     querySelector: () => null,
     addEventListener(name, fn) { if (name === 'DOMContentLoaded') boot = fn; },

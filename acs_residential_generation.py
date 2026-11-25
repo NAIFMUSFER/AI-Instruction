@@ -130,7 +130,7 @@ def prepare_layout(building, brief, requirements, budget):
         except PlanError as exc:
             issues.append({'code':exc.code})
         # Other engineering requirements remain visible in the normal review.
-        counts=[r for r in requirements if r.get('metric') in {'site_width_m','site_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit'}]
+        counts=[r for r in requirements if r.get('metric') in {'site_width_m','site_depth_m','building_width_m','building_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit'}]
         issues += _program(value, brief, counts) if counts else []
         return issues
     issues = findings(building)
