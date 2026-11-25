@@ -50,6 +50,25 @@ GUID_ALPHABET = SPEC["global_id_alphabet"]
 COMMAND_SOURCE = SPEC["import_command_source"]
 COMMAND_MAP = dict(SPEC["import_command_map"])
 
+# Canonical plans use x east and z SOUTH (meta.north "-Z"), with y up. IFC is a
+# right-handed X/Y plan with Z up, where +Y is the project north unless
+# TrueNorth says otherwise. Writing canonical z directly as IFC Y therefore
+# produced a mirror image (east x south x up is left-handed), not a rotation:
+# the south room appeared north of the plan in every IFC reader while DXF, SVG
+# and glTF agreed. The exchange model stays canonical; only serialisation and
+# import cross this boundary, through these two functions.
+IFC_PLAN_AXES = "IFC_X=CANONICAL_X;IFC_Y=-CANONICAL_Z;IFC_Z=UP"
+
+
+def _ifc_y(z):
+    """Canonical plan z (south) to IFC Y (north). Adds 0.0 so -0.0 never prints."""
+    return -float(z) + 0.0
+
+
+def _ifc_rot(rot_deg):
+    """Canonical plan angle (x towards +z) to IFC angle (X towards +Y)."""
+    return -float(rot_deg or 0.0) + 0.0
+
 
 # ----------------------------------------------------------------- أدوات ----
 def _q(v):
@@ -585,8 +604,11 @@ def serialise_ifc(exchange, generated_at=None):
                   % (u_len, u_area, u_vol, u_deg))
 
     world = f.axis(0.0, 0.0, 0.0)
+    # Canonical north is -Z (acs_project's site default and the CAD/SVG
+    # projections), i.e. IFC +Y after _ifc_y. State it, not the reader default.
+    north = f.direction(0.0, 1.0)
     ctx = f.add("IFCGEOMETRICREPRESENTATIONCONTEXT",
-                "$,'Model',3,1.E-05,%s,$" % world)
+                "$,'Model',3,1.E-05,%s,%s" % (world, north))
 
     proj = f.add("IFCPROJECT", "'%s',%s,%s,$,$,$,$,(%s),%s"
                  % (guid("project"), owner, step_string(exchange["project"]["name"]),
@@ -623,11 +645,13 @@ def serialise_ifc(exchange, generated_at=None):
     space_refs = {}
     for sp in exchange["spaces"]:
         x, z, w, d = sp["footprint"]
-        pl = f.placement(local(sp["level_index"]), x, z, 0.0)
+        # The placement is the canonical north-west corner; the footprint
+        # extends east (+X) and south (-Y in IFC).
+        pl = f.placement(local(sp["level_index"]), x, _ifc_y(z), 0.0)
         half_w = w / 2.0 if f.exact_numbers else _q(w / 2.0)
         half_d = d / 2.0 if f.exact_numbers else _q(d / 2.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis2(half_w, half_d), f.real(w), f.real(d)))
+                     % (f.axis2(half_w, -half_d + 0.0), f.real(w), f.real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                          f.real(sp["height"])))
@@ -646,10 +670,11 @@ def serialise_ifc(exchange, generated_at=None):
     for roof in exchange.get("roof_references") or []:
         cid = roof["canonical_id"]
         x, z, w, d = roof["footprint"]
-        pl = f.placement(bldg_pl, x, z, roof["elevation"])
+        pl = f.placement(bldg_pl, x, _ifc_y(z), roof["elevation"])
         if roof["height"] == 0:
+            # Counter-clockwise seen from above (+Z normal) in the IFC plan.
             loop = f.add("IFCPOLYLOOP", "(%s)" % ",".join(
-                f.point(px, py, 0.0) for px, py in ((0.0, 0.0), (w, 0.0), (w, d), (0.0, d))))
+                f.point(px, py, 0.0) for px, py in ((0.0, 0.0), (0.0, -d + 0.0), (w, -d + 0.0), (w, 0.0))))
             bound = f.add("IFCFACEOUTERBOUND", "%s,.T." % loop)
             face = f.add("IFCFACE", "(%s)" % bound)
             faces = f.add("IFCCONNECTEDFACESET", "(%s)" % face)
@@ -657,7 +682,7 @@ def serialise_ifc(exchange, generated_at=None):
             shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SurfaceModel',(%s)" % (ctx, surface))
         else:
             prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                         % (f.axis2(w / 2.0, d / 2.0), f.real(w), f.real(d)))
+                         % (f.axis2(w / 2.0, -d / 2.0 + 0.0), f.real(w), f.real(d)))
             solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                           % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                              f.real(roof["height"])))
@@ -692,7 +717,7 @@ def serialise_ifc(exchange, generated_at=None):
         x2, z2 = wl["end"]
         length = _q(math.sqrt((x2 - x1) ** 2 + (z2 - z1) ** 2))
         ang = _q(math.degrees(math.atan2(z2 - z1, x2 - x1)))
-        pl = f.placement(local(wl["level_index"]), x1, z1, 0.0, ang)
+        pl = f.placement(local(wl["level_index"]), x1, _ifc_y(z1), 0.0, _ifc_rot(ang))
         thick = wl["thickness"] if wl["thickness_known"] else 0.2
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
                      % (f.axis2(_q(length / 2.0), 0.0), step_real(length),
@@ -727,9 +752,9 @@ def serialise_ifc(exchange, generated_at=None):
 
     for sl in exchange["slabs"]:
         x, z, w, d = sl["outline"]
-        pl = f.placement(local(sl["level_index"]), x, z, 0.0)
+        pl = f.placement(local(sl["level_index"]), x, _ifc_y(z), 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis2(_q(w / 2.0), _q(d / 2.0)), step_real(w),
+                     % (f.axis2(_q(w / 2.0), -_q(d / 2.0) + 0.0), step_real(w),
                         step_real(d)))
         th = sl["thickness"] if sl["thickness_known"] else 0.2
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
@@ -747,8 +772,8 @@ def serialise_ifc(exchange, generated_at=None):
         for op in exchange[key]:
             host = wall_refs.get(op["host_wall_id"])
             base = _q(op["sill"]) if (kind == "window" and op["sill"] is not None) else 0.0
-            pl = f.placement(local(op["level_index"]), op["x"], op["z"], base,
-                             op["rotation_deg"])
+            pl = f.placement(local(op["level_index"]), op["x"], _ifc_y(op["z"]), base,
+                             _ifc_rot(op["rotation_deg"]))
             oh = op["height"] if op["height_known"] else 2.1
             prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
                          % (f.axis2(0.0, 0.0), step_real(op["width"]),
@@ -760,8 +785,8 @@ def serialise_ifc(exchange, generated_at=None):
                         % (ctx, solid))
             pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s)" % shp)
             if host is not None:
-                opl = f.placement(local(op["level_index"]), op["x"], op["z"], base,
-                                  op["rotation_deg"])
+                opl = f.placement(local(op["level_index"]), op["x"], _ifc_y(op["z"]), base,
+                                  _ifc_rot(op["rotation_deg"]))
                 ovoid = f.add("IFCOPENINGELEMENT",
                               "'%s',%s,%s,$,$,%s,%s,$,.OPENING."
                               % (guid(op["canonical_id"] + ":void"), owner,
@@ -778,7 +803,7 @@ def serialise_ifc(exchange, generated_at=None):
             contained.setdefault(op["level_index"], []).append(ref)
 
     for st in exchange["stairs"]:
-        pl = f.placement(local(st["level_index"]), st["x"], st["z"], 0.0)
+        pl = f.placement(local(st["level_index"]), st["x"], _ifc_y(st["z"]), 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
                      % (f.axis2(0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
@@ -1551,9 +1576,18 @@ def _profile_of(step, product):
                     c = _arg(pt, 0) or []
                     if len(c) > 2 and _num(c[2]) is not None:
                         base_z = _num(c[2])
+            # Where the rectangle sits relative to its placement (its centre in
+            # the placement's X/Y); a reader cannot assume a corner origin.
+            centre = None
+            ppos = _deref(step, _arg(prof, 2))
+            if ppos and ppos["type"] == "IFCAXIS2PLACEMENT2D":
+                ppt = _deref(step, _arg(ppos, 0))
+                pc = (_arg(ppt, 0) or []) if ppt else []
+                if len(pc) >= 2 and None not in (_num(pc[0]), _num(pc[1])):
+                    centre = [_num(pc[0]), _num(pc[1])]
             return {"kind": "PARAMETRIC_MAPPED",
                     "x_dim": _num(_arg(prof, 3)), "y_dim": _num(_arg(prof, 4)),
-                    "depth": depth, "base_z": base_z}
+                    "depth": depth, "base_z": base_z, "centre": centre}
     return None
 
 
@@ -1649,6 +1683,32 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             return world.get(pr.n)
         return None
 
+    def canonical(w):
+        """IFC project-world placement in canonical plan terms (IFC_PLAN_AXES).
+
+        The staged ``world`` stays the file's own IFC world; every canonical
+        ``geometry`` value is converted here, exactly once.
+        """
+        if w is None:
+            return None
+        x, y, z = w["xyz"]
+        return dict(w, xyz=[x, _q(-y) + 0.0, z],
+                    rot_deg=_q((-w["rot_deg"]) % 360.0) + 0.0)
+
+    def corner(w, prof):
+        """Canonical north-west corner of an axis-aligned rectangular footprint.
+
+        The rectangle's centre is read from its profile position; IFC +Y is
+        north, so its northern edge is the canonical minimum z.
+        """
+        if not w:
+            return None, None
+        c = prof.get("centre") if prof else None
+        if not c or prof.get("x_dim") is None or prof.get("y_dim") is None:
+            return w["xyz"][0], w["xyz"][1]
+        return (_q(w["xyz"][0] + (c[0] - prof["x_dim"] / 2.0) * lf) + 0.0,
+                _q(w["xyz"][1] - (c[1] + prof["y_dim"] / 2.0) * lf) + 0.0)
+
     storey_of = {}
     for host, items in rel["contains"].items():
         for it in items:
@@ -1719,7 +1779,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             continue
 
         prof = _profile_of(step, e)
-        w = rec["world"]
+        w = canonical(rec["world"])
         if t == "IFCPROJECT":
             rec["canonical_kind"] = "project"
             rec["mapping_class"] = "PARAMETRIC_MAPPED"
@@ -1745,6 +1805,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             long_name = _arg(e, 7)
             g = {"x": w["xyz"][0] if w else None, "z": w["xyz"][1] if w else None}
             if prof and prof.get("kind") == "PARAMETRIC_MAPPED":
+                g["x"], g["z"] = corner(w, prof)
                 g["w"] = _q((prof["x_dim"] or 0.0) * lf)
                 g["d"] = _q((prof["y_dim"] or 0.0) * lf)
                 g["height"] = _q((prof["depth"] or 0.0) * lf)
@@ -1797,8 +1858,9 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             pdt = _enum(_arg(e, 8)) or "UNKNOWN"
             rec["properties"]["predefined_type"] = pdt
             if prof and prof.get("kind") == "PARAMETRIC_MAPPED":
+                sx, sz = corner(w, prof)
                 rec["geometry"] = {
-                    "x": w["xyz"][0] if w else None, "z": w["xyz"][1] if w else None,
+                    "x": sx, "z": sz,
                     "w": _q((prof["x_dim"] or 0.0) * lf),
                     "d": _q((prof["y_dim"] or 0.0) * lf),
                     "thickness": _q((prof["depth"] or 0.0) * lf),

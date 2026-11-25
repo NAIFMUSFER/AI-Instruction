@@ -2,7 +2,9 @@
 
 Test dependency: ifcopenshell==0.9.0.post1 (CI only); production stays unchanged.
 IFC uses X/Y plan and Z up; canonical/glTF uses X/Z plan and Y up.
-The declared 2D CAD projection maps canonical Z to negative CAD Y.
+Canonical north is -Z. Both the 2D CAD projection and IFC therefore map canonical
+Z to negative Y (north up), and IFC states TrueNorth (0,1). Writing Z as +Y made
+the IFC a mirror image of the DXF/SVG/glTF, which no rotation can undo.
 """
 import json,tempfile,unittest,sys
 from pathlib import Path
@@ -76,7 +78,7 @@ class IndependentGeometryReaders(unittest.TestCase):
             for l in model['levels']:
                 for r in model['floors'][l['template']]['rooms']:
                     x,z,w,d=r['rect'];h=r.get('wall_h',model['wall_h']);y=l.get('elevation',l['index']*model['floor_height'])
-                    expected.append((r['id'],[[x,x+w],[z,z+d],[y,y+h]]))
+                    expected.append((r['id'],[[x,x+w],[-(z+d)+0.0,-z+0.0],[y,y+h]]))
             actual=[]
             for s in spaces:
                 shape=ifcopenshell.geom.create_shape(settings,s);v=shape.geometry.verts
@@ -143,7 +145,7 @@ class IndependentGeometryReaders(unittest.TestCase):
             self.assertIs(props['CanonicalHeightDeclared'],True)
             self.assertEqual(props['CanonicalId'],source)
             self.assertEqual(props['CanonicalLevelId'],'bld_0.flr_'+str(roof['index']))
-            expected=((x,x+w),(z,z+d),(roof['elevation'],roof['elevation']+.9))
+            expected=((x,x+w),(-(z+d),-z),(roof['elevation'],roof['elevation']+.9))
             for axis,(low,high) in enumerate(expected):
                 self.assertAlmostEqual(min(v[axis::3]),low,places=6)
                 self.assertAlmostEqual(max(v[axis::3]),high,places=6)
@@ -207,11 +209,61 @@ class IndependentGeometryReaders(unittest.TestCase):
             self.assertEqual(receipt['roof_reference_height_policy'],'REFERENCE_EXTENT_ONLY_NOT_STRUCTURAL')
             shape=ifcopenshell.geom.create_shape(settings,zone);vertices=shape.geometry.verts
             self.assertTrue(vertices)
-            for axis,(low,high) in enumerate(((x,x+w),(z,z+d),(roof['elevation'],roof['elevation']))):
+            for axis,(low,high) in enumerate(((x,x+w),(-(z+d),-z),(roof['elevation'],roof['elevation']))):
                 self.assertAlmostEqual(min(vertices[axis::3]),low,places=6)
                 self.assertAlmostEqual(max(vertices[axis::3]),high,places=6)
         self.assertEqual(canonical(ws.get(rev.id).model),before)
         self.assertEqual(ws.get(rev.id).model_hash,rev.model_hash)
+
+    def test_ifc_dxf_svg_gltf_agree_on_which_room_is_north(self):
+        """Asymmetric plan: a bedroom south of the living room must be south in every export."""
+        import copy,xml.etree.ElementTree as ET
+        from acs_plan_lock_binding import PlanLockWorkspace
+        from acs_plan_bridge import existing_geometry_verifier
+        from tools.acs_plan_handoff import compile_approved_baseline
+        from tools.acs_plan_ifc_export import export_approved_ifc
+        from tools.acs_plan_cad_export import export_approved_cad
+        model=copy.deepcopy(fixtures()['villa']);model['levels']=model['levels'][:1]
+        rooms=model['floors']['home']['rooms'];door=lambda i,e,o:{'id':i,'edge':e,'offset':o,'width':1.0,'height':2.2,'material':'wood'}
+        rooms[0]['doors'].append(door('to_south_bed','S',2))
+        rooms.append({'id':'south_bed','name':'غرفة نوم جنوبية','role':'bedroom','rect':[0,8,6,4],'walls':['N','S','W','E'],
+                      'doors':[door('from_living','N',2)],'windows':[],'points':[{'id':'light','type':'light','x':3,'z':2}]})
+        area=sum(r['rect'][2]*r['rect'][3] for r in rooms)
+        ws=PlanLockWorkspace(existing_geometry_verifier)
+        rev=ws.propose(model,brief=f'Synthetic area {area}',requirements=[{'id':'area','metric':'building_target_area_m2','expected':area,'source':'requested','evidence':str(area)}],expected_head=None,note='north agreement')
+        self.assertTrue(ws.review(rev.id)['can_approve'],ws.review(rev.id)['issues'])
+        ws.approve(rev.id,expected_head=rev.id,confirmed=True,acknowledge_concept_only=True,actor_label='synthetic-reader')
+        out=self.root/'north';out.mkdir()
+        export_approved_ifc(ws,rev.id,out/'n.ifc');export_approved_cad(ws,rev.id,0,out/'n.dxf')
+        export_approved_cad(ws,rev.id,0,out/'n.svg');compile_approved_baseline(ws,rev.id,out/'n.gltf')
+        # Northness per room: larger value = further north, in each format's own terms.
+        f=ifcopenshell.open(str(out/'n.ifc'))
+        norths=[c.TrueNorth for c in f.by_type('IfcGeometricRepresentationContext') if c.TrueNorth is not None]
+        self.assertEqual([tuple(n.DirectionRatios) for n in norths],[(0.0,1.0)],'IFC declares +Y as true north')
+        settings=ifcopenshell.geom.settings();settings.set(settings.USE_WORLD_COORDS,True)
+        ifc={s.LongName:sum(ifcopenshell.geom.create_shape(settings,s).geometry.verts[1::3])/len(ifcopenshell.geom.create_shape(settings,s).geometry.verts[1::3]) for s in f.by_type('IfcSpace')}
+        cad=ezdxf.readfile(out/'n.dxf');labels={t.dxf.text:t.dxf.insert.y for t in cad.modelspace().query('TEXT')}
+        dxf={'living':labels['مجلس العائلة'],'south_bed':labels['غرفة نوم جنوبية']}
+        svg={g.findtext('{http://www.w3.org/2000/svg}title'):-float(g.find('{http://www.w3.org/2000/svg}rect').get('y'))
+             for g in ET.parse(out/'n.svg').getroot().iter('{http://www.w3.org/2000/svg}g')}
+        svg={'living':svg['مجلس العائلة'],'south_bed':svg['غرفة نوم جنوبية']}
+        g=json.loads((out/'n.gltf').read_text());zs={}
+        for n in g['nodes']:
+            parts=(n.get('name') or '').split('|')
+            if parts[0]=='FLOOR' or len(parts)<3 or parts[2] not in ('living','south_bed'):continue
+            acc=g['accessors'][g['meshes'][n['mesh']]['primitives'][0]['attributes']['POSITION']]
+            t=n.get('translation',[0,0,0]);zs.setdefault(parts[2],[]).append(t[2]+(acc['min'][2]+acc['max'][2])/2)
+        gltf={k:-sum(v)/len(v) for k,v in zs.items()}  # glTF north is -Z
+        for name,values in (('IFC',ifc),('DXF',dxf),('SVG',svg),('glTF',gltf)):
+            self.assertGreater(values['living'],values['south_bed'],name+' puts the southern bedroom north of the living room: '+repr(values))
+        # The ACS importer maps the file back to canonical axes: corners, not mirrored.
+        import acs_bim
+        staged=acs_bim.stage_import((out/'n.ifc').read_text(encoding='utf-8'),'n.ifc',{},None,'1970-01-01T00:00:00')
+        self.assertTrue(staged['valid'],staged['issues'][:3])
+        spaces={e['properties'].get('number'):e['geometry'] for e in staged['staging']['entities'] if e['canonical_kind']=='space'}
+        for room in rooms:
+            got=spaces[room['id']];x,z,w,d=room['rect']
+            for key,value in (('x',x),('z',z),('w',w),('d',d)):self.assertAlmostEqual(got[key],value,places=6)
 
     def test_dxf_boundaries_match_declared_rectangles(self):
         for name,model in self.models.items():
