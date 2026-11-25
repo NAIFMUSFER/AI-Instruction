@@ -199,5 +199,29 @@ class ProgressReceipts(Harness):
         self.assertEqual((row["state"], row["error_code"]), ("FAILED", "PROJECT_ACCESS_DENIED"))
 
 
+class ChatEditAccounting(Harness):
+    """Chat edits ran without the progress channel: provider_calls stayed 0."""
+
+    async def test_chat_edit_provider_calls_reach_the_receipt(self):
+        self.workspace = Workspace("plan_head")
+        seen = []
+
+        def chat(store, project_id, actor_id, cmd, *, on_progress=None):
+            seen.append(on_progress is not None)
+            if on_progress:
+                on_progress({"phase": "UNDERSTANDING", "provider_calls": 1})
+            return "plan_edited"
+        payload = {"action": "chat_edit", "job_id": JOB, "expected_head": "plan_head",
+                   "notes": [{"text": "وسّع الغرفة"}], "confirmed": True, "max_provider_calls": 3}
+        with patch.object(H.SERVICE, "chat_and_save", chat):
+            status, body = await call(self.middleware, payload)
+            self.assertEqual(status, 202, body)
+            await asyncio.gather(*list(self.middleware.tasks))
+        row = self.table.rows[JOB]
+        self.assertEqual(seen, [True])
+        self.assertEqual((row["state"], row["provider_calls"]), ("SUCCEEDED", 1))
+        self.assertEqual(self.limiter.calls, ["edit"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

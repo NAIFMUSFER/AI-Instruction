@@ -126,8 +126,8 @@ class WorkspaceMiddleware:
                     if exc.code != "STORE_UNAVAILABLE":
                         raise
                     LOG.warn("workspace_progress_write_failed", request_id=command["job_id"], error_code=exc.code)
-            controls = {"on_progress":progress} if command["action"] == "generate" else {}
-            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, **controls)
+            # Chat edits spend provider requests too; their counts must reach the receipt.
+            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, on_progress=progress)
             payload = {"state": "SUCCEEDED", "revision_id": rid, "error_code": None}
         except TimeoutError:
             payload["error_code"] = E.ACS_TIMEOUT
