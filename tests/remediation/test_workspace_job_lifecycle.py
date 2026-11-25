@@ -29,11 +29,17 @@ class JobsTable:
     def __init__(self):
         self.rows, self.lock = {}, threading.Lock()
         self.fail_progress = 0
+        self.fail_kept = 0
 
     def _request(self, method, path, payload=None, **kwargs):
         job_id = path.rsplit("id=eq.", 1)[-1]
         with self.lock:
             if method == "GET":
+                if "&id=eq." not in path:   # generated-version listing
+                    wanted = [r for r in self.rows.values() if r.get("error_code") == "GENERATION_CONFLICT"
+                              and r.get("state") == "FAILED"]
+                    wanted.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+                    return [{k: r.get(k) for k in ("id", "created_at", "expected_head")} for r in wanted][:5]
                 return [copy.deepcopy(self.rows[job_id])] if job_id in self.rows else []
             if method == "POST":
                 if payload["id"] in self.rows:
@@ -42,6 +48,9 @@ class JobsTable:
                                                 created_at=datetime.now(timezone.utc).isoformat())
                 return [copy.deepcopy(self.rows[payload["id"]])]
             if method == "PATCH":
+                if self.fail_kept and (payload.get("checkpoint") or {}).get("kind") == "generated_version":
+                    self.fail_kept -= 1
+                    raise PlanError("STORE_UNAVAILABLE", "Supabase plan store is unavailable")
                 if "phase" in payload and self.fail_progress:
                     self.fail_progress -= 1
                     raise PlanError("STORE_UNAVAILABLE", "Supabase plan store is unavailable")
@@ -297,6 +306,158 @@ class OnePaidJobPerProject(Harness):
         self.assertEqual(sorted([first[0], second[0]]), [202, 409])
         self.assertEqual(len(self.started), 1)
         await self.drain()
+
+
+class GeneratedVersionChoice(unittest.IsolatedAsyncioTestCase):
+    """A manual edit saved while a paid generation runs used to void the paid
+    result (STALE_REVISION, raw code). It is now kept as a separate generated
+    version; the owner chooses; nothing is paid twice and nothing is lost."""
+
+    def setUp(self):
+        import tempfile
+        from acs_plan_store import SQLitePlanStore
+        from acs_plan_store_port import SQLitePlanStoreAdapter
+        from test_connected_workspace import model
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        db = SQLitePlanStore(Path(self.temp.name) / "plans.sqlite3")
+        db.create_project(PROJECT, owner_id=ACTOR)
+        table = JobsTable()
+
+        class Store(SQLitePlanStoreAdapter):
+            def _request(inner, *a, **k):
+                return table._request(*a, **k)
+        self.store, self.table, self.limiter = Store(db), table, Allow()
+        self.generated = model("warehouse")
+        self.runs, self.during = [], None
+        case = self
+
+        class Runner:
+            def run(inner, target, kwargs, **controls):
+                case.runs.append(target)
+                if case.during:
+                    case.during()
+                return {"building": copy.deepcopy(case.generated), "provider_calls": 1}
+        self.middleware = H.WorkspaceMiddleware(None)
+        for p in (patch.object(H.AUTH, "authorize_asgi", authorize),
+                  patch.object(H.SESSION, "authenticated_supabase_plan_store", lambda scope: self.store),
+                  patch.object(H.RL, "default_limiter", lambda: self.limiter),
+                  patch.object(JOBS, "default_runner", lambda: Runner())):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def head(self):
+        return H.SERVICE.workspace(self.store, PROJECT, ACTOR).head
+
+    def history(self):
+        return [r["revision_id"] for r in H.SERVICE.workspace(self.store, PROJECT, ACTOR).history()]
+
+    async def job(self, payload):
+        status, body = await call(self.middleware, payload)
+        self.assertEqual(status, 202, body)
+        await asyncio.gather(*list(self.middleware.tasks))
+
+    async def poll(self, job=JOB):
+        status, body = await call(self.middleware, {"action": "job", "job_id": job})
+        self.assertEqual(status, 200, body)
+        return body["job"]
+
+    def manual_edit(self, rect):
+        head = self.head()
+        H.SERVICE.edit_geometry(self.store, PROJECT, ACTOR, {"action": "edit_geometry", "expected_head": head,
+                                                             "room_ref": ["ground", "a"], "rect": rect})
+
+    async def conflict(self):
+        await self.job(dict(command(), job_id=OTHER))                  # first version (head R1)
+        base = self.head()
+        self.during = lambda: self.manual_edit([0, 0, 7, 7])           # other tab, while paid job runs
+        await self.job(dict(command(), expected_head=base))
+        self.during = None
+        return base
+
+    async def test_conflict_keeps_the_generated_version_and_the_manual_edit_stays_head(self):
+        base = await self.conflict()
+        manual = self.head()
+        self.assertNotEqual(manual, base)
+        row = self.table.rows[JOB]
+        self.assertEqual((row["state"], row["error_code"]), ("FAILED", "GENERATION_CONFLICT"))
+        self.assertEqual(row["checkpoint"]["kind"], "generated_version")
+        self.assertEqual(row["checkpoint"]["current_head"], manual)
+        job = await self.poll()
+        self.assertEqual(job["choice"]["options"], ["keep_edit", "use_generated"])
+        self.assertIsNone(job["choice"]["adopted_revision_id"])
+        self.assertIn("النسخة المولّدة", job["error_message"])
+        self.assertFalse(job["can_resume"])
+        self.assertEqual(len(self.runs), 2)
+        self.assertEqual(self.limiter.calls, ["gen", "gen"])
+
+    async def test_use_generated_appends_once_without_provider_or_quota(self):
+        await self.conflict()
+        manual, runs, quota = self.head(), len(self.runs), list(self.limiter.calls)
+        choose = {"action": "adopt_generated", "job_id": JOB, "expected_head": manual, "confirmed": True}
+        first = await call(self.middleware, choose)
+        again = await call(self.middleware, choose)                    # lost reply, retried
+        self.assertEqual((first[0], again[0]), (200, 200), (first, again))
+        adopted = first[1]["revision_id"]
+        self.assertEqual(again[1]["revision_id"], adopted)
+        self.assertEqual(self.head(), adopted)
+        self.assertIn(manual, self.history())                          # the manual edit stays recoverable
+        ws = H.SERVICE.workspace(self.store, PROJECT, ACTOR)
+        rooms = {r["id"]: r["rect"] for r in ws.get(adopted).model["floors"]["ground"]["rooms"]}
+        self.assertEqual(rooms["a"], [0, 0, 8, 8])                     # the generated geometry
+        self.assertEqual((len(self.runs), self.limiter.calls), (runs, quota))
+        job = await self.poll()
+        self.assertEqual(job["choice"]["adopted_revision_id"], adopted)
+        self.assertIn("يمكن استعادته", job["error_message"])
+
+    async def test_keep_edit_leaves_the_version_recoverable_later(self):
+        await self.conflict()
+        status, body = await call(self.middleware, {"action": "generated_versions"})
+        self.assertEqual(status, 200, body)
+        self.assertEqual([(v["job_id"], v["adopted_revision_id"]) for v in body["versions"]], [(JOB, None)])
+        self.manual_edit([0, 0, 6, 6])                                 # owner keeps editing
+        later = self.head()
+        status, body = await call(self.middleware, {"action": "adopt_generated", "job_id": JOB,
+                                                    "expected_head": later, "confirmed": True})
+        self.assertEqual(status, 200, body)
+        self.assertIn(later, self.history())
+
+    async def test_choice_is_bound_to_the_current_head_and_to_a_kept_version(self):
+        base = await self.conflict()
+        before = self.history()
+        status, body = await call(self.middleware, {"action": "adopt_generated", "job_id": JOB,
+                                                    "expected_head": base, "confirmed": True})
+        self.assertEqual((status, body["error"]["code"]), (409, "STALE_REVISION"))
+        status, body = await call(self.middleware, {"action": "adopt_generated", "job_id": OTHER,
+                                                    "expected_head": self.head(), "confirmed": True})
+        self.assertEqual((status, body["error"]["code"]), (404, "GENERATED_VERSION_NOT_FOUND"))
+        status, body = await call(self.middleware, {"action": "adopt_generated", "job_id": JOB,
+                                                    "expected_head": self.head()})
+        self.assertEqual(body["error"]["code"], "EXPLICIT_CONFIRMATION_REQUIRED")
+        self.assertEqual(self.history(), before)
+
+    async def test_a_version_that_could_not_be_kept_is_never_offered(self):
+        self.table.fail_kept = 1
+        await self.conflict()
+        row = self.table.rows[JOB]
+        self.assertEqual((row["state"], row["error_code"]), ("FAILED", "STALE_REVISION"))
+        job = await self.poll()
+        self.assertIsNone(job["choice"])
+        self.assertIn("افتح آخر نسخة", job["error_message"])          # plain Arabic, not a raw code
+
+    async def test_room_locks_of_the_current_head_still_apply(self):
+        from acs_plan_persisted_commands import execute_persisted_plan_command
+        await self.conflict()
+        execute_persisted_plan_command(self.store, PROJECT, {"action": "set_room_lock", "expected_head": self.head(),
+                                       "room_ref": ["ground", "a"], "locked": True},
+                                       actor_id=ACTOR, verifier=H.SERVICE.existing_geometry_verifier)
+        locked, before = self.head(), self.history()
+        status, body = await call(self.middleware, {"action": "adopt_generated", "job_id": JOB,
+                                                    "expected_head": locked, "confirmed": True})
+        self.assertEqual(status, 400, body)
+        self.assertIn(body["error"]["code"], {"LOCK_VIOLATION", "LOCK_CONTEXT_CHANGED"})
+        self.assertEqual(self.history(), before)
+        self.assertIsNone((await self.poll())["choice"]["adopted_revision_id"])   # still offered
 
 
 if __name__ == "__main__":

@@ -431,7 +431,9 @@ class WorkspaceLifecycle(unittest.TestCase):
         with patch('acs_stairs.with_default_stairs') as helper, self.assertRaises(PlanError) as stale:
             S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
         helper.assert_not_called()
-        self.assertEqual(stale.exception.code, 'STALE_REVISION')
+        # Owner decision: the lost race keeps the paid proposal for an explicit choice.
+        self.assertEqual(stale.exception.code, 'GENERATION_CONFLICT')
+        self.assertEqual(stale.exception.building, stair_core_model())
         ws = S.workspace(self.store, PROJECT, ACTOR)
         self.assertEqual(ws.head, winner[0]);self.assertEqual(len(ws.history()), 1)
         self.assertEqual(ws.get(ws.head).model, model())
@@ -755,7 +757,9 @@ class WorkspaceLifecycle(unittest.TestCase):
                 return super().run(target,kwargs,**controls)
         with self.assertRaises(PlanError) as caught:
             S.generate_and_save(self.store,PROJECT,ACTOR,next_command,runner=RacingRunner(model()))
-        self.assertEqual(caught.exception.code,'STALE_REVISION')
+        # Kept as a separate generated version (owner decision), never saved over the edit.
+        self.assertEqual(caught.exception.code,'GENERATION_CONFLICT')
+        self.assertEqual(caught.exception.building,model())
         self.assertEqual(len(S.view(self.store,PROJECT,ACTOR)['history']),2)
 
     def test_invalid_generated_geometry_names_reason_without_saving_or_retrying(self):

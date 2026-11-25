@@ -88,14 +88,39 @@ def _job_view(row):
     state = row.get("state")
     original = row.get("resume_command") or {}
     can_restart = isinstance(original,dict) and original.get('action') == 'generate' and not original.get('source_id')
-    return {"ok": True, "job": {"id": row["id"], "state": state,
+    view = {"ok": True, "job": {"id": row["id"], "state": state,
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
         "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state in {"FAILED", "INTERRUPTED", "CANCELLED"} else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
         "can_resume": bool(row.get("checkpoint") or can_restart) and state == "FAILED" and _resumable_failure(row.get("error_code")) and not row.get("resumed_by"),
+        "choice": _choice(row),
         "storage": "supabase", "automatic_resubmission": False}}
+    if view["job"]["choice"] and view["job"]["choice"]["adopted_revision_id"]:
+        view["job"]["error_message"] = "اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته."
+    return view
+
+
+def _choice(row):
+    """Explicit owner choice for a generated version kept after a newer revision."""
+    kept = SERVICE.generated_version(row)
+    if kept is None:
+        return None
+    building = kept["building"]
+    floors = building.get("floors") if isinstance(building.get("floors"), dict) else {}
+    return {"kind": "generated_version", "options": ["keep_edit", "use_generated"],
+            "current_head": kept.get("current_head"), "adopted_revision_id": row.get("adopted_revision_id"),
+            "generated_summary": {"levels": len(building.get("levels") or []),
+                                  "rooms": sum(len(f.get("rooms") or []) for f in floors.values() if isinstance(f, dict))}}
+
+
+def _adoption(ws, job_id):
+    marker = SERVICE.adoption_marker(job_id)
+    for revision in ws.history():
+        if (revision.get("note") or "").endswith(marker):
+            return revision["revision_id"]
+    return None
 
 
 class WorkspaceMiddleware:
@@ -105,7 +130,7 @@ class WorkspaceMiddleware:
 
     async def _finish(self, store, project_id, actor_id, command):
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
-        spent = {}
+        spent, kept = {}, None
         try:
             execute = SERVICE.chat_and_save if command["action"] == "chat_edit" else SERVICE.generate_and_save
             def progress(event):
@@ -134,6 +159,8 @@ class WorkspaceMiddleware:
             payload["error_code"] = E.ACS_TIMEOUT
         except (PlanError, E.AcsApiError) as exc:
             payload["error_code"] = str(exc.code)[:80]
+            if isinstance(exc, SERVICE.GeneratedVersionConflict):
+                kept = exc.checkpoint()
         except Exception as exc:
             from acs_generation_job import JobRejected, JobError
             payload["error_code"] = "GENERATION_BUSY" if isinstance(exc, JobRejected) else "GENERATION_WORKER_FAILED" if isinstance(exc, JobError) else "GENERATION_FAILED"
@@ -141,6 +168,14 @@ class WorkspaceMiddleware:
         LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
         payload["finished_at"] = datetime.now(timezone.utc).isoformat()
         payload.update(spent)  # the terminal receipt carries the last known provider count
+        if kept is not None:
+            # Keep the paid version before the terminal receipt: never discarded,
+            # never saved over the newer revision; the owner chooses later. Written
+            # like a progress checkpoint so it maps onto lease-fenced job writes.
+            try:
+                await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), {"checkpoint": kept})
+            except Exception:
+                payload["error_code"] = "STALE_REVISION"   # not kept: never offer a choice we cannot honour
         try:
             await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), payload)
         except Exception:
@@ -285,7 +320,34 @@ class WorkspaceMiddleware:
                             break
                 if _orphaned(row):
                     row = dict(row, state="INTERRUPTED", error_code="PROVIDER_OUTCOME_UNKNOWN")
+                if SERVICE.generated_version(row) is not None:
+                    ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                    row = dict(row, adopted_revision_id=_adoption(ws, row["id"]))
                 result = _job_view(row)
+            elif action == "adopt_generated":
+                # Owner's explicit choice. No quota and no provider request: the
+                # version was already paid for by its job.
+                SERVICE.checked_command(command, {"job_id", "expected_head", "confirmed"})
+                if command.get("confirmed") is not True:
+                    raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "أكد اختيار النسخة المولّدة أولًا.")
+                row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
+                if not row:
+                    raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
+                rid = await asyncio.to_thread(SERVICE.adopt_generated_version, store, project_id, actor_id,
+                                              row, command.get("expected_head"))
+                result = await asyncio.to_thread(SERVICE.view, store, project_id, actor_id, rid)
+                result["job"] = _job_view(dict(row, adopted_revision_id=rid))["job"]
+            elif action == "generated_versions":
+                SERVICE.checked_command(command, set())
+                rows = await asyncio.to_thread(store._request, "GET",
+                    "/rest/v1/acs_workspace_jobs?project_id=eq." + project_id + "&error_code=eq." + SERVICE.CONFLICT_CODE
+                    + "&state=eq.FAILED&select=id,created_at,expected_head&order=created_at.desc&limit=5")
+                if not isinstance(rows, list):
+                    raise PlanError("STORE_UNAVAILABLE", "تعذّر قراءة النسخ المولّدة المحفوظة.")
+                ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                result = {"ok": True, "versions": [{"job_id": r.get("id"), "created_at": r.get("created_at"),
+                                                    "adopted_revision_id": _adoption(ws, r.get("id") or "")}
+                                                   for r in rows[:5] if isinstance(r, dict) and isinstance(r.get("id"), str)]}
             elif action == "edit_geometry":
                 result = await asyncio.to_thread(SERVICE.edit_geometry, store, project_id, actor_id, command)
             elif action == "set_roof":

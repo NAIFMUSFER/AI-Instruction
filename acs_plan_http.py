@@ -59,7 +59,7 @@ def _error_status(code: str) -> int:
         return 403
     if code in {
         "ACS_PROJECT_NOT_FOUND", "PROJECT_NOT_FOUND",
-        "REVISION_NOT_FOUND",
+        "REVISION_NOT_FOUND", "GENERATED_VERSION_NOT_FOUND",
         "PLAN_PROJECT_ROUTE_NOT_FOUND",
     }:
         return 404

@@ -305,6 +305,15 @@ async function handleJob(job) {
     }
     status(comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.');setBusy(false);return;
   }
+  if(job.choice&&job.choice.kind==='generated_version'){
+    // A newer revision landed while this paid job ran. Its result is kept apart:
+    // never discarded, never written over the newer revision. The owner chooses.
+    stopProgress();clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
+    $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;$('cwResumeJob').hidden=true;
+    if(job.choice.adopted_revision_id){hideChoice();await refresh(job.choice.adopted_revision_id);status(CHOICE_ADOPTED);return;}
+    await refresh();showChoice(job.id);
+    status('حُفظ تعديل أحدث أثناء التوليد، فاحتفظنا بالنسخة المولّدة منفصلة دون أن تستبدل تعديلك. اختر: الإبقاء على تعديلك أو استخدام النسخة المولّدة.',true);return;
+  }
   if(['FAILED','INTERRUPTED'].includes(job.state)){
     stopProgress();
     clearTimeout(pollTimer);$('cwDismissJob').hidden=false;$('cwResumeJob').hidden=!job.can_resume;
@@ -313,6 +322,25 @@ async function handleJob(job) {
   }
   progressPhase(job.phase||job.state,true);if(job.progress?.total)$('cwJobHeartbeat').textContent+=' اكتملت '+job.progress.completed+' من '+job.progress.total+' مجموعات في هذه المرحلة.';status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
   clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll().catch(e=>{status('انقطع الاتصال. اضغط متابعة المهمة عند عودة الشبكة.',true);}),4000);
+}
+const CHOICE_ADOPTED='اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته.';
+function showChoice(jobId){const box=$('cwChoice');box.dataset.job=jobId;box.hidden=false;}
+function hideChoice(){const box=$('cwChoice');if(box){box.hidden=true;delete box.dataset.job;}}
+function keepEdit(){hideChoice();status('أبقينا تعديلك كما هو. النسخة المولّدة محفوظة، ويمكنك استخدامها لاحقًا من «نسخ مولّدة محفوظة».');return listGenerated();}
+async function useGenerated(jobId){
+  if(!jobId)throw new Error('اختر النسخة المولّدة من جديد.');
+  if(!state?.head)throw new Error('افتح آخر نسخة أولًا.');
+  const data=await api({action:'adopt_generated',job_id:jobId,expected_head:state.head,confirmed:true});
+  hideChoice();await refresh(data.revision_id);status(CHOICE_ADOPTED);await listGenerated();
+}
+async function listGenerated(){
+  const host=$('cwGeneratedVersions');if(!host)return;
+  let data;try{data=await api({action:'generated_versions'});}catch(e){return;}
+  const open=(Array.isArray(data?.versions)?data.versions:[]).filter(v=>typeof v?.job_id==='string'&&!v.adopted_revision_id);
+  host.replaceChildren();host.hidden=!open.length;
+  if(!open.length)return;
+  el('p','نسخ مولّدة محفوظة لم تُعتمد بعد. استخدام إحداها يحفظها كنسخة جديدة دون توليد جديد، ويبقى تعديلك في السجل.',host,'cw-muted');
+  for(const v of open){const b=el('button','استخدام النسخة المولّدة المحفوظة',host);b.type='button';b.dataset.mutate='';b.addEventListener('click',()=>run(()=>useGenerated(v.job_id)));}
 }
 async function poll(){if(!pendingJob)return;try{await handleJob((await api({action:'job',job_id:pendingJob})).job);}catch(e){progressPhase('UNKNOWN');if(e.code==='REVISION_NOT_FOUND')$('cwDismissJob').hidden=false;throw e;}}
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=el('a',null,document.body);a.href=url;a.download=name;a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
@@ -383,6 +411,8 @@ function mount(){
   <div class="cw-toolbar"><div><h1>من الفكرة إلى مخطط محفوظ</h1><p class="cw-muted">حدد متطلباتك، راجع البدائل، ثم اعتمد النسخة التي تريد تحويلها وتصديرها.</p></div><span id="cwVersionBadge" class="cw-badge">جارٍ فتح المشروع</span></div>
   <nav class="cw-steps" aria-label="مراحل التصميم"><button data-step="1" aria-current="step">01 · المتطلبات</button><button data-step="2">02 · البدائل</button><button data-step="3">03 · المخطط والمراجعة</button><button data-step="4">04 · 3D والتصدير</button></nav>
   <div class="cw-toolbar"><div id="cwStatus" class="cw-status" role="status" aria-live="polite"></div><button id="cwReload" type="button">تحديث المشروع</button><button id="cwRecoverJob" type="button" hidden>متابعة المهمة</button><button id="cwDismissJob" type="button" hidden>إنهاء المتابعة والسماح بطلب جديد</button></div>
+  <section id="cwChoice" class="cw-card" role="group" aria-labelledby="cwChoiceTitle" hidden><h2 id="cwChoiceTitle">أي نسخة تريد اعتمادها؟</h2><p class="cw-muted">تعديلك هو النسخة الحالية. النسخة المولّدة محفوظة منفصلة ولن يُحسب توليدها مرة ثانية. ما لا تختاره يبقى محفوظًا.</p><div class="cw-actions"><button id="cwKeepEdit" type="button">الإبقاء على تعديلي</button><button id="cwUseGenerated" type="button" class="cw-primary">استخدام النسخة المولّدة</button></div></section>
+  <div id="cwGeneratedVersions" class="cw-card" hidden></div>
   <section id="cwJobProgress" class="cw-card cw-job-progress" aria-label="متابعة إعداد المخطط" hidden><strong id="cwJobPhase" role="status" aria-live="polite"></strong><progress id="cwJobActivity" aria-label="جارٍ تنفيذ المهمة"></progress><output id="cwJobElapsed" aria-live="off"></output><p id="cwJobHeartbeat" class="cw-muted" aria-live="off"></p><p class="cw-muted">يمكنك العودة لاحقًا ومتابعة المهمة نفسها. يظهر المخطط بعد اكتماله وحفظه.</p></section>
   <section data-step-panel="1" class="cw-grid"><form id="cwBriefForm" class="cw-card"><h2>متطلبات المشروع</h2><label for="cwType">نوع المشروع</label><select id="cwType"><option value="residential">سكني / عمارة / فيلا</option><option value="warehouse">مستودع / صناعي</option></select><label for="cwBrief">صف المشروع والاستخدامات والعلاقات المطلوبة</label><textarea id="cwBrief" rows="6" maxlength="58000" placeholder="الموقع، الفراغات المطلوبة، المداخل، الحركة، والقيود التي يجب الحفاظ عليها…"></textarea><div class="cw-fields"><div><label for="cwWidth">عرض الموقع (م)</label><input id="cwWidth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwDepth">عمق الموقع (م)</label><input id="cwDepth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwLevels">عدد الأدوار</label><input id="cwLevels" type="number" min="1" step="1" placeholder="غير محدد"></div></div><h3>برنامج الفراغات والمتطلبات المقاسة</h3><p class="cw-muted">أضف أعداد الفراغات أو المساحات أو المتطلبات الأخرى المطلوب التحقق منها. اكتب بقية القيود في الوصف لمراجعتها مع المخطط.</p><div class="cw-table-wrap"><table><thead><tr><th>المتطلب</th><th>الاستخدام</th><th>القيمة</th><th></th></tr></thead><tbody id="cwRequirements"></tbody></table></div><button id="cwAddRequirement" type="button">+ إضافة متطلب</button><label class="cw-check"><input id="cwConfirmed" type="checkbox">راجعت الوصف والأبعاد وبرنامج المتطلبات وأؤكد استخدامها في المقترح.</label><button type="submit" class="cw-primary">متابعة إلى البدائل ←</button></form><aside class="cw-card"><h2>ماذا سنحفظ؟</h2><p>وصفك ومتطلباتك مع كل نسخة، ثم تعديلات المخطط والأقفال وقرار الاعتماد.</p><p class="cw-muted">الحفظ السحابي يتم بعد اكتمال كل عملية. الكتابة التي لم ترسلها بعد تُستعاد على هذا الجهاز.</p><h3 id="cwTypeHelpTitle">للمستودعات</h3><p id="cwTypeHelp" class="cw-muted">حدد وحدات التخزين والرفوف والمعدات وارتفاعاتها والأرصفة والممرات ومناطق التشغيل. البيانات غير المحددة تبقى غير متحققة.</p><a href="/plan-review/" target="_blank" rel="noopener">فتح ملف مراجعة محلي</a></aside></section>
   <section data-step-panel="2" hidden><div class="cw-card"><h2>اختر برنامج المخطط</h2><p class="cw-muted">راجع غرف كل خيار والمساحة المقترحة، ثم اختره لإنشاء مسودة. تستطيع تعديل احتياجاتك من خطوة المتطلبات.</p><details id="cwGenerationSettings"><summary>إعدادات التوليد المتقدمة</summary><label for="cwBudget">أقصى عدد استدعاءات المزود لهذا المقترح</label><select id="cwBudget"><option value="3">حتى 3 استدعاءات</option><option value="6" selected>حتى 6 استدعاءات</option><option value="12">حتى 12 استدعاء</option></select><p class="cw-muted">قد يُقسّم المخطط إلى مراحل ضمن هذا السقف. لا يبدأ توليد بديل آخر تلقائيًا، ولا توجد تكلفة مالية ثابتة يمكن تأكيدها قبل رد المزود.</p></details></div><div class="cw-options"><article class="cw-card"><span class="cw-option-code">A</span><h2>استثمار المساحة</h2><p>تركيز على توزيع البرنامج المطلوب ضمن الأبعاد والقيود.</p><button data-option="A" data-mutate class="cw-primary">توليد البديل A</button></article><article class="cw-card"><span class="cw-option-code">B</span><h2>وضوح الحركة</h2><p>تركيز على العلاقات بين الفراغات وقرب الأنشطة المرتبطة.</p><button data-option="B" data-mutate class="cw-primary">توليد البديل B</button></article><article class="cw-card"><span class="cw-option-code">C</span><h2>المرونة والفصل</h2><p>تركيز على فصل الاستخدامات ومرونة التوسع المطلوبة.</p><button data-option="C" data-mutate class="cw-primary">توليد البديل C</button></article></div></section>
@@ -422,6 +452,8 @@ function mount(){
   $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded)residentialOptions.prepare(confirmedProgram);root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;sourceGenerate.textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2);}catch(err){safeError(err);}});
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
+  $('cwKeepEdit').addEventListener('click',()=>run(keepEdit));
+  $('cwUseGenerated').addEventListener('click',()=>run(()=>useGenerated($('cwChoice').dataset.job)));
   $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
   $('cwLevel').addEventListener('change',draw);
@@ -461,6 +493,7 @@ async function start(){
   stopProgress();pendingJob=null;
   try{const saved=JSON.parse(localStorage.getItem(jobKey())||'null');if(typeof saved?.jobId==='string'&&saved.jobId)beginJob(saved.jobId,saved);}catch(e){}
   if(pendingJob){$('cwRecoverJob').hidden=false;setBusy(false);poll().catch(safeError);}
+  listGenerated();
 }
 window.addEventListener('storage',event=>{
   if(event.key!=='acs_supabase_session_v1'||!root)return;
