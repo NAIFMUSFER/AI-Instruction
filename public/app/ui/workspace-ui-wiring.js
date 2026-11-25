@@ -2831,19 +2831,33 @@ function wrapBuilding(rooms, W, D, nF){
   return {site:{w:W,d:D},floor_height:3.2,wall_h:3.0,wall_t:0.15,levels,floors:{ground,typical:{rooms},roof}};
 }
 /* ---- DXF parser: يقرأ LWPOLYLINE/POLYLINE المغلقة كغرف ---- */
+// $INSUNITS → metres. Only these declared drawing units keep true size.
+const DXF_UNIT_M={1:0.0254,2:0.3048,4:0.001,5:0.01,6:1};
 function parseDXF(text){
   const L=text.split(/\r?\n/); const pairs=[];
   for(let k=0;k+1<L.length;k+=2)pairs.push([L[k].trim(),L[k+1]]);
-  let cur=null; const polys=[];
+  let cur=null, label=null, headerVar=null; const polys=[], labels=[];
+  polys.insunits=null;
   for(const [code,val] of pairs){
+    if(code==='9'){ headerVar=(val||'').trim(); continue; }
+    if(code==='70'&&headerVar==='$INSUNITS'){ polys.insunits=parseInt(val,10); headerVar=null; continue; }
     if(code==='0'){ if(cur&&cur.pts.length>=3)polys.push(cur);
-      const v=(val||'').trim(); cur=(v==='LWPOLYLINE'||v==='POLYLINE')?{pts:[],_x:null}:null; }
+      if(label&&label.text&&label.x!=null&&label.y!=null)labels.push(label);
+      const v=(val||'').trim(); cur=(v==='LWPOLYLINE'||v==='POLYLINE')?{pts:[],_x:null}:null;
+      label=(v==='TEXT'||v==='MTEXT')?{text:'',x:null,y:null}:null; headerVar=null; }
     else if(cur){
       if(code==='10')cur._x=parseFloat(val);
       else if(code==='20'){ if(cur._x!=null){cur.pts.push([cur._x,parseFloat(val)]);cur._x=null;} }
     }
+    else if(label){
+      if(code==='10')label.x=parseFloat(val);
+      else if(code==='20')label.y=parseFloat(val);
+      else if(code==='1')label.text=String(val||'').replace(/\\P/g,' ').trim();
+    }
   }
   if(cur&&cur.pts.length>=3)polys.push(cur);
+  if(label&&label.text&&label.x!=null&&label.y!=null)labels.push(label);
+  polys.labels=labels;
   return polys;
 }
 function dxfToBuilding(text,W,D,nF){
@@ -2852,15 +2866,26 @@ function dxfToBuilding(text,W,D,nF){
   let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
   polys.forEach(p=>p.pts.forEach(([x,y])=>{minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}));
   const dw=Math.max(maxX-minX,1e-3), dh=Math.max(maxY-minY,1e-3);
-  const scale=Math.min((W-2)/dw,(D-2)/dh);
+  // A drawing that declares its units keeps its measured size; only a
+  // unit-less drawing is fitted to the site fields as before.
+  const unit=DXF_UNIT_M[polys.insunits]||null;
+  const scale=unit||Math.min((W-2)/dw,(D-2)/dh);
+  const siteW=unit?Math.max(W,dw*scale+2):W, siteD=unit?Math.max(D,dh*scale+2):D;
   const rooms=polys.map((p,idx)=>{
     let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
     p.pts.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
     const rw=(x1-x0)*scale, rd=(y1-y0)*scale;
-    return decorateRoom({id:'poly'+(idx+1),rect:[(x0-minX)*scale+1,(y0-minY)*scale+1,rw,rd]});
+    // CAD Y points north; plan Z increases to the south (meta.north '-Z').
+    // Measure from the drawing's north edge so the plan is not mirrored.
+    const room={id:'poly'+(idx+1),rect:[(x0-minX)*scale+1,(maxY-y1)*scale+1,rw,rd]};
+    const name=polys.labels.find(t=>t.x>=x0&&t.x<=x1&&t.y>=y0&&t.y<=y1);
+    if(name)room.name=name.text;
+    return decorateRoom(room);
   }).filter(r=>r.rect[2]>0.8 && r.rect[3]>0.8);
   if(!rooms.length) throw new Error('المضلّعات صغيرة جداً بعد التحجيم.');
-  return wrapBuilding(rooms,W,D,nF);
+  const b=wrapBuilding(rooms,siteW,siteD,nF);
+  b.meta={north:'-Z',acs_dxf_import:{insunits:polys.insunits,metres_per_unit:unit,true_scale:!!unit}};
+  return b;
 }
 /* ---- استقبال الملف ---- */
 function fileToImage(f){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(f);});}
@@ -2936,7 +2961,8 @@ async function handleImport(f){
       const b=(data.levels&&data.floors)?data:wrapBuilding((data.rooms||[]).map(decorateRoom),W,D,nF);
       setModel(b); info.textContent='تم استيراد JSON ✓'; }
     else if(name.endsWith('.dxf')){ const b=dxfToBuilding(await f.text(),W,D,nF);
-      setModel(b); info.textContent='تم استيراد DXF ✓ ('+b.floors.typical.rooms.length+' غرفة)'; }
+      setModel(b); info.textContent='تم استيراد DXF ✓ ('+b.floors.typical.rooms.length+' غرفة · '
+        +(b.meta.acs_dxf_import.true_scale?'بالأبعاد الفعلية للملف':'الملف بلا وحدة معلنة، فوُسِّع ليلائم حدود الموقع')+')'; }
     else if(name.endsWith('.pdf')){
       // (أ) الأفضل: أرسل الـPDF نفسه لمحرّك الفهم — استخراج نصّ سليم + مواضع دقيقة
       const llm=srvURL();

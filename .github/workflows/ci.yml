@@ -849,6 +849,7 @@ jobs:
           set -euo pipefail
           bash tools/ci_run.sh --log logs/delivery-browser.log --label "delivery critical Chromium" --runner node \
             tests/remediation/test_guest_workspace.cjs \
+            tests/remediation/test_guest_dxf_import.cjs \
             tests/remediation/test_connected_workspace_browser.cjs \
             tests/remediation/test_approved_viewer_browser.cjs \
             tests/remediation/test_stairs_approved_browser.cjs \
