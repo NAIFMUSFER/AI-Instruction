@@ -792,6 +792,7 @@ jobs:
             tests/remediation/test_workspace_recovery.py \
             tests/remediation/test_auth_gateway.py \
             tests/remediation/test_production_auth_boundary.py \
+            tests/remediation/test_auth_upstream_readiness.py \
             tests/remediation/test_plan_http_command_boundary.py \
             tests/remediation/test_plan_pdf_export.py \
             tests/remediation/test_geometry_delivery.py \

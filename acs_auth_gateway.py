@@ -9,9 +9,12 @@ never logged or persisted by the ACS server.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import os
 import re
+import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -121,6 +124,149 @@ def _request(method: str, path: str, *, payload: dict | None = None,
         return status, json.loads(raw.decode("utf-8"))
     except Exception:
         return 502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"}
+
+
+# ── Sign-in upstream readiness (monitoring only) ─────────────────────────────
+# `configured` (both variables set) is not `reachable`: a deleted or unresolvable
+# project still looks configured. /health reports only the last cached verdict
+# and never opens a socket, because Render restarts the service when /health
+# fails and the guest workspace is still useful while sign-in is down.
+# /ready/auth runs at most one bounded probe per _PROBE_TTL_S for all callers,
+# so public probes cannot amplify traffic to the auth project. Results carry
+# states, booleans, HTTP status numbers and timings only: never the project URL
+# or host, the key, exception text or an upstream body.
+UPSTREAM_CONTRACT = "acs.auth-upstream/1.0"
+_PROBE_PATH = "/auth/v1/settings"
+_PROBE_TIMEOUT_S = 3.0
+_PROBE_TTL_S = 30.0
+_PROBE_LOCK = threading.Lock()
+_PROBE = {"fingerprint": None, "at": None, "checked_at": None,
+          "value": None, "latency_ms": None, "worker": None}
+_clock = time.monotonic
+
+
+def missing_configuration() -> list[str]:
+    """Names (never values) of the variables the sign-in gateway lacks."""
+    missing = []
+    if not _base():
+        missing.append("ACS_AUTH_SUPABASE_URL")
+    if not _key():
+        missing.append("ACS_AUTH_SUPABASE_PUBLISHABLE_KEY")
+    return missing
+
+
+def _probe_settings(base: str, key: str, timeout: float) -> tuple[str, int | None, bool | None]:
+    """One GET of the public auth settings the Google button depends on."""
+    req = urllib.request.Request(base + _PROBE_PATH, method="GET", headers={
+        "apikey": key, "accept": "application/json",
+        "user-agent": "acs-auth-gateway/1.0 readiness",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            status = int(getattr(response, "status", 200) or 200)
+            raw = response.read(_MAX_UPSTREAM + 1)
+    except urllib.error.HTTPError as exc:
+        status = int(getattr(exc, "code", 502) or 502)
+        try:
+            exc.close()
+        except Exception:
+            pass
+        return ("rejected" if status in (401, 403) else "error"), status, None
+    except (urllib.error.URLError, TimeoutError, OSError):
+        # The same condition that makes the gateway answer AUTH_UPSTREAM_UNAVAILABLE.
+        return "unreachable", None, None
+    if not 200 <= status < 300 or len(raw) > _MAX_UPSTREAM:
+        return "error", status, None
+    try:
+        settings = json.loads(raw.decode("utf-8"))
+    except Exception:
+        return "error", status, None
+    external = settings.get("external") if isinstance(settings, dict) else None
+    if not isinstance(external, dict):
+        return "error", status, None
+    return "ok", status, external.get("google") is True
+
+
+def _bounded_probe(base: str, key: str):
+    """Run the probe with a hard wall-clock bound.
+
+    urllib's timeout does not cover DNS resolution, so the probe runs in a
+    daemon thread. A worker that outlives the bound is reported as unreachable
+    and no second worker is started while it is still alive.
+    """
+    box = {}
+
+    def work():
+        try:
+            box["value"] = _probe_settings(base, key, _PROBE_TIMEOUT_S)
+        except Exception:
+            box["value"] = ("error", None, None)
+
+    started = time.perf_counter()
+    worker = threading.Thread(target=work, name="acs-auth-readiness-probe", daemon=True)
+    worker.start()
+    worker.join(_PROBE_TIMEOUT_S + 0.5)
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    if worker.is_alive():
+        return ("unreachable", None, None), latency_ms, worker
+    return box.get("value", ("error", None, None)), latency_ms, None
+
+
+def _status_view(entry: dict | None, now: float) -> dict:
+    view = {"contract": UPSTREAM_CONTRACT, "configured": True, "checked": False,
+            "ready": False, "reachable": None, "state": "unchecked",
+            "google_enabled": None, "http_status": None, "latency_ms": None,
+            "checked_at": None, "age_s": None, "ttl_s": _PROBE_TTL_S,
+            "timeout_s": _PROBE_TIMEOUT_S}
+    if entry is None:
+        return view
+    state, http_status, google = entry["value"]
+    if state == "ok" and google is not True:
+        state = "google_not_configured"
+    view.update(checked=True, ready=state == "ok", state=state,
+                reachable=state != "unreachable", google_enabled=google,
+                http_status=http_status, latency_ms=entry["latency_ms"],
+                checked_at=entry["checked_at"],
+                age_s=round(max(0.0, now - entry["at"]), 1))
+    return view
+
+
+def upstream_status(*, probe: bool = True) -> dict:
+    """Sign-in upstream verdict for /health (probe=False) and /ready/auth."""
+    base, key = _base(), _key()
+    if not base or not key:
+        view = _status_view(None, 0.0)
+        view.update(configured=False, state="not_configured",
+                    missing=missing_configuration())
+        return view
+    fingerprint = hashlib.sha256((base + "\n" + key).encode("utf-8")).hexdigest()
+
+    def cached():
+        if _PROBE["fingerprint"] != fingerprint or _PROBE["value"] is None:
+            return None
+        return dict(_PROBE)
+
+    entry = cached()
+    if not probe or (entry is not None and _clock() - entry["at"] < _PROBE_TTL_S):
+        return _status_view(entry, _clock())
+    # Single flight: concurrent callers wait for the one probe in progress.
+    if not _PROBE_LOCK.acquire(timeout=_PROBE_TIMEOUT_S + 1.0):
+        return _status_view(entry, _clock())
+    try:
+        entry = cached()
+        if entry is not None and _clock() - entry["at"] < _PROBE_TTL_S:
+            return _status_view(entry, _clock())
+        stuck = _PROBE["worker"]
+        if stuck is not None and stuck.is_alive():
+            value, latency_ms, worker = ("unreachable", None, None), None, stuck
+        else:
+            value, latency_ms, worker = _bounded_probe(base, key)
+        _PROBE.update(fingerprint=fingerprint, at=_clock(), value=value,
+                      latency_ms=latency_ms, worker=worker,
+                      checked_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        return _status_view(cached(), _clock())
+    finally:
+        _PROBE_LOCK.release()
 
 
 def _bearer(scope: dict) -> str:

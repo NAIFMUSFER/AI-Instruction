@@ -35,7 +35,8 @@ SUCCESS = {'ok': True, 'building': {'site': {'w': 20, 'd': 15},
 class LiveGenerationVerdict(unittest.TestCase):
     def run_verifier(self, status=200, payload=None, text=None, error=None,
                      generation=True, anonymous_status=401,
-                     anonymous_code='ACS_AUTH_REQUIRED'):
+                     anonymous_code='ACS_AUTH_REQUIRED', auth_ready=(200, None),
+                     google_start=(200, None)):
         calls = []
         response_text = json.dumps(SUCCESS if payload is None else payload) \
             if text is None else text
@@ -61,6 +62,14 @@ class LiveGenerationVerdict(unittest.TestCase):
                 result, code = health, 200
             elif path == '/ready':
                 result, code = {'ok': True, 'ready': True}, 200
+            elif path == '/ready/auth':
+                code, failure = auth_ready
+                result = {'ok': True, 'ready': True} if failure is None else envelope(failure)
+            elif path == '/v1/auth/google/start' and method == 'POST':
+                code, failure = google_start
+                result = ({'url': 'https://auth.example/auth/v1/authorize?provider=google&x=1',
+                           'redirect_to': origin + '/'} if failure is None
+                          else {'ok': False, 'error': {'code': failure, 'message': 'synthetic'}})
             elif path == '/':
                 result, code = {'service': 'test'}, 200
             elif path == '/definitely-not-a-route':
@@ -108,6 +117,26 @@ class LiveGenerationVerdict(unittest.TestCase):
         rc, output, failures, skipped = self.run_verifier(generation=False)
         self.assertEqual((rc, failures), (0, 0), output)
         self.assertEqual(skipped, ['end-to-end generation'])
+
+    def test_unreachable_sign_in_project_fails_the_free_monitor(self):
+        # Production 2026-11-25: /health and /ready were green while every
+        # sign-in answered 503 AUTH_UPSTREAM_UNAVAILABLE.
+        rc, output, failures, skipped = self.run_verifier(
+            generation=False, auth_ready=(503, 'ACS_UPSTREAM_UNAVAILABLE'),
+            google_start=(503, 'AUTH_UPSTREAM_UNAVAILABLE'))
+        self.assertEqual((rc, failures), (1, 2), output)
+        self.assertIn('AUTH_UPSTREAM_UNAVAILABLE', output)
+        self.assertNotIn('auth.example', output)
+
+    def test_deployment_without_readiness_route_still_checks_google_start(self):
+        rc, output, failures, skipped = self.run_verifier(
+            generation=False, auth_ready=(404, 'ACS_NOT_FOUND'),
+            google_start=(503, 'AUTH_UPSTREAM_UNAVAILABLE'))
+        self.assertEqual((rc, failures), (1, 1), output)
+        self.assertIn('/ready/auth', skipped)
+        rc, output, failures, skipped = self.run_verifier(
+            generation=False, auth_ready=(404, 'ACS_NOT_FOUND'))
+        self.assertEqual((rc, failures), (0, 0), output)
 
     def test_successful_generation_passes(self):
         rc, output, failures, skipped = self.run_verifier()
