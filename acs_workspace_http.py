@@ -20,6 +20,7 @@ from acs_plan_review import PlanError, digest
 ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace(?P<source>/plan-source)?$")
 WORKER_ID = str(uuid.uuid4())
 ACTIVE_JOBS = set()
+ACTIVE_PROJECTS = {}  # project_id -> the one job_id admitted or running for it
 PAID_TASKS = set()
 RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE",
                               "ACS_PROVIDER_BUDGET_EXHAUSTED"})
@@ -156,9 +157,25 @@ class WorkspaceMiddleware:
             if prior.get("input_hash") != fingerprint:
                 raise PlanError("STALE_REVISION", "معرّف المهمة مستخدم لطلب مختلف؛ لم يبدأ توليد آخر.")
             return _job_view(prior)
+        # Membership is proven by this read, before any reservation below.
         before = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
         if before.head != command.get("expected_head"):
             raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التوليد.")
+        # One paid job per project at a time. Every job is checked against the
+        # same head and saved by compare-and-swap, so a second concurrent job
+        # (another tab, a second resume of the same failed job) can never be
+        # saved: its provider spend would always be wasted. Check and reserve
+        # happen with no await in between, so concurrent requests cannot both
+        # pass. Process-local: valid under the declared single-instance invariant.
+        if ACTIVE_PROJECTS.setdefault(project_id, job_id) != job_id:
+            raise PlanError("GENERATION_IN_PROGRESS", "توجد مهمة توليد أو تعديل جارية لهذا المشروع. تابعها حتى تنتهي ثم افتح آخر نسخة؛ لم يُرسل أي طلب إلى مزود النموذج.")
+        try:
+            return await self._admit(store, project_id, actor_id, command, job_id, fingerprint)
+        finally:
+            if job_id not in ACTIVE_JOBS and ACTIVE_PROJECTS.get(project_id) == job_id:
+                ACTIVE_PROJECTS.pop(project_id, None)
+
+    async def _admit(self, store, project_id, actor_id, command, job_id, fingerprint):
         if command.get("source_id"):
             await asyncio.to_thread(SOURCES.source, store, project_id, command["source_id"])
         if len(self.tasks) >= 8:
@@ -192,8 +209,11 @@ class WorkspaceMiddleware:
         task = asyncio.create_task(self._finish(store, project_id, actor_id, command))
         self.tasks.add(task)
         ACTIVE_JOBS.add(job_id)
+        ACTIVE_PROJECTS.setdefault(project_id, job_id)
         task.add_done_callback(self.tasks.discard)
         task.add_done_callback(lambda _: ACTIVE_JOBS.discard(job_id))
+        task.add_done_callback(lambda _: ACTIVE_PROJECTS.pop(project_id, None)
+                               if ACTIVE_PROJECTS.get(project_id) == job_id else None)
         return _job_view(row)
 
     async def __call__(self, scope, receive, send):

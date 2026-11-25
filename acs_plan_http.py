@@ -68,6 +68,7 @@ def _error_status(code: str) -> int:
         "ACS_STALE_REVISION",
         "ACS_REVISION_EXISTS",
         "ACS_APPROVAL_EXISTS", "JOB_LEASE_LOST", "REVISION_EXISTS", "APPROVAL_EXISTS",
+        "GENERATION_IN_PROGRESS",
     }:
         return 409
     if code in {"GENERATION_BUSY", "STORE_UNAVAILABLE"}:

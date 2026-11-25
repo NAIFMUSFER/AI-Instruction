@@ -223,5 +223,81 @@ class ChatEditAccounting(Harness):
         self.assertEqual(self.limiter.calls, ["edit"])
 
 
+class OnePaidJobPerProject(Harness):
+    """Two tabs (or two resumes of one failed job) each paid the provider; only
+    one could ever pass the head compare-and-swap."""
+
+    def setUp(self):
+        super().setUp()
+        self.gate = asyncio.Event()
+        self.started = []
+
+        async def finish(store, project_id, actor_id, cmd):
+            self.started.append(cmd["job_id"])
+            await self.gate.wait()
+        p = patch.object(self.middleware, "_finish", finish)
+        p.start()
+        self.addCleanup(p.stop)
+
+    async def drain(self):
+        self.gate.set()
+        await asyncio.gather(*list(self.middleware.tasks))
+        self.assertEqual(H.ACTIVE_PROJECTS, {})
+
+    async def test_concurrent_jobs_with_different_ids_admit_only_one(self):
+        first, second = await asyncio.gather(call(self.middleware, command()),
+                                             call(self.middleware, dict(command(), job_id=OTHER)))
+        statuses = sorted([first[0], second[0]])
+        self.assertEqual(statuses, [202, 409])
+        refused = first[1] if first[0] == 409 else second[1]
+        self.assertEqual(refused["error"]["code"], "GENERATION_IN_PROGRESS")
+        self.assertEqual(len(self.started), 1)
+        self.assertEqual(len(self.table.rows), 1)
+        self.assertEqual(len(self.limiter.calls), 1)          # the refused tab spent no quota
+        await self.drain()
+        status, _ = await call(self.middleware, dict(command(), job_id=OTHER))
+        self.assertEqual(status, 202)                          # free again once the job ended
+        await self.drain()
+
+    async def test_same_job_id_resubmitted_still_reattaches(self):
+        first, second = await asyncio.gather(call(self.middleware, command()), call(self.middleware, command()))
+        self.assertEqual((first[0], second[0]), (202, 202))
+        self.assertEqual(first[1]["job"]["id"], second[1]["job"]["id"])
+        self.assertEqual(self.started, [JOB])
+        await self.drain()
+
+    async def test_failed_admission_releases_the_project(self):
+        self.workspace = Workspace("someone-else-saved")      # stale tab: refused before any spend
+        status, body = await call(self.middleware, command())
+        self.assertEqual((status, body["error"]["code"]), (409, "STALE_REVISION"))
+        self.assertEqual(H.ACTIVE_PROJECTS, {})
+        self.workspace = Workspace()
+        self.assertEqual((await call(self.middleware, command()))[0], 202)
+        await self.drain()
+
+    async def test_non_member_can_neither_probe_nor_hold_the_reservation(self):
+        self.assertEqual((await call(self.middleware, command()))[0], 202)     # member's job running
+
+        def denied(*a):
+            raise PlanError("PROJECT_ACCESS_DENIED", "Authenticated actor lacks project access")
+        with patch.object(H.SERVICE, "workspace", denied):
+            status, body = await call(self.middleware, dict(command(), job_id=OTHER))
+        self.assertEqual((status, body["error"]["code"]), (403, "PROJECT_ACCESS_DENIED"))
+        self.assertEqual(H.ACTIVE_PROJECTS, {PROJECT: JOB})
+        await self.drain()
+
+    async def test_resuming_one_failed_job_twice_admits_one(self):
+        old = "55555555-5555-4555-8555-555555555555"
+        self.table.rows[old] = {"id": old, "project_id": PROJECT, "created_by": ACTOR, "state": "FAILED",
+                                "error_code": "PLAN_LAYOUT_INCOMPLETE", "checkpoint": {"kind": "start"},
+                                "provider_calls": 1, "resume_command": command(), "input_hash": "0" * 64}
+        resume = lambda job: {"action": "resume", "job_id": job, "resume_job_id": old,
+                              "confirmed": True, "max_provider_calls": 3}
+        first, second = await asyncio.gather(call(self.middleware, resume(JOB)), call(self.middleware, resume(OTHER)))
+        self.assertEqual(sorted([first[0], second[0]]), [202, 409])
+        self.assertEqual(len(self.started), 1)
+        await self.drain()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
