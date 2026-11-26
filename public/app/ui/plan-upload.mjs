@@ -14,9 +14,10 @@ export const LIMITS={file:5*1024*1024,image:25*1024*1024,pixels:40000000,side:12
 const UNUSABLE='لا يمكن استخدام هذا الملف كما هو: ';
 // U10: a free check on the preview before anything is paid. A floor plan is
 // mostly background with straight horizontal/vertical lines and little colour;
-// a photo of a room or a person is not. Measured on the review inputs: plans
-// and photographed plans >= 0.76 straight edges and <= 0.17 saturation; the
-// non-plan photo 0.49 and 0.43.
+// a photo of a room or a person is not. Measured in Chromium on the review
+// inputs: plans, the sketch and the photographed plan >= 0.73 straight edges
+// and <= 0.17 saturation; the non-plan photo 0.50 and 0.43. A page with
+// almost no lines also warns.
 export function planLikeness(source){
   const scale=Math.min(1,256/Math.max(source.naturalWidth||source.width,source.naturalHeight||source.height));
   const w=Math.max(8,Math.round((source.naturalWidth||source.width)*scale)),h=Math.max(8,Math.round((source.naturalHeight||source.height)*scale));
@@ -28,7 +29,8 @@ export function planLikeness(source){
   for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const gx=lum[y*w+x+1]-lum[y*w+x-1],gy=lum[(y+1)*w+x]-lum[(y-1)*w+x];if(Math.abs(gx)+Math.abs(gy)>60){edges++;if(Math.abs(gx)>3*Math.abs(gy)||Math.abs(gy)>3*Math.abs(gx))straight++;}}
   canvas.width=canvas.height=0;
   const ortho=straight/Math.max(1,edges),colour=sat/(w*h),density=edges/(w*h);
-  return {plan:ortho>=.62&&colour<=.3&&density>=.015,ortho,colour,density};
+  // Density only rules out an (almost) empty page; a sparse drawing is still a plan.
+  return {plan:ortho>=.62&&colour<=.3&&density>=.004,ortho,colour,density};
 }
 export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
   const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
@@ -73,7 +75,7 @@ export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
     if(!pdf)return;const current=++epoch;ready=false;sync();notice('جارٍ تجهيز الصفحة المختارة…');
     const page=await pdf.getPage(Number($('cwPdfPage').value));const vp0=page.getViewport({scale:1});
     if(!Number.isFinite(vp0.width)||!Number.isFinite(vp0.height)||vp0.width<=0||vp0.height<=0)throw new Error('أبعاد صفحة PDF غير صالحة.');
-    const vp=page.getViewport({scale:Math.min(4,LIMITS.read/Math.max(vp0.width,vp0.height))});
+    const vp=page.getViewport({scale:LIMITS.read/Math.max(vp0.width,vp0.height)});
     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.ceil(vp.width));canvas.height=Math.max(1,Math.ceil(vp.height));
     try{
       await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
@@ -190,7 +192,7 @@ export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
     if(!pdf||uploading)return;const n=Math.min(levels(),pdf.numPages);floorMap=[];
     try{
       for(let page=1;page<=n;page++){$('cwPdfPage').value=String(page);await renderPage();uploading=true;sync();floorMap[page-1]=(await saveCurrent()).id;uploading=false;}
-      renderFloors();persist();notice('حُفظت '+n+' صفحات ورُبطت بالأدوار بالترتيب. عدّل الربط أعلاه إن لزم، ثم راجع المتطلبات.');
+      renderFloors();persist();notice((n===2?'حُفظت صفحتان':'حُفظت '+n+' صفحات')+' ورُبطت بالأدوار بالترتيب. عدّل الربط أعلاه إن لزم، ثم راجع المتطلبات.');
     }catch(e){notice('توقف حفظ الصفحات. الصفحات المحفوظة تبقى في القائمة؛ أكمل الربط أو أعد المحاولة. '+(e?.message||''));onError(e);}
     finally{uploading=false;sync();}
   });
@@ -210,7 +212,7 @@ export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
     if(!selected)return;if($('cwDeleteSource').dataset.armed!=='true'){armDelete(true);notice('سيُحذف الملف وصفحاته المحفوظة من المشروع. النسخ المقروءة منه تبقى، ولن يمكن تنزيل الأصل بعدها.');return;}
     const id=selected;uploading=true;sync();
     try{await api({action:'delete',source_id:id});rows=rows.filter(r=>r.id!==id);selected=null;renderRows();persist();notice('حُذف الملف من المشروع. النسخ المقروءة منه محفوظة كما هي.');onOk();}
-    catch(e){notice(e?.code==='PLAN_SOURCE_NOT_OWNER'?e.message:'لم يُحذف الملف. '+(e?.message||''));}
+    catch(e){notice(/[\u0600-\u06FF]/.test(e?.message||'')?e.message:'لم يُحذف الملف. حاول لاحقًا.');}
     finally{uploading=false;armDelete(false);sync();}
   });
   $('cwDownloadSource').addEventListener('click',async()=>{
@@ -230,7 +232,7 @@ export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
   function confirm(){
     const n=levels(),max=Math.min(12,2*n);
     return {title:'قراءة مخططك بالذكاء الاصطناعي؟',go:'ابدأ القراءة',sent:'جارٍ إرسال طلب قراءة المخطط وحفظ رقم المهمة…',
-      text:(n>1?'سيُقرأ '+n+' أدوار: قراءة واحدة لكل دور ('+n+' قراءات). ':'ستُقرأ صفحة المخطط المختارة: قراءة واحدة. ')
+      text:(n>2?'سيُقرأ '+n+' أدوار: قراءة واحدة لكل دور ('+n+' قراءات). ':n===2?'سيُقرأ دوران: قراءة واحدة لكل دور (قراءتان). ':'ستُقرأ صفحة المخطط المختارة: قراءة واحدة. ')
         +'تستغرق كل قراءة عادةً من 20 إلى 30 ثانية، وتكلف نحو 5 إلى 7 سنتات من رصيد الذكاء الاصطناعي. إن لم تكتمل قراءة دور تُعاد مرة واحدة فقط، بحد أقصى '+max+' قراءات. يمكنك مغادرة الصفحة والعودة لمتابعتها.'};
   }
   // Step 3: the original beside the draft, the owner's answers, suggested changes.

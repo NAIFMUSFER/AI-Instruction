@@ -154,7 +154,7 @@ class PageText(unittest.TestCase):
 class PageRender(unittest.TestCase):
     def test_pdf_pages_are_rendered_at_the_read_size_and_kept_under_the_preview_limit(self):
         page = (ROOT / 'public/app/ui/plan-upload.mjs').read_text(encoding='utf-8')
-        self.assertIn('scale:Math.min(4,LIMITS.read/Math.max(vp0.width,vp0.height))', page)
+        self.assertIn('scale:LIMITS.read/Math.max(vp0.width,vp0.height)', page)
         self.assertNotIn('1600/', page)
         self.assertIn('LIMITS.preview', page)
         for field in ('cwSourceScale', 'cwSourceNorth', 'cwScaleLabel', 'cwScaleMeters'):

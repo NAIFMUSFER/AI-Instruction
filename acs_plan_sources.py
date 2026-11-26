@@ -619,8 +619,15 @@ def delete_source(store, project_id, actor_id, source_id):
     row = source(store, project_id, source_id)
     if row.get("created_by") != actor_id:
         raise PlanError("PLAN_SOURCE_NOT_OWNER", "يحذف الملفَ من رفعه فقط. اطلب منه حذفه.")
-    deleted = store._request("DELETE", TABLE + "?project_id=eq." + identity(project_id) + "&id=eq." + identity(source_id),
-                             prefer="return=representation")
+    try:
+        deleted = store._request("DELETE", TABLE + "?project_id=eq." + identity(project_id) + "&id=eq." + identity(source_id),
+                                 prefer="return=representation")
+    except PlanError as exc:
+        # Membership was proven by the read above; a refusal here is the delete
+        # policy itself (absent until 20261126120000 is applied).
+        if exc.code != "PROJECT_ACCESS_DENIED":
+            raise
+        deleted = None
     if not isinstance(deleted, list) or len(deleted) != 1:
         raise PlanError("PLAN_SOURCE_DELETE_UNAVAILABLE", "تعذّر حذف الملف الآن؛ لم يُحذف شيء. حاول لاحقًا.")
     object_request(store, "DELETE", project_id, source_id, "preview")

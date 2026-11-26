@@ -187,6 +187,17 @@ class Delete(unittest.TestCase):
                     S.delete_source(store, PROJECT, ACTOR, IDS[3])
         self.assertEqual(caught.exception.code, 'PLAN_SOURCE_DELETE_UNAVAILABLE')
         self.assertEqual(store.objects, before, 'policy not applied yet: nothing is removed')
+        # Without the migration PostgREST refuses the grant (403): same Arabic answer.
+        def refuse(method, *args, **kwargs):
+            if method == 'DELETE':
+                raise PlanError('PROJECT_ACCESS_DENIED', 'Authenticated actor lacks project access')
+            return Store._request(store, method, *args, **kwargs)
+        with objects(store), patch.object(store, '_request', side_effect=refuse):
+            with self.assertRaises(PlanError) as caught:
+                S.delete_source(store, PROJECT, ACTOR, IDS[3])
+        self.assertEqual(caught.exception.code, 'PLAN_SOURCE_DELETE_UNAVAILABLE')
+        self.assertIn('لم يُحذف شيء', str(caught.exception))
+        self.assertEqual(store.objects, before)
 
     def test_the_route_and_page_offer_delete(self):
         http = (ROOT / 'acs_workspace_http.py').read_text(encoding='utf-8')
