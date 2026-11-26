@@ -799,7 +799,10 @@ class PlanWorkspace:
                   "regulatory_compliance": "NOT_VERIFIED", "structural_safety": "NOT_VERIFIED"}
         if self._verifier is not None and not geometry_issues:
             try:
-                evidence = self._verifier(model)
+                # The revision's own brief tells a villa from an apartment building.
+                from acs_residential_access import dwelling_context
+                with dwelling_context(rev.brief, json.loads(rev.requirements_json)):
+                    evidence = self._verifier(model)
                 if digest(model) != rev.model_hash:
                     raise PlanError("MUTATING_VERIFIER", "Verifier must not rewrite the plan")
                 if not isinstance(evidence, dict) or not isinstance(evidence.get("issues"), list):

@@ -1,14 +1,107 @@
 """Geometric access from declared apartment entrances, not code certification.
 
 Apartment interiors connect through their own rooms to common circulation.
-Finished plans need aligned doors through both sides of a wall. Street access,
-escape widths, accessibility and regulatory compliance are outside this check.
+A single-family dwelling (villa or house) has no common corridor between
+apartments: its rooms connect to its entrance, and on upper floors to its
+stairs, through the dwelling's own rooms. Finished plans need aligned doors
+through both sides of a wall. Street access, escape widths, accessibility and
+regulatory compliance are outside this check.
 """
-from collections import defaultdict
+from collections import Counter, defaultdict
+from contextlib import contextmanager
+from contextvars import ContextVar
 import math
+import re
 
 EPS = 0.0001
 OPPOSITE = {'N':'S','S':'N','E':'W','W':'E'}
+SINGLE_DWELLING = 'single_dwelling'
+APARTMENTS = 'apartments'
+
+# A reviewer that only receives the model (the plan review verifier) reads the
+# revision's own brief and requirements from here. Unset, only the building's
+# own shape is used, and anything unclear keeps the apartment rules.
+_dwelling_brief = ContextVar('acs_residential_dwelling_brief', default=None)
+
+
+@contextmanager
+def dwelling_context(brief, requirements):
+    token = _dwelling_brief.set((brief, requirements))
+    try:
+        yield
+    finally:
+        _dwelling_brief.reset(token)
+
+
+# Whole words with optional Arabic conjunction/preposition/article prefixes and
+# pronoun suffixes. Dual and plural houses (فيلتين، فلل، بيوت) are several
+# dwellings and never count as one; dual apartments (شقتين) are apartments.
+_OWNER = '(?:ي|ه|ها|نا|كم|هم)'
+def _words(stems):
+    return re.compile(r'(?<!\w)(?:و|ف)?(?:لل|ب|ل|ك)?(?:ال)?(?:' + '|'.join(stems)
+                      + r')' + _OWNER + r'?(?!\w)', re.I)
+
+def _feminine(stem, dual=False):
+    return stem + '(?:[ةه]|ت' + ('(?:ين|ان)|ت' if dual else '') + _OWNER + ')'
+
+_HOUSE = _words(['فيلا', _feminine('فيل'), _feminine('فل'), 'بيت', 'منزل', 'قصر',
+                 'villa', 'house', 'townhouse'])
+_APARTMENT = _words([_feminine('شق', True), 'شقق', _feminine('عمار', True), 'عمائر',
+                     'apartments?', 'flats?', 'condo(?:minium)?s?'])
+_UNITS = re.compile(r'وحدات\s+سكني[ةه]|residential\s+units', re.I)
+# A roof stair or lift housing is not a house.
+_CORE_HOUSING = re.compile(r'بيت\s+(?:ال)?(?:درج|سلم|مصعد)')
+
+
+def _brief_says(text):
+    text = _CORE_HOUSING.sub(' ', text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا'))
+    if _APARTMENT.search(text) or _UNITS.search(text):
+        return APARTMENTS
+    return SINGLE_DWELLING if _HOUSE.search(text) else None
+
+
+def _unit_ids(rooms):
+    return {r['unit_id'] for r in rooms if isinstance(r, dict)
+            and isinstance(r.get('unit_id'), str) and r['unit_id']}
+
+
+def dwelling_kind(building, brief=None, requirements=None):
+    """Return SINGLE_DWELLING for one villa/house, otherwise APARTMENTS.
+
+    Apartment evidence always wins: two dwellings on one floor, a dwelling on a
+    template repeated over several storeys, an apartment brief, or a confirmed
+    unit count other than one. A single dwelling then needs positive evidence:
+    a villa/house brief, exactly one confirmed unit, or one unit_id spanning
+    every occupied room of the building.
+    """
+    if brief is None and requirements is None and _dwelling_brief.get() is not None:
+        brief, requirements = _dwelling_brief.get()
+    floors = building.get('floors') if isinstance(building, dict) else None
+    levels = building.get('levels') if isinstance(building, dict) else None
+    if not isinstance(floors, dict) or not isinstance(levels, list):
+        return APARTMENTS
+    occupied = Counter(l.get('template') for l in levels
+                       if isinstance(l, dict) and l.get('kind') != 'roof')
+    house_ids, rooms = set(), []
+    for template, floor in floors.items():
+        if template not in occupied or not isinstance(floor, dict) or not isinstance(floor.get('rooms'), list):
+            continue
+        ids = _unit_ids(floor['rooms'])
+        if len(ids) > 1 or (ids and occupied[template] > 1):
+            return APARTMENTS
+        house_ids |= ids
+        rooms += floor['rooms']
+    said = _brief_says(brief) if isinstance(brief, str) else None
+    if said == APARTMENTS:
+        return APARTMENTS
+    units = [r.get('expected') for r in requirements or [] if isinstance(r, dict) and r.get('metric') == 'unit_count']
+    per_level = [r.get('expected') for r in requirements or [] if isinstance(r, dict) and r.get('metric') == 'unit_count_per_level']
+    if (any(type(n) is not int or n != 1 for n in units)
+            or (per_level and (not units or any(type(n) is not int or n != 1 for n in per_level)))):
+        return APARTMENTS
+    spans_house = (len(house_ids) == 1 and bool(rooms)
+                   and all(isinstance(r, dict) and r.get('unit_id') in house_ids for r in rooms))
+    return SINGLE_DWELLING if said == SINGLE_DWELLING or units or spans_house else APARTMENTS
 
 def scoped(building):
     return any(r.get('unit_id') and r.get('role') == 'bedroom'
@@ -57,8 +150,9 @@ def reachable(roots,allowed,graph):
             if item in allowed and item not in seen:seen.add(item);pending.append(item)
     return seen
 
-def issues(building,doors=True):
+def issues(building,doors=True,dwelling=None):
     if not scoped(building):return []
+    single=(dwelling or dwelling_kind(building))==SINGLE_DWELLING
     out=[]
     # A declared roof deck is unoccupied; this check proves apartment/common
     # circulation only, not roof access. Keep checking templates also used by
@@ -76,7 +170,8 @@ def issues(building,doors=True):
         for i,a in enumerate(rooms):
             for b in rooms[i+1:]:
                 if shared(a,b,doors):graph[a['id']].add(b['id']);graph[b['id']].add(a['id'])
-        common={r['id'] for r in rooms if not r.get('unit_id')}
+        # One dwelling owns every room; apartments share only unit-less rooms.
+        common=set(by_id) if single else {r['id'] for r in rooms if not r.get('unit_id')}
         ground=min((l['index'] for l in occupied_levels),default=0)
         at_ground=any(l['index']==ground and l['template']==template for l in occupied_levels)
         roots={r['id'] for r in rooms if r['id'] in common and r.get('role') in ({'entrance','lobby'} if at_ground else {'stairs','stair'})}
@@ -91,6 +186,10 @@ def issues(building,doors=True):
                         for other in rooms if other['id']!=rid and enclosed(other))
                 for side in OPPOSITE for lo,hi in portals(by_id[rid],side))}
         access=reachable(roots,common,graph)
+        if single:
+            for rid in sorted(common-access):issue(rid,('اربط هذا الفراغ بمدخل المسكن' if at_ground else 'اربط هذا الفراغ بدرج المسكن في هذا الدور')
+                +' عبر فراغات المسكن وممراته، دون ممر مشترك بين شقق'+(' وبأبواب متقابلة متطابقة.' if doors else ' وبحواف متلامسة.'))
+            continue
         for rid in sorted(common-access):issue(rid,'اربط المدخل والممر المشترك والدرج والمصعد بمسار متصل'+(' وأبواب متقابلة متطابقة.' if doors else ' وحواف متلامسة.'))
         for unit in sorted({r.get('unit_id') for r in rooms if isinstance(r.get('unit_id'),str) and r['unit_id']}):
             own={r['id'] for r in rooms if r.get('unit_id')==unit}
@@ -120,8 +219,8 @@ def opening_collisions(building):
                                     'severity':'error','message':'['+template+'/'+room['id']+'] باب ونافذة متداخلان على الحافة '+str(door['edge'])+'؛ باعد بين الفتحتين.'})
     return out[:128]
 
-def detail_issues(building):
+def detail_issues(building,dwelling=None):
     import acs_validate as V
     findings,_=V.validate_building(building)
     return ([{'code':'ACS_GEOMETRY_FINDING','message':str(x)} for x in findings]
-            + issues(building) + opening_collisions(building))[:128]
+            + issues(building,dwelling=dwelling) + opening_collisions(building))[:128]
