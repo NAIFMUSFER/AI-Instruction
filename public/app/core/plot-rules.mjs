@@ -29,6 +29,17 @@ const round2 = v => Math.round(v * 100) / 100;
 const fmt = v => String(round2(v));
 
 // Mirrors acs_plot_rules.resolve for the numbers shown before generation.
+/** Is this brief one villa/house? Mirrors the server reading: the signed-in form
+ *  appends «نوع المشروع: سكني / عمارة / فيلا» to every residential brief, so that
+ *  category line is ignored; «بيت الدرج» is a stair core, not a house; apartment
+ *  words win; and a confirmed count above one flat is never a villa. */
+export function villaBrief(text, total = null) {
+  const t = String(text || '').replace(/^\s*نوع المشروع\s*:.*$/gm, ' ')
+    .replace(/بيت\s+(?:ال)?(?:درج|سلم|مصعد)/g, ' ').replace(/[أإآ]/g, 'ا');
+  if (/عمار[ةه]|شق[ةق]|شقتين|شقتان|apartment/i.test(t)) return false;
+  return /فيل[اه]|villa|بيت|منزل/i.test(t) && (!total || total === 1);
+}
+
 export function preview({villa=false, levels=1, units=null, width, depth, streets=[], streetWidth=null,
                          setbacks={}, coverage=null, placement='front_setback', count=null}) {
   const d = villa ? DEFAULTS.villa : DEFAULTS.apartments, warnings = [];

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {parseNumber,plotCommand,preview,overlay,summaryText,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES} from '../../public/app/core/plot-rules.mjs';
+import {parseNumber,plotCommand,preview,overlay,summaryText,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES,villaBrief} from '../../public/app/core/plot-rules.mjs';
 import {residentialOptions} from '../../public/app/core/residential-program.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -26,6 +26,14 @@ check('Arabic-Indic and extended digits, Arabic decimal comma and units', () => 
   assert.equal(parseNumber('2,5'), 2.5);
   assert.equal(parseNumber(''), null);
   assert.ok(Number.isNaN(parseNumber('ثلاثة')));
+});
+
+check('a saved apartment brief is not read as a villa from the form category line', () => {
+  const line = '\nنوع المشروع: سكني / عمارة / فيلا';
+  assert.equal(villaBrief('أبغى عمارة سكنية في الرياض بشقتين في كل دور.' + line, null), false);
+  assert.equal(villaBrief('مبنى من ثلاثة أدوار مع بيت الدرج في الخلف.' + line, null), false);
+  assert.equal(villaBrief('أبغى فيلا عائلية في جدة.' + line, null), true);
+  assert.equal(villaBrief('أبغى فيلا عائلية في جدة.' + line, 6), false);
 });
 
 check('command block from form text', () => {
