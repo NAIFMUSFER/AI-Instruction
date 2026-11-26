@@ -78,7 +78,7 @@ def geometry_failure_message(code):
         "ACS_TIMEOUT":"انتهت مهلة المعالجة وحالة الطلب لدى المزود غير مؤكدة. احتُفظ بالمراحل؛ لن يبدأ استدعاء مكرر تلقائيًا.",
         "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد وحالة الطلب لدى المزود غير مؤكدة. لم يُعَد إرسال الطلب تلقائيًا.",
         "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد وحالة الطلب غير مؤكدة. احتُفظ بالمراحل دون إعادة مدفوعة تلقائية.",
-        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. حالة الطلب غير مؤكدة؛ لم يُعَد إرساله تلقائيًا.",
+        "GENERATION_WORKER_FAILED":"تعذّر إكمال الطلب بسبب خطأ داخلي في الخادم. يمكنك إرساله مرة أخرى.",
         "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
         "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
@@ -577,7 +577,7 @@ def edit_geometry(store, project_id, actor_id, command):
     # user-authored roof is never touched.
     candidate = carry_roof_for_admission(before.model, candidate)
     revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
-                          expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
+                          expected_head=expected, note="تعديل أبعاد وموضع " + (room["name"].strip()[:120] if isinstance(room.get("name"), str) and room["name"].strip() else ref[1]))
     result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return result

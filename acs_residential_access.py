@@ -51,9 +51,14 @@ _APARTMENT = _words([_feminine('شق', True), 'شقق', _feminine('عمار', Tr
 _UNITS = re.compile(r'وحدات\s+سكني[ةه]|residential\s+units', re.I)
 # A roof stair or lift housing is not a house.
 _CORE_HOUSING = re.compile(r'بيت\s+(?:ال)?(?:درج|سلم|مصعد)')
+# The signed-in form appends «نوع المشروع: سكني / عمارة / فيلا» to every
+# residential brief. That category label names both kinds, so its «عمارة» must
+# not decide that a villa brief describes an apartment building.
+_FORM_TYPE_LINE = re.compile(r'(?m)^\s*نوع المشروع\s*:.*$')
 
 
 def _brief_says(text):
+    text = _FORM_TYPE_LINE.sub(' ', text)
     text = _CORE_HOUSING.sub(' ', text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا'))
     if _APARTMENT.search(text) or _UNITS.search(text):
         return APARTMENTS

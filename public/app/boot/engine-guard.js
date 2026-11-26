@@ -357,13 +357,18 @@
       byId("login").classList.remove("acs-hidden");
       setStatus("جارٍ تسجيل الخروج…",false);
       try{if(s)await acsFetchJSON("/v1/auth/signout",{},s.access_token);}catch(e){}
-      location.reload();
+      // Land on sign-in with a notice, not silently in the public demo.
+      location.replace("/?signin=1&signed_out=1");
     });header.appendChild(b);
   }
   function authInit(callback){
     onEntry=callback;
     if(guestEntry){onEntry({mode:"guest",name:"ضيف · محلي"});return;}
     setMode("signin");
+    if(entryQuery.get("signed_out")==="1"){
+      setStatus("تم تسجيل الخروج. يمكنك الدخول مرة أخرى، أو المتابعة بدون حساب.",false);
+      history.replaceState(null,"",location.pathname+"?signin=1");
+    }
     var guestLink=byId("acsAuthGuestLink");
     if(guestLink&&apartmentExample)guestLink.setAttribute("href","/?guest=1&example=apartment-20x25");
     var form=byId("acsAuthForm");

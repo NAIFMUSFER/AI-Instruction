@@ -18,6 +18,7 @@ async function openGuestWorkspace() {
     <div class="guest-identity">
       <strong id="acsGuestStatus" role="status">مشروع تجريبي</strong>
       <span id="guestSaveStatus" role="status">غير محفوظ على هذا الجهاز</span>
+      <a id="guestAccount" class="guest-account" href="/?signin=1" aria-label="تسجيل الدخول لحفظ مشاريعك في حسابك">تسجيل الدخول</a>
     </div>
     <div class="guest-controls">
       <button id="guestCreate" type="button">صف مبناك</button>
@@ -156,7 +157,7 @@ async function openGuestWorkspace() {
   }
   const exampleDraft = A_AUTH_SCOPE() === 'acs_guest_apartment_20x25_v1';
   $('guestStorageNote').hidden = !exampleDraft;
-  if (exampleDraft) $('guestSignin').href = '/?signin=1&example=apartment-20x25';
+  if (exampleDraft) $('guestSignin').href = $('guestAccount').href = '/?signin=1&example=apartment-20x25';
   document.addEventListener('click', event => {
     if (options.open && !options.contains(event.target)) closeOptions();
   });

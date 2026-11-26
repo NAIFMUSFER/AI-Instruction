@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {frameBounds} from '../render/frame-bounds.mjs';
+import {floorLabel as storeyName,roomNameFromId} from '../core/plan-labels.mjs';
 export {frameBounds};
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
@@ -481,7 +482,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const buttons={};for(const [name,label]of Object.entries(VIEW_LABELS)){const button=element('button',label,toolbar);button.type='button';button.dataset.view=name;buttons[name]=button;}
   const floorLabel=element('label','الدور المعروض',toolbar);const floors=element('select',null,floorLabel);floors.setAttribute('aria-label','الدور المعروض في 3D');
   const all=element('option','جميع الأدوار',floors);all.value='all';
-  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':index<0?'القبو '+Math.abs(index):index===0?'الأرضي':'الدور '+index,floors);option.value=String(index);});
+  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':storeyName(index),floors);option.value=String(index);});
   floors.disabled=!levels.size;
   const reset=element('button','إعادة الضبط',toolbar);reset.type='button';
   const tourButton=element('button','جولة تلقائية',toolbar);tourButton.type='button';tourButton.setAttribute('aria-pressed','false');
@@ -495,15 +496,26 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const finishButton=element('button','تشطيب أرضية افتراضي · بلاط ٦٠ سم',moreBody);
   finishButton.type='button';finishButton.hidden=!finish.available;finishButton.setAttribute('aria-pressed','false');
   const qualityButton=element('button','الجودة: '+quality.name,moreBody);qualityButton.type='button';
-  const labelButton=element('button','أسماء الفراغات',moreBody);labelButton.type='button';labelButton.setAttribute('aria-pressed','true');
+  // On a phone the room names pile over the model, so they start hidden there.
+  const phone=globalThis.matchMedia?.('(max-width: 600px)')?.matches===true;
+  const labelButton=element('button','أسماء الفراغات',moreBody);labelButton.type='button';labelButton.setAttribute('aria-pressed',String(!phone));
   const detailButton=element('button','تفاصيل الفتحات',moreBody);detailButton.type='button';detailButton.setAttribute('aria-pressed','true');
   const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
   const sunLabel=element('label','الشمس',moreBody),sunRange=element('input',null,sunLabel);sunRange.type='range';sunRange.min='6';sunRange.max='18';sunRange.step='0.5';sunRange.value=String(sunHour);sunRange.setAttribute('aria-label','موضع الشمس للعرض، من الصباح إلى المساء');
-  const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);element('bdi',revisionId,badge);badge.title='بصمة النموذج: '+marker.model_hash;
+  const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);badge.title='النسخة '+revisionId+' · بصمة النموذج: '+marker.model_hash;
   const finishNote=element('span',walls.available?'تشطيب جدران افتراضي':'ألوان الملف المصدر',badge);
   const roofNote=element('span','السقف غير موجود في الملف المعتمد',badge,'av-roof-note');
   roofNote.hidden=Boolean(roofLevels.size||kinds.has('ROOF'));
-  const inspector=element('div','اختر عنصرًا لعرض هويته ودوره.',stage,'av-inspector');inspector.setAttribute('role','status');inspector.setAttribute('aria-live','polite');
+  const inspector=element('div',null,stage,'av-inspector');inspector.setAttribute('role','status');inspector.setAttribute('aria-live','polite');inspector.hidden=true;
+  const roomTitle=(level,room)=>options.projections?.find(p=>p.level_index===level)?.primitives?.find(p=>p.source?.room_id===room)?.label||(room?roomNameFromId(room):'الموقع');
+  const levelTitle=level=>level===null?'لا يحمل معرّف دور':roofLevels.has(level)?'السطح':storeyName(level);
+  // Tapping shows a small card with the Arabic room name; ids only in the engineer view.
+  function showInfo(title,detail){
+    inspector.replaceChildren();if(!title){inspector.hidden=true;return null;}
+    const head=element('div',null,inspector,'av-info-head');element('strong',title,head);
+    const close=element('button','✕',head,'av-info-close');close.type='button';close.setAttribute('aria-label','إغلاق البطاقة');close.addEventListener('click',()=>select(null));
+    if(detail)element('span',detail,inspector);inspector.hidden=false;return inspector;
+  }
   const hint=element('p','اسحب للدوران · إصبعان للتحريك والتقريب · الأسهم للدوران · +/− للتقريب. مربع الشبكة = '+gridCell+' م. الكاميرا حرة وليست إثباتًا لقابلية المشي.',shell,'av-help');
   const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
@@ -516,7 +528,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   // Short room names anchored to the approved rooms. Names come from the review
   // packet when supplied, otherwise from the artifact's own room identifiers.
   const labelLayer=element('div',null,stage,'av-labels');labelLayer.setAttribute('aria-hidden','true');
-  const labels=[],projected=new THREE.Vector3();let labelsOn=true;
+  const labels=[],projected=new THREE.Vector3();let labelsOn=!phone;
   for(const row of roomBounds.values()){
     if(labels.length>=80)break;if(isRoofRow(row))continue;
     const source=options.projections?.find(p=>p.level_index===row.identity.level)?.primitives?.find(p=>p.source?.room_id===row.identity.room);
@@ -623,7 +635,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
       ({position,target}=frameBounds(box,along(1,.42,0),camera.fov,camera.aspect,1.12,target));
     }
     if(name==='interior'){
-      const room=chosenRoom();if(!room){inspector.textContent='لم يُحدّد الملف فراغًا صالحًا لكاميرا داخلية. اختر عنصرًا أو استخدم القص.';return;}
+      const room=chosenRoom();if(!room){showInfo('لم يُحدّد الملف فراغًا صالحًا لكاميرا داخلية.','اختر عنصرًا أو استخدم القص.');return;}
       framedBounds=null;const r=room.box,rs=r.getSize(new THREE.Vector3());target=r.getCenter(new THREE.Vector3());target.y=r.min.y+Math.min(1.45,Math.max(.2,rs.y*.5));
       const eye=r.min.y+Math.min(1.6,Math.max(.25,rs.y*.6)),inside=obstacles.filter(row=>row.level===room.identity.level&&row.box.intersectsBox(r));
       let best=null;
@@ -632,7 +644,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
         if(!best||clear>best.clear+.05)best={spot,clear,fx,fz};
       }
       position=best.spot;target.x=r.min.x+rs.x*(1-best.fx*.6-.2);target.z=r.min.z+rs.z*(1-best.fz*.6-.2);
-      inspector.textContent='كاميرا داخل '+room.identity.room+' · حركة حرة؛ اتصال الدرج والممرات غير متحقق هنا.';
+      showInfo('كاميرا داخل '+roomTitle(room.identity.level,room.identity.room),'حركة حرة؛ اتصال الدرج والممرات غير متحقق هنا.');
       const middle=r.getCenter(new THREE.Vector3());lamp.position.set(middle.x,r.min.y+rs.y*.82,middle.z);lamp.intensity=1.6*rs.y*rs.y+.12*rs.x*rs.z;
     }
     if(name==='detail'){
@@ -655,14 +667,15 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     selected=object;
     const bound=object?.userData.acsApprovedObjectSource;
     if(current())options.onSelectObject?.(bound?{revision_id:revisionId,model_hash:marker.model_hash,...bound,source:{...bound.source}}:null);
-    if(!object){inspector.textContent='اختر عنصرًا لعرض هويته ودوره.';if(draw)render();return;}
+    if(!object){showInfo(null);if(draw)render();return;}
     telemetry.detailGroupSize=detailMeshes(object).length;selectionBox=new THREE.Box3Helper(detailBounds(object),0x078bba);selectionBox.material.depthTest=false;selectionBox.material.toneMapped=true;selectionBox.material.transparent=true;selectionBox.userData.presentationOnly=true;selectionBox.renderOrder=10;scene.add(selectionBox);
     const identity=object.userData.acsViewerIdentity;
-    inspector.replaceChildren();const source=options.projections?.find(p=>p.level_index===identity.level)?.primitives?.find(p=>p.source?.room_id===identity.room);
-    element('strong',(KIND_LABELS[identity.kind]||'عنصر')+' · '+(source?.label||identity.room||'الموقع'),inspector);
-    if(source?.source_id)element('bdi','الفراغ المصدر: '+source.source_id,inspector);
-    element('span',identity.level===null?'لا يحمل معرّف دور':identity.level===0?'الدور الأرضي':'الدور '+identity.level,inspector);
-    element('bdi',identity.name,inspector);if(telemetry.detailGroupSize>1)element('span','مجموعة عرض مترابطة · '+telemetry.detailGroupSize+' أجزاء من الملف',inspector);element('small','معرّف ملف العرض · النسخة '+revisionId,inspector);if(draw)render();
+    const source=options.projections?.find(p=>p.level_index===identity.level)?.primitives?.find(p=>p.source?.room_id===identity.room);
+    showInfo((KIND_LABELS[identity.kind]||'عنصر')+' · '+roomTitle(identity.level,identity.room),levelTitle(identity.level));
+    if(telemetry.detailGroupSize>1)element('span','مجموعة عرض مترابطة · '+telemetry.detailGroupSize+' أجزاء من الملف',inspector);
+    const ids=element('details',null,inspector,'av-info-ids');ids.hidden=globalThis.document?.getElementById('cwEngineerIds')?.checked!==true;element('summary','معرّفات للمهندس',ids);
+    if(source?.source_id)element('bdi','الفراغ المصدر: '+source.source_id,ids);
+    element('bdi',identity.name,ids);element('small','معرّف ملف العرض · النسخة '+revisionId,ids);if(draw)render();
   }
   const tourViews=['exterior','street','interior','cutaway','aerial','detail'];
   function stopTour(){if(!tour)return;clearInterval(tour);tour=0;tourButton.setAttribute('aria-pressed','false');telemetry.presentation.tour=false;}

@@ -105,6 +105,13 @@ def first_repair_request(building, brief=BRIEF, rows=None):
 
 
 class SavedVillaRegression(unittest.TestCase):
+    def test_the_form_category_line_does_not_turn_a_villa_into_apartments(self):
+        # Every signed-in brief ends with this line; its «عمارة» must not win.
+        line = '\nنوع المشروع: سكني / عمارة / فيلا'
+        self.assertEqual(A._brief_says('أبغى فيلا عائلية في جدة.' + line), A.SINGLE_DWELLING)
+        self.assertEqual(A._brief_says('أبغى عمارة سكنية بشقتين في كل دور.' + line), A.APARTMENTS)
+        self.assertIsNone(A._brief_says('مبنى من دورين.' + line))
+
     def test_only_the_core_misalignment_remains_and_it_is_stated_exactly(self):
         building = saved()
         before = copy.deepcopy(building)

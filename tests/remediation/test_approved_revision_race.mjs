@@ -57,7 +57,10 @@ for(const [label,changed] of [
 for(const fmt of ['svg','dxf']){
  const run=setup(),work=run.context.invoke(fmt,false);
  run.replies.resolve({...response,receipt:{...receipt,format:fmt.toUpperCase(),level_index:0}});
- await work;assert.equal(run.downloads.length,2);
+ await work;assert.equal(run.downloads.length,1,'one file per tap for the owner');assert.match(run.downloads[0][1],new RegExp('^مخطط'+(fmt==='dxf'?'-CAD':'')+'(?:-|\\.)'));
+ const engineer=setup();engineer.context.$('cwEngineerIds').checked=true;const both=engineer.context.invoke(fmt,false);
+ engineer.replies.resolve({...response,receipt:{...receipt,format:fmt.toUpperCase(),level_index:0}});await both;
+ assert.equal(engineer.downloads.length,2,'the engineer view also downloads the receipt manifest');assert.match(engineer.downloads[1][1],/-manifest\.json$/);
  const wrong=setup(),pending=wrong.context.invoke(fmt,false);
  wrong.replies.resolve({...response,receipt:{...receipt,format:fmt.toUpperCase(),level_index:1}});
  await assert.rejects(pending);assert.equal(wrong.downloads.length,0);

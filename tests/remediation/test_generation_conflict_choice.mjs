@@ -97,3 +97,27 @@ const paid=requests=>requests.filter(r=>['generate','chat_edit','resume'].includ
   assert.equal(t.node('cwResumeJob').hidden,false);
   console.log('PASS: ordinary failed jobs are unchanged');
 }
+{
+  // Audit M2: after a failed job the owner had to find «إنهاء المتابعة…» before
+  // any generate/edit button worked again. A finished job now releases the workspace.
+  const t=setup();
+  await t.context.handleJob({id:JOB,state:'FAILED',error_code:'GENERATION_WORKER_FAILED',error_message:'تعذّر إكمال الطلب بسبب خطأ داخلي في الخادم. يمكنك إرساله مرة أخرى.',can_resume:false,choice:null});
+  assert.equal(t.context.pendingJob,null,'a failed job no longer blocks new work');
+  assert.equal(t.context.failedJob,null,'a non-resumable failure keeps no job id');
+  assert.equal(t.storage.has('job'),false,'the saved job id is cleared, so a reload does not re-block');
+  for(const id of ['cwRecoverJob','cwDismissJob','cwResumeJob'])assert.equal(t.node(id).hidden,true,id+' is not offered after a finished job');
+  const shown=t.statuses.at(-1);
+  assert.equal(shown[0],'error');assert.ok(!rawCode.test(shown[1]),'no raw error code: '+shown[1]);
+  assert.ok(shown[1].includes('يمكنك إرساله مرة أخرى')&&shown[1].includes('لم تُحفظ نسخة جديدة'),shown[1]);
+  assert.ok(!shown[1].includes('غير مؤكدة'),'the message does not call a finished failure uncertain');
+  console.log('PASS: a failed job releases the workspace and names one next step');
+}
+{
+  const t=setup();
+  await t.context.handleJob({id:JOB,state:'FAILED',error_code:'PLAN_DETAIL_INCOMPLETE',can_resume:true,choice:null});
+  assert.equal(t.context.pendingJob,null);assert.equal(t.context.failedJob,JOB,'a resumable failure keeps its id for the paid resume');
+  assert.equal(t.node('cwResumeJob').hidden,false);assert.equal(t.node('cwDismissJob').hidden,true);
+  assert.ok(t.statuses.at(-1)[1].includes('استدعاء مدفوع'),'resume is named as a paid action');
+  assert.ok(!rawCode.test(t.statuses.at(-1)[1]),'a missing message never falls back to a raw code');
+  console.log('PASS: a resumable failure offers one paid resume action and nothing else');
+}
