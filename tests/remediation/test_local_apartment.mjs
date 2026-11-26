@@ -271,18 +271,24 @@ for(const [direction,edge] of Object.entries({الشمال:'N',الشرق:'E',ا
       const [roofed,,reason]=withDefaultRoof(changed); assert.equal(reason,null);
       assert.equal(changed.meta.acs_apartment.courtyard.size_source,'client_stated');
       // Every roof edge stretch with no deck beyond it (the courtyard opening and the
-      // facade alike) carries the 0.9 m parapet; none crosses a neighbouring deck.
+      // facade alike) carries the 0.9 m parapet, as a whole-edge wall or a span; none
+      // crosses a neighbouring deck, and every deck keeps its source rectangle.
       const decks=roofed.floors[roofed.levels.at(-1).template].rooms;
+      const top=changed.floors[changed.levels.at(-1).template].rooms;
+      assert.deepEqual(decks.map(deck=>deck.rect),top.map(room=>room.rect),'one deck per top-floor room, no slivers');
       for(const deck of decks) {
         assert.deepEqual(deck.roof_provenance.parapet_gaps,[],'no unguarded roof edge: '+deck.id);
+        assert.equal(deck.wall_h,0.9);
         const [x,z,w,d]=deck.rect;
         for(const edge of ['N','S','W','E']) {
-          const open=[.061,.293,.517,.739,.947].map(f=>({N:[x+w*f,z-.02],S:[x+w*f,z+d+.02],W:[x-.02,z+d*f],E:[x+w+.02,z+d*f]})[edge])
-            .map(point=>!decks.some(other=>other!==deck&&contains(other,point)));
-          assert.ok(open.every(v=>v)||open.every(v=>!v),'a deck edge is either wholly open or wholly shared: '+deck.id+'/'+edge);
-          assert.equal(deck.walls.includes(edge),open[0],'parapet follows the open roof edge: '+deck.id+'/'+edge);
+          const length=['N','S'].includes(edge)?w:d;
+          for(const f of [.031,.061,.293,.517,.739,.947,.969]) {
+            const point={N:[x+w*f,z-.02],S:[x+w*f,z+d+.02],W:[x-.02,z+d*f],E:[x+w+.02,z+d*f]}[edge];
+            const open=!decks.some(other=>other!==deck&&contains(other,point));
+            const guarded=deck.walls.includes(edge)||(deck.parapet_spans||[]).some(span=>span.edge===edge&&span.start_m<=f*length&&f*length<=span.end_m);
+            assert.equal(guarded,open,'parapet follows the open roof edge: '+deck.id+'/'+edge+'@'+f);
+          }
         }
-        if(deck.walls.length) assert.equal(deck.wall_h,0.9);
       }
       // The architectural compiler declares the opening and pierces every slab and the roof.
       const arch=compileArchitecture(roofed), clearCourt=changed.meta.acs_apartment.courtyard.rect_m;

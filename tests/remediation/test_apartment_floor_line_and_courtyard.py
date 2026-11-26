@@ -117,24 +117,21 @@ class FloorLine(unittest.TestCase):
             area = sum(p[2] * p[3] for p in element['pieces'])
             self.assertAlmostEqual(area, element['outline'][2] * element['outline'][3] - 20.0, places=4)
         self.assertNotIn('SLAB_OUTLINE_IS_BOUNDING_BOX', [a['reason'] for a in arch['approximations']])
-        # The roof guards every stretch over the opening with the facade parapet.
+        # The roof guards every stretch over the opening with the facade parapet:
+        # read the compiled parapet boxes, not the model's own declaration.
         roof = next(l for l in model['levels'] if l.get('kind') == 'roof')
+        decks = model['floors'][roof['template']]['rooms']
+        top = model['floors'][model['levels'][-2]['template']]['rooms']
+        self.assertEqual([r['rect'] for r in decks], [r['rect'] for r in top], 'one deck per top-floor room, no slivers')
+        self.assertTrue(all(r['roof_provenance']['parapet_gaps'] == [] for r in decks))
         fx, fz, fw, fd = court['footprint_void_m']
-        guarded = {'N': 0.0, 'S': 0.0, 'W': 0.0, 'E': 0.0}
-        for r in model['floors'][roof['template']]['rooms']:
-            x, z, w, d = r['rect']
-            self.assertEqual(r['roof_provenance']['parapet_gaps'], [])
-            if 'S' in r['walls'] and abs(z + d - fz) < TOL and fx - TOL <= x and x + w <= fx + fw + TOL:
-                guarded['N'] += w
-            if 'N' in r['walls'] and abs(z - fz - fd) < TOL and fx - TOL <= x and x + w <= fx + fw + TOL:
-                guarded['S'] += w
-            if 'E' in r['walls'] and abs(x + w - fx) < TOL:
-                guarded['W'] += d
-            if 'W' in r['walls'] and abs(x - fx - fw) < TOL:
-                guarded['E'] += d
-            if r['walls']:
-                self.assertEqual(r['wall_h'], 0.9)
-        self.assertEqual({k: round(v, 3) for k, v in guarded.items()}, {'N': 4.18, 'S': 4.18, 'W': 5.18, 'E': 5.18})
+        parapets = [p for p in parts if p[0].startswith('WALL|F%d|' % roof['index'])]
+        def guarded(x, z):
+            return any(lo[0] - TOL <= x <= hi[0] + TOL and lo[2] - TOL <= z <= hi[2] + TOL and
+                       hi[1] >= roof['elevation'] + 0.9 - TOL for _, lo, hi in parapets)
+        for f in (0.01, 0.25, 0.5, 0.75, 0.99):
+            for x, z in ((fx + fw * f, fz), (fx + fw * f, fz + fd), (fx, fz + fd * f), (fx + fw, fz + fd * f)):
+                self.assertTrue(guarded(x, z), 'unguarded roof edge over the courtyard at %.2f, %.2f' % (x, z))
 
     def test_courtyard_size_from_the_brief_is_recorded_as_the_clients(self):
         model = generate('B(%s)' % json.dumps(GIVEN))

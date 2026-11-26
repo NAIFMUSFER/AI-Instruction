@@ -164,9 +164,10 @@ class GuestRoofParity(unittest.TestCase):
         cases.append({'id':'untrusted-caveat','op':'disclosure','args':[bad,bad['levels'][-1]]})
         results=self.compare(cases);report=results[2]['value'][1]
         self.assertEqual(report['deck_area_m2'],12)
-        # The partly shared south edge of the bar is cut and guarded on its open stretch.
+        # With a parapet the bar's open stretch is guarded by a span; an open deck still discloses it.
         self.assertEqual(report['parapet_gaps'],[])
-        self.assertEqual([r['id'] for r in results[2]['value'][0]['floors']['roof']['rooms']],['roof_bar','roof_bar_2','roof_leg'])
+        self.assertEqual(results[2]['value'][0]['floors']['roof']['rooms'][0]['parapet_spans'],[{'edge':'S','start_m':2,'end_m':4}])
+        self.assertEqual(results[0]['value'][1]['parapet_gaps'],[{'room_id':'bar','edge':'S','open_length_m':2}])
         self.assertEqual(results[0]['value'][1]['parapet_length_m'],0)
         self.assertEqual(results[-1]['value']['gap_coverage'],'NOT_VERIFIED')
 
@@ -250,9 +251,7 @@ class GuestRoofParity(unittest.TestCase):
         self.assertTrue(rows['respect-removed']['value']['meta']['acs_roof']['removed_by_user'])
         self.assertEqual(rows['reject-override']['error'],'ROOF_PREFERENCE_CONFLICT')
         rebuilt=rows['edit-rebuild']['value'];self.assertEqual(rebuilt['meta'],auto['meta'])
-        self.assertEqual(rebuilt['levels'],auto['levels'])
-        decks={r['id']:r for r in rebuilt['floors']['roof']['rooms']}
-        self.assertEqual(decks['roof_leg']['rect'][2],3);self.assertEqual(decks['roof_bar_2']['rect'],[3,0,1,2])
+        self.assertEqual(rebuilt['levels'],auto['levels']);self.assertEqual(rebuilt['floors']['roof']['rooms'][1]['rect'][2],3)
         self.equal_json(rows['carry-zero-parapet']['value'],zero)
         omitted=rows['carry-unknown-height']['value'];self.assertEqual(omitted['meta']['acs_roof']['omitted'],'ROOF_HEIGHT_NOT_SPECIFIED')
         self.assertIsNone(omitted['wall_h']);self.assertFalse(any(l.get('kind')=='roof' for l in omitted['levels']))
@@ -267,8 +266,7 @@ class GuestRoofParity(unittest.TestCase):
         self.assertEqual(_geometry(rows[0]['value'][0])[1]['space_instance_count'],6)
         self.assertEqual(node({'counts':[b,rows[0]['value'][0]]}),[
             {'occupied_levels':3,'occupied_rooms':6,'roof_levels':0,'roof_decks':0},
-            # The L's bar is cut where the leg's cover ends, so its open stretch is guarded.
-            {'occupied_levels':3,'occupied_rooms':6,'roof_levels':1,'roof_decks':3}])
+            {'occupied_levels':3,'occupied_rooms':6,'roof_levels':1,'roof_decks':2}])
 
     def test_actual_residential_sample_and_warehouse_generator(self):
         samples=node({'samples':True});self.assertEqual(set(samples),{'residential','warehouse'})

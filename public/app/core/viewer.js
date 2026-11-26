@@ -605,6 +605,20 @@ function buildRoom(group,room,fkey,baseY,def){
     for(const e of edges){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
       wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
         wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
+    /* A roof parapet over the open stretch of a partly shared edge, as [edge,start,end]
+       offsets from the edge's low end. Twin of acs_geometry_contract.parapet_spans and
+       acs_compiler; kept inline so every sandboxed copy of buildRoom carries it. */
+    const spans=room.parapet_spans;
+    if(spans!==undefined&&spans!==null){
+      if(!Array.isArray(wallsMode)||!Array.isArray(spans))throw new Error('Invalid parapet spans');
+      spans.forEach((span,k)=>{
+        const e=span&&span.edge,s0=span&&span.start_m,s1=span&&span.end_m;
+        if(!['N','S','E','W'].includes(e)||wallsMode.includes(e)||typeof s0!=='number'||typeof s1!=='number'||
+          !Number.isFinite(s0)||!Number.isFinite(s1)||!(0<=s0&&s0<s1)||s1>(['N','S'].includes(e)?w:d)+1e-6)throw new Error('Invalid parapet spans');
+        const[axis,fixed,u0]=edgeGeom(e,rect);
+        wallOpenings(group,axis,fixed,u0+s0,u0+s1,baseY,hW,t,[],fkey,name,'w'+e+k,
+          wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');});
+    }
   }
   /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
   const finishW=Math.max(w-t,0.1),finishD=Math.max(d-t,0.1);

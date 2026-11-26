@@ -5460,6 +5460,18 @@ function _aRoomsOf(building,tmpl,bid){
   return rooms; }
 /* ------------------------------------------------------------ الجدران --- */
 /* كل حدّ مشترك يُقسَّم عند كل نقطة انكسار، فيُعرَّف الجدار المشترك مرّة واحدة */
+/* Wall spans along part of an edge (a roof parapet over an open stretch) as
+   [edge,start,end] offsets from the edge's low end. Twin of
+   acs_geometry_contract.parapet_spans; invalid data fails closed. */
+function _aParapetSpans(room){
+  const value=room.parapet_spans;
+  if(value===undefined||value===null)return [];
+  if(!Array.isArray(room.walls)||!Array.isArray(value))throw new Error('Invalid parapet spans');
+  return value.map(span=>{
+    if(!span||typeof span!=='object'||!['N','S','E','W'].includes(span.edge)||room.walls.includes(span.edge))throw new Error('Invalid parapet spans');
+    const start=span.start_m,end=span.end_m,length=Number(['N','S'].includes(span.edge)?room.rect[2]:room.rect[3]);
+    if(typeof start!=='number'||typeof end!=='number'||!Number.isFinite(start)||!Number.isFinite(end)||!(0<=start&&start<end)||end>length+1e-6)throw new Error('Invalid parapet spans');
+    return [span.edge,start,end]; }); }
 function _aWallSegments(rooms,industrial){
   const groups=new Map();
   rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
@@ -5470,11 +5482,12 @@ function _aWallSegments(rooms,industrial){
     const open=declared==='none'||declared==='line'||(!declared&&industrial&&room.role&&!['office','admin','it','staff','maintenance','meeting'].includes(room.role));
     const edges=Array.isArray(declared)?declared:open?[]:['N','S','E','W'];
     if(edges.some(e=>!['N','S','E','W'].includes(e))||new Set(edges).size!==edges.length)throw new Error('Invalid explicit room wall edges');
-    edges.forEach(e=>{
+    edges.map(e=>[e,null,null]).concat(_aParapetSpans(room)).forEach(([e,s0,s1])=>{
       const seg=_aEdgeSegment(e,rc);
+      const u0=s0===null?seg[2]:seg[2]+s0, u1=s0===null?seg[3]:seg[2]+s1;
       const key=seg[0]+'|'+_aq(seg[1]);
       if(!groups.has(key)) groups.set(key,{axis:seg[0],fixed:_aq(seg[1]),items:[]});
-      groups.get(key).items.push({u0:_aq(seg[2]),u1:_aq(seg[3]),space:sid,
+      groups.get(key).items.push({u0:_aq(u0),u1:_aq(u1),space:sid,
         edge:e,side:seg[4],height:h,rect:rc}); }); });
   const walls=[];
   groups.forEach(g=>{

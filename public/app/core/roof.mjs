@@ -56,26 +56,20 @@ function sharedLength(edge,r,others){
   for(const other of others){const [otherAxis,otherFixed,b0,b1]=edgeSpan(opposite,other);if(otherAxis===axis&&Math.abs(otherFixed-fixed)<=EPS)total+=Math.max(0,Math.min(a1,b1)-Math.max(a0,b0));}
   return total;
 }
-// A roof deck edge that is only partly against another deck (a courtyard opening,
-// a re-entrant corner) has an open stretch with a drop. Cut the deck at every point
-// where the neighbouring coverage changes, so each piece's edges are wholly shared
-// or wholly open, and every open stretch carries the same parapet as the facade.
-function deckPieces(r,others){
-  const xs=new Set([r[0],r[0]+r[2]]),zs=new Set([r[1],r[1]+r[3]]);
-  for(const edge of EDGES){
-    const [axis,fixed,a0,a1]=edgeSpan(edge,r),shared=sharedLength(edge,r,others);
-    if(shared<=EPS||shared>=a1-a0-EPS)continue;
-    const opposite={N:'S',S:'N',W:'E',E:'W'}[edge];
-    for(const other of others){
-      const [otherAxis,otherFixed,b0,b1]=edgeSpan(opposite,other);
-      if(otherAxis!==axis||Math.abs(otherFixed-fixed)>EPS)continue;
-      for(const v of [b0,b1])if(v>a0+EPS&&v<a1-EPS)(axis==='x'?xs:zs).add(round(v));
-    }
+// Open stretches of a partly shared edge, as [start,end] offsets from the edge start.
+// A courtyard opening or a re-entrant corner leaves such a stretch with a drop; it
+// gets the facade parapet as a span, so the deck itself is never cut into slivers.
+function openSpans(edge,r,others){
+  const [axis,fixed,a0,a1]=edgeSpan(edge,r),opposite={N:'S',S:'N',W:'E',E:'W'}[edge],cover=[];
+  for(const other of others){
+    const [otherAxis,otherFixed,b0,b1]=edgeSpan(opposite,other);
+    if(otherAxis===axis&&Math.abs(otherFixed-fixed)<=EPS&&Math.min(a1,b1)-Math.max(a0,b0)>EPS)cover.push([Math.max(a0,b0),Math.min(a1,b1)]);
   }
-  if(xs.size===2&&zs.size===2)return [r];
-  const sx=[...xs].sort((a,b)=>a-b),sz=[...zs].sort((a,b)=>a-b),pieces=[];
-  for(let j=0;j<sz.length-1;j++)for(let i=0;i<sx.length-1;i++)pieces.push([sx[i],sz[j],round(sx[i+1]-sx[i]),round(sz[j+1]-sz[j])]);
-  return pieces;
+  cover.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);
+  const spans=[];let at=a0;
+  for(const [c0,c1]of cover){if(c0-at>EPS)spans.push([round(at-a0),round(c0-a0)]);at=Math.max(at,c1);}
+  if(a1-at>EPS)spans.push([round(at-a0),round(a1-a0)]);
+  return spans;
 }
 function compareText(a,b){const aa=Array.from(a),bb=Array.from(b);for(let i=0;i<Math.min(aa.length,bb.length);i++){const delta=aa[i].codePointAt(0)-bb[i].codePointAt(0);if(delta)return delta;}return aa.length-bb.length;}
 const caveats=()=>['structure','drainage','waterproofing','roof access','code compliance'];
@@ -102,19 +96,23 @@ export function addFlatRoofLevel(model,parapetH=DEFAULT_PARAPET_H){
   const rise=floorHeight>=topWall+.15-EPS?floorHeight:topWall+.15,roofElevation=round(elevation(top,floorHeight)+rise);
   let template='roof',n=2;while(own(floors,template))template='roof_'+n++;
   const rects=topRooms.map(([,r])=>r),roofRooms=[],gaps=[],used=new Set();let parapetM=0;
-  const decks=topRooms.flatMap(([room,r])=>deckPieces(r,rects.filter(other=>other!==r)).map(piece=>[room,piece]));
-  const pieces=decks.map(([,piece])=>piece);
-  for(const [room,r]of decks){
-    const others=pieces.filter(other=>other!==r),walls=[],roomGaps=[];
+  for(const [room,r]of topRooms){
+    const others=rects.filter(other=>other!==r),walls=[],roomGaps=[],spans=[];
     for(const edge of EDGES){const [,,a0,a1]=edgeSpan(edge,r),length=a1-a0,shared=sharedLength(edge,r,others);
       if(shared<=EPS){walls.push(edge);parapetM+=length;}
-      else if(shared<length-EPS){const gap={edge,open_length_m:round(length-shared)};gaps.push({room_id:room.id??null,...gap});roomGaps.push(gap);}
+      else if(shared<length-EPS){
+        // Only the open stretches carry the parapet, as spans; an open deck still discloses the gap.
+        if(parapetH>0)for(const [start,end]of openSpans(edge,r,others)){spans.push({edge,start_m:start,end_m:end});parapetM+=end-start;}
+        else gaps.push({room_id:room.id??null,edge,open_length_m:round(length-shared)});
+      }
     }
     let base=ROOF_ROOM_PREFIX+str(room.id||'deck');
     if(Array.from(base).length>160)base=Array.from(base).slice(0,139).join('')+'_'+sha256Hex(base).slice(0,20);
     let id=base,k=2;while(used.has(id)){const suffix='_'+k++;id=Array.from(base).slice(0,160-suffix.length).join('')+suffix;}used.add(id);
     const roofRoom={id,name:'سطح',role:'roof_deck',auto:true,rect:r.slice(),walls:parapetH>0?walls:'none',doors:[],windows:[],points:[],roof_provenance:{source:'system_default',source_room_id:room.id??null,parapet_gaps:parapetH>0?roomGaps:[]}};
-    if(parapetH>0)roofRoom.wall_h=parapetH;roofRooms.push(roofRoom);
+    if(parapetH>0)roofRoom.wall_h=parapetH;
+    if(parapetH>0&&spans.length)roofRoom.parapet_spans=spans;
+    roofRooms.push(roofRoom);
   }
   floors[template]={rooms:roofRooms};levels.push({index:roofIndex,template,kind:'roof',auto:true,name:'السطح',elevation:roofElevation});out.levels=levels;out.floors=floors;
   return [out,{schema:'acs.roof/1',form:'flat',source:'system_default',level_index:roofIndex,template,elevation_m:roofElevation,parapet_height_m:parapetH,parapet_length_m:round(parapetH>0?parapetM:0),deck_area_m2:round(rects.reduce((sum,r)=>sum+r[2]*r[3],0)),parapet_gaps:gaps,occupied_floor:false,not_verified:caveats()}];

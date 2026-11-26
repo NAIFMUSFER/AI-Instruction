@@ -18,7 +18,7 @@
 # =============================================================================
 import json
 import math
-from acs_geometry_contract import wall_edges
+from acs_geometry_contract import parapet_spans, wall_edges
 import os
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -128,8 +128,11 @@ def _wall_segments(rooms, wall_h_default, thickness, industrial=False):
         if rc is None or not _shape_supported(room):
             continue
         h = room.get("wall_h")
-        for e in wall_edges(room, industrial):
+        spans = [(e, None, None) for e in wall_edges(room, industrial)] + list(parapet_spans(room))
+        for e, s0, s1 in spans:
             axis, fixed, u0, u1, side = _edge_segment(e, rc)
+            if s0 is not None:
+                u0, u1 = u0 + s0, u0 + s1
             key = (axis, _q(fixed))
             groups.setdefault(key, []).append(
                 {"u0": _q(u0), "u1": _q(u1), "space": sid, "edge": e, "side": side,

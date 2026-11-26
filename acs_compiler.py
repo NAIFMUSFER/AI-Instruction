@@ -14,7 +14,7 @@
 
 import json
 import math
-from acs_geometry_contract import level_elevation
+from acs_geometry_contract import level_elevation, parapet_spans
 import re
 import sys
 import struct
@@ -930,6 +930,11 @@ def build_room(bld, room, fkey, base_y, defaults):
             axis, fixed, u0, u1 = edge_geom(e, rect)
             wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
                                per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
+        # A roof parapet over the open stretch of a partly shared edge.
+        for k, (e, s0, s1) in enumerate(parapet_spans(room)):
+            axis, fixed, u0, _ = edge_geom(e, rect)
+            wall_with_openings(bld, axis, fixed, u0 + s0, u0 + s1, base_y, hW, t,
+                               [], "WALL", fkey, name, "w%s%d" % (e, k), wall_mat)
 
         # Source role tints and explicit wall colors can share one glTF material.
         # Only mark default opaque walls. This hint authorizes a viewer assumption,
