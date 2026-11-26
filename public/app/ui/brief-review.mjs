@@ -132,7 +132,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
     if(data.metric&&!Object.hasOwn(metricLabels,data.metric)){const o=el('option',data.metric+' · متطلب محفوظ',select);o.value=data.metric;}
     select.value=data.metric||'room_count';
     const role=el('select',null,cell('الاستخدام'));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
-    const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
+    const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',maid_room:'غرفة خادمة',driver_room:'غرفة سائق',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
     if(data.role&&!Object.hasOwn(uses,data.role))uses[data.role]=data.role;
     for(const [id,label] of Object.entries(uses)){const o=el('option',label,role);o.value=id;}role.value=data.role||'bedroom';
     const expected=el('input',null,cell('القيمة'));expected.dataset.value='';expected.type='text';expected.inputMode='decimal';expected.autocomplete='off';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';

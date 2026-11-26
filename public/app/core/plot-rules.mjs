@@ -34,10 +34,24 @@ const fmt = v => String(round2(v));
  *  category line is ignored; «بيت الدرج» is a stair core, not a house; apartment
  *  words win; and a confirmed count above one flat is never a villa. */
 export function villaBrief(text, total = null) {
-  const t = String(text || '').replace(/^\s*نوع المشروع\s*:.*$/gm, ' ')
-    .replace(/بيت\s+(?:ال)?(?:درج|سلم|مصعد)/g, ' ').replace(/[أإآ]/g, 'ا');
-  if (/عمار[ةه]|شق[ةق]|شقتين|شقتان|apartment/i.test(t)) return false;
-  return /فيل[اه]|villa|بيت|منزل/i.test(t) && (!total || total === 1);
+  return briefSays(text) === 'single_dwelling' && (!total || total === 1);
+}
+// The same word lists as acs_residential_access._brief_says: whole words with
+// optional Arabic conjunction/preposition/article prefixes and pronoun suffixes.
+// Plural or dual houses (فلل، بيوت، فيلتين) are several dwellings; any
+// apartment word wins.
+const OWNER = '(?:ي|ه|ها|نا|كم|هم)';
+const feminine = (stem, dual = false) => stem + '(?:[ةه]|ت' + (dual ? '(?:ين|ان)|ت' : '') + OWNER + ')';
+const wholeWords = stems => new RegExp('(?<![\\p{L}\\p{N}_])(?:و|ف)?(?:لل|ب|ل|ك)?(?:ال)?(?:' + stems.join('|') + ')' + OWNER + '?(?![\\p{L}\\p{N}_])', 'iu');
+const HOUSE = wholeWords(['فيلا', feminine('فيل'), feminine('فل'), 'بيت', 'منزل', 'قصر', 'villa', 'house', 'townhouse']);
+const APARTMENT = wholeWords([feminine('شق', true), 'شقق', feminine('عمار', true), 'عمائر', 'apartments?', 'flats?', 'condo(?:minium)?s?']);
+const UNITS = /وحدات\s+سكني[ةه]|residential\s+units/i;
+/** 'single_dwelling', 'apartments' or null, as the server reads a brief. */
+export function briefSays(text) {
+  const t = String(text || '').replace(/^\s*نوع المشروع\s*:.*$/gm, ' ').replace(/[أإآ]/g, 'ا')
+    .replace(/بيت\s+(?:ال)?(?:درج|سلم|مصعد)/g, ' ');
+  if (APARTMENT.test(t) || UNITS.test(t)) return 'apartments';
+  return HOUSE.test(t) ? 'single_dwelling' : null;
 }
 
 export function preview({villa=false, levels=1, units=null, width, depth, streets=[], streetWidth=null,

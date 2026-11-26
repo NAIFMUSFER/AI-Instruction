@@ -43,15 +43,19 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     const villa = villaBrief(value('cwBrief'), total);
     return {levels, units:total, villa};
   }
+  function current() {
+    const raw = inputs(), parsed = plotCommand(raw), {levels, units, villa} = program();
+    const p = preview({villa, levels, units, width:parseNumber(value('cwWidth')), depth:parseNumber(value('cwDepth')),
+      streets:parsed.streets, streetWidth:parsed.street_width_m ?? null, setbacks:parsed.setbacks_m,
+      coverage:parsed.max_coverage ?? null, placement:parsed.parking.placement, count:parsed.parking.count ?? null});
+    return {p, parsed};
+  }
   function refresh() {
     section.hidden = value('cwType') !== 'residential';
     let p;
     try {
-      const raw = inputs(), parsed = plotCommand(raw), {levels, units, villa} = program();
-      p = preview({villa, levels, units, width:parseNumber(value('cwWidth')), depth:parseNumber(value('cwDepth')),
-        streets:parsed.streets, streetWidth:parsed.street_width_m ?? null, setbacks:parsed.setbacks_m,
-        coverage:parsed.max_coverage ?? null, placement:parsed.parking.placement, count:parsed.parking.count ?? null});
-      $('cwPlotSummary').textContent = summaryText(p, parsed.parking.placement)
+      const now = current(); p = now.p;
+      $('cwPlotSummary').textContent = summaryText(p, now.parsed.parking.placement)
         + (primary() ? '' : ' جهة الشارع غير محددة فنفترض الشمال.');
     } catch (e) { $('cwPlotSummary').textContent = e.message; }
     for (const s of SIDES) $('cwPlotSetback'+s).placeholder = p?.setbacks ? 'افتراضي '+p.setbacks[s] : 'افتراضي';
@@ -74,6 +78,11 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
         if (data) for (const id of fields) { const n = $(id); if (!n || !(id in data)) continue; if (n.type === 'checkbox') n.checked = data[id] === true; else if (typeof data[id] === 'string') n.value = data[id]; }
       } catch (e) {}
       refresh();
+    },
+    // The buildable footprint (m²) the preview derives, or null: sizes the villa cards.
+    buildable() {
+      if (value('cwType') !== 'residential') return null;
+      try { const {p} = current(); return p.ready ? p.area : null; } catch (e) { return null; }
     },
     // {plot} for a residential generation from the description; {} otherwise.
     command() {
