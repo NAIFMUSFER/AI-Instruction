@@ -540,7 +540,7 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         building, issues, soft = candidate, remaining, soft_left
         emit('LAYOUT',{'kind':'layout','building':building},provider_calls=budget['used'])
 
-def detail(building, brief, budget, done=None, requirements=None, plot=None, program=None):
+def detail(building, brief, budget, done=None, requirements=None, plot=None, program=None, keep_unresolved=False):
     """Openings per room group. ``program`` (a validated confirmed brief program)
     adds the target floor's own rooms to each call's context, nothing more."""
     import acs_understand as U
@@ -623,10 +623,12 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
         for template, offset, rooms in groups:
             if (findings or extra) and (not affected or template in affected):
                 if budget['used'] >= budget['limit']:
-                    if not findings:
+                    if not findings or keep_unresolved:
                         break
                     raise PlanError('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح الفتحات ضمن الحد المختار.')
                 propose(template, offset, rooms, findings+extra)
-        if detail_issues(building,dwelling):
+        # keep_unresolved: every room already has its openings, so the paid plan
+        # is kept as a draft; what remains is a blocking finding in the review.
+        if not keep_unresolved and detail_issues(building,dwelling):
             raise PlanError('PLAN_DETAIL_INCOMPLETE','لم تجتز الفتحات ومسارات الدخول الفحص بعد محاولة التصحيح.')
     return building
