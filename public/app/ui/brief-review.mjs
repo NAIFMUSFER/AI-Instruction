@@ -122,16 +122,17 @@ export function createBriefEditor(root,{storageKey,onError}) {
   }
   function add(data={}){
     const row=el('tr',null,$('cwRequirements'));
-    const select=el('select',null,el('td',null,row));select.setAttribute('aria-label','نوع المتطلب');
+    const cell=label=>{const td=el('td',null,row);td.dataset.label=label;return td;};
+    const select=el('select',null,cell('المتطلب'));select.setAttribute('aria-label','نوع المتطلب');
     for(const [key,label] of Object.entries(metricLabels)){if(fields[key])continue;const o=el('option',label,select);o.value=key;}
     if(data.metric&&!Object.hasOwn(metricLabels,data.metric)){const o=el('option',data.metric+' · متطلب محفوظ',select);o.value=data.metric;}
     select.value=data.metric||'room_count';
-    const role=el('select',null,el('td',null,row));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
+    const role=el('select',null,cell('الاستخدام'));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
     const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
     if(data.role&&!Object.hasOwn(uses,data.role))uses[data.role]=data.role;
     for(const [id,label] of Object.entries(uses)){const o=el('option',label,role);o.value=id;}role.value=data.role||'bedroom';
-    const expected=el('input',null,el('td',null,row));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
-    const remove=el('button','حذف',el('td',null,row));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
+    const expected=el('input',null,cell('القيمة'));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
+    const remove=el('button','حذف',cell(''));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
     remove.addEventListener('click',()=>{row.remove();draft();showQuestions();});
     return row;
   }

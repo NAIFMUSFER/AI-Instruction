@@ -78,6 +78,17 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace .cw-dialog .cw-actions { margin-top:12px; }
 #designWorkspace .cw-advanced { margin:18px 0 0; }
 #designWorkspace .cw-advanced summary { font-weight:600; }
+/* Requirements: a card per row on a phone, so selects keep readable widths. */
+@media(max-width:600px){
+ #designWorkspace .cw-req-table thead{display:none}
+ #designWorkspace .cw-req-table,#designWorkspace .cw-req-table tbody{display:block}
+ #designWorkspace .cw-req-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px;margin-bottom:10px;padding:12px;border:1px solid #2e5067;border-radius:12px;background:#0b1b2c}
+ #designWorkspace .cw-req-table td{display:block;padding:0;border:0;min-width:0}
+ #designWorkspace .cw-req-table td:first-child{grid-column:1/-1}
+ #designWorkspace .cw-req-table td:last-child{grid-column:1/-1}
+ #designWorkspace .cw-req-table td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;margin-bottom:4px;color:#a8bbcd;font-size:13px}
+ #designWorkspace .cw-req-table td button{white-space:nowrap}
+}
 #designWorkspace footer { border-top:1px solid #233d53; padding-top:18px; margin-top:32px; font-size:13px; color:#9db6ca; }
 @media(max-width:820px) {
  #designWorkspace { padding:16px; padding-bottom:max(24px,env(safe-area-inset-bottom)); }

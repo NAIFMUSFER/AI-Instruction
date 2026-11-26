@@ -15,11 +15,11 @@
     "target": "The deployed index.html is an index SHELL — markup, <link rel=stylesheet>, classic boot scripts and <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/."
   },
   "connected_workspace": {
-    "additional_css_bytes": 14787,
+    "additional_css_bytes": 15672,
     "assets": [
       {
-        "bytes": 82243,
-        "gzip_bytes": 24021,
+        "bytes": 82264,
+        "gzip_bytes": 24030,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -36,13 +36,13 @@
         "path": "public/app/ui/approved-viewer.mjs"
       },
       {
-        "bytes": 14787,
-        "gzip_bytes": 3754,
+        "bytes": 15672,
+        "gzip_bytes": 3958,
         "loaded": "initial-css",
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 151262,
+    "initial_javascript_bytes": 151283,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 254574,
+    "core_initial_bytes": 254689,
     "core_initial_module_count": 16,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The declared boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 45,
@@ -327,7 +327,7 @@
     ],
     "first_party_dynamic_import_count": 37,
     "first_party_module_count": 59,
-    "first_party_total_bytes": 2590585,
+    "first_party_total_bytes": 2590700,
     "guest_route_additional_bytes": 1793990,
     "guest_route_modules": [
       "public/app/core/stairs.mjs",
@@ -362,7 +362,7 @@
       "public/app/render/guest-software-view.mjs",
       "public/app/ui/guest-software-studio.mjs"
     ],
-    "initial_javascript_bytes": 323155,
+    "initial_javascript_bytes": 323270,
     "largest_module": {
       "bytes": 243660,
       "group": "core",
@@ -528,12 +528,12 @@
         "pct_of_first_party_js": 3.85
       },
       {
-        "bytes": 82243,
+        "bytes": 82264,
         "group": "ui",
-        "gzip_bytes": 24021,
+        "gzip_bytes": 24030,
         "loaded": "eager",
         "path": "public/app/ui/connected-workspace.mjs",
-        "pct_of_first_party_js": 3.17
+        "pct_of_first_party_js": 3.18
       },
       {
         "bytes": 76870,
@@ -672,9 +672,9 @@
         "pct_of_first_party_js": 0.69
       },
       {
-        "bytes": 16014,
+        "bytes": 16108,
         "group": "ui",
-        "gzip_bytes": 5285,
+        "gzip_bytes": 5327,
         "loaded": "eager",
         "path": "public/app/ui/brief-review.mjs",
         "pct_of_first_party_js": 0.62
@@ -1023,7 +1023,7 @@
     "sha256": "9d09b30238e6e41eb76cd4778c90a9dd15db6220dc392de892a8e5409908ee38",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2590585 bytes) lives in 59 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2590700 bytes) lives in 59 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,
