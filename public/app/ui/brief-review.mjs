@@ -235,7 +235,8 @@ export function createBriefEditor(root,{storageKey,onError}) {
       }else if(data?.brief){
         $('cwBrief').value=data.brief;savedRequirements=data.requirements||[];
         $('cwBldWidth').value='';$('cwBldDepth').value='';
-        for(const r of savedRequirements){const id=fields[r.metric];if(id)$(id).value=r.expected??'';else add(r);}
+        // Per-floor rows come from the confirmed program card (step 02 adds them again), not the table.
+        for(const r of savedRequirements){if(r?.source_id==='brief:program')continue;const id=fields[r.metric];if(id)$(id).value=r.expected??'';else add(r);}
         if(typology==='warehouse')$('cwType').value='warehouse';
       }
       // Restoring a local draft or cloud revision is not a fresh confirmation.
