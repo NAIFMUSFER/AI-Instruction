@@ -1,0 +1,152 @@
+{
+ "about": "Sanitized replay of live paid plan read a (input a_cad_ground: clean CAD-style ground floor PNG (1400x2240)) on 2026-11-26: room ids, names, uses and rectangles exactly as saved, at level 0. The read returned no doors (the old instruction forbade them). Roles were recovered from the saved scorecard; floor height, wall height and thickness are the instruction defaults the read echoed. Free text (the owner brief and requirement evidence) replaced.",
+ "brief": "قراءة مخطط الدور الأرضي لفيلا سكنية من الملف المرفق.\n\nنوع المشروع: سكني / عمارة / فيلا\nعرض الموقع (م): 18\nعمق الموقع (م): 28\nعدد الأدوار: 1",
+ "read": {
+  "floor_height": 3.2,
+  "floors": {
+   "ground": {
+    "rooms": [
+     {
+      "id": "r1",
+      "name": "مجلس الضيوف",
+      "rect": [
+       5.5,
+       1.5,
+       6,
+       5.5
+      ],
+      "role": "majlis"
+     },
+     {
+      "id": "r2",
+      "name": "المطبخ",
+      "rect": [
+       11.5,
+       1.5,
+       5,
+       5.5
+      ],
+      "role": "kitchen"
+     },
+     {
+      "id": "r3",
+      "name": "بهو المدخل",
+      "rect": [
+       5.5,
+       7,
+       4,
+       5
+      ],
+      "role": "entrance_lobby"
+     },
+     {
+      "id": "r4",
+      "name": "الدرج",
+      "rect": [
+       9.5,
+       7,
+       3,
+       5
+      ],
+      "role": "stair"
+     },
+     {
+      "id": "r5",
+      "name": "غرفة الطعام",
+      "rect": [
+       12.5,
+       7,
+       4,
+       5
+      ],
+      "role": "dining"
+     },
+     {
+      "id": "r6",
+      "name": "صالة الأسرة",
+      "rect": [
+       5.5,
+       12,
+       11,
+       7
+      ],
+      "role": "family_living"
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "template": "ground"
+   }
+  ],
+  "meta": {
+   "added": []
+  },
+  "site": {
+   "d": 28,
+   "w": 18
+  },
+  "wall_h": 3,
+  "wall_t": 0.2
+ },
+ "requirements": [
+  {
+   "confirmed": true,
+   "evidence": "عرض الموقع (م): 18",
+   "expected": 18,
+   "id": "brief-0",
+   "metric": "site_width_m",
+   "source": "requested",
+   "source_id": "brief:form",
+   "source_span": {
+    "end": 105,
+    "start": 87
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عمق الموقع (م): 28",
+   "expected": 28,
+   "id": "brief-1",
+   "metric": "site_depth_m",
+   "source": "requested",
+   "source_id": "brief:form",
+   "source_span": {
+    "end": 124,
+    "start": 106
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عدد الأدوار: 1",
+   "expected": 1,
+   "id": "brief-2",
+   "metric": "level_count",
+   "source": "requested",
+   "source_id": "brief:form",
+   "source_span": {
+    "end": 139,
+    "start": 125
+   }
+  }
+ ],
+ "review_before_fix": {
+  "finding_count": 12,
+  "findings": [
+   "[ground/r1] بلا باب — أضِف باباً على حافة مناسبة.",
+   "[ground/r1] بلا إنارة — أضِف light أو spot.",
+   "[ground/r2] بلا باب — أضِف باباً على حافة مناسبة.",
+   "[ground/r2] بلا إنارة — أضِف light أو spot."
+  ],
+  "scopes": {
+   "program": "PASS",
+   "rectangular_geometry": "PASS",
+   "regulatory_compliance": "NOT_VERIFIED",
+   "structural_safety": "NOT_VERIFIED",
+   "topology": "NOT_VERIFIED",
+   "vertical_circulation": "FAIL"
+  }
+ }
+}

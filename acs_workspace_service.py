@@ -89,6 +89,7 @@ def geometry_failure_message(code):
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
         "PLAN_LAYOUT_INCOMPLETE":"لم يكتمل توزيع الغرف بعد محاولة التصحيح. راجع البرنامج والمساحة، أو استأنف ضمن حد الاستدعاءات المتبقي.",
+        "PLAN_SOURCE_READ_MALFORMED":"لم يُعد الذكاء الاصطناعي قراءة صالحة للمخطط حتى بعد إعادة واحدة. لم تُحفظ نسخة، والملف محفوظ؛ أعد القراءة لاحقًا.",
         "PLAN_SOURCE_GEOMETRY_INCOMPLETE":"تعذّر استخراج حدود الغرف دون تداخل بعد مراجعة الصورة. راجع وضوح الصفحة والأبعاد المرجعية ثم أعد القراءة؛ الملف الأصلي محفوظ ولم يُعد ترتيب غرفه تلقائيًا.",
         CONFLICT_CODE:"حُفظ تعديل أحدث أثناء التوليد، فاحتفظنا بالنسخة المولّدة منفصلة دون أن تستبدل تعديلك. اختر ما تريد اعتماده؛ الخيار الآخر يبقى محفوظًا، ولن يُحسب توليد جديد.",
         "STALE_REVISION":"تغيّرت النسخة الحالية أثناء العملية، فلم تُحفظ نتيجتها فوق النسخة الأحدث. افتح آخر نسخة؛ لن يُعاد الطلب تلقائيًا.",
@@ -169,6 +170,9 @@ def view(store, project_id, actor_id, revision_id=None):
     if plot is not None:
         from acs_plot_rules import summary
         result["plot_rules"] = summary(revision.model, plot)
+    if isinstance(meta, dict) and isinstance(meta.get("acs_plan_source"), dict):
+        from acs_plan_sources import review_view
+        result["plan_source"] = review_view(meta)  # original beside the draft, suggested changes
     # Step-01 inputs travel with the revision, so another device restores them.
     import acs_brief_reader as BRIEF
     result["plot_input"] = BRIEF.plot_input(plot)
@@ -177,13 +181,15 @@ def view(store, project_id, actor_id, revision_id=None):
 
 
 def generation_command(command):
-    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id", "plot", "program"})
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "source_read", "resume_job_id", "plot", "program"})
     if "source_id" in out:
         from acs_plan_sources import identity
         identity(out["source_id"])
-        if out.get("source_mode") not in {"preserve", "revise"}:
-            raise PlanError("INVALID_PLAN_SOURCE", "اختر الحفاظ على توزيع المخطط أو طلب تعديله.")
-    elif "source_mode" in out:
+        if out.get("source_mode") not in {"preserve", "revise", "complete"}:
+            raise PlanError("INVALID_PLAN_SOURCE", "اختر قراءة المخطط كما هو أو طلب تعديله أو إكمال أبوابه.")
+        from acs_plan_sources import read_options
+        read_options(out)  # floors, confirmed floor count and budget, before any paid call
+    elif "source_mode" in out or "source_read" in out:
         raise PlanError("INVALID_PLAN_SOURCE", "اختر ملف مخطط محفوظًا أولًا.")
     if out.get("confirmed") is not True:
         raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "راجع المتطلبات وأكدها قبل التوليد.")
@@ -480,19 +486,14 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     source_receipt = None
     target = "acs_workspace_service:generate_plan_candidate"
     if command.get("source_id"):
-        from acs_plan_sources import read_source
-        row, image = read_source(store, project_id, command["source_id"], "preview")
-        kwargs["plan_source"] = {"image": base64.b64encode(image).decode("ascii"),
-            "media_type": row["preview_media_type"], "mode": command["source_mode"]}
-        source_receipt = {k: row[k] for k in ("id", "sha256", "page", "page_count", "preview_sha256")}
-        source_receipt["mode"] = command["source_mode"]
-        source_receipt["measurement_status"] = "needs_review"
+        from acs_plan_sources import read_inputs
+        kwargs["plan_source"], source_receipt = read_inputs(store, project_id, command)
         target = "acs_plan_sources:candidate"
     if command.get("resume_job_id"):
         from acs_workspace_http import _read_job, _id
         prior = _read_job(store, project_id, _id(command["resume_job_id"]))
         original = prior.get("resume_command") if prior else None
-        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode", "plot", "program")
+        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode", "source_read", "plot", "program")
         if not original or any(canonical(original.get(k)) != canonical(command.get(k)) for k in bound_keys):
             raise PlanError("INVALID_RESUME", "تغيّر وصف المهمة أو مرجعها. ابدأ طلبًا جديدًا.")
         kwargs.update(resume=prior.get("checkpoint"), used_calls=prior.get("provider_calls",0))
@@ -513,7 +514,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     try:
         return _admit_generated(store, project_id, actor_id, command, result["building"], ws,
                                 source_receipt=source_receipt, on_progress=on_progress,
-                                note="البديل " + command["option"] + " · " + adoption_marker(command["job_id"]))
+                                note=("مقروء من ملفك" if command.get("source_id") else "البديل " + command["option"])
+                                + " · " + adoption_marker(command["job_id"]))
     except PlanError as exc:
         if exc.code != "STALE_REVISION":
             raise
@@ -623,10 +625,8 @@ def adopt_generated_version(store, project_id, actor_id, row, expected_head):
     _reject_provider_authority_changes({}, building)
     source_receipt = None
     if command.get("source_id"):
-        from acs_plan_sources import source
-        source_row = source(store, project_id, command["source_id"])
-        source_receipt = {k: source_row[k] for k in ("id", "sha256", "page", "page_count", "preview_sha256")}
-        source_receipt.update(mode=command["source_mode"], measurement_status="needs_review")
+        from acs_plan_sources import source_receipt as receipt
+        source_receipt = receipt(store, project_id, command)
     return _admit_generated(store, project_id, actor_id, command, building, ws, source_receipt=source_receipt,
                             on_progress=None,
                             note="اعتماد النسخة المولّدة (البديل " + command["option"] + ") بعد تعديل أحدث · " + marker)

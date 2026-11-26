@@ -1,0 +1,119 @@
+{
+ "about": "Sanitized replay of live paid plan read d (input d_upper_floor: page 2 (upper floor) of a two-page vector PDF; page 1 is the drawing of fixture a) on 2026-11-26: room ids, names, uses and rectangles exactly as saved, at level 1. The read returned no doors (the old instruction forbade them). Roles were recovered from the saved scorecard; floor height, wall height and thickness are the instruction defaults the read echoed. Free text (the owner brief and requirement evidence) replaced.",
+ "brief": "مخطط الدور الأول لفيلا سكنية من الصفحة الثانية لملف PDF المرفق.\n\nنوع المشروع: سكني / عمارة / فيلا\nعرض الموقع (م): 18\nعمق الموقع (م): 28\nعدد الأدوار: 2",
+ "read": {
+  "floor_height": 3.2,
+  "floors": {
+   "first": {
+    "rooms": [
+     {
+      "id": "stair_landing_upper",
+      "name": "بسطة الدرج - الدور العلوي",
+      "rect": [
+       5.5,
+       7,
+       4,
+       5
+      ],
+      "role": "circulation"
+     },
+     {
+      "id": "stair_upper",
+      "name": "الدرج - الدور العلوي",
+      "rect": [
+       9.5,
+       7,
+       3,
+       5
+      ],
+      "role": "stair"
+     },
+     {
+      "id": "bedrooms_zone",
+      "name": "غرف النوم",
+      "rect": [
+       5.5,
+       12,
+       11,
+       7
+      ],
+      "role": "bedroom"
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 1,
+    "template": "first"
+   }
+  ],
+  "meta": {
+   "added": []
+  },
+  "site": {
+   "d": 28,
+   "w": 18
+  },
+  "wall_h": 3,
+  "wall_t": 0.2
+ },
+ "requirements": [
+  {
+   "confirmed": true,
+   "evidence": "عرض الموقع (م): 18",
+   "expected": 18,
+   "id": "brief-0",
+   "metric": "site_width_m",
+   "source": "requested",
+   "source_id": "brief:form",
+   "source_span": {
+    "end": 116,
+    "start": 98
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عمق الموقع (م): 28",
+   "expected": 28,
+   "id": "brief-1",
+   "metric": "site_depth_m",
+   "source": "requested",
+   "source_id": "brief:form",
+   "source_span": {
+    "end": 135,
+    "start": 117
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عدد الأدوار: 2",
+   "expected": 2,
+   "id": "brief-2",
+   "metric": "level_count",
+   "source": "requested",
+   "source_id": "brief:text",
+   "source_span": {
+    "end": 150,
+    "start": 136
+   }
+  }
+ ],
+ "review_before_fix": {
+  "finding_count": 7,
+  "findings": [
+   "",
+   "[first/stair_landing_upper] بلا باب — أضِف باباً على حافة مناسبة.",
+   "[first/stair_landing_upper] بلا إنارة — أضِف light أو spot.",
+   "[first/stair_upper] بلا باب — أضِف باباً على حافة مناسبة."
+  ],
+  "scopes": {
+   "program": "FAIL",
+   "rectangular_geometry": "PASS",
+   "regulatory_compliance": "NOT_VERIFIED",
+   "structural_safety": "NOT_VERIFIED",
+   "topology": "NOT_VERIFIED",
+   "vertical_circulation": "FAIL"
+  }
+ }
+}

@@ -201,10 +201,15 @@ def existing_geometry_verifier(building: dict) -> dict:
     an identical core rectangle on every level. Physical traversal is separately
     NOT_VERIFIED even when dimensioned core objects are present.
     All existing validator findings block conceptual approval in this first pass;
-    no substring-based filtering suppresses an inconvenient finding.
+    no substring-based filtering suppresses an inconvenient finding. The
+    validator itself classifies what never blocks (missing lighting points, and
+    unseen doors/paths on a plan transcribed from the owner's file) by code.
     """
     import acs_validate as V
-    findings, _ = V.validate_building(building)
+    findings, _, notes = V.review_building(building)
+    # A plan transcribed from the owner's file draws only the doors visible in
+    # it: missing doors and paths there are disclosed notes, not errors.
+    transcription = V.transcribed(building)
     floors, levels = building['floors'], building['levels']
     rooms = [r for f in floors.values() for r in f['rooms']]
     def openings_explicit(room):
@@ -226,7 +231,11 @@ def existing_geometry_verifier(building: dict) -> dict:
     topology_known = all(openings_explicit(r) for r in rooms)
     from acs_residential_access import issues as residential_access_issues, opening_collisions
     if topology_known:
-        findings += [item['message'] for item in residential_access_issues(building)]
+        access = residential_access_issues(building)
+        if transcription:
+            notes += [dict(item, code='PATH_NOT_VISIBLE') for item in access]
+        else:
+            findings += [item['message'] for item in access]
         findings += [item['message'] for item in opening_collisions(building)]
     # Vertical circulation is verified between occupied storeys. An explicit roof
     # level is an unoccupied deck: it needs no stair core to be a valid concept,
@@ -252,8 +261,30 @@ def existing_geometry_verifier(building: dict) -> dict:
     if core_issue:
         issues.append({'code': 'VERTICAL_CORE_MISMATCH', 'severity': 'error'})
     vertical_state = ('FAIL' if core_issue or findings else 'PASS') if vertical_known else 'NOT_VERIFIED'
-    return {'scopes': {
-        'topology': ('FAIL' if findings else 'PASS') if topology_known else 'NOT_VERIFIED',
-        'vertical_circulation': vertical_state},
-        'issues': issues,
+    topology = ('FAIL' if findings else 'PASS') if topology_known else 'NOT_VERIFIED'
+    if topology == 'PASS' and any(n['code'] in ('DOOR_NOT_VISIBLE', 'PATH_NOT_VISIBLE') for n in notes):
+        topology = 'NOT_VERIFIED'  # a transcription with unseen doors proves no path
+    return {'scopes': {'topology': topology, 'vertical_circulation': vertical_state},
+        'issues': issues, 'advisories': advisory_notes(notes, transcription),
         'coverage': {'vertical_circulation': vertical_geometry_coverage(building, vertical_state)}}
+
+
+TRANSCRIPTION_NOTE = 'المخطط مقروء من ملفك؛ الأبواب المرئية فقط مرسومة.'
+
+
+def advisory_notes(notes, transcription=False):
+    """Review notes that never block approval, in a short owner-facing form.
+
+    Missing lighting points are one note for the whole plan (a detail-stage
+    choice). A transcription opens with its disclosure; its unseen doors and
+    paths stay per room so the owner can open each one."""
+    out = [{'code': 'PLAN_SOURCE_TRANSCRIPTION', 'severity': 'advisory', 'message': TRANSCRIPTION_NOTE}] if transcription else []
+    lights = [n for n in notes if n.get('code') == 'LIGHTING_NOT_DECLARED']
+    for note in notes:
+        if note.get('code') != 'LIGHTING_NOT_DECLARED':
+            out.append({'code': note.get('code'), 'severity': 'advisory', 'room_ref': note.get('room_ref'),
+                        'message': str(note.get('message') or '')})
+    if lights:
+        out.append({'code': 'LIGHTING_NOT_DECLARED', 'severity': 'advisory',
+                    'message': 'لم تُحدَّد نقاط الإنارة في %d من الفراغات بعد. الإنارة من تفاصيل المرحلة التالية ولا تمنع الاعتماد المبدئي.' % len(lights)})
+    return out[:128]

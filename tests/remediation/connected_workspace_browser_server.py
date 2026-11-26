@@ -109,7 +109,13 @@ def application(database):
                         con.execute('insert or ignore into ci_sources values(?,?)',(payload['id'],json.dumps(payload)));return None
                     query=urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
                     documents=[json.loads(row[0]) for row in con.execute('select document from ci_sources')]
-                    return [d for d in documents if d['project_id']==query['project_id'][0][3:] and ('id' not in query or d['id']==query['id'][0][3:])]
+                    found=[d for d in documents if d['project_id']==query['project_id'][0][3:] and all(
+                        str(d.get(key))==query[key][0][3:] for key in ('id','sha256') if key in query)]
+                    if method=='DELETE':
+                        # Row-level security: only the member who uploaded a source deletes it.
+                        found=[d for d in found if d['created_by']==ACTOR]
+                        for d in found:con.execute('delete from ci_sources where id=?',(d['id'],))
+                    return found
                 if method=='POST':
                     cur=con.execute('insert or ignore into ci_jobs values(?,?)',(payload['id'],json.dumps(payload)))
                     return [copy.deepcopy(payload)] if cur.rowcount else []
@@ -154,8 +160,9 @@ def application(database):
         key='/'.join([project_id,source_id,part])
         with sqlite3.connect(database) as con:
             if method=='POST':con.execute('insert or ignore into ci_source_objects values(?,?)',(key,raw));return b''
+            if method=='DELETE':con.execute('delete from ci_source_objects where key=?',(key,));return b''
             row=con.execute('select data from ci_source_objects where key=?',(key,)).fetchone()
-            if not row:raise ValueError('Fixture source unavailable')
+            if not row:raise SOURCES.PlanError('PLAN_SOURCE_UNAVAILABLE','Fixture source unavailable')
             return row[0]
     SOURCES.object_request=source_object
     SESSION.authenticated_supabase_plan_store=lambda scope:Store(db)
@@ -164,6 +171,12 @@ def application(database):
     app=FastAPI()
     @app.get('/test-stats')
     def stats():return counts
+    @app.get('/test-source-objects')
+    def source_objects():
+        # Loopback-only, synthetic files: sizes and whether camera metadata survived.
+        with sqlite3.connect(database) as con:
+            return [{'key':key,'bytes':len(data),'exif':b'Exif' in bytes(data[:65536])}
+                    for key,data in con.execute('select key,data from ci_source_objects order by key')]
     @app.get('/test-diagnostics')
     def diagnostics():
         # This loopback-only synthetic server deliberately exposes no command,

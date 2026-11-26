@@ -36,6 +36,15 @@ ENVELOPE = ("envelope", "shell", "perimeter", "parapet", "building_shell", "غل
 IND_AISLE = {"forklift": 3.4, "amr": 1.2, "pedestrian": 1.2, "one_way": 3.0}
 
 
+def transcribed(b):
+    """A plan read from the owner's own file (server-stamped receipt, not provider text).
+
+    Only the doors visible in that file are drawn, so a room without a visible
+    door or path is a disclosed review note there, never a blocking error."""
+    src = (b.get("meta") or {}).get("acs_plan_source") if isinstance(b, dict) else None
+    return isinstance(src, dict) and src.get("mode") in ("preserve", "revise")
+
+
 def _is_envelope(rid):
     low = str(rid).lower()
     return any(k in low for k in ENVELOPE)
@@ -277,18 +286,27 @@ def unsupported_rooms(b):
 
 def validate_building(b):
     """يعيد (issues, stats). issues = قائمة نصوص عربية موجّهة للنموذج."""
+    issues, stats, _advisories = review_building(b)
+    return issues, stats
+
+
+def review_building(b):
+    """(issues, stats, advisories): advisories are review notes that never block."""
     issues = []
     site = b.get("site", {})
     W = float(site.get("w", 0)); D = float(site.get("d", 0))
     if W <= 0 or D <= 0:
         issues.append("site.w و site.d يجب أن يكونا أكبر من صفر.")
-        return issues, {}
+        return issues, {}, []
 
     btype = building_type(b)
     industrial = btype in ("warehouse", "industrial", "factory", "logistics", "مستودع")
     # الوضع الصارم: نلتزم بوصف العميل حرفياً — لا نطالبه بإضافات قياسية،
     # ونكتفي بفحص الهندسة (الحدود، التداخل، الفتحات) دون فرض محتوى.
     strict = bool((b.get("meta") or {}).get("strict"))
+    # Review notes that never block a concept: lighting points everywhere, and
+    # missing doors/paths on a plan transcribed from the owner's file.
+    advisories, transcription = [], transcribed(b)
     stats = {"levels": len(b.get("levels", [])), "rooms": 0, "points": 0}
     if industrial:
         stats["racks"] = stats["lanes"] = stats["stations"] = stats["docks"] = 0
@@ -373,14 +391,20 @@ def validate_building(b):
             # باب لكل غرفة داخلية (عدا الأسوار والمواقف والمناطق المفتوحة)
             if not strict and not r.get("doors") and not outdoor and not openz \
                     and "parking" not in low and not r.get("docks"):
-                issues.append("[%s/%s] بلا باب — أضِف باباً على حافة مناسبة." % (tmpl, rid))
+                if transcription:
+                    advisories.append({"code": "DOOR_NOT_VISIBLE", "room_ref": [tmpl, rid],
+                                       "message": "[%s/%s] لا يظهر لهذا الفراغ باب مرسوم في ملفك." % (tmpl, rid)})
+                else:
+                    issues.append("[%s/%s] بلا باب — أضِف باباً على حافة مناسبة." % (tmpl, rid))
 
             pts = r.get("points", []) or []
             stats["points"] += len(pts)
             kinds = [p.get("type") for p in pts]
             if not strict and area >= 3.0 and not outdoor \
                     and not any(k in ("light", "spot") for k in kinds):
-                issues.append("[%s/%s] بلا إنارة — أضِف light أو spot." % (tmpl, rid))
+                advisories.append({"code": "LIGHTING_NOT_DECLARED", "room_ref": [tmpl, rid],
+                                   "message": "[%s/%s] بلا إنارة — لم تُحدَّد نقطة إنارة لهذا الفراغ بعد؛ "
+                                              "تُضاف في مرحلة التفاصيل." % (tmpl, rid)})
             # Required fire equipment, aisle widths and electrical heights are
             # unresolved review tasks. Uncited thresholds must not enter the
             # repair prompt as mandatory engineering corrections.
@@ -611,15 +635,18 @@ def validate_building(b):
             unreachable = [rid for rid in internal
                            if rid not in reach and (rooms_of.get(rid) or {}).get("doors")]
             for rid in unreachable[:PER_CHECK_CAP]:
-                issues.append(
-                    "[%s/%s] لا يوصل إليه: أبوابه لا تتّصل بأي مسار يبدأ من مدخل — "
-                    "أضِف باباً على حافّة مشتركة مع ممرّ أو حيّز موصول."
-                    % (tname, rid))
+                text = ("[%s/%s] لا يوصل إليه: أبوابه لا تتّصل بأي مسار يبدأ من مدخل — "
+                        "أضِف باباً على حافّة مشتركة مع ممرّ أو حيّز موصول." % (tname, rid))
+                if transcription:
+                    advisories.append({"code": "PATH_NOT_VISIBLE", "room_ref": [tname, rid], "message": text})
+                else:
+                    issues.append(text)
 
     # Regulatory and security quantities remain NOT_EVALUATED. They are
     # disclosed by the authority planner, never manufactured as repair errors.
 
-    return issues, stats
+    stats["advisories"] = len(advisories)
+    return issues, stats, advisories
 
 
 def format_issues(issues, limit=40):

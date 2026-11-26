@@ -570,7 +570,8 @@ class WorkspaceLifecycle(unittest.TestCase):
         self.assertTrue(S.view(self.store,PROJECT,ACTOR)['authority']['can_approve_concept'])
         def persisted(body):
             return execute_persisted_plan_command(self.store,PROJECT,body,actor_id=ACTOR,verifier=S.existing_geometry_verifier)
-        persisted({'action':'approve','expected_head':first,'confirmed':True,'acknowledge_concept_only':True})
+        # A plan read from the owner's file is approved as a transcription of it.
+        persisted({'action':'approve','expected_head':first,'confirmed':True,'acknowledge_concept_only':True,'acknowledge_transcription':True})
         removed=S.set_roof(self.store,PROJECT,ACTOR,{'action':'set_roof','expected_head':first,'enabled':False})['head']
         add('unit_count',2)
         for role, number in [('bedroom',2),('living',1),('kitchen',1),('bathroom',2),('majlis',0)]:

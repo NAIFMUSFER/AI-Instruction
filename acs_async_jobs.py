@@ -33,6 +33,9 @@ SUBMIT_PATHS = {
     '/v1/jobs/understand/pdf': '/v1/understand/pdf',
     '/v1/jobs/edit': '/v1/edit',
 }
+# Old unscoped plan-file reads (no project, no saved source, no owner answers).
+RETIRED_PLAN_READS = frozenset({'/v1/understand/image', '/v1/understand/pdf',
+                                '/v1/jobs/understand/image', '/v1/jobs/understand/pdf'})
 JOB_PATH = re.compile(r'^/v1/jobs/(job_[a-f0-9]{32})(/result)?$')
 ID_RE = re.compile(r'^job_[a-f0-9]{32}$')
 TOKEN_RE = re.compile(r'^[a-f0-9]{64}$')
@@ -253,6 +256,12 @@ class AsyncGenerationMiddleware:
         # errors; result retrieval remains available and never resubmits work.
         if path in AUTH.DIRECT_PROTECTED_PATHS or path in SUBMIT_PATHS:
             if os.environ.get('ACS_ENV', '').strip().lower() == 'production':
+                if path in RETIRED_PLAN_READS:
+                    # Reading an uploaded plan has one path: the project's saved
+                    # sources, the owner's answers and a confirmed read (U15).
+                    return await AUTH._send_error(scope, send, 410, 'PLAN_READ_ROUTE_RETIRED',
+                        'قراءة ملفات المخطط انتقلت إلى «رفع مخطط جاهز» في مساحة مشروعك: احفظ الملف، '
+                        'واختر مخطط كل دور والمقياس والشمال، ثم أكد القراءة. هذا المسار القديم لا يقرأ الملفات.')
                 return await AUTH._send_error(scope, send, 409, 'PAID_WORKSPACE_REQUIRED',
                     'افتح مساحة مشروعك، راجع المتطلبات وحد الاستدعاءات ثم أكد التوليد. مسار التوليد القديم لم يعد يبدأ طلبات مدفوعة.')
         if path in AUTH.DIRECT_PROTECTED_PATHS:

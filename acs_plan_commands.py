@@ -212,6 +212,8 @@ def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str,
             # It is not statutory, structural or professional certification.
             "can_approve_concept": report.get("can_approve") is True,
             "construction_approved": False,
+            # A plan transcribed from the owner's file is approved as such.
+            **({"source_transcription": True} if report.get("transcription") is True else {}),
         },
         "review_packet": build_review_packet(workspace, revision_id),
         "object_actions": _object_actions(workspace, revision_id),
@@ -370,6 +372,12 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
 
     if action == "approve":
         expected = _head(command.get("expected_head"))
+        from acs_validate import transcribed
+        transcription = transcribed(workspace.get(expected).model)
+        if transcription and command.get("acknowledge_transcription") is not True:
+            raise PlanError("TRANSCRIPTION_ACKNOWLEDGEMENT_REQUIRED",
+                            "هذه النسخة مقروءة من ملفك. أكد أنك تعتمدها كنسخة منقولة من ملفك "
+                            "(الأبواب المرئية فقط مرسومة) قبل الاعتماد.")
         receipt = workspace.approve(
             expected, expected_head=expected, actor_label=actor,
             confirmed=command.get("confirmed"),
@@ -385,6 +393,8 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
             "semantic_lock_manifest_hash": receipt.semantic_lock_manifest_hash,
             "semantic_lock_count": receipt.semantic_lock_count,
         }
+        if transcription:
+            result["approval"]["source"] = "transcription"
         return result
 
     raise PlanError(

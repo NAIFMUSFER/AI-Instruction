@@ -390,10 +390,28 @@ def _reencode(im, kind):
     return buf.getvalue(), fresh.size
 
 
-def validate_image(data, declared_content_type=None):
+# أطول ضلع تقرؤه واجهة الرؤية (2576 بكسل). المتصفّح يصغّر الصور إليه قبل الرفع،
+# والخادم يصغّر المعاينة المُمرَّرة إليه أيضاً — الحدّان متطابقان عمداً.
+VISION_MAX_SIDE = 2576
+
+
+def _jpeg_draft(im, width, height, budget):
+    """F-22 مكرّر: صورة هاتف ١٢ ميغابكسل (≈٣٦ م.ب RGB) تُفكّ بنسبة ١/٢ أو ١/٤
+    أو ١/٨ مباشرة من معاملات DCT في JPEG، فلا يوجد الرستر الكامل في الذاكرة
+    أصلاً. يعيد الأبعاد بعد التصغير، أو الأبعاد نفسها إن لم تكفِ ١/٨."""
+    for scale in (2, 4, 8):
+        size = (-(-width // scale), -(-height // scale))
+        if _decoded_bytes(im.mode, size[0], size[1]) <= budget:
+            im.draft(im.mode, size)
+            return int(im.size[0]), int(im.size[1])
+    return width, height
+
+
+def validate_image(data, declared_content_type=None, max_side=None):
     """يتحقّق من صورة واحدة ويعيد نسخة مُعاد ترميزها آمنة للتمرير.
 
     يعيد: {"media_type","width","height","bytes","sniffed","normalized"}
+    ``max_side``: إن أُعطي صُغّرت النسخة المُعاد ترميزها إلى هذا الضلع الأطول.
     """
     if not isinstance(data, (bytes, bytearray, memoryview)):
         _reject("EMPTY_UPLOAD",
@@ -466,11 +484,14 @@ def validate_image(data, declared_content_type=None):
         # الثلاثة السابقة تقيس السلك والبكسلات، ولا يقيس أيّها الرستر الناتج.
         decoded_budget = int(ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES)
         decoded = _decoded_bytes(im.mode, width, height)
+        if decoded > decoded_budget and kind == "jpeg":
+            width, height = _jpeg_draft(im, width, height, decoded_budget)
+            decoded = _decoded_bytes(im.mode, width, height)
         if decoded > decoded_budget:
             _reject("IMAGE_DECODED_TOO_LARGE",
                     "الصورة تحتاج %.0f م.ب من الذاكرة بعد فكّ ضغطها والحدّ "
-                    "%.0f م.ب — صدّرها بدقّة أقل (مثلاً ‎4000×2800‎) ثم أعد "
-                    "الرفع." % (_mb(decoded), _mb(decoded_budget)),
+                    "%.0f م.ب — صغّرها إلى %d بكسل للضلع الأطول أو احفظها بصيغة "
+                    "JPEG ثم أعد الرفع." % (_mb(decoded), _mb(decoded_budget), VISION_MAX_SIDE),
                     "decoded raster %d bytes (%s %dx%d) exceeds budget %d"
                     % (decoded, im.mode, width, height, decoded_budget))
 
@@ -489,6 +510,10 @@ def validate_image(data, declared_content_type=None):
             fixed = ImageOps.exif_transpose(im) or im
         except Exception:
             fixed = im                              # دوران غير قابل للتفسير: تُترك كما هي
+        if max_side and max(fixed.size) > int(max_side):
+            ratio = float(max_side) / max(fixed.size)
+            fixed = fixed.resize((max(1, round(fixed.size[0] * ratio)), max(1, round(fixed.size[1] * ratio))),
+                                 Image.LANCZOS, reducing_gap=2.0)
 
         try:
             normalized, out_size = _reencode(fixed, kind)

@@ -15,11 +15,11 @@
     "target": "The deployed index.html is an index SHELL — markup, <link rel=stylesheet>, classic boot scripts and <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/."
   },
   "connected_workspace": {
-    "additional_css_bytes": 19299,
+    "additional_css_bytes": 20344,
     "assets": [
       {
-        "bytes": 85583,
-        "gzip_bytes": 25197,
+        "bytes": 86613,
+        "gzip_bytes": 25585,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -36,13 +36,13 @@
         "path": "public/app/ui/approved-viewer.mjs"
       },
       {
-        "bytes": 19299,
-        "gzip_bytes": 4607,
+        "bytes": 20344,
+        "gzip_bytes": 4786,
         "loaded": "initial-css",
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 154537,
+    "initial_javascript_bytes": 155567,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 370436,
+    "core_initial_bytes": 391652,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The declared boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 45,
@@ -327,7 +327,7 @@
     ],
     "first_party_dynamic_import_count": 37,
     "first_party_module_count": 64,
-    "first_party_total_bytes": 2706999,
+    "first_party_total_bytes": 2728215,
     "guest_route_additional_bytes": 1794187,
     "guest_route_modules": [
       "public/app/core/stairs.mjs",
@@ -362,16 +362,16 @@
       "public/app/render/guest-software-view.mjs",
       "public/app/ui/guest-software-studio.mjs"
     ],
-    "initial_javascript_bytes": 439372,
+    "initial_javascript_bytes": 460588,
     "largest_module": {
       "bytes": 243660,
       "group": "core",
       "gzip_bytes": 79788,
       "loaded": "local-route",
       "path": "public/app/core/viewer.js",
-      "pct_of_first_party_js": 9.0
+      "pct_of_first_party_js": 8.93
     },
-    "largest_module_pct_of_first_party_js": 9.0,
+    "largest_module_pct_of_first_party_js": 8.93,
     "lazy_bytes": 2267627,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -461,7 +461,7 @@
         "gzip_bytes": 79788,
         "loaded": "local-route",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 9.0
+        "pct_of_first_party_js": 8.93
       },
       {
         "bytes": 235931,
@@ -469,7 +469,7 @@
         "gzip_bytes": 73034,
         "loaded": "local-route",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 8.72
+        "pct_of_first_party_js": 8.65
       },
       {
         "bytes": 230376,
@@ -477,7 +477,7 @@
         "gzip_bytes": 49402,
         "loaded": "local-route",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 8.51
+        "pct_of_first_party_js": 8.44
       },
       {
         "bytes": 213439,
@@ -485,7 +485,7 @@
         "gzip_bytes": 59389,
         "loaded": "local-route",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 7.88
+        "pct_of_first_party_js": 7.82
       },
       {
         "bytes": 164478,
@@ -493,7 +493,7 @@
         "gzip_bytes": 50023,
         "loaded": "local-route",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 6.08
+        "pct_of_first_party_js": 6.03
       },
       {
         "bytes": 122705,
@@ -501,7 +501,7 @@
         "gzip_bytes": 30357,
         "loaded": "local-route",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 4.53
+        "pct_of_first_party_js": 4.5
       },
       {
         "bytes": 116628,
@@ -509,7 +509,7 @@
         "gzip_bytes": 33458,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 4.31
+        "pct_of_first_party_js": 4.27
       },
       {
         "bytes": 104379,
@@ -517,7 +517,7 @@
         "gzip_bytes": 30687,
         "loaded": "lazy",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 3.86
+        "pct_of_first_party_js": 3.83
       },
       {
         "bytes": 99740,
@@ -525,15 +525,15 @@
         "gzip_bytes": 29046,
         "loaded": "lazy",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 3.68
+        "pct_of_first_party_js": 3.66
       },
       {
-        "bytes": 85583,
+        "bytes": 86613,
         "group": "ui",
-        "gzip_bytes": 25197,
+        "gzip_bytes": 25585,
         "loaded": "eager",
         "path": "public/app/ui/connected-workspace.mjs",
-        "pct_of_first_party_js": 3.16
+        "pct_of_first_party_js": 3.17
       },
       {
         "bytes": 76870,
@@ -541,7 +541,7 @@
         "gzip_bytes": 21294,
         "loaded": "local-route",
         "path": "public/app/generated/runtime.js",
-        "pct_of_first_party_js": 2.84
+        "pct_of_first_party_js": 2.82
       },
       {
         "bytes": 74657,
@@ -549,7 +549,7 @@
         "gzip_bytes": 23215,
         "loaded": "local-route",
         "path": "public/app/generated/pbr.js",
-        "pct_of_first_party_js": 2.76
+        "pct_of_first_party_js": 2.74
       },
       {
         "bytes": 72457,
@@ -557,7 +557,7 @@
         "gzip_bytes": 22901,
         "loaded": "local-route",
         "path": "public/app/core/local-apartment.mjs",
-        "pct_of_first_party_js": 2.68
+        "pct_of_first_party_js": 2.66
       },
       {
         "bytes": 70950,
@@ -565,7 +565,7 @@
         "gzip_bytes": 20057,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 2.62
+        "pct_of_first_party_js": 2.6
       },
       {
         "bytes": 63445,
@@ -573,7 +573,7 @@
         "gzip_bytes": 20026,
         "loaded": "lazy",
         "path": "public/app/generated/bim.js",
-        "pct_of_first_party_js": 2.34
+        "pct_of_first_party_js": 2.33
       },
       {
         "bytes": 62952,
@@ -581,7 +581,7 @@
         "gzip_bytes": 20173,
         "loaded": "eager",
         "path": "public/app/ui/approved-viewer.mjs",
-        "pct_of_first_party_js": 2.33
+        "pct_of_first_party_js": 2.31
       },
       {
         "bytes": 51608,
@@ -589,7 +589,7 @@
         "gzip_bytes": 16760,
         "loaded": "local-route",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 1.91
+        "pct_of_first_party_js": 1.89
       },
       {
         "bytes": 48840,
@@ -597,7 +597,7 @@
         "gzip_bytes": 15074,
         "loaded": "local-route",
         "path": "public/app/generated/pbr-bridge.js",
-        "pct_of_first_party_js": 1.8
+        "pct_of_first_party_js": 1.79
       },
       {
         "bytes": 46037,
@@ -605,7 +605,7 @@
         "gzip_bytes": 13493,
         "loaded": "boot-classic",
         "path": "public/app/boot/engine-guard.js",
-        "pct_of_first_party_js": 1.7
+        "pct_of_first_party_js": 1.69
       },
       {
         "bytes": 43544,
@@ -613,7 +613,7 @@
         "gzip_bytes": 14138,
         "loaded": "local-route",
         "path": "public/app/trust/wiring.js",
-        "pct_of_first_party_js": 1.61
+        "pct_of_first_party_js": 1.6
       },
       {
         "bytes": 33253,
@@ -621,7 +621,15 @@
         "gzip_bytes": 10785,
         "loaded": "eager",
         "path": "public/app/core/brief-program.mjs",
-        "pct_of_first_party_js": 1.23
+        "pct_of_first_party_js": 1.22
+      },
+      {
+        "bytes": 30873,
+        "group": "ui",
+        "gzip_bytes": 10769,
+        "loaded": "eager",
+        "path": "public/app/ui/plan-upload.mjs",
+        "pct_of_first_party_js": 1.13
       },
       {
         "bytes": 29179,
@@ -629,7 +637,7 @@
         "gzip_bytes": 9310,
         "loaded": "eager",
         "path": "public/app/ui/brief-reader.mjs",
-        "pct_of_first_party_js": 1.08
+        "pct_of_first_party_js": 1.07
       },
       {
         "bytes": 26068,
@@ -645,7 +653,7 @@
         "gzip_bytes": 8286,
         "loaded": "local-route",
         "path": "public/app/core/stairs.mjs",
-        "pct_of_first_party_js": 0.93
+        "pct_of_first_party_js": 0.92
       },
       {
         "bytes": 23681,
@@ -661,7 +669,7 @@
         "gzip_bytes": 6237,
         "loaded": "eager",
         "path": "public/app/ui/connected-semantic-locks.mjs",
-        "pct_of_first_party_js": 0.83
+        "pct_of_first_party_js": 0.82
       },
       {
         "bytes": 22161,
@@ -669,7 +677,7 @@
         "gzip_bytes": 8188,
         "loaded": "local-route",
         "path": "public/app/ui/guest-floor-plan.mjs",
-        "pct_of_first_party_js": 0.82
+        "pct_of_first_party_js": 0.81
       },
       {
         "bytes": 18832,
@@ -677,7 +685,7 @@
         "gzip_bytes": 6339,
         "loaded": "eager",
         "path": "public/app/ui/brief-review.mjs",
-        "pct_of_first_party_js": 0.7
+        "pct_of_first_party_js": 0.69
       },
       {
         "bytes": 18298,
@@ -685,7 +693,7 @@
         "gzip_bytes": 6542,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail-bridge.js",
-        "pct_of_first_party_js": 0.68
+        "pct_of_first_party_js": 0.67
       },
       {
         "bytes": 17861,
@@ -693,7 +701,7 @@
         "gzip_bytes": 6150,
         "loaded": "local-route",
         "path": "public/app/ui/panels-entry.js",
-        "pct_of_first_party_js": 0.66
+        "pct_of_first_party_js": 0.65
       },
       {
         "bytes": 14929,
@@ -717,7 +725,7 @@
         "gzip_bytes": 4916,
         "loaded": "local-route",
         "path": "public/app/ui/generation-jobs.js",
-        "pct_of_first_party_js": 0.53
+        "pct_of_first_party_js": 0.52
       },
       {
         "bytes": 13117,
@@ -749,7 +757,7 @@
         "gzip_bytes": 4898,
         "loaded": "local-route",
         "path": "public/app/render/guest-presentation.mjs",
-        "pct_of_first_party_js": 0.47
+        "pct_of_first_party_js": 0.46
       },
       {
         "bytes": 12451,
@@ -776,20 +784,12 @@
         "pct_of_first_party_js": 0.4
       },
       {
-        "bytes": 10824,
-        "group": "ui",
-        "gzip_bytes": 4098,
-        "loaded": "eager",
-        "path": "public/app/ui/plan-upload.mjs",
-        "pct_of_first_party_js": 0.4
-      },
-      {
         "bytes": 9360,
         "group": "boot",
         "gzip_bytes": 3820,
         "loaded": "boot-classic",
         "path": "public/app/boot/style-bridge.js",
-        "pct_of_first_party_js": 0.35
+        "pct_of_first_party_js": 0.34
       },
       {
         "bytes": 9129,
@@ -797,7 +797,7 @@
         "gzip_bytes": 3768,
         "loaded": "local-route",
         "path": "public/app/render/guest-software-view.mjs",
-        "pct_of_first_party_js": 0.34
+        "pct_of_first_party_js": 0.33
       },
       {
         "bytes": 8641,
@@ -813,12 +813,12 @@
         "gzip_bytes": 3114,
         "loaded": "local-route",
         "path": "public/app/ui/guest-projects.mjs",
-        "pct_of_first_party_js": 0.29
+        "pct_of_first_party_js": 0.28
       },
       {
-        "bytes": 7253,
+        "bytes": 7390,
         "group": "ui",
-        "gzip_bytes": 2863,
+        "gzip_bytes": 2935,
         "loaded": "eager",
         "path": "public/app/ui/plot-rules.mjs",
         "pct_of_first_party_js": 0.27
@@ -861,7 +861,7 @@
         "gzip_bytes": 1854,
         "loaded": "boot-classic",
         "path": "public/app/boot/a11y-baseline.js",
-        "pct_of_first_party_js": 0.19
+        "pct_of_first_party_js": 0.18
       },
       {
         "bytes": 4086,
@@ -877,7 +877,7 @@
         "gzip_bytes": 1643,
         "loaded": "eager",
         "path": "public/app/core/plan-labels.mjs",
-        "pct_of_first_party_js": 0.15
+        "pct_of_first_party_js": 0.14
       },
       {
         "bytes": 3309,
@@ -1063,7 +1063,7 @@
     "sha256": "bf6580495eb6c64784046448a4ce92fb10de8f9c4a1189ae7a73c08b483492f7",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2706999 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2728215 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,
