@@ -63,6 +63,14 @@ def _enclosed(r):
     return not (isinstance(walls, list) and not walls)
 
 
+OPEN_AIR_ROLES = ("terrace", "balcony", "roof_terrace")
+
+
+def _open_air(r):
+    """A terrace or balcony: open to the sky whatever parapets it lists."""
+    return str(r.get("role") or "").lower() in OPEN_AIR_ROLES
+
+
 def _is_open_zone(r):
     """منطقة تشغيلية مفتوحة (مستودع/مصنع): محدّدة بدهان أرضي لا بجدران —
     لا تُطالَب بباب ولا كاشف دخان لكل حيّز، ولها أن تكون كبيرة جداً."""
@@ -442,7 +450,12 @@ def review_building(b):
                                           "الارتفاع موجب والجلسة غير سالبة." % (tmpl, rid, field))
                     vertical = _opening_vertical(o, kind)
                     wall_h = r.get("wall_h") if r.get("wall_h") is not None else b.get("wall_h")
-                    if vertical is not None and _finite(wall_h) and vertical[1] > float(wall_h) + GEOM_TOL:
+                    # A room that lists its walls (a terrace with two parapets)
+                    # has no wall of its own on the other sides: an opening
+                    # there sits in the neighbour's wall and is measured with it.
+                    own_wall = not isinstance(r.get("walls"), list) or e in r["walls"]
+                    if (own_wall and vertical is not None and _finite(wall_h)
+                            and vertical[1] > float(wall_h) + GEOM_TOL):
                         issues.append("[%s/%s] الفتحة تتجاوز ارتفاع الجدار المصرّح به "
                                       "(أعلى الفتحة %.2f م، الجدار %.2f م)."
                                       % (tmpl, rid, vertical[1], float(wall_h)))
@@ -573,8 +586,10 @@ def review_building(b):
                         continue
                     # A neighbour without any wall (open porch or canopy) is
                     # outdoor space, so a window facing it is on a facade.
+                    # So is an open-air terrace or balcony: it is roofless,
+                    # and a window onto it is how a room opens to it.
                     nbrs = [n for n in _edge_neighbours(rect, e, others, (lo, hi))
-                            if _enclosed(rooms_of.get(n) or {})]
+                            if _enclosed(rooms_of.get(n) or {}) and not _open_air(rooms_of.get(n) or {})]
                     # لا فحص «باب لا يفتح على شيء» هنا. كُتب ثم أُسقط بالقياس:
                     # على ١٦٥ نموذجاً حقيقياً أطلق ٣٣ بلاغاً، كلّها كاذبة. السبب
                     # افتراضٌ لا يصحّ في هذا النظام — أن كل فراغ ممثَّل كغرفة.
