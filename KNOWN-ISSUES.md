@@ -2171,13 +2171,13 @@ and is not expected to track the present.
 | | |
 |---|---|
 | index shell (`public/index.html`) | **52,931 B** |
-| first-party JavaScript, all modules | **2,448,625 B in 55 modules** |
-| account/sign-in entry (static modules + boot) | **292,260 B** |
-|   of which core modules | **224,315 B in 15 modules** |
-| additional when the local guest studio is entered | **1,683,205 B in 28 modules** |
+| first-party JavaScript, all modules | **2,482,900 B in 58 modules** |
+| account/sign-in entry (static modules + boot) | **298,425 B** |
+|   of which core modules | **229,844 B in 15 modules** |
+| additional when the local guest studio is entered | **1,711,315 B in 31 modules** |
 | optional panels, after local studio entry | **473,160 B in 6 modules** |
-| share of first-party JS deferred from account entry | **88.1 %** |
-| largest single module | **229,312 B of a 307,200 B cap** |
+| share of first-party JS deferred from account entry | **88.0 %** |
+| largest single module | **234,194 B of a 307,200 B cap** |
 
 Local guest studio modules, in load order:
 
@@ -2196,6 +2196,7 @@ Local guest studio modules, in load order:
 * `public/app/render/warehouse-canonical-identity.js`
 * `public/app/render/guest-presentation.mjs`
 * `public/app/generated/pbr-bridge.js`
+* `public/app/ui/tap-gesture.mjs`
 * `public/app/ui/workspace-ui-wiring.js`
 * `public/app/trust/core.js`
 * `public/app/trust/wiring.js`
@@ -2205,6 +2206,8 @@ Local guest studio modules, in load order:
 * `public/app/ui/residential-quality.js`
 * `public/app/ui/generation-jobs.js`
 * `public/app/ui/guest-floor-plan.mjs`
+* `public/app/ui/guest-room-card.mjs`
+* `public/app/ui/guest-projects.mjs`
 * `public/app/ui/guest-workspace.js`
 * `public/app/trust/guest-draft-store.mjs`
 * `public/app/render/guest-software-view.mjs`
