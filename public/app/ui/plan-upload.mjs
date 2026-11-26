@@ -12,6 +12,24 @@ export const TRANSCRIPTION={
 // 2576 px long side. Larger photos are downscaled here before upload.
 export const LIMITS={file:5*1024*1024,image:25*1024*1024,pixels:40000000,side:12000,read:2576,preview:2*1024*1024};
 const UNUSABLE='لا يمكن استخدام هذا الملف كما هو: ';
+// U10: a free check on the preview before anything is paid. A floor plan is
+// mostly background with straight horizontal/vertical lines and little colour;
+// a photo of a room or a person is not. Measured on the review inputs: plans
+// and photographed plans >= 0.76 straight edges and <= 0.17 saturation; the
+// non-plan photo 0.49 and 0.43.
+export function planLikeness(source){
+  const scale=Math.min(1,256/Math.max(source.naturalWidth||source.width,source.naturalHeight||source.height));
+  const w=Math.max(8,Math.round((source.naturalWidth||source.width)*scale)),h=Math.max(8,Math.round((source.naturalHeight||source.height)*scale));
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,w,h);
+  const data=ctx.getImageData(0,0,w,h).data,lum=new Float32Array(w*h);let sat=0;
+  for(let i=0;i<w*h;i++){const r=data[4*i],g=data[4*i+1],b=data[4*i+2],mx=Math.max(r,g,b);lum[i]=.299*r+.587*g+.114*b;sat+=(mx-Math.min(r,g,b))/Math.max(1,mx);}
+  let straight=0,edges=0;
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const gx=lum[y*w+x+1]-lum[y*w+x-1],gy=lum[(y+1)*w+x]-lum[(y-1)*w+x];if(Math.abs(gx)+Math.abs(gy)>60){edges++;if(Math.abs(gx)>3*Math.abs(gy)||Math.abs(gy)>3*Math.abs(gx))straight++;}}
+  canvas.width=canvas.height=0;
+  const ortho=straight/Math.max(1,edges),colour=sat/(w*h),density=edges/(w*h);
+  return {plan:ortho>=.62&&colour<=.3&&density>=.015,ortho,colour,density};
+}
 export function createPlanUpload(root,{storageKey,onError}) {
   const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
   let floorMap=[],file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
@@ -21,7 +39,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   <div id="cwUploadPanel" hidden><p id="cwPlotNote" class="cw-muted">في وضع رفع المخطط يُنقل مخططك كما رسمته، فأخفينا قسم الأرض والارتدادات والمواقف: لا تُطبَّق قواعد الأرض على القراءة. عرض الموقع وعمقه أعلاه يبقيان للمقياس.</p><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف بيانات الكاميرا والموقع من كل صورة قبل حفظها، ويُحفظ الملف المتطابق مرة واحدة. في PDF اختر الصفحة التي تريد قراءتها.</p>
   <label for="cwPlanFile">ملف المخطط</label><input id="cwPlanFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" data-mutate>
   <div id="cwPdfPagePanel" hidden><label for="cwPdfPage">الصفحة المطلوب استخدامها</label><select id="cwPdfPage" data-mutate></select></div>
-  <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
+  <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><div id="cwNotPlan" class="cw-warning" role="alert" hidden><p>لا يبدو هذا الملف مخططًا: ألوانه كثيرة وخطوطه قليلة الاستقامة. قراءة المخطط مدفوعة، فتأكد أنه مخطط قبل المتابعة.</p><label class="cw-check"><input id="cwNotPlanConfirm" type="checkbox" data-mutate>تأكدت أن الملف مخطط وأريد حفظه وقراءته</label></div><p id="cwSourceStatus" role="status" aria-live="polite"></p>
   <button id="cwSaveSource" type="button" data-mutate disabled>حفظ المخطط في المشروع</button>
   <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button><button id="cwDeleteSource" type="button" data-mutate disabled>حذف الملف من المشروع</button>
   <div id="cwFloorMap" class="cw-floor-map" hidden><h3>أي مخطط لكل دور؟</h3><p class="cw-muted">أكدت أكثر من دور: اختر لكل دور صفحة أو صورة محفوظة، بدءًا من الدور الأرضي. يُقرأ كل دور مرة واحدة ضمن الطلب نفسه.</p><div id="cwFloorRows"></div><button id="cwSaveAllPages" type="button" data-mutate hidden>حفظ صفحات الملف وربطها بالأدوار بالترتيب</button></div>
@@ -62,12 +80,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
       if(current!==epoch)return;
       // The read sees this page at its 2576 px limit; quality steps down only to fit 2 MB.
       let data='';for(const q of [.92,.85,.75,.6]){data=canvas.toDataURL('image/jpeg',q);if(data.length*3/4<=LIMITS.preview*.97)break;}preview64=data.split(',')[1];
-      $('cwSourcePreview').src=data;$('cwSourcePreview').hidden=false;ready=true;uploadId=crypto.randomUUID();
+      $('cwSourcePreview').src=data;$('cwSourcePreview').hidden=false;ready=true;uploadId=crypto.randomUUID();flag(canvas);
       notice('الصفحة '+$('cwPdfPage').value+' من '+pdf.numPages+' جاهزة. احفظها ثم راجع المتطلبات.');
     }finally{canvas.width=canvas.height=0;page.cleanup();sync();}
   }
   async function chooseFile(){
-    ++epoch;ready=false;uploadId=null;preview64=null;selectSource(null);persist();releasePreview();sync();
+    ++epoch;ready=false;uploadId=null;preview64=null;selectSource(null);persist();releasePreview();$('cwNotPlan').hidden=true;sync();
     if(pdf){await pdf.destroy();pdf=null;}$('cwPdfPagePanel').hidden=true;renderFloors();
     file=$('cwPlanFile').files[0]||null;if(!file){notice('');return;}
     if(!file.size)throw new Error('الملف فارغ. اختر ملف المخطط مرة أخرى.');
@@ -101,7 +119,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
         releasePreview();objectUrl=URL.createObjectURL(file);img.src=objectUrl;await img.decode();if(current!==epoch)return;
         img.dataset.media=file.type;
       }
-      img.hidden=false;ready=true;uploadId=crypto.randomUUID();
+      img.hidden=false;ready=true;uploadId=crypto.randomUUID();flag(img);
       notice((file.size&&before[0]!==img.naturalWidth?'صغّرنا الصورة من '+before.join('×')+' إلى '+img.naturalWidth+'×'+img.naturalHeight+' بكسل على جهازك (حد قراءة المخطط). ':'')+'المعاينة جاهزة. احفظ المخطط ثم راجع المتطلبات.');sync();
     }
   }
@@ -121,10 +139,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
       return new File([out],name,{type:out.type});
     }finally{canvas.width=canvas.height=0;}
   }
-  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode','cwSourceScale','cwSourceNorth','cwScaleLabel','cwScaleMeters'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
+  function flag(source){let plan=true;try{plan=planLikeness(source).plan;}catch(e){}$('cwNotPlan').hidden=plan;$('cwNotPlanConfirm').checked=false;}
+  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready||(!$('cwNotPlan').hidden&&!$('cwNotPlanConfirm').checked);for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode','cwSourceScale','cwSourceNorth','cwScaleLabel','cwScaleMeters'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
   $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';renderFloors();persist();});
   $('cwLevels')?.addEventListener('input',renderFloors);
   $('cwSourceMode').addEventListener('change',persist);
+  $('cwNotPlanConfirm').addEventListener('change',sync);
   $('cwSourceScale').addEventListener('change',()=>{$('cwScaleKnown').hidden=$('cwSourceScale').value!=='known';persist();});
   $('cwSourceNorth').addEventListener('change',persist);
   async function prepare(fn){opening=true;sync();try{await fn();}catch(e){ready=false;releasePreview();notice(e.message);onError(e);}finally{opening=false;sync();}}
