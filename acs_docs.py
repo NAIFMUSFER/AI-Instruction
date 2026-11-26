@@ -394,15 +394,20 @@ def plan_geometry(project, view, src=None):
         for s in arch["slabs"]:
             if s["level_id"] != lid:
                 continue
-            o = [_num(x) for x in (s.get("outline") or [])]
-            if len(o) == 4 and all(x is not None for x in o):
-                th = stated(s.get("thickness_m"))
-                elems.append({"category": "SLAB", "id": s["id"],
-                              "geometry_class": "PROJECTED", "shape": "rect",
-                              "rect": [_q(x) for x in o],
-                              "thickness": th["value"],
-                              "thickness_status": th["status"],
-                              "outline_basis": s.get("outline_basis")})
+            # A slab that declares pieces (outline minus a courtyard open to the
+            # sky) is drawn as those pieces; the outline is only its extent.
+            parts = ([("%s.piece_%d" % (s["id"], k), p) for k, p in enumerate(s["pieces"])]
+                     if isinstance(s.get("pieces"), list) else [(s["id"], s.get("outline"))])
+            for pid, part in parts:
+                o = [_num(x) for x in (part or [])]
+                if len(o) == 4 and all(x is not None for x in o):
+                  th = stated(s.get("thickness_m"))
+                  elems.append({"category": "SLAB", "id": pid,
+                                "geometry_class": "PROJECTED", "shape": "rect",
+                                "rect": [_q(x) for x in o],
+                                "thickness": th["value"],
+                                "thickness_status": th["status"],
+                                "outline_basis": s.get("outline_basis")})
     if "CORE" in vis or "STAIR" in vis:
         for c in arch["cores"]:
             if lvl is not None and lvl["index"] not in (c.get("served_levels") or []):
