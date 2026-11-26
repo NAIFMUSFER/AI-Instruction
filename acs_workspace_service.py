@@ -266,8 +266,11 @@ def chat_and_save(store, project_id, actor_id, command, *, on_progress=None):
     return result["revision_id"]
 
 
-def generate_plan_candidate(brief, requirements, option, max_provider_calls, resume=None, used_calls=0):
-    """Isolated worker: has no actor, bearer, project, store or approval input."""
+def generate_plan_candidate(brief, requirements, option, max_provider_calls, resume=None, used_calls=0, plot=None):
+    """Isolated worker: has no actor, bearer, project, store or approval input.
+
+    ``plot`` is the client's plot block; it is resolved here exactly as the
+    parent resolves it before stamping the revision."""
     from acs_plan_bridge import generate_candidate, _reject_provider_authority_changes
     from acs_provider_budget import limited
     from acs_workspace_progress import resuming, emit, planning_policy
@@ -291,10 +294,14 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 'WAREHOUSE_BUILDING_TARGET_INFEASIBLE',
                 'مساحة المبنى المستهدفة لا يمكن احتواؤها حسابيًا ضمن أبعاد الموقع وعدد الأدوار المؤكدة.'
             )
+    rules = None
+    if plot is not None and residential:
+        rules = plot_rules({"plot": plot, "brief": brief, "requirements": requirements, "option": option})
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
     confirmed = {r.get('metric'): r.get('expected') for r in requirements if isinstance(r, dict)}
-    if confirmed.get('building_width_m') is not None and confirmed.get('building_depth_m') is not None:
+    if (rules is None and confirmed.get('building_width_m') is not None
+            and confirmed.get('building_depth_m') is not None):
         # The building's confirmed size is the envelope; the land is context only.
         prompt += ("\nغلاف المبنى المؤكد: اجعل site.w = " + str(confirmed['building_width_m']) + " وsite.d = "
                    + str(confirmed['building_depth_m']) + " (أبعاد المبنى). أبعاد الأرض "
@@ -309,12 +316,20 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
-        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail, _canonical_room_roles
-        prompt += "\n" + ROOM_PROGRAM
+        from acs_residential_generation import (ROOM_PROGRAM, ROOM_PROGRAM_PLOT, PLANNING_SYSTEM, prepare_layout,
+                                                detail, _canonical_room_roles)
+        prompt += "\n" + (ROOM_PROGRAM if rules is None else ROOM_PROGRAM_PLOT)
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
-            resume = manifest(brief, requirements)
+            resume = manifest(brief, requirements, rules)
+        if rules is not None:
+            import acs_plot_rules as P
+            levels = (resume or {}).get('envelope', {}).get('levels') if isinstance(resume, dict) else None
+            names = list(dict.fromkeys(l['template'] for l in levels or []))
+            prompt += "\n" + P.prompt_text(rules, names[0] if names else None, names[1] if len(names) > 1 else None)
     policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
+    if residential and rules is not None:
+        policy += P.PLANNING_ADDENDUM
     with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
@@ -323,15 +338,19 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         if residential:
             try:
                 before_layout = canonical(_canonical_room_roles(result["building"]))
-                result["building"] = prepare_layout(result["building"], brief, requirements, budget)
+                result["building"] = prepare_layout(result["building"], brief, requirements, budget, plot=rules)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
                 result["building"] = detail(result["building"], brief, budget,
-                                            resume.get("done") if reuse_details else None, requirements)
+                                            resume.get("done") if reuse_details else None, requirements, plot=rules)
             except PlanError as exc:
                 if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
                     raise
-                from acs_residential_layout import propose
-                fallback = propose(brief, requirements)
+                if rules is None:
+                    from acs_residential_layout import propose
+                    fallback = propose(brief, requirements)
+                else:
+                    from acs_plot_layout import propose as propose_in_envelope
+                    fallback = propose_in_envelope(brief, requirements, rules)
                 if fallback is None:
                     raise
                 result["building"] = fallback
@@ -352,6 +371,9 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
             result["building"] = repair_overlap(result["building"], prompt, budget)
         emit("REVIEW",provider_calls=budget["used"])
     candidate = result["building"]
+    if rules is not None:
+        import acs_plot_rules as P
+        P.stamp(candidate, rules)
     _reject_provider_authority_changes({}, candidate)
     return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
 
@@ -394,6 +416,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     kwargs = {
         k: command[k] for k in ("brief", "requirements", "option", "max_provider_calls")
     }
+    if "plot" in command:
+        kwargs["plot"] = command["plot"]
     source_receipt = None
     target = "acs_workspace_service:generate_plan_candidate"
     if command.get("source_id"):
