@@ -17,6 +17,7 @@
 #   • المصرِّف حتمي: نفس النموذج ⇒ نفس المعرّفات والنتائج.
 # =============================================================================
 import json
+import math
 from acs_geometry_contract import wall_edges
 import os
 
@@ -312,6 +313,58 @@ def _cores(building, bid, levels):
 
 
 # ------------------------------------------------------------ التصريف --
+_COURTYARD_SIZE_SOURCES = ("client_stated", "default_assumption", "partly_default_assumption")
+
+
+def _declared_courtyards(building):
+    """Open-to-sky courtyards declared by the model (``acs.courtyard/1``).
+
+    The clear rectangle is between the courtyard wall faces; the footprint void
+    is the same opening measured on the wall axes, as the rooms are. Twin of
+    ``_aDeclaredCourtyards`` in public/app/core/disciplines.js.
+    """
+    meta = (building.get("meta") or {}).get("acs_apartment")
+    court = meta.get("courtyard") if isinstance(meta, dict) else None
+    if not isinstance(court, dict) or court.get("schema") != "acs.courtyard/1" or court.get("open_to_sky") is not True:
+        return []
+    rects = []
+    for key in ("rect_m", "footprint_void_m"):
+        r = court.get(key)
+        if (not isinstance(r, (list, tuple)) or len(r) != 4 or
+                any(type(v) not in (int, float) or not math.isfinite(v) for v in r) or r[2] <= 0 or r[3] <= 0):
+            return []
+        rects.append([float(v) for v in r])
+    source = court.get("size_source")
+    return [{"clear": rects[0], "void": rects[1],
+             "size_source": source if source in _COURTYARD_SIZE_SOURCES else "not_recorded"}]
+
+
+def _overlap_area(a, b):
+    ox = min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0])
+    oz = min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1])
+    return max(0.0, ox) * max(0.0, oz)
+
+
+def _rect_minus(rect, holes):
+    """Axis-aligned pieces of ``rect`` outside ``holes``: north and south bands
+    at full width, then the west and east bands beside each hole."""
+    pieces = [list(rect)]
+    for h in holes:
+        kept = []
+        for p in pieces:
+            x0, z0, x1, z1 = p[0], p[1], p[0] + p[2], p[1] + p[3]
+            hx0, hz0 = max(x0, h[0]), max(z0, h[1])
+            hx1, hz1 = min(x1, h[0] + h[2]), min(z1, h[1] + h[3])
+            if hx1 - hx0 <= _EPS or hz1 - hz0 <= _EPS:
+                kept.append(p)
+                continue
+            for a, b, c, d in ((x0, z0, x1, hz0), (x0, hz1, x1, z1), (x0, hz0, hx0, hz1), (hx1, hz0, x1, hz1)):
+                if c - a > _EPS and d - b > _EPS:
+                    kept.append([_q(a), _q(b), _q(c - a), _q(d - b)])
+        pieces = kept
+    return pieces
+
+
 def compile_architecture(building, building_id="bld_0", position=None, rotation_deg=0.0):
     """يبني نموذج العناصر المعمارية من النموذج الدلالي. حتمي وقابل للتكرار."""
     bid = building_id
@@ -329,6 +382,7 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
            "ceilings": [], "roofs": [], "cores": [], "spaces": [], "envelope": None,
            "approximations": [], "issues": []}
 
+    courtyards, courtyard_voids = _declared_courtyards(building), []
     for lvl in levels:
         rooms = _rooms_of(building, lvl["template"], bid)
         rects, unsupported, all_rects = [], [], []
@@ -404,18 +458,41 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                         host["openings"].append(op["id"])
                     out["openings"].append(op)
 
+        # A declared open-to-sky courtyard pierces this level's slab (and the roof)
+        # unless a space now occupies it, which is reported rather than hidden.
+        open_courts = []
+        for court in courtyards:
+            if any(_overlap_area(rc, court["clear"]) > _EPS for rc in all_rects):
+                out["issues"].append({"code": "COURTYARD_OCCUPIED", "subject": lvl["id"]})
+                continue
+            open_courts.append(court)
+            x, z, w, d = court["clear"]
+            courtyard_voids.append({
+                "id": "%s.courtyard_void" % lvl["id"], "type": "FLOOR_OPENING", "void_type": "COURTYARD",
+                "building_id": bid, "level_id": lvl["id"], "level_index": lvl["index"],
+                "core_id": None, "core_type": None, "rect": [x, z, w, d],
+                "footprint_void_rect": list(court["void"]), "open_to_sky": True,
+                "clear_width_m": w, "clear_depth_m": d, "clear_area_m2": _q(w * d),
+                "size_source": court["size_source"], "footprint_source": "declared_courtyard",
+                "note": "open to the sky through every slab and the roof; not a structural design"})
         if bbox:
+            outline = [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
             slab = {"id": "%s.slab" % lvl["id"], "type": "FLOOR_SLAB", "building_id": bid,
                     "level_id": lvl["id"], "level_index": lvl["index"],
-                    "outline": [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]],
+                    "outline": outline,
                     "outline_basis": "bounding_box_of_spaces",
                     "elevation_m": lvl["elevation_m"], "elevation_source": lvl["elevation_source"],
                     "thickness_m": _val(building.get("slab_t"), DEFAULTS["slab_thickness_m"],
                                         "imported" if building.get("slab_t") is not None
                                         else "system_default"),
                     "structural": False, "note": "architectural slab only — not a structural design"}
+            if open_courts:
+                # ``outline`` stays the extent; the slab itself is only its pieces.
+                slab["outline_basis"] = "bounding_box_minus_declared_voids"
+                slab["pieces"] = _rect_minus(outline, [c["clear"] for c in open_courts])
+                slab["void_ids"] = ["%s.courtyard_void" % lvl["id"]]
             out["slabs"].append(slab)
-            covered = sum(r[2] * r[3] for r in rects)
+            covered = sum(r[2] * r[3] for r in rects) + sum(c["void"][2] * c["void"][3] for c in open_courts)
             if covered < (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) - 1e-6:
                 out["approximations"].append(
                     {"level_id": lvl["id"], "reason": "SLAB_OUTLINE_IS_BOUNDING_BOX",
@@ -431,6 +508,10 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                                  "source": "system_default" if lvl["auto_added"] else "imported",
                                  "occupied_floor": False,
                                  "note": "a roof level is never an occupied floor"})
+            if out["slabs"] and "pieces" in out["slabs"][-1]:
+                out["roofs"][-1]["outline_basis"] = "bounding_box_minus_declared_voids"
+                out["roofs"][-1]["pieces"] = [list(p) for p in out["slabs"][-1]["pieces"]]
+                out["roofs"][-1]["void_ids"] = list(out["slabs"][-1]["void_ids"])
         else:
             for sid, room, i in rooms:
                 rc = _rect(room)
@@ -480,6 +561,7 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
             vn += 1
         if core["position_source"] != "imported":
             out["issues"].append({"code": "CORE_POSITION_NOT_STATED", "subject": core["id"]})
+    out["voids"].extend(courtyard_voids)
 
     ext = [w for w in out["walls"] if w["exposure"] == "exterior"]
     ext_open = [o for o in out["openings"]

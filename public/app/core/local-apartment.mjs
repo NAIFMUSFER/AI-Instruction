@@ -345,8 +345,9 @@ function design(width,depth,levels,height,source,{entrance='N',courtyard=null}={
     const reserve=[round(clear[0]-wallThickness/2),round(clear[1]-wallThickness/2),round(cw+wallThickness),round(cd+wallThickness)];
     model.meta.acs_apartment.courtyard={schema:'acs.courtyard/1',open_to_sky:true,occupied_floor:false,
       rect_m:orientedRect(clear,turns,planWidth,planDepth),footprint_void_m:orientedRect(reserve,turns,planWidth,planDepth),
-      circulation:'enclosed_gallery_ring'};
-    model.meta.acs_apartment.assumptions.push('فناء مركزي مفتوح للسماء بأبعاد صافية '+courtyard.width+' × '+courtyard.depth+' م، تحيط به أروقة مشتركة تصل المدخل بالدرج والمصعد. لا توجد غرفة أو بلاطة أو سطح فوق الفناء.');
+      circulation:'enclosed_gallery_ring',size_source:courtyard.size_source??'not_recorded'};
+    const sizeNote={default_assumption:' افتراضاً لأنك لم تحدد أبعاده',partly_default_assumption:'، وأحد البعدين افتراضي لأنك لم تحدده'}[courtyard.size_source]??'';
+    model.meta.acs_apartment.assumptions.push('فناء مركزي مفتوح للسماء بأبعاد صافية '+courtyard.width+' × '+courtyard.depth+' م'+sizeNote+'، تحيط به أروقة مشتركة تصل المدخل بالدرج والمصعد. لا توجد غرفة أو بلاطة أو سطح فوق الفناء، وحول فتحته على السطح حاجز مثل حاجز الواجهة.');
   }
   for(let i=0;i<levels;i++) {
     const template='level_'+i;
@@ -520,7 +521,14 @@ function courtyardChoice(text,previous=null) {
   if(/\d\s*(?:قدم|اقدام|سم|سنتيمتر|مم|ملم|ft|cm|mm)/.test(scope))
     unsupported('أدخل أبعاد الفناء الصافية بالمتر.');
   const old=previous?.rect_m;
-  return {width:Number(namedWidth?.[1]??pair?.[1]??old?.[2]??4),depth:Number(namedDepth?.[1]??pair?.[2]??old?.[3]??5)};
+  // Record whether each clear dimension is the customer's or the 4 × 5 m default;
+  // a dimension carried from the current design keeps that design's provenance.
+  const carried={client_stated:'client',default_assumption:'default'}[previous?.size_source]??'unknown';
+  const origin=(named,prior)=>named||pair?'client':prior!==undefined?carried:'default';
+  const origins=[origin(namedWidth,old?.[2]),origin(namedDepth,old?.[3])];
+  const size_source=origins.includes('unknown')?'not_recorded':origins.every(o=>o==='client')?'client_stated':
+    origins.every(o=>o==='default')?'default_assumption':'partly_default_assumption';
+  return {width:Number(namedWidth?.[1]??pair?.[1]??old?.[2]??4),depth:Number(namedDepth?.[1]??pair?.[2]??old?.[3]??5),size_source};
 }
 
 export function apartmentFromBrief(text,defaults={}) {
@@ -610,7 +618,7 @@ export function apartmentFromRevision(text,currentModel) {
   if(/(?:حافظ|احتفظ|ابق|بقاء|المحافظه|ثبت|دون تغيير|بدون تغيير|لا\s+(?:تغير|تحرك|تبدل|تمس|تعدل))[^،.!\n]{0,80}(?:مواقع|موقع|مواضع|جهه|جهات|اتجاه|جدران|حوائط|ابعاد\s+(?:(?:جميع|كل)\s+)?الغرف)/.test(t))
     unsupported('تغيير الفناء أو جهة المدخل يعيد توزيع الغرف والجدران. لا يمكن في هذا التعديل تثبيت مواقعها أو اتجاهاتها أو أبعادها الحالية.');
   const existing={width:prior.width_m,depth:prior.depth_m,levels:prior.occupied_levels,height:currentModel.floor_height};
-  const oldCourt=prior.courtyard?{width:prior.courtyard.rect_m?.[2]??4,depth:prior.courtyard.rect_m?.[3]??5}:null;
+  const oldCourt=prior.courtyard?{width:prior.courtyard.rect_m?.[2]??4,depth:prior.courtyard.rect_m?.[3]??5,size_source:prior.courtyard.size_source}:null;
   const options={courtyard:courtyard===undefined?oldCourt:courtyard,entrance:entrance??prior.street_edge};
   let model=buildRequestedApartment(t,existing,options);
   if(model.site.w!==existing.width || model.site.d!==existing.depth || model.levels.length!==existing.levels || model.floor_height!==existing.height)

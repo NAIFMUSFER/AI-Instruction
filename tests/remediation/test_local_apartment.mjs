@@ -6,6 +6,7 @@ import { stairConnections, validateStairReport } from '../../public/app/core/sta
 import { withDefaultRoof, carryAutoRoof } from '../../public/app/core/roof.mjs';
 import { withContextDetails } from '../../public/app/core/context-details.mjs';
 import { pqPlateRect } from '../../public/app/generated/pbr.js';
+import { compileArchitecture } from '../../public/app/core/disciplines.js';
 
 const fixture=readFileSync(new URL('../fixtures/briefs/riyadh-apartment-ar.txt',import.meta.url),'utf8');
 const sample=apartmentSample();
@@ -239,6 +240,31 @@ for(const [direction,edge] of Object.entries({الشمال:'N',الشرق:'E',ا
     if(court) {
       assert.deepEqual(changed.meta.acs_apartment.courtyard.rect_m,[10,11.5,4,5]);
       const [roofed,,reason]=withDefaultRoof(changed); assert.equal(reason,null);
+      assert.equal(changed.meta.acs_apartment.courtyard.size_source,'client_stated');
+      // Every roof edge stretch with no deck beyond it (the courtyard opening and the
+      // facade alike) carries the 0.9 m parapet; none crosses a neighbouring deck.
+      const decks=roofed.floors[roofed.levels.at(-1).template].rooms;
+      for(const deck of decks) {
+        assert.deepEqual(deck.roof_provenance.parapet_gaps,[],'no unguarded roof edge: '+deck.id);
+        const [x,z,w,d]=deck.rect;
+        for(const edge of ['N','S','W','E']) {
+          const open=[.061,.293,.517,.739,.947].map(f=>({N:[x+w*f,z-.02],S:[x+w*f,z+d+.02],W:[x-.02,z+d*f],E:[x+w+.02,z+d*f]})[edge])
+            .map(point=>!decks.some(other=>other!==deck&&contains(other,point)));
+          assert.ok(open.every(v=>v)||open.every(v=>!v),'a deck edge is either wholly open or wholly shared: '+deck.id+'/'+edge);
+          assert.equal(deck.walls.includes(edge),open[0],'parapet follows the open roof edge: '+deck.id+'/'+edge);
+        }
+        if(deck.walls.length) assert.equal(deck.wall_h,0.9);
+      }
+      // The architectural compiler declares the opening and pierces every slab and the roof.
+      const arch=compileArchitecture(roofed), clearCourt=changed.meta.acs_apartment.courtyard.rect_m;
+      const courtVoids=arch.voids.filter(v=>v.void_type==='COURTYARD');
+      assert.deepEqual(courtVoids.map(v=>[v.level_index,v.rect,v.size_source,v.open_to_sky]),
+        roofed.levels.map(l=>[l.index,clearCourt,'client_stated',true]));
+      for(const element of [...arch.slabs,...arch.roofs]) {
+        assert.equal(element.outline_basis,'bounding_box_minus_declared_voids');
+        assert.ok(element.pieces.every(piece=>!overlaps(piece,clearCourt)),'slab or roof piece over the courtyard: '+element.id);
+        assert.ok(near(element.pieces.reduce((a,p)=>a+p[2]*p[3],0),element.outline[2]*element.outline[3]-clearCourt[2]*clearCourt[3]));
+      }
       const [detailed,,detailReason]=withContextDetails(roofed); assert.equal(detailReason,null);
       for(const level of detailed.levels) {
         const rooms=detailed.floors[level.template].rooms, clear=changed.meta.acs_apartment.courtyard.rect_m;
