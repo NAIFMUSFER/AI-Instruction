@@ -91,6 +91,9 @@ class Envelope(unittest.TestCase):
                           'فيلا سكنية', program(levels=2, units=1), None)
         self.assertEqual((villa['dwelling'], villa['setbacks_m']['N'], villa['setbacks_m']['E']), ('villa', 6.0, 1.5))
         self.assertEqual(villa['max_coverage'], 0.75)
+        typed = 'فيلا دورين\n\nنوع المشروع: سكني / عمارة / فيلا'          # the form's category line
+        self.assertEqual(P.dwelling(typed, program(levels=2, units=1)[:3]), 'villa')
+        self.assertEqual(P.dwelling('عمارة\n\nنوع المشروع: سكني / عمارة / فيلا', []), 'apartments')
 
     def test_corner_plot_and_user_values_override_defaults(self):
         rules = P.resolve({'streets': ['N', 'E'], 'setbacks_m': {'W': 0, 'S': 1.5}, 'max_coverage': 0.7,
@@ -202,6 +205,11 @@ class FailingReviewFixture(unittest.TestCase):
         blocking, advisory = P.check(REVIEW_MODEL, quiet)
         self.assertFalse(codes(blocking) & {'PLOT_ZONING_MAJLIS_FAR', 'PLOT_ZONING_BEDROOM_AT_ENTRY'})
         self.assertTrue({'PLOT_ZONING_MAJLIS_FAR', 'PLOT_ZONING_BEDROOM_AT_ENTRY'} <= codes(advisory))
+
+    def test_automatic_roof_decks_never_produce_plot_findings(self):
+        blocking, advisory = P.check(REVIEW_MODEL, self.rules())
+        self.assertEqual(REVIEW_MODEL['levels'][-1]['kind'], 'roof')
+        self.assertFalse([f for f in blocking + advisory if (f.get('room_ref') or [''])[0] == 'roof'])
 
     def test_b4_upper_floor_street_door_opens_onto_the_void(self):
         blocking, advisory = P.check(REVIEW_MODEL, self.rules())
@@ -420,6 +428,17 @@ class Contract(unittest.TestCase):
             self.assertTrue(advisories and all(f['message'].startswith('ملاحظة استشارية') for f in advisories))
             for text in rules['assumptions']:
                 self.assertIn(text, view['planning_assumptions'])
+            # The stamped block travels through approval and every export unchanged.
+            from acs_plan_persisted_commands import execute_persisted_plan_command
+            import base64
+            approved = execute_persisted_plan_command(fixture.store, PROJECT, {
+                'action': 'approve', 'expected_head': rid, 'confirmed': True, 'acknowledge_concept_only': True},
+                actor_id=ACTOR, verifier=S.existing_geometry_verifier)
+            self.assertEqual(approved['baseline'], rid)
+            for fmt in ('svg', 'pdf', 'dxf', 'ifc', 'gltf'):
+                result = S.artifact(fixture.store, PROJECT, ACTOR,
+                                    {'action': 'artifact', 'revision_id': rid, 'format': fmt, 'level_index': 0})
+                self.assertTrue(base64.b64decode(result['data_base64']), fmt)
         finally:
             fixture.tearDown()
 

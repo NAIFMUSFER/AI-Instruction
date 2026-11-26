@@ -161,9 +161,14 @@ def zoning_requested(brief):
     return any(p.search(text) for p in _ZONING)
 
 
+# The form appends «نوع المشروع: سكني / عمارة / فيلا» to every residential
+# brief; that category label names both kinds and says nothing about this one.
+_TYPE_LINE = re.compile(r'(?m)^\s*نوع المشروع:.*$')
+
+
 def dwelling(brief, requirements):
     from acs_residential_access import SINGLE_DWELLING, _brief_says
-    said = _brief_says(brief) if isinstance(brief, str) else None
+    said = _brief_says(_TYPE_LINE.sub(' ', brief)) if isinstance(brief, str) else None
     units = _confirmed(requirements, 'unit_count')
     if said == SINGLE_DWELLING and units in (None, 1):
         return VILLA
