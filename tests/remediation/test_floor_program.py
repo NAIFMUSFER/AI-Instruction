@@ -263,6 +263,49 @@ class Generation(unittest.TestCase):
         self.assertEqual(blocking, [])
 
 
+class KeptDraft(unittest.TestCase):
+    """Live job 38f36e00: every floor had its openings, one corrective call
+    was spent, and the cap of 8 ran out before the next. The job failed and
+    nothing was saved. A confirmed floor program has no fallback that fits it,
+    so the paid plan is now kept as a draft that the review blocks."""
+
+    class DoorlessBedroom(Provider):
+        def __call__(self, text, **kw):
+            out = super().__call__(text, **kw)
+            if kw['stage'] == 'detail':
+                context = json.loads(text)
+                if context['target_template'] == 'level_1':
+                    target = next(r['id'] for r in context['all_rooms'] if r['role'] == 'bedroom')
+                    self.doorless = target
+                    value = json.loads(out)
+                    for row in value['rooms']:
+                        if row['id'] == target:
+                            row['doors'] = []   # never corrected by this stub
+                    out = json.dumps(value, ensure_ascii=False)
+            return out
+
+    def test_budget_out_during_correction_keeps_the_detailed_plan(self):
+        provider = self.DoorlessBedroom()
+        out = generate(provider, budget=7)
+        self.assertEqual([c[0] for c in provider.calls], ['plan_chunk'] * 3 + ['repair'] + ['detail'] * 3)
+        rooms = {r['id']: r for f in out['building']['floors'].values() for r in f['rooms']}
+        self.assertEqual(rooms[provider.doorless]['doors'], [])
+        self.assertTrue(all('doors' in r for r in rooms.values()), 'every room has had its openings call')
+        result = review(out['building'])
+        self.assertFalse(result['can_approve'], 'what remains blocks approval in the review')
+
+    def test_corrections_still_run_while_calls_remain(self):
+        provider = self.DoorlessBedroom()
+        out = generate(provider, budget=12)
+        self.assertGreater([c[0] for c in provider.calls].count('detail'), 3, 'the corrective pass still runs')
+        self.assertFalse(review(out['building'])['can_approve'])
+
+    def test_other_plans_keep_their_previous_behaviour(self):
+        import acs_residential_generation as G
+        import inspect
+        self.assertFalse(inspect.signature(G.detail).parameters['keep_unresolved'].default)
+
+
 # ── the review: per-floor metrics and target sizes ──────────────────────────
 class Review(unittest.TestCase):
     def test_the_owner_model_passes_every_check(self):

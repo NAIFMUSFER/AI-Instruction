@@ -396,9 +396,13 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget, plot=rules,
                                                     program=floor_program)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
+                # A confirmed floor program has no fallback that fits it, so once
+                # every floor has its openings the plan is kept as a reviewable
+                # draft rather than discarded with the calls already paid for.
+                keep = floor_program is not None and not F.is_villa(floor_program, brief, requirements)
                 result["building"] = detail(result["building"], brief, budget,
                                             resume.get("done") if reuse_details else None, requirements, plot=rules,
-                                            program=floor_program)
+                                            program=floor_program, keep_unresolved=keep)
             except PlanError as exc:
                 if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
                     raise
