@@ -27,6 +27,20 @@ const python = (code, input) => {
 // The program as the server returns it (validated, with checks and cannot_do).
 const PROGRAM = python('import acs_brief_reader as B;print(json.dumps(B.validate_program(json.load(sys.stdin)),ensure_ascii=False))', RAW);
 const copy = v => JSON.parse(JSON.stringify(v));
+// One villa over two floors: one unit per floor, a master suite, maid's and driver's rooms.
+const room = (role, name, count = 1, extra = {}) => ({role, name, count, width_m: null, depth_m: null, approx: false, ensuite: false, note: null, ...extra});
+const VILLA = python('import acs_brief_reader as B;print(json.dumps(B.validate_program(json.load(sys.stdin)),ensure_ascii=False))', {
+  ...copy(RAW), building_type: 'villa', city: 'جدة', outdoor: [], other_requests: [],
+  site: {width_m: 18, depth_m: 28, area_m2: null, street_sides: ['W'], street_width_m: null, setbacks_m: {N: null, E: null, S: null, W: null},
+    footprint: {width_m: null, depth_m: null, position: null}},
+  parking: {count: 2, stall_width_m: null, stall_depth_m: null, placement: 'front_setback', note: null},
+  levels: [
+    {name: 'الدور الأرضي', use: 'residential', note: null, units: [{name: 'الفيلا', bedrooms: null, bathrooms: null, rooms: [
+      room('majlis', 'مجلس الرجال'), room('bathroom', 'دورة مياه الضيوف'), room('kitchen', 'المطبخ'), room('maid', 'غرفة الخادمة'),
+      room('driver', 'غرفة السائق'), room('bathroom', 'حمام الخدمة', 2), room('bedroom', 'غرفة نوم الضيوف')]}]},
+    {name: 'الدور الأول', use: 'residential', note: null, units: [{name: 'الفيلا', bedrooms: null, bathrooms: null, rooms: [
+      room('bedroom', 'غرفة النوم الرئيسية', 1, {ensuite: true}), room('bathroom', 'حمام الرئيسية'), room('bedroom', 'غرف الأبناء', 3),
+      room('bathroom', 'حمام مشترك', 2), room('living', 'الصالة العلوية')]}]}]});
 
 await check('free reader: the owner brief now yields plot, depth and floors with exact evidence', () => {
   const a = analyzeBrief(BRIEF);
@@ -82,12 +96,15 @@ await check('confirmed program maps onto the existing step-01 fields', () => {
     width: 20, depth: 25, levels: 3, buildingWidth: 13, buildingDepth: 16, street: 'N', street2: null, streetWidth: null,
     setbacks: {N: 5.5, E: 5.5, S: 3.5, W: 1.5}, units: {units: 1, scope: 'per_level'}, bedrooms: null, bathrooms: null,
     guests: 'suggest', city: 'الرياض', parking: {placement: 'front_setback', count: 2}, landing: true,
-    rows: [{metric: 'room_count', role: 'bedroom', expected: 9}, {metric: 'room_count', role: 'bathroom', expected: 9}], notes: 1});
+    rows: [{metric: 'room_count', role: 'bedroom', expected: 9}, {metric: 'room_count', role: 'bathroom', expected: 9}], notes: 1, villa: null});
   const uniform = copy(PROGRAM); uniform.levels = [uniform.levels[1], copy(uniform.levels[1])];
   const u = programFields(uniform);
   assert.equal(u.bedrooms, 4); assert.equal(u.bathrooms, 3); assert.deepEqual(u.rows, []); assert.equal(u.guests, 'separate');
-  const villa = copy(PROGRAM); villa.building_type = 'villa';
-  assert.equal(programFields(villa).units, null, 'a villa is one dwelling, not a flat count');
+  const v = programFields(VILLA);
+  assert.equal(v.units, null, 'a villa is one dwelling, not a flat count');
+  assert.deepEqual(v.rows, [], 'the villa fields carry its program');
+  assert.deepEqual(v.villa, {bedrooms: 5, master: 'yes', bathrooms: 6, maid: 'yes', driver: 'yes'});
+  assert.deepEqual([v.width, v.depth, v.levels, v.street], [18, 28, 2, 'W']);
   assert.equal(levelSummary(PROGRAM.levels[0]), 'شقة واحدة · 3 غرف نوم · 4 حمامات · 13 بندًا');
   const bad = copy(PROGRAM); bad.levels[0].units[0].rooms[0].count = 0;
   assert.throws(() => checkProgram(bad), /العدد من 1 إلى 12/);
@@ -140,10 +157,12 @@ globalThis.localStorage = {getItem: k => storage.get(k) ?? null, setItem: (k, v)
 const root = new El('section'), form = new El('form'); form.id = 'cwBriefForm'; root.append(form);
 const ids = ['cwType', 'cwBrief', 'cwReadBrief', 'cwBriefReview', 'cwWidth', 'cwDepth', 'cwLevels', 'cwBldWidth', 'cwBldDepth', 'cwUnits', 'cwUnitsScope',
   'cwBedrooms', 'cwBathrooms', 'cwGuests', 'cwCity', 'cwStreet', 'cwPlotStreet2', 'cwPlotStreetWidth', 'cwPlotSetbackN', 'cwPlotSetbackE',
-  'cwPlotSetbackS', 'cwPlotSetbackW', 'cwPlotParking', 'cwPlotParkingCount', 'cwPlotLanding'];
+  'cwPlotSetbackS', 'cwPlotSetbackW', 'cwPlotParking', 'cwPlotParkingCount', 'cwPlotLanding',
+  'cwVillaBedrooms', 'cwVillaMaster', 'cwVillaBathrooms', 'cwVillaMaid', 'cwVillaDriver'];
 for (const id of ids) { const n = new El(id === 'cwReadBrief' ? 'button' : 'input'); n.id = id; form.append(n); }
 const $ = id => root.querySelector('#' + id);
-const reset = () => { for (const id of ids) $(id).value = ''; $('cwType').value = 'residential'; $('cwStreet').value = 'unknown'; $('cwPlotLanding').checked = false; $('cwBrief').value = BRIEF; };
+const reset = () => { for (const id of ids) $(id).value = ''; $('cwType').value = 'residential'; $('cwStreet').value = 'unknown'; $('cwPlotLanding').checked = false; $('cwBrief').value = BRIEF;
+  for (const id of ['cwVillaMaster']) $(id).value = 'yes'; for (const id of ['cwVillaMaid', 'cwVillaDriver']) $(id).value = 'no'; };
 reset();
 const formEvents = [];
 form.addEventListener('input', e => formEvents.push(e.target.id));
@@ -231,6 +250,20 @@ await check('confirm fills the existing step-01 fields and requirement rows', as
   assert.throws(() => reader.command(), /أكّد البطاقة من جديد/);
   $('cwWidth').value = '20';
   assert.doesNotThrow(() => reader.command());
+});
+
+await check('a single-dwelling program fills the villa fields, not a flat count', async () => {
+  reset(); used.length = 0;
+  reader.fill({head: 'plan_villa', brief: 'فيلا', requirements: [], brief_program: null, plot_input: null});
+  storage.set('draft:program', JSON.stringify({program: VILLA, confirmed: false, key: null, source: 'ai', brief: null}));
+  reader.fill(null);
+  $('cwProgramConfirm').click();
+  assert.deepEqual(['cwVillaBedrooms', 'cwVillaMaster', 'cwVillaBathrooms', 'cwVillaMaid', 'cwVillaDriver', 'cwUnits', 'cwWidth', 'cwStreet', 'cwCity'].map(id => $(id).value),
+    ['5', 'yes', '6', 'yes', 'yes', '', '18', 'W', 'جدة']);
+  assert.deepEqual(used, [], 'no flat-count rows for a villa');
+  assert.match($('cwProgramStatus').textContent, /برنامج الفيلا/);
+  $('cwProgramDismiss').click(); reset();
+  storage.set('draft:program', JSON.stringify({program: PROGRAM, confirmed: true, key: JSON.stringify([20, 25, 3, 13, 16]), source: 'ai', brief: null}));
 });
 
 await check('a saved program and a cloud program are restored; dismissing sends nothing', async () => {

@@ -35,7 +35,7 @@ POSITIONS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW", "center")
 BUILDING_TYPES = ("apartments", "villa", "other")
 LEVEL_USES = ("residential", "parking", "services", "other")
 ROLES = ("bedroom", "bathroom", "living", "majlis", "dining", "kitchen", "pantry", "laundry",
-         "storage", "office", "dressing", "maid", "corridor", "entrance", "terrace", "balcony", "other")
+         "storage", "office", "dressing", "maid", "driver", "corridor", "entrance", "terrace", "balcony", "other")
 OUTDOOR_KINDS = ("pool", "garden", "seating", "courtyard", "yard", "service_yard", "walkway",
                  "outdoor_dining", "equipment", "other")
 STAIRS = ("u_two_flights", "straight", "l_shape", "spiral")
@@ -91,7 +91,9 @@ location or adjacency. List each bathroom, toilet and guest washroom as role
 still belongs to the unit of its floor. unit.bedrooms and unit.bathrooms are the
 totals the brief states for that unit (null when not stated). Repeat a program
 on every level it applies to; give each level its own program when the brief
-differs per floor.
+differs per floor. For a villa or house (one dwelling), set building_type to
+"villa" and give each floor one unit named «الفيلا» holding that floor's rooms;
+a maid's room is role "maid" and a driver's room role "driver".
 
 Pools, gardens, yards, outdoor seating, outdoor dining and walkways go in
 "outdoor", never in rooms. other_requests holds short requests that fit no
@@ -100,7 +102,7 @@ field (grouping kitchens and bathrooms around shafts, roof use).
 Text limits: names 40 characters, notes 120, materials 60, other_requests 120.
 
 Roles: bedroom, bathroom, living, majlis, dining, kitchen, pantry, laundry,
-storage, office, dressing, maid, corridor, entrance, terrace, balcony, other.
+storage, office, dressing, maid, driver, corridor, entrance, terrace, balcony, other.
 Outdoor kinds: pool, garden, seating, courtyard, yard, service_yard, walkway,
 outdoor_dining, equipment, other.
 

@@ -229,6 +229,12 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
         ['cwBldWidth', f.buildingWidth, 'عرض المبنى'], ['cwBldDepth', f.buildingDepth, 'عمق المبنى']]) if (setField(id, v)) filled.push(label);
     }
     if (f.units && setField('cwUnits', f.units.units)) {setField('cwUnitsScope', f.units.scope, 'change'); filled.push('عدد الشقق');}
+    if (f.villa) {
+      const villa = [['cwVillaBedrooms', f.villa.bedrooms, 'input'], ['cwVillaBathrooms', f.villa.bathrooms, 'input'],
+        ['cwVillaMaster', f.villa.master, 'change'], ['cwVillaMaid', f.villa.maid, 'change'], ['cwVillaDriver', f.villa.driver, 'change']]
+        .filter(([id, v, kind]) => setField(id, v, kind));
+      if (villa.length) filled.push('برنامج الفيلا');
+    }
     if (setField('cwBedrooms', f.bedrooms)) filled.push('غرف النوم');
     if (setField('cwBathrooms', f.bathrooms)) filled.push('دورات المياه');
     if (f.guests) setField('cwGuests', f.guests, 'change');
