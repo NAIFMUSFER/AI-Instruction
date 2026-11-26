@@ -14,7 +14,7 @@ export const LIMITS={file:5*1024*1024,image:25*1024*1024,pixels:40000000,side:12
 const UNUSABLE='لا يمكن استخدام هذا الملف كما هو: ';
 export function createPlanUpload(root,{storageKey,onError}) {
   const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
-  let file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
+  let floorMap=[],file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
   function node(tag,text,parent){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;}
   const section=node('section');section.className='cw-source';section.id='cwSource';
   section.innerHTML=`<label for="cwStartMode">كيف تريد بدء المخطط؟</label><select id="cwStartMode"><option value="describe">وصف مشروع جديد</option><option value="upload">رفع مخطط جاهز</option></select>
@@ -24,6 +24,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
   <button id="cwSaveSource" type="button" data-mutate disabled>حفظ المخطط في المشروع</button>
   <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button><button id="cwDeleteSource" type="button" data-mutate disabled>حذف الملف من المشروع</button>
+  <div id="cwFloorMap" class="cw-floor-map" hidden><h3>أي مخطط لكل دور؟</h3><p class="cw-muted">أكدت أكثر من دور: اختر لكل دور صفحة أو صورة محفوظة، بدءًا من الدور الأرضي. يُقرأ كل دور مرة واحدة ضمن الطلب نفسه.</p><div id="cwFloorRows"></div><button id="cwSaveAllPages" type="button" data-mutate hidden>حفظ صفحات الملف وربطها بالأدوار بالترتيب</button></div>
   <label for="cwSourceMode">كيف نستخدم المخطط؟</label><select id="cwSourceMode" data-mutate><option value="preserve">قراءة التوزيع الحالي للمراجعة</option><option value="revise">اقتراح تعديلات حسب وصفي</option><option value="complete">قراءة المخطط ثم إكمال الأبواب (تصميم كامل)</option></select>
   <p class="cw-muted">راجع أبعاد الموقع والأدوار أدناه. قراءة الصورة لا تثبت المقياس أو دقة نقل جميع العناصر؛ راجع المسودة مقابل الأصل قبل اعتمادها. تُقرأ الصفحة المختارة فقط.</p></div>`;
   $('cwBriefForm').querySelector('h2').after(section);
@@ -34,7 +35,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   }
   function persist(){
     $('cwConfirmed').checked=false;
-    try{localStorage.setItem(storageKey(),JSON.stringify({id:selected,mode:$('cwStartMode').value,policy:$('cwSourceMode').value}));}catch(e){}
+    try{localStorage.setItem(storageKey(),JSON.stringify({id:selected,floors:floorMap,mode:$('cwStartMode').value,policy:$('cwSourceMode').value}));}catch(e){}
   }
   function selectSource(id){selected=rows.some(r=>r.id===id)?id:null;$('cwSavedSource').value=selected||'';$('cwDownloadSource').disabled=!selected;armDelete(false);}
   // Two taps: the first asks, the second deletes. Only the member who uploaded a file can delete it.
@@ -42,7 +43,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   function renderRows(){
     $('cwSavedSource').replaceChildren();const blank=node('option','اختر مخططًا',$('cwSavedSource'));blank.value='';
     for(const row of rows){const o=node('option',row.name+(row.media_type==='application/pdf'?' · الصفحة '+row.page+' من '+row.page_count:''),$('cwSavedSource'));o.value=row.id;}
-    selectSource(selected);
+    selectSource(selected);renderFloors();
   }
   function releasePreview(){if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;$('cwSourcePreview').hidden=true;$('cwSourcePreview').removeAttribute('src');}
   function base64(bytes){let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s);}
@@ -62,7 +63,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   }
   async function chooseFile(){
     ++epoch;ready=false;uploadId=null;preview64=null;selectSource(null);persist();releasePreview();sync();
-    if(pdf){await pdf.destroy();pdf=null;}$('cwPdfPagePanel').hidden=true;
+    if(pdf){await pdf.destroy();pdf=null;}$('cwPdfPagePanel').hidden=true;renderFloors();
     file=$('cwPlanFile').files[0]||null;if(!file){notice('');return;}
     if(!file.size)throw new Error('الملف فارغ. اختر ملف المخطط مرة أخرى.');
     notice('جارٍ فتح الملف…');const current=epoch;
@@ -80,7 +81,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
       if(current!==epoch){await doc.destroy();return;}
       if(doc.numPages>200){await doc.destroy();throw new Error('ملف PDF يتجاوز 200 صفحة. ارفع الصفحات المطلوبة في ملف أصغر.');}
       pdf=doc;$('cwPdfPage').replaceChildren();for(let i=1;i<=pdf.numPages;i++){const o=node('option','الصفحة '+i,$('cwPdfPage'));o.value=i;}
-      $('cwPdfPagePanel').hidden=false;await renderPage();
+      $('cwPdfPagePanel').hidden=false;await renderPage();renderFloors();
     }else{
       const png=magic[0]===137&&magic[1]===80,jpg=magic[0]===255&&magic[1]===216;
       const webp=String.fromCharCode(...magic.subarray(0,4))==='RIFF'&&String.fromCharCode(...magic.subarray(8,12))==='WEBP';
@@ -116,19 +117,50 @@ export function createPlanUpload(root,{storageKey,onError}) {
     }finally{canvas.width=canvas.height=0;}
   }
   function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
-  $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';persist();});
+  $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';renderFloors();persist();});
+  $('cwLevels')?.addEventListener('input',renderFloors);
   $('cwSourceMode').addEventListener('change',persist);
   async function prepare(fn){opening=true;sync();try{await fn();}catch(e){ready=false;releasePreview();notice(e.message);onError(e);}finally{opening=false;sync();}}
   $('cwPlanFile').addEventListener('change',()=>prepare(chooseFile));
   $('cwPdfPage').addEventListener('change',()=>{selectSource(null);persist();prepare(renderPage);});
   $('cwSavedSource').addEventListener('change',()=>{ready=false;releasePreview();selectSource($('cwSavedSource').value);persist();sync();const row=rows.find(r=>r.id===selected);notice(row?'سيستخدم الطلب '+row.name+' · الصفحة '+row.page+'. يمكنك تنزيل الأصل للمراجعة.':'اختر مخططًا محفوظًا أو ارفع ملفًا جديدًا.');});
+  // Floors (U4): one saved source per floor, ground first; one read per floor.
+  const FLOORS=['الدور الأرضي','الدور الأول','الدور الثاني','الدور الثالث','الدور الرابع','الدور الخامس'];
+  function levels(){const n=parseInt(String($('cwLevels')?.value||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)),10);return Number.isFinite(n)?Math.max(1,Math.min(FLOORS.length,n)):1;}
+  function renderFloors(){
+    const n=levels(),map=$('cwFloorMap');map.hidden=$('cwStartMode').value!=='upload'||n<2;
+    floorMap=floorMap.slice(0,n).map(id=>rows.some(r=>r.id===id)?id:null);
+    $('cwFloorRows').replaceChildren();
+    for(let i=0;i<n;i++){
+      const label=node('label',FLOORS[i],$('cwFloorRows'));label.htmlFor='cwFloorSource'+i;
+      const select=node('select',null,$('cwFloorRows'));select.id='cwFloorSource'+i;select.dataset.floor=i;select.dataset.mutate='';
+      node('option','اختر صفحة أو صورة',select).value='';
+      for(const row of rows){const o=node('option',label_(row),select);o.value=row.id;}
+      select.value=floorMap[i]||'';select.addEventListener('change',()=>{floorMap[i]=select.value||null;persist();});
+    }
+    $('cwSaveAllPages').hidden=!pdf||n<2;
+  }
+  function label_(row){return row.name+(row.media_type==='application/pdf'?' · الصفحة '+row.page+' من '+row.page_count:'');}
+  function mapFloor(id){const n=levels();if(n<2)return;if(!floorMap.includes(id)){const free=[...Array(n).keys()].find(i=>!floorMap[i]);if(free!==undefined)floorMap[free]=id;}renderFloors();persist();}
+  async function saveCurrent(){
+    notice('جارٍ رفع المخطط وحفظ الأصل…');
+    const body={action:'upload',source_id:uploadId,name:file.name,media_type:pdf?'application/pdf':$('cwSourcePreview').dataset.media,data_base64:base64(new Uint8Array(await file.arrayBuffer())),page:pdf?Number($('cwPdfPage').value):1};
+    if(pdf)body.preview_base64=preview64;
+    const result=await api(body);rows=[result.source,...rows.filter(r=>r.id!==result.source.id)];selected=result.source.id;renderRows();mapFloor(selected);persist();
+    return result.source;
+  }
+  $('cwSaveAllPages').addEventListener('click',async()=>{
+    if(!pdf||uploading)return;const n=Math.min(levels(),pdf.numPages);floorMap=[];
+    try{
+      for(let page=1;page<=n;page++){$('cwPdfPage').value=String(page);await renderPage();uploading=true;sync();floorMap[page-1]=(await saveCurrent()).id;uploading=false;}
+      renderFloors();persist();notice('حُفظت '+n+' صفحات ورُبطت بالأدوار بالترتيب. عدّل الربط أعلاه إن لزم، ثم راجع المتطلبات.');
+    }catch(e){notice('توقف حفظ الصفحات. الصفحات المحفوظة تبقى في القائمة؛ أكمل الربط أو أعد المحاولة. '+(e?.message||''));onError(e);}
+    finally{uploading=false;sync();}
+  });
   $('cwSaveSource').addEventListener('click',async()=>{
     if(!file||!ready||$('cwSaveSource').disabled)return;ready=false;uploading=true;sync();
     try{
-      notice('جارٍ رفع المخطط وحفظ الأصل…');
-      const body={action:'upload',source_id:uploadId,name:file.name,media_type:pdf?'application/pdf':$('cwSourcePreview').dataset.media,data_base64:base64(new Uint8Array(await file.arrayBuffer())),page:pdf?Number($('cwPdfPage').value):1};
-      if(pdf)body.preview_base64=preview64;
-      const result=await api(body);rows=[result.source,...rows.filter(r=>r.id!==result.source.id)];selected=result.source.id;renderRows();persist();notice('حُفظ الأصل في المشروع. راجع المتطلبات ثم تابع لاستخدام المخطط.');
+      await saveCurrent();notice('حُفظ الأصل في المشروع. راجع المتطلبات ثم تابع لاستخدام المخطط.');
     }catch(e){
       // A refused file stays refused: say why and that it cannot be used, not "retry".
       const refused=e?.status>=400&&e?.status<500&&['INVALID_PLAN_SOURCE','INPUT_LIMIT'].includes(e?.code);
@@ -149,7 +181,16 @@ export function createPlanUpload(root,{storageKey,onError}) {
   });
   return {
     sync,
-    command(){if($('cwStartMode').value!=='upload')return {};if(!selected)throw new Error('احفظ المخطط أو اختر ملفًا محفوظًا قبل المتابعة.');return {source_id:selected,source_mode:$('cwSourceMode').value};},
-    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;sync();},
+    command(){
+      if($('cwStartMode').value!=='upload')return {};
+      const n=levels(),mode=$('cwSourceMode').value;
+      if(n<2){if(!selected)throw new Error('احفظ المخطط أو اختر ملفًا محفوظًا قبل المتابعة.');return {source_id:selected,source_mode:mode};}
+      const floors=[...Array(n).keys()].map(i=>floorMap[i]);
+      const missing=floors.findIndex(id=>!id);if(missing>=0)throw new Error('اختر مخطط '+FLOORS[missing]+' في «أي مخطط لكل دور؟» قبل المتابعة.');
+      if(new Set(floors).size!==n)throw new Error('اختر صفحة مختلفة لكل دور.');
+      return {source_id:floors[0],source_mode:mode,source_read:{floors:floors.map((source_id,level)=>({source_id,level}))}};
+    },
+    calls(){const n=$('cwStartMode').value==='upload'?levels():0;return n?Math.min(12,2*n):null;},
+    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;floorMap=Array.isArray(saved?.floors)?saved.floors:[];renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;sync();},
   };
 }

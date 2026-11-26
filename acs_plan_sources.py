@@ -346,7 +346,7 @@ def visible_doors(room):
     return kept[:8], dropped + max(0, len(kept) - 8)
 
 
-def read_rooms(building):
+def read_rooms(building, ids=True):
     """Transcribed rooms keep identity, use, rectangle and the doors drawn; no
     provider furniture, fixtures, windows or points enter the model."""
     dropped = 0
@@ -362,9 +362,144 @@ def read_rooms(building):
         building.setdefault("meta", {}).setdefault("assumptions", []).append(
             "تُركت %d فتحة باب لم تقع قراءتها على جدار غرفتها؛ أضفها بالتعديل إن كانت في ملفك." % dropped)
     building.pop("_opening_identity", None)
-    from acs_opening_identity import stabilise_opening_ids
-    stabilise_opening_ids(building)
+    if ids:
+        from acs_opening_identity import stabilise_opening_ids
+        stabilise_opening_ids(building)
     return building
+
+
+# ---- Several floors in one read (U4) ---------------------------------------
+MAX_FLOORS = 6
+FLOOR_NAMES = ("الدور الأرضي", "الدور الأول", "الدور الثاني", "الدور الثالث", "الدور الرابع", "الدور الخامس")
+STAIR_ROLES = ("stair", "stairs", "staircase")
+CORE_SNAP_M = 0.6
+
+
+def _confirmed_levels(requirements):
+    for row in requirements if isinstance(requirements, list) else []:
+        if (isinstance(row, dict) and row.get("metric") == "level_count" and not row.get("role")
+                and not row.get("template") and type(row.get("expected")) is int):
+            return row["expected"]
+    return None
+
+
+def read_options(command):
+    """Upload read options of a generate command, checked before any paid call.
+
+    ``source_read.floors`` maps saved sources (PDF pages or images) to floors,
+    ground first; the ground floor is ``source_id``. One vision read per floor.
+    The owner's confirmed floor count must match the floors mapped."""
+    options = command.get("source_read", {})
+    if not isinstance(options, dict) or set(options) - {"floors"}:
+        raise PlanError("INVALID_PLAN_SOURCE", "خيارات قراءة المخطط غير صالحة.")
+    floors = options.get("floors", [{"source_id": command.get("source_id"), "level": 0}])
+    if (not isinstance(floors, list) or not 1 <= len(floors) <= MAX_FLOORS
+            or any(not isinstance(f, dict) or set(f) != {"source_id", "level"} for f in floors)):
+        raise PlanError("INVALID_PLAN_SOURCE", "اختر صفحة أو صورة لكل دور (حتى %d أدوار)." % MAX_FLOORS)
+    ids = [identity(f["source_id"]) for f in floors]
+    if [f["level"] for f in floors] != list(range(len(floors))) or len(set(ids)) != len(ids) \
+            or ids[0] != command.get("source_id"):
+        raise PlanError("INVALID_PLAN_SOURCE", "لكل دور صفحة مختلفة، بدءًا من الدور الأرضي.")
+    levels = _confirmed_levels(command.get("requirements"))
+    if levels is not None and levels != len(floors):
+        raise PlanError("SOURCE_FLOOR_COUNT_MISMATCH",
+                        "أكدت %d من الأدوار، واخترت مخططًا لـ%d منها. اختر صفحة أو صورة لكل دور، "
+                        "أو عدّل عدد الأدوار، قبل بدء القراءة." % (levels, len(floors)))
+    if type(command.get("max_provider_calls")) is int and command["max_provider_calls"] < len(floors):
+        raise PlanError("INVALID_BUDGET", "حد الطلبات أقل من عدد الأدوار: كل دور يحتاج قراءة واحدة على الأقل.")
+    return {"floors": floors}
+
+
+def receipt(rows, command):
+    """Server-stamped source receipt of a read (hashes only, never the file)."""
+    out = {k: rows[0][k] for k in ("id", "sha256", "page", "page_count", "preview_sha256")}
+    out.update(mode=command["source_mode"], measurement_status="needs_review")
+    if len(rows) > 1:
+        out["floors"] = [dict({k: row[k] for k in ("id", "sha256", "page", "preview_sha256")}, level=level)
+                         for level, row in enumerate(rows)]
+    return out
+
+
+def read_inputs(store, project_id, command):
+    """(plan_source for the isolated read, receipt) from the saved sources."""
+    floors = read_options(command)["floors"]
+    rows, images = [], []
+    for floor in floors:
+        row, image = read_source(store, project_id, floor["source_id"], "preview")
+        rows.append(row)
+        images.append({"image": base64.b64encode(image).decode("ascii"),
+                       "media_type": row["preview_media_type"], "level": floor["level"]})
+    return {"mode": command["source_mode"], "floors": images}, receipt(rows, command)
+
+
+def source_receipt(store, project_id, command):
+    return receipt([source(store, project_id, f["source_id"]) for f in read_options(command)["floors"]], command)
+
+
+def _stairs(rooms):
+    """Stair rooms of one floor: by use, else by a name that is a stair and not
+    its landing (بسطة الدرج is circulation, not the stair core)."""
+    found = [r for r in rooms if str(r.get("role", "")).lower() in STAIR_ROLES]
+    if found:
+        return found
+    named = lambda r: isinstance(r.get("name"), str) and ("درج" in r["name"] or "سلم" in r["name"]) and "بسطة" not in r["name"]
+    return [r for r in rooms if named(r)]
+
+
+def _overlaps(rect, rooms, skip):
+    x, z, w, d = rect
+    return any(r is not skip and min(x + w, r["rect"][0] + r["rect"][2]) - max(x, r["rect"][0]) > 0.001
+               and min(z + d, r["rect"][1] + r["rect"][3]) - max(z, r["rect"][1]) > 0.001 for r in rooms)
+
+
+def share_stair_core(building):
+    """One stair core id through every floor; an upper stair read within 0.6 m of
+    the ground stair takes the ground rectangle (reading noise, disclosed)."""
+    levels = sorted(building["levels"], key=lambda l: l["index"])
+    stairs = [_stairs(building["floors"][l["template"]]["rooms"]) for l in levels]
+    if len(levels) < 2 or not all(stairs):
+        return
+    snapped = 0
+    for j, base in enumerate(stairs[0]):
+        base["core_id"] = "stair_core_%d" % (j + 1)
+    for level, found in zip(levels[1:], stairs[1:]):
+        rooms = building["floors"][level["template"]]["rooms"]
+        for room in found:
+            cx, cz = room["rect"][0] + room["rect"][2] / 2, room["rect"][1] + room["rect"][3] / 2
+            base = min(stairs[0], key=lambda b: abs(b["rect"][0] + b["rect"][2] / 2 - cx) + abs(b["rect"][1] + b["rect"][3] / 2 - cz))
+            room["core_id"] = base["core_id"]
+            delta = max(abs(a - b) for a, b in zip(room["rect"], base["rect"]))
+            if 0 < delta <= CORE_SNAP_M and not _overlaps(base["rect"], rooms, room):
+                room["rect"] = list(base["rect"])
+                snapped += 1
+    for found in stairs:
+        for room in found:
+            room["role"] = room.get("role") if str(room.get("role", "")).lower() in STAIR_ROLES else "stair"
+    if snapped:
+        building["meta"].setdefault("assumptions", []).append(
+            "وُحّد موضع الدرج بين الأدوار لـ%d دور بعد فرق قراءة لا يتجاوز %.1f م؛ راجعه مقابل ملفك." % (snapped, CORE_SNAP_M))
+
+
+def merge_floors(reads):
+    """[(level, read building)] -> one multi-level model, ground first."""
+    ground = reads[0][1]
+    out = {"site": {"w": max(b["site"]["w"] for _, b in reads), "d": max(b["site"]["d"] for _, b in reads)},
+           "floor_height": ground.get("floor_height", 3.2), "wall_h": ground.get("wall_h", 3),
+           "wall_t": ground.get("wall_t", 0.2), "levels": [], "floors": {},
+           "meta": {"added": [], "assumptions": []}}
+    for level, building in reads:
+        template = "ground" if level == 0 else "floor_%d" % level
+        occupied = [l["template"] for l in building.get("levels", []) if l.get("kind") != "roof"]
+        rooms = [room for t in occupied[:1] for room in building["floors"][t]["rooms"]]
+        out["floors"][template] = {"rooms": rooms}
+        out["levels"].append({"index": level, "template": template})
+        meta = building.get("meta") if isinstance(building.get("meta"), dict) else {}
+        for key in ("added", "assumptions"):
+            out["meta"][key] += [v for v in meta.get(key, []) if isinstance(v, str)]
+    if not out["meta"]["assumptions"]:
+        out["meta"].pop("assumptions")
+    share_stair_core(out)
+    return out
 
 
 def delete_source(store, project_id, actor_id, source_id):
@@ -388,41 +523,70 @@ def delete_source(store, project_id, actor_id, source_id):
 
 
 def candidate(brief, requirements, option, max_provider_calls, plan_source):
-    """At most two image-grounded readings; never auto-relocate a drawing."""
-    import acs_understand as U
+    """One image-grounded reading per floor, at most one re-read each; never
+    auto-relocate a drawing. Floors are read ground first, in one frame."""
     from acs_provider_budget import limited
-    from acs_plan_bridge import _reject_provider_authority_changes
-    from acs_plan_review import canonical, _structure, _geometry
-    from acs_workspace_progress import emit
-    import acs_upload_security as UPLOAD
-    checked = UPLOAD.validate_image(decode(plan_source["image"], MAX_FILE), plan_source["media_type"])
-    preview = base64.b64encode(checked["normalized"]).decode("ascii")
+    from acs_plan_review import canonical
+    floors = sorted(plan_source.get("floors") or [{"image": plan_source["image"], "media_type": plan_source["media_type"],
+                                                   "level": 0}], key=lambda f: f["level"])
     mode = plan_source["mode"]
     prompt = brief + "\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     system = READ_SYSTEM + ("" if mode == "complete" else NO_INVENTION) + SHAPE
     system += "\n" + POLICY[mode]
-    system += "\nهذه صورة الصفحة المختارة فقط. لا تفترض محتوى الصفحات الأخرى أو تكرر الأدوار غير الظاهرة."
     system += "\nلا تمثل حدود الشقة أو الدور كغرفة تتداخل مع الغرف الداخلية. استخدم حدود الفراغات الداخلية فقط؛ ولا تستبدل شكلاً غير مستطيل بمستطيل يتداخل مع جيرانه."
     with limited(max_provider_calls) as budget:
-        findings=[]
-        for attempt in range(min(2,max_provider_calls)):
-            emit('LAYOUT',provider_calls=budget['used'])
-            text=prompt
-            if attempt:
-                text+='\nأعد قراءة الصورة نفسها لتصحيح أخطاء الاستخراج التالية فقط، مع الحفاظ على التوزيع الظاهر وسياسة القراءة:\n'+canonical(findings)
-                text+='\nالقراءة السابقة (بيانات غير معتمدة):\n'+canonical(building)
-            raw = U.call_llm(None, content=[
-                {"type":"image", "source":{"type":"base64", "media_type":checked["media_type"], "data":preview}},
-                {"type":"text", "text":text}], max_tokens=U.G.stage_budget("plan"),
-                stage="vision", btype=U.detect_type(brief), truncate=False,
-                system_override=system)
-            building = U.extract_json(raw)
-            _reject_provider_authority_changes({}, building)
-            _structure(building)
-            read_rooms(building)
-            findings,_=_geometry(building)
-            emit('REVIEW',provider_calls=budget['used'])
-            if not findings:break
-        if findings:
-            raise PlanError('PLAN_SOURCE_GEOMETRY_INCOMPLETE','لم تجتز قراءة المخطط فحص الهندسة.')
-    return {"building":building, "provider_calls":budget["used"], "stage":"PLAN_DRAFT"}
+        reads = []
+        for index, floor in enumerate(floors):
+            floor_system = system + "\n" + (
+                "هذه صورة الصفحة المختارة فقط. لا تفترض محتوى الصفحات الأخرى أو تكرر الأدوار غير الظاهرة."
+                if len(floors) == 1 else
+                "هذه صورة %s فقط (دور %d من %d). أخرج هذا الدور وحده بقالب واحد، ولا تكرر الأدوار الأخرى."
+                % (FLOOR_NAMES[floor["level"]], index + 1, len(floors)))
+            text = prompt
+            if reads:
+                ground = reads[0][1]
+                text += ("\nالدور الأرضي المقروء من الملف نفسه (بيانات غير معتمدة) لإطار الإحداثيات نفسه: "
+                         + canonical({"site": ground["site"], "rooms": [{k: r[k] for k in ("id", "role", "rect") if k in r}
+                                                                         for t in ground["floors"] for r in ground["floors"][t]["rooms"]]})
+                         + "\nاستخدم المرجع والمقياس نفسيهما، وضع الدرج في موضعه نفسه إن ظهر في هذا الدور.")
+            reserve = len(floors) - index - 1
+            reads.append((floor["level"], _read_floor(floor, text, floor_system, brief, budget, reserve)))
+        building = reads[0][1] if len(reads) == 1 else merge_floors(reads)
+        from acs_opening_identity import stabilise_opening_ids
+        stabilise_opening_ids(building)
+    return {"building": building, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
+
+
+def _read_floor(floor, prompt, system, brief, budget, reserve):
+    """At most two readings of one image; the re-read never spends a call that a
+    later floor needs."""
+    import acs_understand as U
+    import acs_upload_security as UPLOAD
+    from acs_plan_bridge import _reject_provider_authority_changes
+    from acs_plan_review import canonical, _structure, _geometry
+    from acs_workspace_progress import emit
+    checked = UPLOAD.validate_image(decode(floor["image"], MAX_FILE), floor["media_type"])
+    preview = base64.b64encode(checked["normalized"]).decode("ascii")
+    findings, building = [], None
+    for attempt in range(2):
+        if attempt and budget["limit"] - budget["used"] <= reserve:
+            break
+        emit('LAYOUT', provider_calls=budget['used'])
+        text = prompt
+        if attempt:
+            text += '\nأعد قراءة الصورة نفسها لتصحيح أخطاء الاستخراج التالية فقط، مع الحفاظ على التوزيع الظاهر وسياسة القراءة:\n' + canonical(findings)
+            text += '\nالقراءة السابقة (بيانات غير معتمدة):\n' + canonical(building)
+        raw = U.call_llm(None, content=[
+            {"type": "image", "source": {"type": "base64", "media_type": checked["media_type"], "data": preview}},
+            {"type": "text", "text": text}], max_tokens=U.G.stage_budget("plan"),
+            stage="vision", btype=U.detect_type(brief), truncate=False,
+            system_override=system)
+        building = U.extract_json(raw)
+        _reject_provider_authority_changes({}, building)
+        _structure(building)
+        read_rooms(building, ids=False)
+        findings, _ = _geometry(building)
+        emit('REVIEW', provider_calls=budget['used'])
+        if not findings:
+            return building
+    raise PlanError('PLAN_SOURCE_GEOMETRY_INCOMPLETE', 'لم تجتز قراءة المخطط فحص الهندسة.')

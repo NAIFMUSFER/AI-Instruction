@@ -394,7 +394,7 @@ async function generation(option) {
   const source=planUpload.command();
   const plot=source.source_id?{}:plotRules.command(); // validated before any paid call
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
-  const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
+  const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:(source.source_id&&planUpload.calls())||Number($('cwBudget').value)};
   // A generation is a paid, multi-minute run: the owner confirms it first.
   const name=source.source_id?'قراءة المخطط المرفوع':'«'+(root.querySelector('[data-option="'+option+'"]')?.closest('article')?.querySelector('h2')?.textContent.replace(/\s*·\s*مقترح لك$/,'')||'البديل '+option)+'»';
   if(!await confirmPaid('سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.','ابدأ التوليد')){status('لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}

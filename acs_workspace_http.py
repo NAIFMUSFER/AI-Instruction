@@ -228,7 +228,8 @@ class WorkspaceMiddleware:
 
     async def _admit(self, store, project_id, actor_id, command, job_id, fingerprint):
         if command.get("source_id"):
-            await asyncio.to_thread(SOURCES.source, store, project_id, command["source_id"])
+            for floor in SOURCES.read_options(command)["floors"]:
+                await asyncio.to_thread(SOURCES.source, store, project_id, floor["source_id"])
         if len(self.tasks) >= 8:
             raise PlanError("STORE_UNAVAILABLE", "التوليد مشغول حاليًا. حاول لاحقًا.")
         # Reuse the deployment's shared admission limiter. Job reattachment above
