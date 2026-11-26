@@ -295,7 +295,8 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 before_layout = canonical(_canonical_room_roles(result["building"]))
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
-                result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
+                result["building"] = detail(result["building"], brief, budget,
+                                            resume.get("done") if reuse_details else None, requirements)
             except PlanError as exc:
                 if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
                     raise
