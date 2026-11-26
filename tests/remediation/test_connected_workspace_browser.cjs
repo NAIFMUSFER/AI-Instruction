@@ -20,6 +20,12 @@ function assertConceptApproval(view,stage){
  assert.equal(view.authority?.can_approve_concept,true,stage+' must satisfy the actual canonical review: '+JSON.stringify(blockers));
 }
 
+// Every generation is a paid, multi-minute run and is confirmed in a dialog first.
+async function confirmPaidGeneration(page){
+ await page.locator('#cwPaidConfirm').waitFor({state:'visible'});
+ await page.locator('#cwConfirmGenerate').click();
+}
+
 async function newProject(page,name){
  await page.locator('#cwNewProject').click();
  await page.locator('#cwProjectName').fill(name);
@@ -68,8 +74,15 @@ async function verifyPromptStarters(page,port,width){
  assert.equal(await generationCount(),initialCount,'choosing, editing and restoring a prompt must not generate');
  await page.locator('#cwConfirmed').check();
  await page.locator('#cwBriefForm button[type=submit]').click();
- const response=page.waitForResponse(r=>r.url().endsWith('/workspace')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action==='generate');
  await page.locator('[data-option="A"]').click();
+ const dialogText=await page.locator('#cwPaidConfirmText').textContent();
+ assert.ok(dialogText.includes('أربع دقائق')&&dialogText.includes('رصيد'),'the paid confirmation states the time and the AI credit: '+dialogText);
+ await page.locator('#cwCancelGenerate').click();
+ await page.waitForFunction(()=>document.querySelector('#designWorkspace').getAttribute('aria-busy')==='false');
+ assert.equal(await generationCount(),initialCount,'cancelling the confirmation starts no generation');
+ assert.ok((await page.locator('#cwStatus').textContent()).includes('لم يبدأ التوليد'));
+ const response=page.waitForResponse(r=>r.url().endsWith('/workspace')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action==='generate');
+ await page.locator('[data-option="A"]').click();await confirmPaidGeneration(page);
  const admitted=await response;
  assert.ok(admitted.ok(),'the account generation request must be admitted');
  const submitted=admitted.request().postDataJSON().brief;
@@ -229,7 +242,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();
    const before=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
    assert.equal(await page.locator('#cwJobProgress').isVisible(),false,'idle projects show no running activity');
-   await page.locator(noWebGL?'[data-option=A]':'#cwGenerateSource').click();await page.locator('#cwRecoverJob').waitFor({state:'visible'});
+   await page.locator(noWebGL?'[data-option=A]':'#cwGenerateSource').click();await confirmPaidGeneration(page);await page.locator('#cwRecoverJob').waitFor({state:'visible'});
    await page.locator('#cwJobProgress').waitFor({state:'visible'});
    assert.equal(await page.locator('#cwJobActivity').getAttribute('value'),null,'activity has no invented completion percentage');
    await page.waitForFunction(()=>Number(document.querySelector('#cwJobElapsed').dataset.seconds)>=1);
@@ -266,7 +279,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore,'roof removal must not invoke the controlled provider');
    await page.reload();await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
    assert.equal((await workspaceState(page)).head,removedRoof.head);assert.equal(await page.locator('#cwRoof').textContent(),'إضافة سطح افتراضي');
-   await page.locator('[data-step="1"]').click();await page.locator('#cwStartMode').selectOption('describe');await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();await page.locator('[data-option="A"]').click();
+   await page.locator('[data-step="1"]').click();await page.locator('#cwStartMode').selectOption('describe');await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();await page.locator('[data-option="A"]').click();await confirmPaidGeneration(page);
    await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwJobProgress').hidden,removedRoof.head,{timeout:45000});
    const regeneratedBare=await workspaceState(page);assert.equal(roofRows(regeneratedBare).length,0,'a later generated revision respects the saved roof-removal preference');assert.notEqual(regeneratedBare.head,removedRoof.head);assert.equal(regeneratedBare.history.length,removedRoof.history.length+1);
    if(width===1280)assert.equal(regeneratedBare.requirements.find(row=>row.metric==='unit_count')?.expected,2,'desktop regeneration must retain the selected two-apartment program');
