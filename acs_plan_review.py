@@ -846,6 +846,12 @@ class PlanWorkspace:
                   "program": "FAIL" if program_issues else "PASS",
                   "topology": "NOT_VERIFIED", "vertical_circulation": "NOT_VERIFIED",
                   "regulatory_compliance": "NOT_VERIFIED", "structural_safety": "NOT_VERIFIED"}
+        # A plan read from the owner's file (server-stamped receipt) is approved
+        # as a disclosed transcription: notes that need doors it does not show
+        # are advisory there, and unproven paths stay NOT_VERIFIED, not FAIL.
+        from acs_validate import transcribed
+        transcription = transcribed(model)
+        notes = []
         if self._verifier is not None and not geometry_issues:
             try:
                 # The revision's own brief tells a villa from an apartment building.
@@ -865,7 +871,12 @@ class PlanWorkspace:
                     if not isinstance(item, dict) or not _id(item.get("code")):
                         raise PlanError("INVALID_VERIFICATION", "Malformed issue")
                 issues.extend(evidence["issues"])
+                notes = evidence.get("advisories") or []
+                if not isinstance(notes, list) or any(
+                        not isinstance(item, dict) or not _id(item.get("code")) for item in notes):
+                    raise PlanError("INVALID_VERIFICATION", "Malformed advisory")
             except Exception:
+                notes = []
                 scopes["topology"] = scopes["vertical_circulation"] = "NOT_VERIFIED"
                 issues.append({"code": "VERIFICATION_UNAVAILABLE", "severity": "error"})
         # Plot rules (setbacks, parking, Saudi residential basics) exist only on
@@ -892,11 +903,18 @@ class PlanWorkspace:
         if single:
             from acs_villa_program import check as villa_check
             blocking, advice = villa_check(model, rev.brief, requirements, plot=plot)
+            if transcription:
+                # The owner's own drawing is read, not designed here: livability
+                # notes are shown, and the owner decides what to change.
+                advice = [dict(item, severity="advisory") for item in blocking] + advice
+                blocking = []
             issues.extend(blocking)
             advisories = advisories + advice
             scopes["dwelling_program"] = "FAIL" if blocking else "PASS"
-        ready = not issues and all(scopes[k] == "PASS" for k in
-                                    ("rectangular_geometry", "program", "topology", "vertical_circulation"))
+        ready = not issues and all(
+            scopes[k] == "PASS" or (transcription and k in ("topology", "vertical_circulation")
+                                    and scopes[k] == "NOT_VERIFIED")
+            for k in ("rectangular_geometry", "program", "topology", "vertical_circulation"))
         # لا ننقل ادعاء مشي من المقترح أو المدقّق؛ هذه التغطية مشتقة من النموذج.
         coverage = {'vertical_circulation': vertical_geometry_coverage(
             rev.model, scopes['vertical_circulation'])}
@@ -904,8 +922,10 @@ class PlanWorkspace:
                   "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
                   "metrics": metrics, "issues": issues, "construction_approved": False,
                   "coverage": coverage}
-        if plot is not None or single:
-            result["advisories"] = advisories  # never block approval
+        if plot is not None or single or notes:
+            result["advisories"] = notes + advisories  # never block approval
+        if transcription:
+            result["transcription"] = True
         return result
 
     def approve(self, revision_id: str, *, expected_head: str, actor_label: str,

@@ -1,4 +1,12 @@
 // Project-scoped original + explicit PDF page selection. No automatic paid calls.
+// A plan read from the owner's file is approved as a transcription of it.
+export const TRANSCRIPTION={
+  concept:'راجعت هذه النسخة وأعتمدها تخطيطيًا فقط. هذا لا يُعد اعتمادًا إنشائيًا أو تصريحًا للتنفيذ.',
+  confirm:'أعتمد هذه النسخة كمخطط مقروء من ملفي (نقل مبدئي): الأبواب المرئية فقط مرسومة، ولم يُتحقق من الإنارة أو مسارات الوصول. هذا لا يُعد اعتمادًا إنشائيًا أو تصريحًا للتنفيذ.',
+  ready:'المخطط مقروء من ملفك؛ الأبواب المرئية فقط مرسومة. الملاحظات الاستشارية لا تمنع اعتماده كنسخة منقولة مبدئية.',
+  approved:'حُفظ اعتماد المخطط المقروء من ملفك كنسخة منقولة مبدئية. يمكنك الآن تحويلها أو تصديرها.',
+  issues:{PLAN_SOURCE_TRANSCRIPTION:'مخطط مقروء من ملفك',DOOR_NOT_VISIBLE:'باب غير ظاهر في ملفك',PATH_NOT_VISIBLE:'مسار وصول غير ظاهر في ملفك',LIGHTING_NOT_DECLARED:'نقاط الإنارة لم تُحدَّد بعد',TRANSCRIPTION_ACKNOWLEDGEMENT_REQUIRED:'أكد اعتماد المخطط كنسخة مقروءة من ملفك'},
+};
 export function createPlanUpload(root,{storageKey,onError}) {
   const $=id=>root.querySelector('#'+id),MAX=5*1024*1024;
   let file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
@@ -11,7 +19,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
   <button id="cwSaveSource" type="button" data-mutate disabled>حفظ المخطط في المشروع</button>
   <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button>
-  <label for="cwSourceMode">كيف نستخدم المخطط؟</label><select id="cwSourceMode" data-mutate><option value="preserve">قراءة التوزيع الحالي للمراجعة</option><option value="revise">اقتراح تعديلات حسب وصفي</option></select>
+  <label for="cwSourceMode">كيف نستخدم المخطط؟</label><select id="cwSourceMode" data-mutate><option value="preserve">قراءة التوزيع الحالي للمراجعة</option><option value="revise">اقتراح تعديلات حسب وصفي</option><option value="complete">قراءة المخطط ثم إكمال الأبواب (تصميم كامل)</option></select>
   <p class="cw-muted">راجع أبعاد الموقع والأدوار أدناه. قراءة الصورة لا تثبت المقياس أو دقة نقل جميع العناصر؛ راجع المسودة مقابل الأصل قبل اعتمادها. تُقرأ الصفحة المختارة فقط.</p></div>`;
   $('cwBriefForm').querySelector('h2').after(section);
   function notice(text){$('cwSourceStatus').textContent=text;}
@@ -94,6 +102,6 @@ export function createPlanUpload(root,{storageKey,onError}) {
   return {
     sync,
     command(){if($('cwStartMode').value!=='upload')return {};if(!selected)throw new Error('احفظ المخطط أو اختر ملفًا محفوظًا قبل المتابعة.');return {source_id:selected,source_mode:$('cwSourceMode').value};},
-    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(saved?.policy==='revise')$('cwSourceMode').value='revise';sync();},
+    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;sync();},
   };
 }

@@ -171,8 +171,8 @@ def generation_command(command):
     if "source_id" in out:
         from acs_plan_sources import identity
         identity(out["source_id"])
-        if out.get("source_mode") not in {"preserve", "revise"}:
-            raise PlanError("INVALID_PLAN_SOURCE", "اختر الحفاظ على توزيع المخطط أو طلب تعديله.")
+        if out.get("source_mode") not in {"preserve", "revise", "complete"}:
+            raise PlanError("INVALID_PLAN_SOURCE", "اختر قراءة المخطط كما هو أو طلب تعديله أو إكمال أبوابه.")
     elif "source_mode" in out:
         raise PlanError("INVALID_PLAN_SOURCE", "اختر ملف مخطط محفوظًا أولًا.")
     if out.get("confirmed") is not True:

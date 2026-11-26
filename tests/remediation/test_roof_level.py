@@ -379,9 +379,11 @@ class RoofBoundaryRegressions(unittest.TestCase):
         findings,_=acs_validate.validate_building(b)
         self.assertFalse(any('بلا باب' in x or 'بلا إنارة' in x for x in findings),findings)
         b['levels'].append({'index':1,'template':'g','kind':'floor'})
-        findings,_=acs_validate.validate_building(b)
+        findings,_,notes=acs_validate.review_building(b)
         self.assertTrue(any('بلا باب' in x for x in findings),findings)
-        self.assertTrue(any('بلا إنارة' in x for x in findings),findings)
+        # A missing lighting point is a non-blocking note, never a repair error.
+        self.assertFalse(any('بلا إنارة' in x for x in findings),findings)
+        self.assertTrue(any('بلا إنارة' in n['message'] for n in notes),notes)
 
     def test_apartment_access_excludes_only_explicit_unoccupied_roof_instances(self):
         from acs_residential_access import issues, opening_collisions
