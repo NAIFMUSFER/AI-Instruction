@@ -90,11 +90,27 @@ def is_villa(program, brief=None, requirements=None):
     return dwelling(brief, requirements or []) == VILLA
 
 
+EXTRA_NAMES = {'bedroom': 'غرفة نوم إضافية', 'bathroom': 'حمام إضافي'}
+
+
+def unit_rooms(unit):
+    """A flat's rooms as planned: the listed rooms, plus unnamed bedrooms or
+    bathrooms when the brief states a larger total for the flat than it lists
+    («إجمالي هذا الدور ... ثلاثة حمامات» with two named)."""
+    rooms = list(unit['rooms'])
+    for role, stated in (('bedroom', unit.get('bedrooms')), ('bathroom', unit.get('bathrooms'))):
+        listed = sum(r['count'] for r in unit['rooms'] if r['role'] == role)
+        if type(stated) is int and stated > listed:
+            rooms.append({'role': role, 'name': EXTRA_NAMES[role], 'count': stated - listed, 'width_m': None,
+                          'depth_m': None, 'approx': False, 'ensuite': False, 'note': None})
+    return rooms
+
+
 def level_counts(level):
     """{role: count} of the counted roles on one program level (all its units)."""
     out = Counter()
     for unit in level['units']:
-        for room in unit['rooms']:
+        for room in unit_rooms(unit):
             if room['role'] in COUNTED_ROLES:
                 out[room['role']] += room['count']
     return dict(out)
@@ -107,7 +123,7 @@ def level_ensuite(level):
 def signature(level):
     """Everything that makes a floor program distinct; equal signatures share a template."""
     units = [[(r['role'], r['name'], r['count'], r['width_m'], r['depth_m'], r['approx'], r['ensuite'])
-              for r in u['rooms']] for u in level['units']]
+              for r in unit_rooms(u)] for u in level['units']]
     return json.dumps([level['use'], units], ensure_ascii=False, sort_keys=True)
 
 
@@ -190,7 +206,7 @@ def contradictions(program, requirements):
             out.append('إجمالي ' + ROLE_LABEL[role] + ' في المتطلبات ' + str(r['expected']) + ' والبرنامج المؤكد '
                        + str(totals.get(role, 0)) + '.')
         elif metric == 'room_count_per_unit' and role in COUNTED_ROLES:
-            per_unit = {sum(rm['count'] for rm in u['rooms'] if rm['role'] == role) for lv in levels for u in lv['units']}
+            per_unit = {sum(rm['count'] for rm in unit_rooms(u) if rm['role'] == role) for lv in levels for u in lv['units']}
             if per_unit != {r['expected']}:
                 out.append(ROLE_LABEL[role] + ' «في كل شقة» = ' + str(r['expected'])
                            + ' يخالف البرنامج المؤكد، وبرنامج كل دور مختلف.')
@@ -308,17 +324,18 @@ def manifest(program, brief, requirements, rules=None):
             prefix = template + ('_a' + str(u + 1) if multi else '')
             flat = ' — الشقة ' + str(u + 1) if multi else ''
             seen = Counter()
-            names = Counter(r['name'] for r in unit['rooms'] for _ in range(r['count']))
+            planned = unit_rooms(unit)
+            names = Counter(r['name'] for r in planned for _ in range(r['count']))
             numbered = Counter()
-            roles = {r['role'] for r in unit['rooms']}
+            roles = {r['role'] for r in planned}
             if 'entrance' not in roles:
                 own.append({'id': prefix + '_entrance', 'role': 'entrance', 'template': template, 'unit_id': unit_id,
                             'name': 'مدخل الشقة' + flat})
             if 'corridor' not in roles:
                 own.append({'id': prefix + '_corridor', 'role': 'corridor', 'template': template, 'unit_id': unit_id,
                             'name': 'ممر الشقة' + flat})
-            for room in unit['rooms']:
-                role = room['role'] if room['role'] != 'other' else 'other'
+            for room in planned:
+                role = room['role']
                 for _ in range(room['count']):
                     seen[role] += 1
                     name = room['name']
@@ -438,7 +455,7 @@ def floor_programs(program, model, template=None):
         lv = program['levels'][i]
         rooms = []
         for u, unit in enumerate(lv['units']):
-            for room in unit['rooms']:
+            for room in unit_rooms(unit):
                 item = {'role': room['role'], 'name': room['name'], 'count': room['count']}
                 if len(lv['units']) > 1:
                     item['unit'] = u + 1

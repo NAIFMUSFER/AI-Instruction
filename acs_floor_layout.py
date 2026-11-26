@@ -54,7 +54,7 @@ def _r2(value):
 def _rooms_of(level):
     """Expanded program rooms of a single-flat floor, in program order."""
     out = []
-    for room in level['units'][0]['rooms']:
+    for room in F.unit_rooms(level['units'][0]):
         for k in range(room['count']):
             out.append({'role': room['role'], 'name': room['name'] + (' ' + str(k + 1) if room['count'] > 1 else ''),
                         'target': (room['width_m'], room['depth_m']) if room['width_m'] is not None else None,
@@ -147,7 +147,7 @@ def _floor(level, frame, kind, left_w=CORE_W):
     rooms, links = [], []
 
     def add(role, name, rect, **extra):
-        room = {'role': role, 'name': name, 'rect': [_r2(v) for v in rect], 'walls': ['N', 'S', 'E', 'W'],
+        room = {'role': role, 'name': name, 'rect': list(rect), 'walls': ['N', 'S', 'E', 'W'],
                 'doors': [], 'windows': [], 'points': [], **extra}
         rooms.append(room)
         return room
@@ -218,10 +218,15 @@ def _floor(level, frame, kind, left_w=CORE_W):
 
 
 def _penalty(level, rooms):
-    """How far a candidate floor's sizes are beyond their advisory tolerance."""
+    """How far a candidate floor's sizes are beyond their advisory tolerance,
+    plus a small cost for long thin living rooms (sides beyond 2 : 1)."""
     if not level['units']:
         return 0.0
     total = 0.0
+    for room in rooms:
+        if room['role'] in HABITABLE and room.get('program') is not None:
+            w, d = room['rect'][2], room['rect'][3]
+            total += 0.05 * max(0.0, max(w, d) / max(min(w, d), EPS) - 2.0)
     for target, room in F.size_matches(level, [r for r in rooms if r.get('program') is not None]):
         soft, hard = F.TOLERANCE[bool(target['approx'])]
         off = abs(F._deviation(target, room))
@@ -264,7 +269,14 @@ def _best_width(floors, frame):
 
 
 def _to_land(rect, frame):
-    """Local frame (street north, core west) to land coordinates."""
+    """Local frame (street north, core west) to land coordinates, edges rounded
+    to the centimetre so that rooms that touch still touch."""
+    x, z, w, d = _land(rect, frame)
+    x0, z0, x1, z1 = _r2(x), _r2(z), _r2(x + w), _r2(z + d)
+    return [x0, z0, _r2(x1 - x0), _r2(z1 - z0)]
+
+
+def _land(rect, frame):
     x, z, w, d = rect
     ex, ez, ew, ed = frame['envelope']
     if frame['flip']:
@@ -417,7 +429,7 @@ def propose(program, brief, requirements, rules=None):
             if room.pop('unit', False):
                 room['unit_id'] = 'apartment_1'
             room.pop('program', None)
-            room['rect'] = [_r2(v) for v in _to_land(room['rect'], frame)]
+            room['rect'] = _to_land(room['rect'], frame)
         try:
             _finish(rooms, links, rules, kind != 'upper', front)
         except _NotFitted:
