@@ -81,12 +81,17 @@ async function runAuthShippedPage(){
           else if(url.pathname==='/v1/auth/projects')body={ok:true,projects:firstProject?[firstProject]:[]};
           else if(url.pathname==='/v1/projects/fixture-project/workspace'){
             assert.equal(req.headers().authorization,'Bearer fixture-access');
-            // Sign-in may only read the workspace: its state and the list of saved
-            // generated versions (kept when a paid result lost to a manual edit).
+            // Sign-in may only read the workspace: its state, the list of saved
+            // generated versions (kept when a paid result lost to a manual edit)
+            // and the latest brief read of an empty project.
             const input=req.postDataJSON();
             if(input?.action==='generated_versions'){
               assert.deepEqual(input,{action:'generated_versions'},'sign-in must only read saved generated versions');
               body={ok:true,versions:[]};
+            }else if(input?.action==='brief_read_latest'){
+              // An empty project may restore a brief read on another device; still a read.
+              assert.deepEqual(input,{action:'brief_read_latest'},'sign-in must only read the latest brief read');
+              body={ok:true,read:null};
             }else{
               assert.deepEqual(input,{action:'state'},'sign-in must only read the workspace state');
               body={ok:true,head:null,baseline:null,history:[],revision_id:null};
