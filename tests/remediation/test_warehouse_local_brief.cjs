@@ -11,7 +11,8 @@ vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/context-details.mjs','co
 const run=src=>vm.runInContext(src,ctx);
 ctx.__args=null;
 const gen=(text,w,d)=>{ctx.__args=[text,w,d];return JSON.parse(JSON.stringify(run('warehouseFromText(__args[0],__args[1],__args[2],{}).building')));};
-const genError=(text,w,d)=>{ctx.__args=[text,w,d];try{run('warehouseFromText(__args[0],__args[1],__args[2],{})');}catch(e){return e;}return null;};
+const genError=(text,w,d,opt={})=>{ctx.__args=[text,w,d,opt];try{run('warehouseFromText(__args[0],__args[1],__args[2],__args[3])');}catch(e){return e;}return null;};
+const genWith=(text,w,d,opt)=>{ctx.__args=[text,w,d,opt];return JSON.parse(JSON.stringify(run('warehouseFromText(__args[0],__args[1],__args[2],__args[3]).building')));};
 // ACS_TEST_CONTINUE=1 reports every failing check (used to show the pre-fix state).
 const keepGoing=process.env.ACS_TEST_CONTINUE==='1';
 let checks=0,failed=0;
@@ -24,7 +25,8 @@ const section=(name,fn)=>{try{fn();}catch(e){if(!keepGoing)throw e;failed++;cons
 
 const distribution=side=>`أبغى مستودع توزيع للمواد الغذائية الجافة في الرياض، الأرض 80×50 متر والارتفاع الصافي 11 متر. البضاعة كراتين على بالتات. الاستلام من الجهة ${side} فيه 4 أرصفة، بعده منطقة فحص الجودة، ثم تخزين بالتات على رفوف عالية، ومنطقة التقاط الطلبات، ومنطقة تغليف، ومنطقة تجهيز الشحن، و4 أرصفة صادر من الجهة الجنوبية، ومكتب إداري يطل على الصالة.`;
 const spareParts=side=>`عندي مستودع قطع غيار سيارات في جدة، الأرض 50×35 متر والارتفاع الصافي 8 متر. نستلم البضاعة من الجهة ${side} برصيفين، ونفحص القطع ونسجلها، بعدين نخزنها على أرفف متوسطة للقطع المتوسطة وصناديق للقطع الصغيرة، وفيه منطقة التقاط وتغليف وشحن للعملاء والورش، ومكتب للمبيعات والمخزون.`;
-const dammam=side=>`نبي مستودع مبرد للخضار في الدمام ٦٠×٤٠ م بارتفاع صافي ١٠ م، الاستلام من الجهة ${side} برصيفين، وتخزين بالتات على رفوف، ومنطقة فرز، وشحن من الجهة الشمالية بثلاث أرصفة، ومكتب صغير.`;
+const dammamAs=owner=>side=>`نبي مستودع مبرد للخضار في الدمام ${owner}٦٠×٤٠ م بارتفاع صافي ١٠ م، الاستلام من الجهة ${side} برصيفين، وتخزين بالتات على رفوف، ومنطقة فرز، وشحن من الجهة الشمالية بثلاث أرصفة، ومكتب صغير.`;
+const dammam=dammamAs('على أرض '), dammamBuilding=dammamAs('والمبنى '), dammamUnclear=dammamAs('');
 const reach='أبغى مستودع توزيع في الرياض، الأرض 80×50 متر والارتفاع الصافي 11 متر. نشتغل برافعات ريتش ترك وعرض الممر بين الرفوف 3 متر. الاستلام من الجهة الشمالية فيه 4 أرصفة، ثم تخزين بالتات، ومنطقة تجهيز الشحن، و4 أرصفة صادر من الجهة الجنوبية.';
 
 const rooms=b=>b.floors[b.levels[0].template].rooms;
@@ -178,6 +180,45 @@ section('6 — clear height, city and a sorting area.',()=>{
   const auto=gen('مستودع في الرياض فيه استلام وفرز آلي بسيور وتغليف وشحن',80,60);
   ok('«فرز آلي» still builds the automatic sorter',rooms(auto).some(r=>r.id==='auto_sorter'));
 }
+});
+// R3.1 — receiving and shipping dock counts in one sentence, digits or words.
+section('R3.1 — dock counts stated together',()=>{
+  for(const [label,text] of [
+    ['words, «للاستلام / للشحن»','مستودع توزيع في الرياض على أرض 80×50 م، فيه خمسة أرصفة للاستلام وثلاثة أرصفة للشحن، وتخزين بالتات وتغليف.'],
+    ['shared noun «أرصفة استلام ٥ وشحن ٣»','مستودع توزيع على أرض ٨٠×٥٠ م، أرصفة استلام ٥ وشحن ٣، وتخزين بالتات.'],
+    ['digits «5 أرصفة استلام و3 أرصفة شحن»','مستودع على أرض 80×50 م، 5 أرصفة استلام و3 أرصفة شحن، وتخزين بالتات.'],
+    ['role first «الاستلام 5 أرصفة والشحن 3 أرصفة»','مستودع على أرض 80×50 م، الاستلام 5 أرصفة والشحن 3 أرصفة، وتخزين بالتات.'],
+    ['words with sides','مستودع على أرض 80×50 م، خمسة أرصفة للاستلام من الجهة الشمالية وثلاثة أرصفة للشحن من الجهة الجنوبية، وتخزين بالتات.']]){
+    const e=genError(text,80,50);
+    ok(label+': accepted',!e,e&&e.message);
+    if(e) continue;
+    const b=gen(text,80,50),r=docks(b,'receiving'),sh=docks(b,'shipping');
+    ok(label+': 5 receiving and 3 shipping docks',r.reduce((n,x)=>n+x.dock.count,0)===5&&sh.reduce((n,x)=>n+x.dock.count,0)===3,
+       JSON.stringify([r.map(x=>x.dock.count),sh.map(x=>x.dock.count)]));
+    ok(label+': both counts come from the brief',b.meta.acs_warehouse.receiving.count_source==='brief'&&b.meta.acs_warehouse.shipping.count_source==='brief');
+  }
+});
+// R3.2 — plot or building: build a stated building, explain a plot-derived one, ask when unclear.
+section('R3.2 — plot or building',()=>{
+  const e=genError(dammamUnclear('الغربية'),60,40);
+  ok('«مستودع … ٦٠×٤٠ م» without land/building asks which one',e&&e.question===true&&(e.missing||[]).includes('dimension_owner')&&/الأرض/.test(e.message)&&/المبنى/.test(e.message),e&&e.message);
+  const b=gen(dammamBuilding('الغربية'),60,40),env=envelope(b).rect;
+  ok('«المبنى ٦٠×٤٠» is built at exactly 60×40',Math.abs(env[2]-60)<1e-6&&Math.abs(env[3]-40)<1e-6,JSON.stringify(env));
+  ok('the stated building keeps ≥ 12 m yards in front of its dock walls inside the drawn plot',env[0]>=12-1e-6&&env[1]>=12-1e-6);
+  ok('the size line says the building was built as asked',/بأبعاده المطلوبة 60×40/.test(b.meta.acs_warehouse.size_note)&&b.meta.acs_warehouse.size_basis==='building');
+  const p=gen(dammam('الغربية'),60,40),pe=envelope(p).rect,note=p.meta.acs_warehouse.size_note;
+  ok('«على أرض ٦٠×٤٠» keeps the 60×40 plot and a smaller building',p.site.w===60&&p.site.d===40&&pe[2]<60&&pe[3]<40);
+  ok('a plain Arabic line gives the smaller size and the reason',note.includes(pe[2]+'×'+pe[3])&&/أصغر من الأرض 60×40/.test(note)&&/ساحة شاحنات/.test(note),note);
+  ok('that line leads the report, ahead of the assumptions',p.meta.added[0]===note);
+  const both=gen('مستودع في الدمام على أرض ٩٠×٧٠ م والمبنى ٦٠×٤٠ م، الاستلام من الجهة الغربية برصيفين، وتخزين بالتات، وشحن من الجهة الشمالية بثلاث أرصفة.',90,70);
+  const be=envelope(both).rect;
+  ok('land and building both stated: 60×40 inside 90×70',both.site.w===90&&both.site.d===70&&be[2]===60&&be[3]===40&&be[0]>=12&&be[1]>=12);
+  const tight=genError('مستودع على أرض ٦٥×٤٥ م والمبنى ٦٠×٤٠ م، الاستلام من الجهة الغربية برصيفين، وتخزين بالتات، وشحن من الجهة الشمالية بثلاث أرصفة.',65,45);
+  ok('a building that leaves no yard in its land is refused with the reason',tight&&tight.code==='LOCAL_WAREHOUSE_UNSUPPORTED'&&/ساحة شاحنات/.test(tight.message),tight&&tight.message);
+  const form=genWith(dammamUnclear('الغربية'),60,40,{form:{width:'60',depth:'40'}});
+  ok('a building field equal to the unlabelled size settles it as the building',envelope(form).rect[2]===60&&form.meta.acs_warehouse.building_source==='form');
+  const none=genError('مستودع فيه استلام وتخزين بالتات وشحن',60,40,{form:{}});
+  ok('no size anywhere asks for it',none&&none.question===true&&(none.missing||[]).includes('building_or_plot_size'));
 });
 // The shipped sample keeps its site and stays a warehouse.
 section('The shipped sample keeps its site and stays a warehouse.',()=>{

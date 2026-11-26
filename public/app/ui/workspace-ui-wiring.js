@@ -1613,7 +1613,7 @@ function buildLocal(txt,W,D,nF,form=localFormValues()){
     const clear=warehouseClearHeight(T);       // «الارتفاع الصافي 11 متر» ارتفاعٌ لا عدد مستويات
     const strict=!!(document.getElementById('strictMode')||{}).checked;
     /* الأولوية المطلقة لوصف العميل: نبني ما ذكره هو فقط، بأعداده ومقاساته */
-    const ft=warehouseFromText(txt,w,d,{clear:clear,strict:strict});
+    const ft=warehouseFromText(txt,w,d,{clear:clear,strict:strict,form});
     if(ft){
       attachObjects(ft.building, oi.objects);
       const reqs=ft.coverage.concat(objCoverage(oi.objects)),
@@ -1621,6 +1621,10 @@ function buildLocal(txt,W,D,nF,form=localFormValues()){
       // meta already holds zone coverage/excluded/added — add only the object-level items
       stampMeta(ft.building,'warehouse',objCoverage(oi.objects),oi.excluded,[]);
       showCoverage(reqs, ft.added, null, exc);
+      // مقاس المبنى وسببه سطرٌ صريح في رأس التقرير، لا افتراضٌ بين الافتراضات
+      const box=document.getElementById('reportBox');
+      if(box&&ft.sizeNote){const lead=document.createElement('div');lead.id='warehouseSizeNote';lead.className='rq warn';
+        lead.textContent=ft.sizeNote;box.prepend(lead);box.classList.add('on');}
       return ft.building;
     }
     /* لم يذكر أي منطقة صناعية معروفة → لكن قد يكون ذكر عناصر (عمّال/رافعات) فلا نُسقِطها */

@@ -1852,15 +1852,25 @@ function whNounCount(seg,re){
   if(/(?:ين|ان)$/.test(word)&&/رصيف|مسار|خط|محط/.test(word)) return 2;
   let g=before.match(/(\d{1,3})\s*$/); if(g) return +g[1];
   g=before.match(/(?:^|\s)(?:و|ب|بـ|ل)?([؀-ۿ]+)\s*$/); if(g&&AR_NUM[g[1]]!=null) return AR_NUM[g[1]];
-  g=after.match(/^\s*(?:[:=])?\s*(\d{1,3})(?![\d.])(?!\s*(?:م|متر|m|%)(?![\u0621-\u064A\u0671-\u06D3a-z]))/i); if(g) return +g[1];
-  g=after.match(/^\s*([؀-ۿ]+)/); if(g&&AR_NUM[g[1]]!=null) return AR_NUM[g[1]];
+  const roleGap='(?:(?:لل|ل|ال)?(?:استلام|وارد|تفريغ|شحن|صادر|تحميل)\\s*)?';
+  g=after.match(new RegExp('^\\s*'+roleGap+'(?:[:=])?\\s*(\\d{1,3})(?![\\d.])(?!\\s*(?:م|متر|m|%)(?!['+WH_L+'a-z]))','i')); if(g) return +g[1];
+  g=after.match(new RegExp('^\\s*'+roleGap+'(['+WH_L+']+)')); if(g&&AR_NUM[g[1]]!=null) return AR_NUM[g[1]];
   if(/^(?:ال)?رصيف$/.test(word)) return 1;
   return null;
 }
-function whClauses(t){
-  return t.split(/[.\n؟?!؛;،,]+/)
-    .flatMap(c=>c.split(/\s(?=و(?:ال)?(?:شحن|استلام|تحميل|صادر|وارد|تفريغ|ارسال|إرسال|نستلم|نشحن))/))
-    .map(s=>s.trim()).filter(Boolean);
+function whClauses(t){ return whSegments(t).map(x=>x.s); }
+/* جملٌ صغيرة مع رقم جملتها الأصلية: «خمسة أرصفة للاستلام وثلاثة أرصفة للشحن» تصير
+   «خمسة أرصفة للاستلام» و«وثلاثة أرصفة للشحن»، و«أرصفة استلام ٥ وشحن ٣» تصير
+   «أرصفة استلام ٥» و«وشحن ٣» التي ترث اسم الأرصفة من الجملة نفسها. */
+function whSegments(t){
+  const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
+  const split=new RegExp('\\s(?=و\\s*(?:\\d|(?:'+words+')(?!['+WH_L+'])|(?:ال|لل|ل)?(?:شحن|استلام|تحميل|صادر|وارد|تفريغ|ارسال|إرسال|نستلم|نشحن)|(?:ال)?(?:أرصفة|ارصفة|أرصفه|ارصفه|رصيف)))');
+  return t.split(/[.\n؟?!؛;،,]+/).flatMap((c,g)=>c.split(split).map(s=>({s:s.trim(),g}))).filter(x=>x.s);
+}
+function whRoleCount(seg){
+  const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
+  const m=seg.match(new RegExp('(?:استلام|وارد|تفريغ|شحن|صادر|تحميل)\\s*(?:[:=])?\\s*(?:(\\d{1,3})(?![\\d.])(?!\\s*(?:م|متر|m|%)(?!['+WH_L+'a-z]))|('+words+')(?!['+WH_L+']))','i'));
+  return m?(m[1]!=null?+m[1]:AR_NUM[m[2]]):null;
 }
 function whClauseAt(t,idx){
   let a=0,b=t.length; const re=/[.\n؟?!؛;،,]/g; let m;
@@ -1873,11 +1883,14 @@ function warehouseBriefFacts(txt){
   const role=()=>({side:null,count:null,mentioned:false,dockMentioned:false});
   const f={receiving:role(),shipping:role(),generic:null,clear:warehouseClearHeight(t),city:whCity(t),
            equipment:whEquipment(t),aisle:whStatedAisle(t),apron:whStatedApron(t)};
-  for(const c of whClauses(t)){
+  let dockGroup=-1;
+  for(const {s:c,g} of whSegments(t)){
     const at=t.indexOf(c);
     if(at>=0&&negatedAt(cmap,at)) continue;
     const roles=[]; if(WH_IN_RE.test(c)) roles.push('receiving'); if(WH_OUT_RE.test(c)) roles.push('shipping');
-    const sides=whSides(c), dock=WH_DOCK_RE.test(c), count=dock?whNounCount(c,WH_DOCK_RE):null;
+    const own=WH_DOCK_RE.test(c), inherited=!own&&dockGroup===g&&roles.length===1&&whRoleCount(c)!=null;
+    const sides=whSides(c), dock=own||inherited, count=own?whNounCount(c,WH_DOCK_RE):inherited?whRoleCount(c):null;
+    if(own) dockGroup=g;
     for(const r of roles) f[r].mentioned=true;
     if(!roles.length){ if(dock&&count!=null) f.generic=count; continue; }
     if(sides.size>1) warehouseUnsupported('ذكرت أكثر من جهة في: «'+c.slice(0,120)+'». حدّد جهة واحدة لكل من الاستلام والشحن.');
@@ -1892,6 +1905,50 @@ function warehouseBriefFacts(txt){
   }
   if(f.generic!=null&&f.receiving.count==null&&!f.shipping.dockMentioned){ f.receiving.count=f.generic; f.receiving.mentioned=true; f.receiving.dockMentioned=true; }
   return f;
+}
+function warehouseAsk(message,missing){
+  const error=new Error(message); error.code='LOCAL_WAREHOUSE_UNSUPPORTED'; error.question=true; error.missing=missing; throw error;
+}
+/* الأرض أم المبنى؟ «الأرض 80×50» أرضٌ تُترك منها ساحة الشاحنات، و«المبنى 60×40» يُبنى
+   بأبعاده نفسها، و«مستودع 60×40» بلا تحديد يُسأل عنه (نفس قرار السكني). الحقول
+   تُستعمل حين يخلو الوصف، وأي اختلاف بينها وبين الوصف يُذكر صراحةً. */
+const WH_BLDG_TERM=/(?:ال)?مبنى|(?:ال)?بناء|مسطح|بصم[ةه]|building|footprint|(?:ال)?مستودع\s+(?:نفسه\s+)?(?:أبعاده|ابعاده|مقاسه|مقاساته)|(?:أبعاد|ابعاد|مقاس)\s+(?:ال)?مستودع/gi;
+const WH_PLOT_TERM=/(?:ال)?(?:أرض|ارض)|قطع[ةه]|(?:ال)?صك|(?:ال)?موقع|plot|land|\bsite\b/gi;
+function warehouseDimensions(txt,form,W,D){
+  const t=whText(txt), found={building:[],plot:[]}, unclear=[], out={building:null,plot:null,notes:[]};
+  for(const m of t.matchAll(/(\d{1,4}(?:\.\d+)?)\s*(?:م|متر|مترا|m)?\s*(?:[×xX*]|في)\s*(\d{1,4}(?:\.\d+)?)/g)){
+    const w=+m[1], d=+m[2], before=t.slice(Math.max(0,m.index-40),m.index).split(/[.\n؟?!؛;،,]/).pop();
+    let owner=null,last=-1;
+    for(const [re,role] of [[WH_BLDG_TERM,'building'],[WH_PLOT_TERM,'plot']]) for(const x of before.matchAll(re)) if(x.index>last){last=x.index;owner=role;}
+    if(owner) found[owner].push({w,d}); else if(Math.min(w,d)>=15) unclear.push({w,d});
+  }
+  const one=(list,label)=>{const u=[...new Set(list.map(v=>v.w+'×'+v.d))];
+    if(u.length>1) warehouseUnsupported('ذكرت أكثر من مقاس لـ'+label+' ('+u.join(' و')+' م). اذكر مقاساً واحداً.');
+    return list.length?{...list[0],source:'text'}:null;};
+  const num=v=>{const n=+v;return Number.isFinite(n)&&n>0?n:undefined;};
+  const fb=form&&num(form.width)&&num(form.depth)?{w:num(form.width),d:num(form.depth),source:'form'}:null;
+  const fp=form&&num(form.plotWidth)&&num(form.plotDepth)?{w:num(form.plotWidth),d:num(form.plotDepth),source:'form'}:null;
+  let b=one(found.building,'المبنى'), p=one(found.plot,'الأرض');
+  const same=(x,y)=>Boolean(x&&y&&x.w===y.w&&x.d===y.d);
+  for(const u of unclear){
+    if(same(u,b)||same(u,p)) continue;
+    if(!b&&same(u,fb)){b=fb;continue;} if(!p&&same(u,fp)){p=fp;continue;}
+    warehouseAsk('هل '+u.w+'×'+u.d+' م أبعاد الأرض أم أبعاد المبنى نفسه؟ اكتب «الأرض '+u.w+'×'+u.d+'» إن كانت الأرض، فنترك منها ساحة للشاحنات أمام الأرصفة، أو «المبنى '+u.w+'×'+u.d+'» فنبنيه بهذا المقاس.',['dimension_owner']);
+  }
+  const pick=(text,field,key,label)=>{
+    if(text&&field&&!same(text,field)){
+      if(form?.prefer?.[key]==='form') return field;
+      out.notes.push('وصفك يذكر '+label+' '+text.w+'×'+text.d+' م والحقل '+field.w+'×'+field.d+' م؛ اعتمدنا الوصف.');
+    }
+    return text||field;};
+  out.building=pick(b,fb,'width','المبنى'); out.plot=pick(p,fp,'plot','الأرض');
+  if(!out.building&&!out.plot){
+    if(form) warehouseAsk('اذكر أبعاد المبنى أو الأرض بالمتر، مثل «الأرض 80×50» أو «المبنى 60×40».',['building_or_plot_size']);
+    out.plot={w:W,d:D,source:'argument'};
+  }
+  if(out.building&&out.plot&&(out.building.w>out.plot.w||out.building.d>out.plot.d))
+    warehouseUnsupported('المبنى '+out.building.w+'×'+out.building.d+' م أكبر من الأرض '+out.plot.w+'×'+out.plot.d+' م. صحّح أحد المقاسين.');
+  return out;
 }
 /* تحويل غرفة من الإطار القانوني (الاستلام شمالاً) إلى الإطار الفعلي بعدد أرباع دورة
    مع عقارب الساعة. نفس اصطلاح orientedPoint في المخطط السكني المحلي. */
@@ -2009,7 +2066,7 @@ function warehouseFromText(txt, W, D, opt){
   if(!found.length) return null;
   const cold=found.find(f=>f.id==='cold_storage'), pal=found.find(f=>f.id==='pallet_storage');
   if(cold&&pal&&/مستودع|warehouse/i.test(cold.clause)){ found.splice(found.indexOf(pal),1); cold.ar='تخزين بالتات مبرّد'; }
-  const facts=warehouseBriefFacts(t), assumptions=[], cov=[];
+  const facts=warehouseBriefFacts(t), assumptions=[], cov=[], dims=warehouseDimensions(t,opt.form,W,D);
   const assume=s=>{if(!assumptions.includes(s)) assumptions.push(s);};
   const hasZone=id=>found.some(f=>f.id===id);
   const hasRecv=hasZone('inbound_docks')||facts.receiving.dockMentioned||facts.receiving.side!=null;
@@ -2052,8 +2109,16 @@ function warehouseFromText(txt, W, D, opt){
   const shipCanon=hasShip?WH_EDGES[(WH_EDGES.indexOf(ship.side)-turns+4)%4]:null;
   const yard={N:0,E:0,S:0,W:0};
   if(hasRecv) yard[recv.side]=apron; if(hasShip) yard[ship.side]=apron;
-  const bx0=yard.W, bz0=yard.N, Wb=W-yard.W-yard.E, Db=D-yard.N-yard.S;
-  if(Wb<15||Db<15) warehouseUnsupported('الأرض '+W+'×'+D+' م لا تتّسع لساحة شاحنات بعمق '+apron+' م أمام الأرصفة ومبنى صالح؛ يتبقّى للمبنى '+Math.max(0,whQ(Wb))+'×'+Math.max(0,whQ(Db))+' م. كبّر الأرض أو اجعل الاستلام والشحن على جهة واحدة أو اذكر عمق الساحة.');
+  let SW,SD,bx0,bz0,Wb,Db;
+  if(dims.building){ Wb=dims.building.w; Db=dims.building.d;
+    if(dims.plot){ SW=dims.plot.w; SD=dims.plot.d;
+      const fx=SW-yard.W-yard.E-Wb, fz=SD-yard.N-yard.S-Db;
+      if(fx<-1e-6||fz<-1e-6) warehouseUnsupported('المبنى '+Wb+'×'+Db+' م لا يترك في الأرض '+SW+'×'+SD+' م ساحة شاحنات بعمق '+apron
+        +' م أمام الأرصفة. كبّر الأرض أو صغّر المبنى أو اجعل الاستلام والشحن على جهة واحدة أو اذكر عمق الساحة.');
+      bx0=yard.W+fx/2; bz0=yard.N+fz/2;
+    } else { SW=Wb+yard.W+yard.E; SD=Db+yard.N+yard.S; bx0=yard.W; bz0=yard.N; }
+  } else { SW=dims.plot.w; SD=dims.plot.d; bx0=yard.W; bz0=yard.N; Wb=SW-yard.W-yard.E; Db=SD-yard.N-yard.S; }
+  if(Wb<15||Db<15) warehouseUnsupported('الأرض '+SW+'×'+SD+' م لا تتّسع لساحة شاحنات بعمق '+apron+' م أمام الأرصفة ومبنى صالح؛ يتبقّى للمبنى '+Math.max(0,whQ(Wb))+'×'+Math.max(0,whQ(Db))+' م. كبّر الأرض أو اجعل الاستلام والشحن على جهة واحدة أو اذكر عمق الساحة.');
   const odd=turns%2===1, Wc=odd?Db:Wb, Dc=odd?Wb:Db;
   const R=[];
   const adm=found.filter(f=>f.adm);
@@ -2090,7 +2155,7 @@ function warehouseFromText(txt, W, D, opt){
   const needD=needs.reduce((s,b)=>s+b.d,0), needW=Math.max(...needs.map(b=>b.w))+admW+colW;
   const flowSpan=odd?'العرض':'العمق';
   if(Dc+1e-6<needD||Wc+1e-6<needW)
-    warehouseUnsupported('المبنى المتبقي بعد ساحات الشاحنات '+whQ(Wb)+'×'+whQ(Db)+' م أصغر من الحد الأدنى لهذا البرنامج ('
+    warehouseUnsupported((dims.building?'المبنى المطلوب ':'المبنى المتبقي بعد ساحات الشاحنات ')+whQ(Wb)+'×'+whQ(Db)+' م أصغر من الحد الأدنى لهذا البرنامج ('
       +whQ(odd?needD:needW)+'×'+whQ(odd?needW:needD)+' م تقريباً، '+flowSpan+' باتجاه التدفق '+whQ(needD)+' م). كبّر الأرض أو قلّل المناطق أو اذكر عمق ساحة أصغر.');
   if(colZone){const need=(colZone.dockCount-1)*WH_DEF.dock_min_pitch_m+WH_DEF.dock_w_m+2;
     if(Dc<need) warehouseUnsupported('ضلع الشحن لا يتّسع لـ'+colZone.dockCount+' أرصفة.');}
@@ -2212,7 +2277,7 @@ function warehouseFromText(txt, W, D, opt){
   // من الإطار القانوني إلى الجهة الفعلية، ثم إلى موضع المبنى داخل الأرض
   const placed=R.map(r=>{const o=whOrientRoom(r,turns,Wc,Dc);o.rect=[whQ(o.rect[0]+bx0),whQ(o.rect[1]+bz0),o.rect[2],o.rect[3]];return o;});
   const entranceActual=entrance?{room:placed[R.indexOf(entrance.room)],edge:whEdge(entrance.edge,turns)}:null;
-  return {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db,notes};
+  return {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db,SW,SD,notes};
   };
   let L=null;
   if(hasShip&&ship.sideAssumed){
@@ -2220,7 +2285,15 @@ function warehouseFromText(txt, W, D, opt){
     try{ L=plan(opposite); }catch(e){ if(e.code!=='LOCAL_WAREHOUSE_UNSUPPORTED'||!hasRecv) throw e; L=plan(same); }
     assume('افتراض: الشحن من الجهة '+WH_SIDE_AR[ship.side]+(ship.side===opposite?' المقابلة للاستلام':' نفسها مع الاستلام لأن الأرض لا تتّسع لساحتين')+' لأن جهة الشحن لم تُذكر — حدّدها في الوصف.');
   }else L=plan(hasShip?ship.side:null);
-  const {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db}=L; L.notes.forEach(assume);
+  const {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db,SW,SD}=L; L.notes.forEach(assume);
+  // سطر صريح عن مقاس المبنى وسببه — لا يكفي أن يكون افتراضاً بين الافتراضات
+  const dockSides=WH_EDGES.filter(e=>yard[e]>0).map(e=>WH_SIDE_AR[e]).join(' و'), q=whQ;
+  let sizeNote=dims.building
+    ?(dims.plot?'بنينا المبنى بأبعاده المطلوبة '+q(Wb)+'×'+q(Db)+' م داخل الأرض '+q(SW)+'×'+q(SD)+' م'+(dockSides?'، وأمام الأرصفة '+dockSides+' ساحة شاحنات '+apron+' م على الأقل.':'.')
+               :'بنينا المبنى بأبعاده المطلوبة '+q(Wb)+'×'+q(Db)+' م. لم تذكر أبعاد الأرض'+(dockSides?'، فرسمنا ساحة شاحنات '+apron+' م أمام الأرصفة '+dockSides+' فقط؛ حدود الأرض الفعلية من صكها.':'.'))
+    :(dockSides?'المبنى '+q(Wb)+'×'+q(Db)+' م أصغر من الأرض '+q(SW)+'×'+q(SD)+' م لأننا تركنا ساحة شاحنات بعمق '+apron+' م أمام الأرصفة '+dockSides+' لتقف الشاحنات وتناور خارج المبنى.'
+               :'المبنى يملأ الأرض '+q(SW)+'×'+q(SD)+' م لأنه لا أرصفة فيه.');
+  if(dims.notes.length) sizeNote+=' '+dims.notes.join(' ');
   const added=[]; let doorsInfo={doors:[],signs:[]};
   if(!opt.strict){
     const env={id:'envelope',rect:[bx0,bz0,Wb,Db].map(whQ),walls:'full',wall_h:H};
@@ -2238,6 +2311,7 @@ function warehouseFromText(txt, W, D, opt){
       doorsInfo.doors.length+' باب أفراد ومخرج طوارئ في الجدار الخارجي (مواقع وعدد افتراضيان يحددهما مختص الدفاع المدني)',
       'طفايات وحنفيات وكاميرات محيطية (إعداد افتراضي للنظام)');
   }
+  added.unshift(sizeNote);
   for(const a of assumptions) added.push(a);
   const meta={name:'منشأة حسب وصف العميل', north:'-Z', type:'warehouse',
     requirements:cov, added:added, excluded:excluded, strict:!!opt.strict, source:'local-from-text',
@@ -2246,14 +2320,16 @@ function warehouseFromText(txt, W, D, opt){
       shipping:hasShip?{side:ship.side,count:ship.count,side_source:ship.sideAssumed?'assumption':'brief',count_source:ship.countAssumed?'assumption':'brief'}:null,
       flow:!hasRecv||!hasShip?null:shipCanon==='S'?'I':shipCanon==='N'?'U':'L',
       truck_yard_m:yard, truck_yard_source:facts.apron!=null?'brief':'assumption', building_rect:[bx0,bz0,Wb,Db].map(whQ),
+      size_basis:dims.building?'building':'plot', building_source:dims.building?dims.building.source:'derived_from_plot',
+      plot_source:dims.plot?dims.plot.source:'derived_from_building', size_note:sizeNote,
       equipment, equipment_source:facts.equipment?'brief':'assumption', rack_aisle_m:A, rack_aisle_source:facts.aisle?'brief':'assumption',
       main_aisle_m:C, rack_block_max_m:WH_DEF.block_max_m, clear_height_m:H, clear_height_source:(+opt.clear||facts.clear)?'brief':'assumption',
       personnel_and_exit_doors:doorsInfo.doors.length, assumptions:assumptions.slice(),
       not_verified:['fire_protection','civil_defense_exits','structural','traffic','setbacks']}};
   if(facts.city) meta.city=facts.city;
-  return {building:{meta, site:{w:W,d:D}, floor_height:H+1, wall_h:H, wall_t:0.25,
+  return {building:{meta, site:{w:whQ(SW),d:whQ(SD)}, floor_height:H+1, wall_h:H, wall_t:0.25,
     levels:[{index:0,name:'صالة التشغيل',template:'ops'}], floors:{ops:{rooms:placed}}},
-    coverage:cov, added:added, excluded:excluded};
+    coverage:cov, added:added, excluded:excluded, sizeNote};
 }
 
 /* ==================================================================
