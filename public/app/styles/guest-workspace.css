@@ -27,6 +27,8 @@
 }
 #acsGuestBanner .guest-identity strong { font-size: 15px; }
 #acsGuestBanner #guestSaveStatus { color: #4f6159; font-size: 12px; }
+/* A visible, quiet way into an account from the first screen (not a dominant CTA). */
+#acsGuestBanner a.guest-account { display: inline-block; min-height: 24px; min-width: 0; padding: 2px 0; border: 0; background: none; color: #0b5d7a; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .guest-controls, .guest-menu-grid { display: flex; align-items: center; gap: 4px; }
 #acsGuestBanner button, #acsGuestBanner a, #guestTools {
   box-sizing: border-box;
@@ -100,7 +102,9 @@ body.acs-guest #left [hidden] { display: none!important; }
     border-radius: 10px;
   }
   #acsGuestBanner .guest-identity strong { font-size: 13px; }
-  #acsGuestBanner #guestSaveStatus { font-size: 11px; }
+  #acsGuestBanner #guestSaveStatus { font-size: 11px; display: inline; }
+  /* Inline padding enlarges the tap area without growing the toolbar. */
+  #acsGuestBanner a.guest-account { display: inline; min-height: 0; padding: 10px 4px; margin: -10px 0 -10px 2px; font-size: 11px; }
   #acsGuestBanner button,#guestTools { padding-inline: 6px; font-size: 12px; }
   #acsGuestBanner .guest-controls { gap: 1px; }
   body.acs-guest #camBar { top: auto; }
