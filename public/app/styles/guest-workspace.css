@@ -102,9 +102,14 @@ body.acs-guest #left [hidden] { display: none!important; }
     border-radius: 10px;
   }
   #acsGuestBanner .guest-identity strong { font-size: 13px; }
-  #acsGuestBanner #guestSaveStatus { font-size: 11px; display: inline; }
-  /* Inline padding enlarges the tap area without growing the toolbar. */
-  #acsGuestBanner a.guest-account { display: inline; min-height: 0; padding: 10px 4px; margin: -10px 0 -10px 2px; font-size: 11px; }
+  /* Name on its own line; save status and the sign-in link share ONE line that
+     never wraps (the status truncates), so a wider Arabic font cannot add a
+     third row and grow the toolbar over the model. */
+  #acsGuestBanner .guest-identity { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; column-gap: 4px; }
+  #acsGuestBanner .guest-identity strong { grid-column: 1 / -1; }
+  #acsGuestBanner #guestSaveStatus { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+  /* Padding enlarges the tap area without growing the toolbar. */
+  #acsGuestBanner a.guest-account { display: inline-block; min-height: 0; padding: 10px 4px; margin: -10px 0; font-size: 11px; white-space: nowrap; }
   #acsGuestBanner button,#guestTools { padding-inline: 6px; font-size: 12px; }
   #acsGuestBanner .guest-controls { gap: 1px; }
   body.acs-guest #camBar { top: auto; }
