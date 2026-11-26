@@ -166,7 +166,7 @@ await check('a villa brief shows the villa program fields instead of the apartme
   assert.equal($('cwVillaBedrooms').placeholder, 'افتراضي 4');
   assert.deepEqual([$('cwVillaMaster').value, $('cwVillaMaid').value, $('cwVillaDriver').value], ['yes', 'no', 'no']);
   assert.match($('cwVillaSummary').textContent, /^البرنامج: 4 غرف نوم، منها غرفة نوم رئيسية بحمام خاص؛ 5 حمامات/);
-  assert.equal($('cwVillaBathrooms').placeholder, 'تلقائي 4 + 1');
+  assert.equal($('cwVillaBathrooms').placeholder, 'تلقائي: 5');
   $('cwVillaBedrooms').value = '٥'; $('cwVillaBedrooms').fire('input');
   assert.match($('cwVillaSummary').textContent, /5 غرف نوم.*6 حمامات/);
   assert.equal($('cwConfirmed').checked, false, 'changing the program needs a new confirmation');
@@ -185,7 +185,7 @@ await check('villa cards replace the generic A/B/C text, each with its own estim
   assert.deepEqual(cards.map(c => c.card.querySelector('h2').textContent),
     ['بيت عائلي مدمج · مقترح لك', 'فصل الضيوف عن العائلة', 'جناح رئيسي واسع']);
   const details = cards.map(c => c.card.querySelector('[data-residential-detail]').textContent);
-  assert.ok(details.every(t => /تقدير المساحة المبنية ≈ \d+ م² على 2 أدوار من نحو 550 م²/.test(t)), details.join('\n'));
+  assert.ok(details.every(t => /تقدير المساحة المبنية ≈ \d+ م² على دورين من نحو 550 م²/.test(t)), details.join('\n'));
   assert.equal(new Set(details).size, 3);
   assert.ok(cards.every(c => !/وصف|عنوان/.test(c.card.querySelector('p').textContent + c.card.querySelector('h2').textContent)));
   assert.equal(cards[1].button.textContent, 'اختيار «فصل الضيوف عن العائلة» والتوليد');

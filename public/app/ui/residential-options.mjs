@@ -32,7 +32,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
   $('cwResidentialTitle').textContent=isVilla?'برنامج الفيلا':'الشقق واحتياجات الأسرة';
   $('cwApartmentFields').hidden=$('cwFlatFields').hidden=isVilla;$('cwVillaFields').hidden=$('cwVillaSummary').hidden=!isVilla;
   if(isVilla){
-   try{const p=villaProgram(villaInputs());$('cwVillaSummary').textContent='البرنامج: '+villaSummary(p);$('cwVillaBathrooms').placeholder='تلقائي '+p.bedrooms+' + '+(p.bathrooms-p.bedrooms);}
+   try{const p=villaProgram(villaInputs());$('cwVillaSummary').textContent='البرنامج: '+villaSummary(p);$('cwVillaBathrooms').placeholder=p.autoBathrooms?'تلقائي: '+p.bathrooms:'';}
    catch(e){$('cwVillaSummary').textContent=e.message;}
    $('cwResidentialSummary').textContent='فيلا لأسرة واحدة: تُرسم كل غرفة نوم وكل حمام فراغًا مستقلًا، ويُفحص المخطط على هذه الأعداد. اترك الحقل فارغًا لاستخدام القيمة الافتراضية.';
    return;
@@ -66,7 +66,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
   choices=villaOptions(program,{levels,buildable:buildable(),guests:$('cwGuests').value});
   for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.querySelector('p').textContent=o.roomsText+' '+o.why+' '+o.tradeoff;
    card.querySelector('[data-residential-detail]')?.remove();
-   const p=el('p','تقدير المساحة المبنية ≈ '+o.estimatedArea+' م² على '+(o.levels>1?o.levels+' أدوار':'دور واحد')+(o.available!=null?' من نحو '+o.available+' م² تسمح بها الارتدادات ونسبة البناء':'')+'. '+(o.feasible?'تقدير أولي يشمل الجدران والحركة؛ يُفحص المخطط بعد التوليد على غرف النوم والحمامات ودورة مياه الضيوف.':'المساحة المسموح ببنائها لا تكفي هذا البديل. قلّل غرف النوم أو اختر بديلًا أصغر.'),card);
+   const p=el('p','تقدير المساحة المبنية ≈ '+o.estimatedArea+' م² على '+counted(o.levels,'دور واحد','دورين','أدوار','دورًا')+(o.available!=null?' من نحو '+o.available+' م² تسمح بها الارتدادات ونسبة البناء':'')+'. '+(o.feasible?'تقدير أولي يشمل الجدران والحركة؛ يُفحص المخطط بعد التوليد على غرف النوم والحمامات ودورة مياه الضيوف.':'المساحة المسموح ببنائها لا تكفي هذا البديل. قلّل غرف النوم أو اختر بديلًا أصغر.'),card);
    p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار «'+o.title+'» والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
   }
  }
@@ -81,7 +81,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
    const evidence=row.label+': '+row.expected,span=line(evidence);let rid='villa-'+row.metric+'-'+(row.role||'all');while(requirements.some(r=>r.id===rid))rid+='x';
    requirements.push({id:rid,metric:row.metric,expected:row.expected,...(row.role?{role:row.role}:{}),source:'inferred',source_id:VILLA_SOURCE,evidence,source_span:span,confirmed:true});
   }
-  brief+='\nتصور الفيلا المختار: '+o.title+' — '+o.why+'\nالمدينة: '+($('cwCity').value||'غير محددة')+'؛ جهة الشارع: '+$('cwStreet').selectedOptions[0].textContent+'.';
+  brief+='\nتصور الفيلا المختار: '+o.title+' — '+o.why+({separate:' مجلس ضيوف مستقل.',none:' بدون مجلس ضيوف مستقل.'}[$('cwGuests').value]||'')+'\nالمدينة: '+($('cwCity').value||'غير محددة')+'؛ جهة الشارع: '+$('cwStreet').selectedOptions[0].textContent+'.';
   return {brief,requirements};
  }
  return {
