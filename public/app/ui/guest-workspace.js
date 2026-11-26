@@ -1,6 +1,8 @@
 /* Public, local-only workspace. No auth identity, provider call or cloud upload. */
 import { openGuestFloorPlan } from './guest-floor-plan.mjs';
 import { apartmentConfirmation } from '../core/local-apartment.mjs';
+import { installGuestRoomCard } from './guest-room-card.mjs';
+import { openGuestProjectsDialog } from './guest-projects.mjs';
 
 const A = window.ACS;
 const $ = id => document.getElementById(id);
@@ -27,6 +29,7 @@ async function openGuestWorkspace() {
         <div class="guest-menu">
           <p id="guestFacts" hidden></p>
           <p id="guestStorageNote" hidden>تُحفظ تغييرات هذا المثال في مسودة مستقلة على جهازك.</p>
+          <button id="guestProjects" type="button" aria-haspopup="dialog">مشاريعي على هذا الجهاز</button>
           <a id="guestNew" href="/?guest=1&amp;new=1" target="_blank" rel="noopener">مشروع جديد في علامة تبويب أخرى</a>
           <button id="guestReviseExisting" type="button" aria-haspopup="dialog" hidden>تعديل التصميم الحالي</button>
           <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
@@ -166,6 +169,11 @@ async function openGuestWorkspace() {
     if (!options.open) return;
     facts();
     nativeSample.hidden = !matchesNativeSample();
+  });
+  installGuestRoomCard(A);
+  $('guestProjects').addEventListener('click', () => {
+    closeOptions();
+    openGuestProjectsDialog(A, A_AUTH_SCOPE()).catch(() => feedbackMessage('تعذّر عرض المشاريع المحفوظة على هذا الجهاز.'));
   });
   $('guestFloors').addEventListener('click', () => {
     openPanel('acsTabModel');

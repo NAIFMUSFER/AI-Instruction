@@ -13,6 +13,7 @@ import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } 
 import { apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../core/local-apartment.mjs';
 import { listContextDetails, withContextDetails } from '../core/context-details.mjs';
 import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
+import { createTapTracker } from './tap-gesture.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
 
@@ -173,6 +174,7 @@ function setModel(data){
   // Query locally: initial model application can precede infoEl's declaration.
   const retiredInfo=document.getElementById('info');
   if(retiredInfo){retiredInfo.replaceChildren();retiredInfo.style.display='none';}
+  window.ACS?.guestRoomCard?.retire?.();
   // Reset the floor filter only for a new model; null is a presentation rebuild.
   if(data) floorSel='all';
   if(data){
@@ -380,15 +382,48 @@ function localGenerationError(error){
   };
   return roofMessages[error.message]||('تعذّر التعديل: '+error.message);
 }
+let roofViewHidden=false;
+function roofFloorKeys(){
+  const levels=Array.isArray(lastBuilding?.levels)?lastBuilding.levels.slice(0,SCENE_LIMITS.max_levels):[];
+  return new Set(levels.map((row,index)=>isRoofLevel(row)?'F'+acsRenderLevel(row,index).index:null).filter(Boolean));
+}
+function syncRoofViewButton(button){
+  button.textContent=roofViewHidden?'إظهار السطح':'إخفاء السطح';
+  button.setAttribute('aria-pressed',String(roofViewHidden));
+}
 function buildLocalRoofControl(wrap){
   const state=localRoofState();
   if(!state.automatic&&!state.removed&&!state.present)return;
+  const guest=!!window.ACS?.guest;
   const disclosure=document.createElement('p');disclosure.id='localRoofDisclosure';disclosure.className='note';
   const gaps=state.disclosures.reduce((sum,row)=>sum+row.parapet_gaps.length,0);
-  disclosure.textContent=state.removed?'أزلت السطح الافتراضي. يبقى هذا الاختيار في المسودة المحلية حتى تستعيده.':
+  disclosure.textContent=state.removed?(guest?'هذه المسودة محفوظة بلا سطح افتراضي. يمكنك استعادته إلى التصميم.':'أزلت السطح الافتراضي. يبقى هذا الاختيار في المسودة المحلية حتى تستعيده.'):
     (state.automatic?'سطح افتراضي مسطّح ضمن النموذج وغير محسوب دوراً مشغولاً؛ الحواجز حسب هندسته المعلنة. ':'سطح معلن في النموذج؛ لا يُحذف بهذه الأداة. ')
     +(gaps?`توجد ${gaps} حواف جزئية بلا حاجز كامل. `:'')
+    +(guest&&state.present?'«إخفاء السطح» للعرض فقط؛ يبقى السطح في التصميم وفي الملفات المنزّلة. ':'')
     +'لم تُتحقّق الإنشاءات أو التصريف أو العزل أو الوصول أو مطابقة الأنظمة.';
+  if(guest){
+    // Guests look inside by hiding the roof from view; the design is never edited here.
+    if(state.present){
+      const view=document.createElement('button');view.type='button';view.id='localRoofToggle';view.className='btn ghost acs-u-15';
+      view.setAttribute('aria-describedby',disclosure.id);syncRoofViewButton(view);
+      view.onclick=()=>{roofViewHidden=!roofViewHidden;syncRoofViewButton(view);updateVis();
+        statusEl.textContent=roofViewHidden?'أُخفي السطح من العرض فقط؛ ما زال في التصميم.':'ظهر السطح.';};
+      wrap.appendChild(view);
+    }
+    if(state.removed){
+      // Drafts saved before this change may lack the roof: offer its return to the design.
+      const restore=document.createElement('button');restore.type='button';restore.id='localRoofRestore';restore.className='btn ghost acs-u-15';
+      restore.textContent='استعادة السطح الافتراضي';restore.setAttribute('aria-describedby',disclosure.id);
+      restore.onclick=()=>{try{
+        changeLocalRoof('restore');
+        window.ACS?.setProjectPanelOpen?.(true);document.getElementById('localRoofToggle')?.focus();
+      }catch(error){statusEl.textContent=localGenerationError(error);}};
+      wrap.appendChild(restore);
+    }
+    wrap.appendChild(disclosure);
+    return;
+  }
   if(state.automatic||state.removed){
     const button=document.createElement('button');button.type='button';button.id='localRoofToggle';button.className='btn ghost acs-u-15';
     button.textContent=state.automatic?'إزالة السطح الافتراضي':'استعادة السطح الافتراضي';button.setAttribute('aria-describedby',disclosure.id);
@@ -456,11 +491,15 @@ function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHT
     const ct=document.createElement('span');ct.className='ct';ct.textContent=r.meshes.length;
     row.append(cb,col,nm,ct);wrap.appendChild(row);});}
 function updateVis(){globalThis.window?.ACS?.requestGuestRender?.();
+  // A hidden roof is a view choice only: the roof stays in the model, saves and exports.
+  // Choosing the roof floor itself always shows it.
+  const roofKeys=roofViewHidden&&floorSel==='all'?roofFloorKeys():null;
+  const shown=floor=>(floorSel==='all'||floor===floorSel)&&!(roofKeys&&roofKeys.has(floor));
   for(const l in registry){const r=registry[l];
   const cut=window.ACS?.guest&&guestCameraMode==='cutaway',warehouse=cut&&guestIsWarehouse();
-  r.meshes.forEach(m=>{m.visible=r.visible&&(floorSel==='all'||m.userData.floor===floorSel)&&(!cut||visibleInGuestCut(m.name,warehouse));});}
+  r.meshes.forEach(m=>{m.visible=r.visible&&shown(m.userData.floor)&&(!cut||visibleInGuestCut(m.name,warehouse));});}
   if(guestJoinery)for(const mesh of guestJoinery.children){
-    mesh.visible=registry[mesh.userData.sourceLayer]?.visible===true&&(floorSel==='all'||mesh.userData.floor===floorSel);
+    mesh.visible=registry[mesh.userData.sourceLayer]?.visible===true&&shown(mesh.userData.floor);
   }
 }
 
@@ -515,7 +554,10 @@ if(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4||innerWidth<7
 
 /* نقر عنصر */
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),infoEl=document.getElementById('info');
+// Orbiting or pinching ends with a click event too; only a real tap acts on the model.
+const canvasTaps=createTapTracker(renderer.domElement);
 renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)return;
+  if(!canvasTaps.wasTap(ev))return;
   mouse.x=(ev.clientX/innerWidth)*2-1;mouse.y=-(ev.clientY/innerHeight)*2+1;
   ray.setFromCamera(mouse,camera);
   const hits=ray.intersectObjects([model],true).filter(h=>h.object.visible);
@@ -523,6 +565,8 @@ renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)r
   const hit=hits[0], o=hit.object, t=(o.userData.tag||'').split('|');
   if(TOOL!=='none'){ addMeasurePoint(hit.point); return; }
   if(noteMode){ openNote(o, hit.point); return; }
+  // Guests get the room card (details and colours) from the viewport selection.
+  if(window.ACS?.guest&&!doorTexture&&window.ACS.guestRoomCard){ infoEl.style.display='none'; return; }
   infoEl.style.display='block';
   if(t[0]==='STRUCT'){ infoEl.innerHTML=structInfoCard(o); return; }
   if(t[0]==='MEP'){ infoEl.innerHTML=mepInfoCard(o); return; }
@@ -622,7 +666,8 @@ function flsInfoCard(o){
          'لا تصميم حريق ولا محاكاة ولا مطابقة كود</span>');
   return L.join('<br>'); }
 /* لوحة ألوان سريعة داخل بطاقة العنصر: نقرة واحدة تلوّن جدران هذه الغرفة فقط */
-function infoQuickColors(o){
+function infoQuickColors(o){ infoEl.append(...quickColourControls(o)); }
+function quickColourControls(o){
   const tag=o.userData.tag||'', t=tag.split('|');
   const surf = t[0]==='FLOOR' ? 'floor' : (t[0]==='WALL' ? 'wall' : 'self');
   const lbl = surf==='wall'?'لوّن جدران هذه الغرفة':(surf==='floor'?'لوّن الأرضية':'لوّن هذا العنصر');
@@ -640,7 +685,7 @@ function infoQuickColors(o){
   cst.className='acs-swatch-btn';
   cst.oninput=()=>{ statusEl.textContent=applyFinish(tag,surf,cst.value,o); };
   bar.appendChild(cst);
-  infoEl.appendChild(wrap); infoEl.appendChild(bar);
+  return [wrap,bar];
 }
 
 /* ========================= محرّك الألوان والتشطيبات (فوري · بلا خادم) ========================= */
@@ -2824,6 +2869,8 @@ window.ACS.showExample = showResidentialExample;
 window.ACS.setModel = setModel;
 window.ACS.guestView=guestView;
 window.ACS.guestViewState=guestViewState;
+window.ACS.quickColourControls=o=>(o?.isMesh&&o.userData?.tag?quickColourControls(o):[]);
+window.ACS.viewportBusy=()=>walkState.active||TOOL!=='none'||noteMode;
 window.ACS.applyLocalEdit=applyLocalEdit;
 window.ACS.localRoof={state:localRoofState,remove:()=>changeLocalRoof('remove'),restore:()=>changeLocalRoof('restore')};
 /* F-27: المبنى المعروض حالياً — قراءة فقط. lastBuilding كان محبوساً داخل هذه

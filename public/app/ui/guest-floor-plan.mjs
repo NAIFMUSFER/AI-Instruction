@@ -213,13 +213,35 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
 
 }
 
+// Plain facts for one room, from the same projection the floor plan draws:
+// the room card and the plan can never disagree on a room's size.
+export function guestRoomFacts(acs, levelIndex, roomId) {
+  const model=acs.exportModel?.();
+  const level=(model?.levels||[]).find(item=>item.index===levelIndex);
+  const room=model?.floors?.[level?.template]?.rooms?.find(item=>String(item.id)===String(roomId));
+  if(!level||!room)return null;
+  let space=null,info=null;
+  try{info=floorData(acs.floorPlan2D(levelIndex,'TECHNICAL'),model);space=info.spaces.find(item=>String(item.name)===String(roomId))||null;}catch{}
+  const rect=validRect(room.rect)?room.rect:null;
+  const w=space?space.w:rect?.[2],d=space?space.d:rect?.[3];
+  if(!Number.isFinite(w)||!Number.isFinite(d))return null;
+  const area=space&&Number.isFinite(space.area_m2)?space.area_m2:w*d;
+  const roof=level.kind==='roof';
+  return {
+    name:space?.displayName||String(room.name||room.id),
+    unit:space&&info?.hasUnits&&space.unit!=='shared'?unitName(model,space.unit):null,
+    floor:roof?'السطح':levelLabel(level),levelIndex,roomId:String(room.id),spaceId:space?.id||null,
+    area:`${fmt(area)} م²`,size:`${fmt(w)} × ${fmt(d)} م`,
+    basis:model.meta?.acs_apartment?.wall_reference==='room_wall_centrelines'?'مقاسة على محاور الجدران، قبل خصم سماكاتها.':'مقاسة على مستطيل الفراغ.',
+  };
+}
 function element(tag, text, id) {
   const node=document.createElement(tag);
   if(text)node.textContent=text;
   if(id)node.id=id;
   return node;
 }
-export function openGuestFloorPlan(acs, initialLevel=0) {
+export function openGuestFloorPlan(acs, initialLevel=0, initialRoom='') {
   const existing=document.getElementById('guestPlanDialog');
   if(existing?.open)return existing;
   const model=acs.exportModel();
@@ -284,5 +306,7 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     const a=element('a');a.href=url;a.download=`apartment-floor-${packet.level_index}.svg`;dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   dialog.addEventListener('close',()=>{dialog.remove();if(previous?.isConnected)previous.focus();},{once:true});
-  changeFloor();dialog.showModal();close.focus();return dialog;
+  changeFloor();
+  if(initialRoom&&[...roomChoice.options].some(option=>option.value===initialRoom)){roomChoice.value=initialRoom;draw();}
+  dialog.showModal();close.focus();return dialog;
 }
