@@ -72,9 +72,60 @@ class JobRejected(Exception):
 
 
 class JobError(Exception):
-    def __init__(self, message, error_class=None):
+    def __init__(self, message, error_class=None, error_at=None):
         Exception.__init__(self, message)
         self.error_class = error_class or "Exception"
+        # Where the worker failed (file:line of its innermost frame), for the
+        # server log only. Never sent to a client.
+        self.error_at = error_at
+        self.exit_code = None   # set only when the worker process died
+
+    @property
+    def safe_message(self):
+        """The worker message only if it is fixed ASCII wording, else None.
+
+        Server logs must not carry user text or secrets. A message with
+        digits, quotes or non-ASCII letters may quote a room id, a key or the
+        user's (usually Arabic) words, so it is withheld; fixed wording such
+        as "invalid opening identity contract" passes. The class and the
+        position (error_class, error_at) are always logged.
+        """
+        text = str(self)
+        if not _SAFE_TEXT.fullmatch(text):
+            return None
+        try:
+            import acs_api_errors as _E
+            if _E.redact(text) != text:      # key-shaped, even without digits
+                return None
+        except Exception:                                       # noqa: BLE001
+            return None
+        return text
+
+
+_SAFE_TEXT = re.compile(r"[A-Za-z][A-Za-z _.,:;()/-]{0,159}")
+_ORIGIN = re.compile(r"[A-Za-z0-9_.-]{1,120}:[0-9]{1,7}")
+
+
+def _origin(exc):
+    """file:line of the innermost traceback frame — a position, never text."""
+    try:
+        tb, last = exc.__traceback__, None
+        while tb is not None:
+            last, tb = tb, tb.tb_next
+        if last is None:
+            return None
+        return "%s:%d" % (os.path.basename(last.tb_frame.f_code.co_filename), last.tb_lineno)
+    except Exception:                                           # pragma: no cover
+        return None
+
+
+def _unpack_origin(payload):
+    """The 4th error field (file:line) if a worker of this version sent one."""
+    if isinstance(payload, (tuple, list)) and len(payload) >= 4:
+        value = payload[3]
+        if isinstance(value, str) and _ORIGIN.fullmatch(value):
+            return value
+    return None
 
 
 def _classified_payload(exc):
@@ -186,7 +237,7 @@ def _child(target, kwargs, conn):                               # pragma: no cov
     except BaseException as exc:                                # noqa: BLE001
         try:
             conn.send(("err", (type(exc).__name__, _child_message(exc),
-                               _classified_payload(exc))))
+                               _classified_payload(exc), _origin(exc))))
         except Exception:
             pass
     finally:
@@ -201,7 +252,7 @@ class GenerationJob(object):
 
     __slots__ = ("id", "state", "created_at", "started_at", "finished_at",
                  "request_id", "target", "result", "error", "error_class",
-                 "error_code",
+                 "error_code", "error_at",
                  "_proc", "_parent", "_lock", "_cancelled", "timeout_s")
 
     def __init__(self, target, request_id=None, timeout_s=None):
@@ -218,6 +269,7 @@ class GenerationJob(object):
         # F-34: رمز التصنيف كما صُنع في الابنة — يظهر في سجلّ generation_job
         # فيُقرأ العطل المحلّي عطلاً محلياً في التليمتري لا «عطل مزوّد».
         self.error_code = None
+        self.error_at = None
         self.timeout_s = float(timeout_s or DEFAULT_TIMEOUT_S)
         self._proc = None
         self._parent = None
@@ -387,10 +439,12 @@ class JobRunner(object):
                 code = proc.exitcode
             except Exception:                                   # pragma: no cover
                 code = None
-            raise JobError(
+            died = JobError(
                 "the generation worker died before returning a result "
                 "(child exit code: %s)" % ("unknown" if code is None else code),
                 type(exc).__name__)
+            died.exit_code = code if type(code) is int else None
+            raise died
         finally:
             try:
                 parent.close()
@@ -420,6 +474,7 @@ class JobRunner(object):
             return payload
         job.state = STATE_FAILED
         job.error_class, job.error, classified = _unpack_err(payload)
+        job.error_at = _unpack_origin(payload)
         if isinstance(classified, dict):
             job.error_code = classified.get("acs_code")
         with self._lock:
@@ -427,7 +482,7 @@ class JobRunner(object):
         if on_event:
             on_event(job)
         _reraise_classified(classified)     # F-34: التصنيف يعبر حدّ العملية
-        raise JobError(job.error, job.error_class)
+        raise JobError(job.error, job.error_class, job.error_at)
 
     def _execute_thread(self, job, kwargs, on_event, on_progress=None):
         """مسار احتياطي للتطوير فقط — لا يضمن الإلغاء، ويقول ذلك."""
@@ -442,7 +497,7 @@ class JobRunner(object):
                     box["ok"] = fn(**kwargs)
             except BaseException as exc:                        # noqa: BLE001
                 box["err"] = (type(exc).__name__, str(exc)[:2000],
-                              _classified_payload(exc))
+                              _classified_payload(exc), _origin(exc))
 
         th = threading.Thread(target=_run, daemon=True)
         job.started_at = time.time()
@@ -463,6 +518,7 @@ class JobRunner(object):
         if "err" in box:
             job.state = STATE_FAILED
             job.error_class, job.error, classified = _unpack_err(box["err"])
+            job.error_at = _unpack_origin(box["err"])
             if isinstance(classified, dict):
                 job.error_code = classified.get("acs_code")
             with self._lock:
@@ -470,7 +526,7 @@ class JobRunner(object):
             if on_event:
                 on_event(job)
             _reraise_classified(classified)  # F-34: نفس السلوك في المسارين
-            raise JobError(job.error, job.error_class)
+            raise JobError(job.error, job.error_class, job.error_at)
         job.state = STATE_SUCCEEDED
         job.result = box.get("ok")
         with self._lock:

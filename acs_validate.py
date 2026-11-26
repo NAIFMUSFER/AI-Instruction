@@ -210,6 +210,71 @@ def _overlap(a, b, tol=0.05):
                 az + ad <= bz + tol or bz + bd <= az + tol)
 
 
+def _unsupported(levels, floors, tmpl_rects):
+    """Check (3): rooms resting on less than half their area, storey by storey.
+
+    Yields (upper, rid, ratio, lower). Silent when the storey below covers under
+    60% of the storey above: a partial model, not a finding."""
+    ordered = [lv for lv in sorted(
+        (lv for lv in levels if lv.get("template") in floors),
+        key=lambda lv: (lv.get("index") if _finite(lv.get("index")) else 0))]
+    for i in range(1, len(ordered)):
+        upper = ordered[i].get("template")
+        lower = ordered[i - 1].get("template")
+        below = tmpl_rects.get(lower, [])
+        above = tmpl_rects.get(upper, [])
+        if not below or not above or upper == lower:
+            continue
+        # الحارس الذي أضافته القياسات على ١٦٥ نموذجاً حقيقياً: هذا الفحص سليم
+        # فقط إن كان القالب السفلي **بلاطة كاملة**. كثير من النماذج تمثّل
+        # طابقاً جزئياً (سيناريو اختبار، أو دوراً لم يُفصَّل بعد)، وحينها كل
+        # حيّز في الأعلى يبدو معلّقاً وليس كذلك. القياس: كم من مسقط الأعلى
+        # يغطّيه الأسفل إجمالاً. دون ٦٠٪ لا نملك ما يميّز «نموذج ناقص» عن
+        # «بروز مقصود» عن «عطل» — والصمت أصدق من ثلاثة احتمالات بلا ترجيح.
+        up_area = sum(w * d for _i, (_x, _z, w, d) in above)
+        cov_all = 0.0
+        for _rid, (x, z, w, d) in above:
+            for _bid, (ox, oz, ow, od) in below:
+                ix = min(x + w, ox + ow) - max(x, ox)
+                iz = min(z + d, oz + od) - max(z, oz)
+                if ix > 0 and iz > 0:
+                    cov_all += ix * iz
+        if up_area <= 0 or cov_all / up_area < 0.60:
+            continue
+        for rid, rect in above:
+            if _is_envelope(rid) or _is_outdoor(rid):
+                continue
+            x, z, w, d = rect
+            # مساحة هذا الحيّز التي يغطّيها أي حيّز أسفله
+            covered = 0.0
+            for _bid, o in below:
+                ox, oz, ow, od = o
+                ix = min(x + w, ox + ow) - max(x, ox)
+                iz = min(z + d, oz + od) - max(z, oz)
+                if ix > 0 and iz > 0:
+                    covered += ix * iz
+            ratio = covered / (w * d) if w * d > 0 else 1.0
+            if ratio < 0.5:
+                yield upper, rid, ratio, lower
+
+
+def unsupported_rooms(b):
+    """Check (3) alone, for a room layout that has no openings yet."""
+    floors = b.get("floors") or {}
+    tmpl_rects = {}
+    for tmpl, fdef in floors.items():
+        tmpl_rects[tmpl] = []
+        for r in (fdef.get("rooms", []) or []) if isinstance(fdef, dict) else []:
+            rect = r.get("rect") if isinstance(r, dict) else None
+            if not rect or len(rect) != 4 or not all(_finite(v) for v in rect):
+                continue
+            x, z, w, d = [float(v) for v in rect]
+            if w > 0 and d > 0:
+                tmpl_rects[tmpl].append((r.get("id", "?"), (x, z, w, d)))
+    levels = [lv for lv in (b.get("levels") or []) if isinstance(lv, dict)]
+    return list(_unsupported(levels, floors, tmpl_rects))
+
+
 def validate_building(b):
     """يعيد (issues, stats). issues = قائمة نصوص عربية موجّهة للنموذج."""
     issues = []
@@ -289,8 +354,14 @@ def validate_building(b):
                 stats["docks"] += sum(int(dk.get("count", 1) or 1) for dk in (r.get("docks") or []))
 
             # تفتيت الأحياز الكبيرة العامة (apt_a ...) — سكني فقط
+            # A roof-only template holds the unoccupied roof slab: its decks are
+            # derived from the storey below and named after it
+            # ("roof_<apartment room id>"), so the id matches "apartment" but
+            # there is nothing to split into rooms, and an edit cannot change
+            # it (carry_auto_roof rebuilds an automatic roof after every edit).
             if (not industrial) and not strict and area > SPLIT_AREA \
-                    and r.get('role') not in {'bedroom','living','kitchen','bathroom','majlis','corridor','entrance','lobby','stairs','elevator'} \
+                    and tmpl not in roof_only_templates \
+                    and r.get('role') not in {'bedroom','living','kitchen','bathroom','majlis','corridor','entrance','lobby','stairs','elevator','roof_deck'} \
                     and any(g in low for g in GENERIC_IDS):
                 issues.append(
                     "[%s/%s] حيّز عام مساحته %.0f م² — قسّمه إلى غرف مسمّاة منفصلة "
@@ -426,54 +497,13 @@ def validate_building(b):
                 break
 
     # ── (٣) الإسناد الإنشائي: حيّز في الأعلى بلا ما تحته ────────────────
-    ordered = [lv for lv in sorted(
-        (lv for lv in levels if lv.get("template") in floors),
-        key=lambda lv: (lv.get("index") if _finite(lv.get("index")) else 0))]
     reported = 0
-    for i in range(1, len(ordered)):
-        upper = ordered[i].get("template")
-        lower = ordered[i - 1].get("template")
-        below = tmpl_rects.get(lower, [])
-        above = tmpl_rects.get(upper, [])
-        if not below or not above or upper == lower:
-            continue
-        # الحارس الذي أضافته القياسات على ١٦٥ نموذجاً حقيقياً: هذا الفحص سليم
-        # فقط إن كان القالب السفلي **بلاطة كاملة**. كثير من النماذج تمثّل
-        # طابقاً جزئياً (سيناريو اختبار، أو دوراً لم يُفصَّل بعد)، وحينها كل
-        # حيّز في الأعلى يبدو معلّقاً وليس كذلك. القياس: كم من مسقط الأعلى
-        # يغطّيه الأسفل إجمالاً. دون ٦٠٪ لا نملك ما يميّز «نموذج ناقص» عن
-        # «بروز مقصود» عن «عطل» — والصمت أصدق من ثلاثة احتمالات بلا ترجيح.
-        up_area = sum(w * d for _i, (_x, _z, w, d) in above)
-        cov_all = 0.0
-        for _rid, (x, z, w, d) in above:
-            for _bid, (ox, oz, ow, od) in below:
-                ix = min(x + w, ox + ow) - max(x, ox)
-                iz = min(z + d, oz + od) - max(z, oz)
-                if ix > 0 and iz > 0:
-                    cov_all += ix * iz
-        if up_area <= 0 or cov_all / up_area < 0.60:
-            continue
-        for rid, rect in above:
-            if _is_envelope(rid) or _is_outdoor(rid):
-                continue
-            x, z, w, d = rect
-            # مساحة هذا الحيّز التي يغطّيها أي حيّز أسفله
-            covered = 0.0
-            for _bid, o in below:
-                ox, oz, ow, od = o
-                ix = min(x + w, ox + ow) - max(x, ox)
-                iz = min(z + d, oz + od) - max(z, oz)
-                if ix > 0 and iz > 0:
-                    covered += ix * iz
-            ratio = covered / (w * d) if w * d > 0 else 1.0
-            if ratio < 0.5:
-                issues.append(
-                    "[%s/%s] معلّق: %.0f%% فقط من مسقطه يقع فوق حيّز في الطابق "
-                    "'%s' أسفله — أعِد وضعه فوق مسقط مبنيّ أو أضِف ما يسنده."
-                    % (upper, rid, ratio * 100, lower))
-                reported += 1
-                if reported >= PER_CHECK_CAP:
-                    break
+    for upper, rid, ratio, lower in _unsupported(levels, floors, tmpl_rects):
+        issues.append(
+            "[%s/%s] معلّق: %.0f%% فقط من مسقطه يقع فوق حيّز في الطابق "
+            "'%s' أسفله — أعِد وضعه فوق مسقط مبنيّ أو أضِف ما يسنده."
+            % (upper, rid, ratio * 100, lower))
+        reported += 1
         if reported >= PER_CHECK_CAP:
             break
 

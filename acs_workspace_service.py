@@ -92,6 +92,7 @@ def geometry_failure_message(code):
         "PLAN_SOURCE_GEOMETRY_INCOMPLETE":"تعذّر استخراج حدود الغرف دون تداخل بعد مراجعة الصورة. راجع وضوح الصفحة والأبعاد المرجعية ثم أعد القراءة؛ الملف الأصلي محفوظ ولم يُعد ترتيب غرفه تلقائيًا.",
         CONFLICT_CODE:"حُفظ تعديل أحدث أثناء التوليد، فاحتفظنا بالنسخة المولّدة منفصلة دون أن تستبدل تعديلك. اختر ما تريد اعتماده؛ الخيار الآخر يبقى محفوظًا، ولن يُحسب توليد جديد.",
         "STALE_REVISION":"تغيّرت النسخة الحالية أثناء العملية، فلم تُحفظ نتيجتها فوق النسخة الأحدث. افتح آخر نسخة؛ لن يُعاد الطلب تلقائيًا.",
+        "OPENING_IDENTITY_INVALID":"بعض أبواب أو نوافذ هذه النسخة بلا معرّف صالح، فلم يبدأ التعديل ولم يُرسل أي طلب إلى مزود النموذج. نسختك بقيت كما هي.",
     }
     if code in messages:
         return messages[code]
@@ -294,7 +295,8 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 before_layout = canonical(_canonical_room_roles(result["building"]))
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
-                result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
+                result["building"] = detail(result["building"], brief, budget,
+                                            resume.get("done") if reuse_details else None, requirements)
             except PlanError as exc:
                 if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
                     raise

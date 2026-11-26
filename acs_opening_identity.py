@@ -64,16 +64,56 @@ def opening_identity_issues(model, building_id="bld_0"):
     return issues
 
 
-def stabilise_opening_ids(model, building_id="bld_0"):
+class OpeningIdentityError(ValueError):
+    """The opening identity contract does not hold for this model."""
+
+
+def _opening_id_counts(model):
+    counts = {}
+    for _t, room in _all_rooms(model):
+        for key in ("doors", "windows"):
+            for op in room.get(key) or []:
+                oid = op.get("id") if isinstance(op, dict) else None
+                if isinstance(oid, str):
+                    counts[oid] = counts.get(oid, 0) + 1
+    return counts
+
+
+def inherited_collisions(model, building_id="bld_0"):
+    """Repeated opening IDs an already admitted model carries: {id: occurrences}.
+
+    Revision admission does not require unique opening IDs, and generated plans
+    repeat them: a stair-template variant is a deep copy of its source template,
+    openings included (acs_stairs.with_default_stairs), and a generated door can
+    carry one ID on both of its faces. An edit of such a saved plan starts from
+    it as it is. Only ID_COLLISION is inherited; a missing, malformed or derived
+    namespace ID is not listed here and still fails closed.
+    """
+    counts = _opening_id_counts(model)
+    return {i["subject"]: counts.get(i["subject"], 0)
+            for i in opening_identity_issues(model, building_id)
+            if i["code"] == "ID_COLLISION"}
+
+
+def stabilise_opening_ids(model, building_id="bld_0", inherited=None):
     """Explicit, idempotent migration on a candidate/new model, never on saved history.
 
     Existing positional references become stored source IDs unchanged. No geometry
     or provenance is inferred. A migrated model with missing IDs fails closed.
     Callers include the returned paths in the same authoring revision.
+
+    ``inherited`` (from :func:`inherited_collisions` of the admitted source) lets
+    an edit keep the repeats that source already had, never more of them; any
+    new repeat or invalid ID still fails closed.
     """
     issues = opening_identity_issues(model, building_id)
+    if inherited:
+        counts = _opening_id_counts(model)
+        issues = [i for i in issues
+                  if not (i["code"] == "ID_COLLISION" and i["subject"] in inherited
+                          and counts.get(i["subject"], 0) <= inherited[i["subject"]])]
     if issues:
-        raise ValueError("invalid opening identity contract")
+        raise OpeningIdentityError("invalid opening identity contract")
     if model.get("_opening_identity") is not None:
         return []
     changed = []

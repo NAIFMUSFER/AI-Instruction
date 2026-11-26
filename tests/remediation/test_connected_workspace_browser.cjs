@@ -132,7 +132,12 @@ w.write(sys.argv[1])`,pdfFixture]);
    const workspaceActions=[];
    const errors=[];page.on('pageerror',e=>{errors.push(e.message);pageErrors.push(e.message.slice(0,1000));if(pageErrors.length>12)pageErrors.shift();});
    if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
-   await page.route('**/*',async route=>{
+   // A poll still in flight when the case closes its context gets
+   // 'Fetch response has been disposed' from route.fetch/fulfill. That is
+   // teardown, not product behaviour; any other handler error is recorded
+   // and fails the case below instead of crashing the process unhandled.
+   let closing=false;const routeErrors=[];
+   const handleRoute=async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname==='acs-engine.onrender.com'){
       const body=req.method()==='POST'&&/\/(?:workspace|plan\/commands)$/.test(url.pathname)?req.postDataJSON():null;
@@ -151,6 +156,14 @@ w.write(sys.argv[1])`,pdfFixture]);
     const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!f.startsWith(PUB+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile())return route.fulfill({status:404,body:''});
     return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
+   };
+   await page.route('**/*',async route=>{
+    try{return await handleRoute(route);}
+    catch(error){
+     if(closing||page.isClosed())return;
+     routeErrors.push(String(error?.message||error).slice(0,500));
+     try{await route.abort('failed');}catch(_){}
+    }
    });
    await page.goto('https://acs-ui.test/?signin=1');
    assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
@@ -331,7 +344,8 @@ w.write(sys.argv[1])`,pdfFixture]);
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);
    console.log('PASS connected workspace '+width+(noWebGL?' without WebGL: 2D, save, approve, SVG, recover and logout remain available':': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout'));
-   await context.close();
+   assert.deepEqual(routeErrors,[],'request routing failed during the case');
+   closing=true;await context.close();
   }
  }catch(error){
   // Preserve the original assertion/timeout. Diagnostics are independently

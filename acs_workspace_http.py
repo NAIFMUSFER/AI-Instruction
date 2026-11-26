@@ -64,6 +64,21 @@ def _orphaned(row, now=None):
 
 
 
+def _failure_fields(exc):
+    """What failed and where, without user text or secrets.
+
+    A JobError only wraps the worker's own exception, so log that exception's
+    class and position (file:line), its message only when it is fixed ASCII
+    wording, and the exit code of a worker that died. Other failures happened
+    in this process: their class is already logged, their position is added.
+    """
+    from acs_generation_job import JobError, _origin
+    if isinstance(exc, JobError):
+        return {"worker_error_class": str(exc.error_class)[:80], "worker_error_at": exc.error_at,
+                "worker_error_message": exc.safe_message, "worker_exit_code": exc.exit_code}
+    return {"error_at": _origin(exc)}
+
+
 def _id(value):
     try:
         if not isinstance(value, str) or str(uuid.UUID(value)) != value:
@@ -164,7 +179,8 @@ class WorkspaceMiddleware:
         except Exception as exc:
             from acs_generation_job import JobRejected, JobError
             payload["error_code"] = "GENERATION_BUSY" if isinstance(exc, JobRejected) else "GENERATION_WORKER_FAILED" if isinstance(exc, JobError) else "GENERATION_FAILED"
-            LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__, error_code=payload["error_code"])
+            LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__,
+                      error_code=payload["error_code"], **_failure_fields(exc))
         LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
         payload["finished_at"] = datetime.now(timezone.utc).isoformat()
         payload.update(spent)  # the terminal receipt carries the last known provider count

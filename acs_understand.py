@@ -1355,7 +1355,7 @@ def extract_json(raw):
         code, E.MESSAGE_AR[code] + " قصّر الوصف أو ارفع ACS_MAX_TOKENS.",
         upstream={"provider": "anthropic", "kind": "unparsable_response"})
 
-def validate(building):
+def validate(building, inherited_opening_ids=None):
     """تحقّق بنيوي خفيف + إصلاحات أمان (بلا اعتماد خارجي).
 
     KI-25/F-41: هنا يُفرَض عقد المستويات. هذه الدالة هي المصبّ الوحيد لكل
@@ -1363,6 +1363,10 @@ def validate(building):
     الملاحظات)، فوضعُ العقد فيها يعني أن `index` لا يعتمد على طاعة النموذج
     لتوجيهٍ ما. مستوىً بلا index يجعل العارض يبني المبنى عند NaN: هندسةٌ
     موجودة وعدّادٌ صحيح ولا بكسل واحد — وهو عطل KI-25 بالحرف.
+
+    ``inherited_opening_ids``: repeated opening IDs of the admitted revision an
+    edit started from (acs_opening_identity.inherited_collisions). Fresh
+    generation passes none, so every repeat still fails closed there.
     """
     assert isinstance(building.get("site"), dict), "site مفقود"
     building.setdefault("floor_height", 3.2); building.setdefault("wall_h", 3.0); building.setdefault("wall_t", 0.15)
@@ -1382,7 +1386,7 @@ def validate(building):
     # Assign identity at admission, before users can reference array positions.
     # This adds metadata only; no dimension/source is invented or reclassified.
     from acs_opening_identity import stabilise_opening_ids
-    stabilise_opening_ids(building)
+    stabilise_opening_ids(building, inherited=inherited_opening_ids)
     return building
 
 def call_llm_repair(description, building, issues, model=None,
@@ -1407,11 +1411,24 @@ def call_llm_repair(description, building, issues, model=None,
 def apply_notes(building, notes, model=None):
     """ينفّذ ملاحظات المهندس (تعديل/نقل/أبعاد/حذف/إضافة) على النموذج الحالي."""
     import acs_validate as V
-    from acs_opening_identity import stabilise_opening_ids
+    from acs_opening_identity import (OpeningIdentityError, inherited_collisions,
+                                      stabilise_opening_ids)
     # Stage a versioned copy before showing an existing model to the provider.
     # The input and its old revisions remain untouched even if the reply fails.
     building = json.loads(json.dumps(building))
-    stabilise_opening_ids(building)
+    # A saved plan may already repeat opening IDs: stair-template variants copy
+    # their source template's openings, and a generated door can carry one ID
+    # on both faces. Admission accepted that revision, so the edit starts from
+    # it as it is; the reply may keep those repeats but not add any. Without
+    # this every note on such a plan failed here, before the provider call, as
+    # an unclassified worker error (GENERATION_WORKER_FAILED).
+    inherited = inherited_collisions(building)
+    try:
+        stabilise_opening_ids(building, inherited=inherited)
+    except OpeningIdentityError:
+        from acs_plan_review import PlanError
+        raise PlanError("OPENING_IDENTITY_INVALID",
+                        "بعض أبواب أو نوافذ هذه النسخة بلا معرّف صالح؛ لم يبدأ التعديل.") from None
     lines = []
     for i, n in enumerate(notes, 1):
         lines.append("%d. [%s] الطبقة: %s · الدور: %s · الغرفة: %s\n   المطلوب: %s"
@@ -1437,8 +1454,19 @@ def apply_notes(building, notes, model=None):
     if raw.get("_opening_identity") != building["_opening_identity"]:
         raise E.AcsApiError(E.ACS_UPSTREAM_INVALID_JSON,
                             "تعذر الحفاظ على معرّفات عناصر النموذج؛ لم يُطبّق التعديل.")
-    # validate() rejects missing/duplicate identities in a migrated model.
-    out = validate(raw)
+    reply_levels = json.loads(json.dumps(raw.get("levels")))
+    # validate() rejects missing identities and any repeat the source lacked.
+    try:
+        out = validate(raw, inherited_opening_ids=inherited)
+    except OpeningIdentityError:
+        raise E.AcsApiError(E.ACS_UPSTREAM_INVALID_JSON,
+                            "تعذر الحفاظ على معرّفات عناصر النموذج؛ لم يُطبّق التعديل.") from None
+    # validate() also fills level fields an admitted plan may lack (id, name).
+    # When the reply kept the saved levels, keep them exactly: that fill is not
+    # the user's edit, and room and whole-element locks bind the levels as
+    # placement context, so it alone failed the edit with LOCK_CONTEXT_CHANGED.
+    if reply_levels == building.get("levels"):
+        out["levels"] = reply_levels
     out.setdefault("meta", {}).setdefault("type", bt)
 
     issues, stats = V.validate_building(out)
