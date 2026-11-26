@@ -225,6 +225,8 @@ w.write(sys.argv[1])`,pdfFixture]);
     }
     const inputFile=width===393?path.join(ROOT,'tests/phase7/outputs/warehouse_buffer_depth.png'):pdfFixture;
     await page.locator('#cwStartMode').selectOption('upload');
+    // The read asks how the drawing is scaled and where north is (U5).
+    await page.locator('#cwSourceScale').selectOption('written');await page.locator('#cwSourceNorth').selectOption('up');
     await page.locator('#cwPlanFile').setInputFiles(inputFile);
     await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);
     if(width===1280){assert.equal(await page.locator('#cwPdfPage option').count(),2);const firstPreview=await page.locator('#cwSourcePreview').getAttribute('src');await page.locator('#cwPdfPage').selectOption('2');await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);assert.notEqual(await page.locator('#cwSourcePreview').getAttribute('src'),firstPreview,'page selection changes the preview');}

@@ -162,13 +162,13 @@ class BridgeTests(unittest.TestCase):
         self.u.apply_notes.assert_called_once()
 
     def test_verifier_does_not_claim_missing_opening_or_core_intent(self):
-        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(validate_building=lambda m: ([], {}))}):
+        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(review_building=lambda m: ([], {}, []), transcribed=lambda m: False)}):
             report = B.existing_geometry_verifier(model())
         self.assertEqual(report['scopes']['topology'], 'NOT_VERIFIED')
         self.assertEqual(report['scopes']['vertical_circulation'], 'NOT_VERIFIED')
 
     def test_verifier_includes_all_existing_findings(self):
-        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(validate_building=lambda m: (['original issue'], {}))}):
+        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(review_building=lambda m: (['original issue'], {}, []), transcribed=lambda m: False)}):
             report = B.existing_geometry_verifier(model())
         self.assertEqual(report['issues'][0]['message'], 'original issue')
 
@@ -180,7 +180,7 @@ class BridgeTests(unittest.TestCase):
         m['floors']['f'] = copy.deepcopy(m['floors']['g'])
         m['levels'][1]['template'] = 'f'
         m['floors']['f']['rooms'][0]['rect'][0] = .5
-        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(validate_building=lambda m: ([], {}))}):
+        with patch.dict(sys.modules, {'acs_validate': SimpleNamespace(review_building=lambda m: ([], {}, []), transcribed=lambda m: False)}):
             report = B.existing_geometry_verifier(m)
         self.assertEqual(report['scopes']['vertical_circulation'], 'FAIL')
         self.assertEqual(report['issues'][0]['code'], 'VERTICAL_CORE_MISMATCH')

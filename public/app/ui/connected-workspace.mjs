@@ -2,7 +2,7 @@ import {parseReviewFile} from '../core/plan-review-packet.mjs';
 import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
 import {createPlotRules} from './plot-rules.mjs';
-import {createPlanUpload} from './plan-upload.mjs';
+import {createPlanUpload,TRANSCRIPTION} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
 import {createBriefReader} from './brief-reader.mjs';
 import {floorLabel,planRoomName} from '../core/plan-labels.mjs';
@@ -116,7 +116,7 @@ function progressTick(){
 }
 function progressPhase(phase,confirmed=false){
   if(!progressState)return;
-  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
+  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:progressState.read?'قراءة المخطط':'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
   const text=labels[phase]||labels.CHECKING;
   if($('cwJobPhase').textContent!==text)$('cwJobPhase').textContent=text;
   $('cwJobProgress').dataset.phase=phase;
@@ -124,11 +124,11 @@ function progressPhase(phase,confirmed=false){
   if(confirmed)progressState.lastSeenAt=Date.now();
   progressTick();
 }
-function beginJob(id,saved=null){
+function beginJob(id,saved=null,read=!!saved?.read){
   clearInterval(progressTimer);pendingJob=id;failedJob=null;if($('cwResumeJob'))$('cwResumeJob').hidden=true;
   const valid=typeof saved?.startedAt==='number'&&Number.isFinite(saved.startedAt)&&saved.startedAt>0&&saved.startedAt<=Date.now();
-  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0};
-  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission}));}catch(e){}
+  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0,read};
+  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission,read}));}catch(e){}
   $('cwJobProgress').hidden=false;$('cwJobProgress').dataset.startedAt=String(progressState.startedAt);
   progressPhase(saved?'CHECKING':'SUBMITTING');progressTimer=setInterval(progressTick,1000);
 }
@@ -175,7 +175,7 @@ function step(n,{record=false}={}) {
   activeStep=n;
   if(n===2&&$('cwGenerateSource')){
     const uploaded=$('cwStartMode').value==='upload';root.querySelector('.cw-options').hidden=uploaded;$('cwGenerateSource').hidden=!uploaded;
-    $('cwGenerateSource').textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';
+    planUpload.step2(uploaded);
   }
   root.querySelectorAll('[data-step-panel]').forEach(p=>{p.hidden=Number(p.dataset.stepPanel)!==n;});
   root.querySelectorAll('[data-step]').forEach(b=>{if(Number(b.dataset.step)===n)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
@@ -240,8 +240,8 @@ function approvalBlocker(){
   if(!packet||!state)return {text:''};
   if(pendingJob)return {text:'انتظر انتهاء المهمة الحالية قبل الاعتماد.'};
   if(!headRevisionSelected())return {text:'هذه نسخة سابقة للقراءة فقط. الاعتماد يكون لآخر نسخة؛ استعد هذه النسخة كمسودة جديدة إن أردت اعتمادها.'};
-  if(state.authority?.can_approve_concept===true)return {text:'الفحوصات التخطيطية جاهزة للمراجعة والاعتماد المبدئي.'};
-  const findings=Array.isArray(state.review_findings)?state.review_findings:packet.review?.issues||[];
+  if(state.authority?.can_approve_concept===true)return {text:state.authority.source_transcription===true?TRANSCRIPTION.ready:'الفحوصات التخطيطية جاهزة للمراجعة والاعتماد المبدئي.'};
+  const findings=(Array.isArray(state.review_findings)?state.review_findings:packet.review?.issues||[]).filter(issue=>issue.severity!=='advisory');
   const others=findings.filter(issue=>!autoRoofFinding(issue));
   if(findings.length&&!others.length)return {text:'يمنع الاعتماد: ملاحظات على السطح الافتراضي فقط. أزل السطح الافتراضي ثم اعتمد النسخة.',fix:'roof'};
   if(others.length===1)return {text:'يمنع الاعتماد: ملاحظة واحدة — '+(issueNames[others[0].code]||'ملاحظة تحتاج المراجعة')+'. راجعها في «ما الذي يحتاج المراجعة؟».'};
@@ -254,6 +254,7 @@ function syncApproval() {
   const loaded=loadedRevisionSelected(),head=headRevisionSelected();
   const blocker=approvalBlocker();
   $('cwApprovalNote').textContent=blocker.text;
+  const approveText=$('cwApproveConfirm').nextSibling;if(approveText)approveText.textContent=state?.authority?.source_transcription===true?TRANSCRIPTION.confirm:TRANSCRIPTION.concept;
   const roofFix=$('cwApprovalFix');
   if(roofFix){roofFix.hidden=blocker.fix!=='roof'||$('cwRoof')?.dataset.enabled!=='true'||$('cwRoof')?.dataset.userAuthored==='true';roofFix.disabled=busy||!!pendingJob||!head;}
   $('cwApprove').disabled=busy||!!pendingJob||!head||state?.authority?.can_approve_concept!==true||!$('cwApproveConfirm').checked;
@@ -299,6 +300,7 @@ async function renderState(data, {keepStep=false}={}) {
   $('cwAssumptions').replaceChildren();
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
+  planUpload?.review(data);
   const details=contextDefaultsText(data.object_actions,packet?.revision);
   if(details){el('li',details,$('cwAssumptions'));$('cwAssumptionsCard').hidden=false;}
   if(packet){
@@ -394,13 +396,14 @@ async function generation(option) {
   const plot=source.source_id?{}:plotRules.command(); // validated before any paid call
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
   const reading=source.source_id?{}:briefReader.command(); // the confirmed smart-reading card, checked before any paid call
-  const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,...reading,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
+  const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,...reading,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:(source.source_id&&planUpload.calls())||Number($('cwBudget').value)};
   // A generation is a paid, multi-minute run: the owner confirms it first.
   const name=source.source_id?'قراءة المخطط المرفوع':'«'+(root.querySelector('[data-option="'+option+'"]')?.closest('article')?.querySelector('h2')?.textContent.replace(/\s*·\s*مقترح لك$/,'')||'البديل '+option)+'»';
-  if(!await confirmPaid('سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.','ابدأ التوليد')){status('لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
-  beginJob(body.job_id);
+  const read=source.source_id?planUpload.confirm():null;
+  if(!await confirmPaid(read?read.text:'سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.',read?read.go:'ابدأ التوليد',read?.title)){status(read?'لم تبدأ القراءة، ولم يُستهلك أي رصيد.':'لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
+  beginJob(body.job_id,null,!!read);
   Object.assign(body,plot);
-  setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
+  setBusy(true);$('cwRecoverJob').hidden=false;status(read?read.sent:'جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
   finally{setBusy(false);}
@@ -408,6 +411,7 @@ async function generation(option) {
 async function handleJob(job) {
   if(!job||job.id!==pendingJob)throw new Error('لم تصل حالة المهمة المطلوبة.');
   if(job.state==='SUCCEEDED'){
+    const used=Number.isInteger(job.provider_calls)&&job.provider_calls>0?(progressState?.read?' القراءات المستخدمة: ':' طلبات الذكاء الاصطناعي المستخدمة: ')+job.provider_calls+'.':'';
     stopProgress();
     const referenceRevision=typeof job.reference_revision_id==='string'&&job.reference_revision_id?job.reference_revision_id:null;
     clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
@@ -421,7 +425,7 @@ async function handleJob(job) {
         comparisonShown=true;
       }catch(e){}
     }
-    status(comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.');setBusy(false);return;
+    status((comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.')+used);setBusy(false);return;
   }
   if(job.choice&&job.choice.kind==='generated_version'){
     // A newer revision landed while this paid job ran. Its result is kept apart:
@@ -533,6 +537,7 @@ async function projectList(){
   $('cwProject').replaceChildren();for(const p of data.projects){const o=el('option',p.name,$('cwProject'));o.value=p.id;}$('cwProject').value=projectId;
 }
 function mount(){
+  Object.assign(issueNames,TRANSCRIPTION.issues); // names of the upload transcription findings
   if(root)return;
   root=el('section',null,document.body);root.id='designWorkspace';root.setAttribute('aria-label','مساحة تصميم المشروع');
   root.innerHTML=`
@@ -589,21 +594,21 @@ function mount(){
       progressPhase('UNKNOWN');status('لم يصل تأكيد طلب الاستئناف. اضغط «متابعة المهمة» للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);
     }
   }));
-  planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
+  planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError,onOk:()=>{if($('cwStatus').classList.contains('bad'))status('');}});
   plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   briefReader=createBriefReader(root,{api,confirmPaid,briefEditor,onError:safeError,storageKey:()=>draftKey()+':program',
     jobKey:()=>'acs_brief_read_job:'+window.ACS_AUTH.storageScope(),localDraftKeys:()=>[draftKey(),draftKey()+':residential',draftKey()+':plot']});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));
-  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded){residentialOptions.validate();residentialOptions.prepare(confirmedProgram);}root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;sourceGenerate.textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2,{record:true});}catch(err){safeError(err);}});
+  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded){residentialOptions.validate();residentialOptions.prepare(confirmedProgram);}root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;planUpload.step2(uploaded);status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2,{record:true});}catch(err){safeError(err);}});
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwKeepEdit').addEventListener('click',()=>run(keepEdit));
   $('cwUseGenerated').addEventListener('click',()=>run(()=>useGenerated($('cwChoice').dataset.job)));
   $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;failedJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
-  $('cwLevel').addEventListener('change',draw);
+  $('cwLevel').addEventListener('change',()=>{draw();planUpload.review(state,packet?.projections?.[Number($('cwLevel').value)]?.level_index??0);});
   try{$('cwEngineerIds').checked=localStorage.getItem('acs_engineer_ids')==='1';}catch(e){}
   $('cwEngineerIds').addEventListener('change',()=>{
     try{localStorage.setItem('acs_engineer_ids',$('cwEngineerIds').checked?'1':'0');}catch(e){}
@@ -614,7 +619,7 @@ function mount(){
   $('cwType').addEventListener('change',projectCopy);
   $('cwApproveConfirm').addEventListener('change',syncApproval);
   $('cwApprovalFix').addEventListener('click',()=>{$('cwRoof')?.click();});
-  $('cwApprove').addEventListener('click',()=>run(async()=>{const data=await api({action:'approve',expected_head:state.head,confirmed:true,acknowledge_concept_only:true},true);await renderState(data);step(4,{record:true});status('حُفظ اعتماد النسخة. يمكنك الآن تحويلها أو تصديرها.');}));
+  $('cwApprove').addEventListener('click',()=>run(async()=>{const transcribed=state.authority?.source_transcription===true;const data=await api({action:'approve',expected_head:state.head,confirmed:true,acknowledge_concept_only:true,...(transcribed?{acknowledge_transcription:true}:{})},true);await renderState(data);step(4,{record:true});status(transcribed?TRANSCRIPTION.approved:'حُفظ اعتماد النسخة. يمكنك الآن تحويلها أو تصديرها.');}));
   $('cwLock').addEventListener('click',()=>run(async()=>{const data=await api({action:'set_room_lock',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],locked:$('cwLock').dataset.locked!=='true'},true);await renderState(data);status('حُفظ القفل في نسخة جديدة.');}));
   $('cwChatForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{
     if(pendingJob)throw new Error('تابع المهمة الحالية أولًا.');

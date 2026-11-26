@@ -51,6 +51,12 @@ class Ingress(unittest.TestCase):
         for path in list(ASYNC.SUBMIT_PATHS)+list(ASYNC.AUTH.DIRECT_PROTECTED_PATHS):
             sent,calls,_=self.invoke(path,[],prod=True)
             self.assertEqual(calls,[])
+            if path in ASYNC.RETIRED_PLAN_READS:
+                # Plan files are read only through the project's upload path (U15).
+                self.assertEqual(sent[0]['status'],410)
+                self.assertIn(b'PLAN_READ_ROUTE_RETIRED',sent[1]['body'])
+                self.assertIn('رفع مخطط جاهز'.encode(),sent[1]['body'])
+                continue
             self.assertEqual(sent[0]['status'],409)
             self.assertIn(b'PAID_WORKSPACE_REQUIRED',sent[1]['body'])
 
