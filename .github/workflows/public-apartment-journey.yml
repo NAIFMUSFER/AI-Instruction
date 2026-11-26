@@ -23,6 +23,8 @@ on:
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
       - 'tests/remediation/test_local_apartment.mjs'
+      - 'tests/remediation/test_apartment_floor_line_and_courtyard.py'
+      - 'acs_roof.py'
       - 'tests/remediation/test_guest_cutaway.mjs'
       - 'tests/remediation/test_guest_floor_plan.mjs'
       - 'tools/build_guest_apartment_plans.py'
@@ -49,6 +51,8 @@ on:
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
       - 'tests/remediation/test_local_apartment.mjs'
+      - 'tests/remediation/test_apartment_floor_line_and_courtyard.py'
+      - 'acs_roof.py'
       - 'tests/remediation/test_guest_cutaway.mjs'
       - 'tests/remediation/test_guest_floor_plan.mjs'
       - 'tools/build_guest_apartment_plans.py'
@@ -105,6 +109,7 @@ jobs:
         run: |
           PYTHONPATH=. python3 tests/remediation/test_audit_engineering_door_meshes.py
           node tests/remediation/test_local_apartment.mjs
+          python3 tests/remediation/test_apartment_floor_line_and_courtyard.py
           python3 tools/build_guest_apartment_usdz.py --check
           python3 tests/remediation/test_guest_quicklook.py
           node tests/remediation/test_guest_cutaway.mjs

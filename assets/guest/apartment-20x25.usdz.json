@@ -1,15 +1,15 @@
 {
-  "sha256": "becf0660f739cb3d6ad685d39173c6a18d5d1ba34fb64a90c750a88b06a1b94f",
-  "bytes": 3471541,
+  "sha256": "ed3ac7601964caffc04cc66882e3addd9cb1b1f98ba1c92706f489082a440ee1",
+  "bytes": 3439953,
   "verification": {
-    "sourceComponents": 1564,
-    "triangles": 18768,
+    "sourceComponents": 1550,
+    "triangles": 18600,
     "batches": 44,
-    "bytes": 3471541,
+    "bytes": 3439953,
     "bounds": [
       [
         0,
-        -0.15000000596046448,
+        -0.18000000715255737,
         0
       ],
       [

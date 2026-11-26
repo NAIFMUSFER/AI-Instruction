@@ -1210,6 +1210,15 @@ function compile(data){
   const industrial=/warehouse|industrial|factory|logistic/.test(bt);
   const def={site,wall_h:data.wall_h||3.0,wall_t:data.wall_t||0.15,industrial:industrial};
   const fh=data.floor_height||(def.wall_h+0.2);
+  /* A local apartment closes its floor line: walls stop at wall_h, the slab above
+     fills the rest of the storey and reaches the outer and courtyard wall faces
+     (half a wall beyond the room axes). Twin of acs_compiler._plate_rects. */
+  const apartmentPlate=data.meta?.acs_apartment?.schema==='acs.local-apartment/1';
+  const slabT=apartmentPlate?_pyRound(Math.max(0.15,Number(fh)-Number(def.wall_h)),6):0.15;
+  const plateOutset=apartmentPlate?Number(def.wall_t)/2:0;
+  const plateRects=rooms=>rooms.map(r=>{
+    const rc=r.rect;if(!plateOutset||!Array.isArray(rc)||rc.length!==4||rc.some(v=>!Number.isFinite(Number(v))))return rc;
+    return [Number(rc[0])-plateOutset,Number(rc[1])-plateOutset,Number(rc[2])+2*plateOutset,Number(rc[3])+2*plateOutset];});
   /* البلاطة تُقرأ من المصرِّف المعماري: نفس مصدر الحقيقة الذي تقرأه العلاقات
      والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
@@ -1259,10 +1268,10 @@ function compile(data){
        منفصلاً وبمقاس الموقع (ensureGround). التغيير عرضيّ بحت: لا مستطيل غرفة
        ولا مساحة ولا كمية ولا بصمة نموذج يتغيّر به. السياسة وسابقتها وسببها
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
-    const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
+    const _pp=__ACS_LATE.pqPlateRect(plateRects(fdef.rooms||[]),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
     (_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes)).forEach((s,k)=>
-      addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
+      addBox(grp,s[0]+s[2]/2,baseY-slabT/2,s[1]+s[3]/2,s[2],slabT,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
     const rooms=acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,'ROOMS_CAPPED','level.rooms');
     const ceilingHoles=physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening);
