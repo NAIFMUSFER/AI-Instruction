@@ -25,6 +25,10 @@ export function createPlanUpload(root,{storageKey,onError}) {
   <button id="cwSaveSource" type="button" data-mutate disabled>حفظ المخطط في المشروع</button>
   <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button><button id="cwDeleteSource" type="button" data-mutate disabled>حذف الملف من المشروع</button>
   <div id="cwFloorMap" class="cw-floor-map" hidden><h3>أي مخطط لكل دور؟</h3><p class="cw-muted">أكدت أكثر من دور: اختر لكل دور صفحة أو صورة محفوظة، بدءًا من الدور الأرضي. يُقرأ كل دور مرة واحدة ضمن الطلب نفسه.</p><div id="cwFloorRows"></div><button id="cwSaveAllPages" type="button" data-mutate hidden>حفظ صفحات الملف وربطها بالأدوار بالترتيب</button></div>
+  <fieldset id="cwSourceAxes" class="cw-source-axes"><legend>المقياس والاتجاه في الرسم</legend>
+  <label for="cwSourceScale">كيف نضبط المقياس؟</label><select id="cwSourceScale" data-mutate><option value="">اختر طريقة</option><option value="extent">حدود الرسم هي حدود الأرض (العرض × العمق أعلاه)</option><option value="known">أعرف طول عنصر واحد في الرسم</option><option value="written">الأبعاد مكتوبة على الرسم</option></select>
+  <div id="cwScaleKnown" hidden><label for="cwScaleLabel">ما العنصر؟</label><input id="cwScaleLabel" maxlength="80" autocomplete="off" placeholder="مثال: عرض المجلس" data-mutate><label for="cwScaleMeters">طوله بالمتر</label><input id="cwScaleMeters" inputmode="decimal" autocomplete="off" placeholder="مثال: 5" data-mutate></div>
+  <label for="cwSourceNorth">أين الشمال في الرسم؟</label><select id="cwSourceNorth" data-mutate><option value="">اختر الاتجاه</option><option value="up">أعلى الصفحة</option><option value="down">أسفل الصفحة</option><option value="left">يسار الصفحة</option><option value="right">يمين الصفحة</option><option value="arrow">اقرأ سهم الشمال من الرسم</option></select></fieldset>
   <label for="cwSourceMode">كيف نستخدم المخطط؟</label><select id="cwSourceMode" data-mutate><option value="preserve">قراءة التوزيع الحالي للمراجعة</option><option value="revise">اقتراح تعديلات حسب وصفي</option><option value="complete">قراءة المخطط ثم إكمال الأبواب (تصميم كامل)</option></select>
   <p class="cw-muted">راجع أبعاد الموقع والأدوار أدناه. قراءة الصورة لا تثبت المقياس أو دقة نقل جميع العناصر؛ راجع المسودة مقابل الأصل قبل اعتمادها. تُقرأ الصفحة المختارة فقط.</p></div>`;
   $('cwBriefForm').querySelector('h2').after(section);
@@ -35,7 +39,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   }
   function persist(){
     $('cwConfirmed').checked=false;
-    try{localStorage.setItem(storageKey(),JSON.stringify({id:selected,floors:floorMap,mode:$('cwStartMode').value,policy:$('cwSourceMode').value}));}catch(e){}
+    try{localStorage.setItem(storageKey(),JSON.stringify({id:selected,floors:floorMap,mode:$('cwStartMode').value,policy:$('cwSourceMode').value,scale:$('cwSourceScale').value,north:$('cwSourceNorth').value}));}catch(e){}
   }
   function selectSource(id){selected=rows.some(r=>r.id===id)?id:null;$('cwSavedSource').value=selected||'';$('cwDownloadSource').disabled=!selected;armDelete(false);}
   // Two taps: the first asks, the second deletes. Only the member who uploaded a file can delete it.
@@ -51,12 +55,13 @@ export function createPlanUpload(root,{storageKey,onError}) {
     if(!pdf)return;const current=++epoch;ready=false;sync();notice('جارٍ تجهيز الصفحة المختارة…');
     const page=await pdf.getPage(Number($('cwPdfPage').value));const vp0=page.getViewport({scale:1});
     if(!Number.isFinite(vp0.width)||!Number.isFinite(vp0.height)||vp0.width<=0||vp0.height<=0)throw new Error('أبعاد صفحة PDF غير صالحة.');
-    const vp=page.getViewport({scale:Math.min(2,1600/Math.max(vp0.width,vp0.height))});
+    const vp=page.getViewport({scale:Math.min(4,LIMITS.read/Math.max(vp0.width,vp0.height))});
     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.ceil(vp.width));canvas.height=Math.max(1,Math.ceil(vp.height));
     try{
       await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
       if(current!==epoch)return;
-      const data=canvas.toDataURL('image/jpeg',.92);preview64=data.split(',')[1];
+      // The read sees this page at its 2576 px limit; quality steps down only to fit 2 MB.
+      let data='';for(const q of [.92,.85,.75,.6]){data=canvas.toDataURL('image/jpeg',q);if(data.length*3/4<=LIMITS.preview*.97)break;}preview64=data.split(',')[1];
       $('cwSourcePreview').src=data;$('cwSourcePreview').hidden=false;ready=true;uploadId=crypto.randomUUID();
       notice('الصفحة '+$('cwPdfPage').value+' من '+pdf.numPages+' جاهزة. احفظها ثم راجع المتطلبات.');
     }finally{canvas.width=canvas.height=0;page.cleanup();sync();}
@@ -116,10 +121,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
       return new File([out],name,{type:out.type});
     }finally{canvas.width=canvas.height=0;}
   }
-  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
+  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode','cwSourceScale','cwSourceNorth','cwScaleLabel','cwScaleMeters'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
   $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';renderFloors();persist();});
   $('cwLevels')?.addEventListener('input',renderFloors);
   $('cwSourceMode').addEventListener('change',persist);
+  $('cwSourceScale').addEventListener('change',()=>{$('cwScaleKnown').hidden=$('cwSourceScale').value!=='known';persist();});
+  $('cwSourceNorth').addEventListener('change',persist);
   async function prepare(fn){opening=true;sync();try{await fn();}catch(e){ready=false;releasePreview();notice(e.message);onError(e);}finally{opening=false;sync();}}
   $('cwPlanFile').addEventListener('change',()=>prepare(chooseFile));
   $('cwPdfPage').addEventListener('change',()=>{selectSource(null);persist();prepare(renderPage);});
@@ -139,6 +146,16 @@ export function createPlanUpload(root,{storageKey,onError}) {
       select.value=floorMap[i]||'';select.addEventListener('change',()=>{floorMap[i]=select.value||null;persist();});
     }
     $('cwSaveAllPages').hidden=!pdf||n<2;
+  }
+  // The owner answers how the drawing is scaled and where north is (U5).
+  function axes(){
+    const kind=$('cwSourceScale').value,north=$('cwSourceNorth').value;
+    if(!kind)throw new Error('اختر كيف نضبط مقياس الرسم قبل القراءة: حدود الأرض، أو طول عنصر معروف، أو الأبعاد المكتوبة.');
+    if(!north)throw new Error('اختر أين الشمال في الرسم، أو اطلب قراءة سهم الشمال.');
+    if(kind!=='known')return {scale:{kind},north};
+    const label=$('cwScaleLabel').value.trim(),meters=Number($('cwScaleMeters').value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫,]/,'.'));
+    if(!label||!(meters>=0.3&&meters<=200))throw new Error('اكتب اسم العنصر المعروف وطوله بالمتر (بين 0.3 و200).');
+    return {scale:{kind,label,meters},north};
   }
   function label_(row){return row.name+(row.media_type==='application/pdf'?' · الصفحة '+row.page+' من '+row.page_count:'');}
   function mapFloor(id){const n=levels();if(n<2)return;if(!floorMap.includes(id)){const free=[...Array(n).keys()].find(i=>!floorMap[i]);if(free!==undefined)floorMap[free]=id;}renderFloors();persist();}
@@ -183,14 +200,14 @@ export function createPlanUpload(root,{storageKey,onError}) {
     sync,
     command(){
       if($('cwStartMode').value!=='upload')return {};
-      const n=levels(),mode=$('cwSourceMode').value;
-      if(n<2){if(!selected)throw new Error('احفظ المخطط أو اختر ملفًا محفوظًا قبل المتابعة.');return {source_id:selected,source_mode:mode};}
+      const n=levels(),mode=$('cwSourceMode').value,read=axes();
+      if(n<2){if(!selected)throw new Error('احفظ المخطط أو اختر ملفًا محفوظًا قبل المتابعة.');return {source_id:selected,source_mode:mode,source_read:read};}
       const floors=[...Array(n).keys()].map(i=>floorMap[i]);
       const missing=floors.findIndex(id=>!id);if(missing>=0)throw new Error('اختر مخطط '+FLOORS[missing]+' في «أي مخطط لكل دور؟» قبل المتابعة.');
       if(new Set(floors).size!==n)throw new Error('اختر صفحة مختلفة لكل دور.');
-      return {source_id:floors[0],source_mode:mode,source_read:{floors:floors.map((source_id,level)=>({source_id,level}))}};
+      return {source_id:floors[0],source_mode:mode,source_read:{...read,floors:floors.map((source_id,level)=>({source_id,level}))}};
     },
     calls(){const n=$('cwStartMode').value==='upload'?levels():0;return n?Math.min(12,2*n):null;},
-    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;floorMap=Array.isArray(saved?.floors)?saved.floors:[];renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;sync();},
+    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;floorMap=Array.isArray(saved?.floors)?saved.floors:[];renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;if(saved?.scale)$('cwSourceScale').value=saved.scale;$('cwScaleKnown').hidden=$('cwSourceScale').value!=='known';if(saved?.north)$('cwSourceNorth').value=saved.north;sync();},
   };
 }
