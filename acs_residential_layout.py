@@ -21,7 +21,7 @@ def propose(brief, requirements):
         return None
     if re.search(r'(?:غرف[ةه]|مجلس|مطبخ|صال[ةه]|حمام|درج|مصعد|ممر|مدخل)[^\n]{0,25}\d\s*[×x*]\s*\d',brief,re.I):
         return None
-    allowed={'site_width_m','site_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit'}
+    allowed={'site_width_m','site_depth_m','building_width_m','building_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit'}
     if any(r.get('metric') not in allowed for r in requirements):return None
     cp=manifest(brief,requirements)
     if not cp or {l['template'] for l in cp['envelope']['levels']}!={'residential_2'}:return None

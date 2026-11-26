@@ -317,6 +317,33 @@ def main():
                 and rj.get("error", {}).get("code") == "ACS_NOT_CONFIGURED"),
             "HTTP %s %s" % (st, tx[:120]))
 
+    # ── الدخول: «مضبوط» لا يعني «متاح» ─────────────────────────────────────
+    # /health و/ready بقيا أخضرين بينما كان كل دخولٍ يعود 503
+    # AUTH_UPSTREAM_UNAVAILABLE لأن مشروع المصادقة لا يُحَلّ اسمه. هذان الفحصان
+    # مجّانيان: لا حساب ولا رمز ولا توليد. لا يُطبَع عنوان مشروع المصادقة.
+    print("\n── sign-in upstream (no account, no token, no paid call) ──")
+    st, hd, tx, err = request(base, "/ready/auth")
+    aj, ok = as_json(tx)
+    aerr = aj.get("error") if ok and isinstance(aj, dict) else None
+    aerr = aerr if isinstance(aerr, dict) else {}
+    if st == 404 and aerr.get("code") == "ACS_NOT_FOUND":
+        note("/ready/auth", "this deployment predates the sign-in readiness route")
+    else:
+        up = aerr.get("upstream") if isinstance(aerr.get("upstream"), dict) else {}
+        chk("GET /ready/auth reports the sign-in service reachable (HTTP 200)",
+            st == 200 and ok and aj.get("ready") is True,
+            "HTTP %s %s %s" % (st, aerr.get("code") or err or "", up.get("kind") or ""))
+    st, hd, tx, err = request(base, "/v1/auth/google/start", method="POST",
+                              body={"code_challenge": "A" * 43})
+    gj, ok = as_json(tx)
+    gj = gj if ok and isinstance(gj, dict) else {}
+    gerr = gj.get("error") if isinstance(gj.get("error"), dict) else {}
+    url = gj.get("url")
+    chk("POST /v1/auth/google/start returns a Google authorization redirect",
+        st == 200 and isinstance(url, str) and url.startswith("https://")
+        and "/auth/v1/authorize?" in url and "provider=google" in url,
+        "HTTP %s %s" % (st, gerr.get("code") or err or ""))
+
     # ── عقد الأخطاء ─────────────────────────────────────────────────────────
     print("\n── error contract: every response is one valid JSON object ──")
     probes = [

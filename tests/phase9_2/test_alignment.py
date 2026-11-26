@@ -369,7 +369,10 @@ chk('the site-wide plate is gone: emitted L-plan slab covers 12 m2 and leaves it
     abs(_plate_area - 12) < 1e-6 and not _courtyard_filled)
 chk('the plate extent is computed by the shared contract, not by a second '
     'extent calculator',
-    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
+    'pqPlateRect(plateRects(fdef.rooms||[]),[0,0,site.w,site.d])' in page
+    and 'const plateRects=rooms=>rooms.map(r=>{' in page
+    and 'const rc=r.rect;if(!plateOutset' in page
+    and 'const plateOutset=apartmentPlate?Number(def.wall_t)/2:0;' in page
     and P.PLATE_POLICY['extent_source'] == 'plate_rect')
 chk('the plate policy records its predecessor and the reason for the change, '
     'so the convention did not move silently',

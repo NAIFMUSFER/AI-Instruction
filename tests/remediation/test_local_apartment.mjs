@@ -1,18 +1,48 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { apartmentDoorPairs, apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../../public/app/core/local-apartment.mjs';
+import { apartmentConfirmation, apartmentDoorPairs, apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../../public/app/core/local-apartment.mjs';
 import { stairConnections, validateStairReport } from '../../public/app/core/stairs.mjs';
 import { withDefaultRoof, carryAutoRoof } from '../../public/app/core/roof.mjs';
 import { withContextDetails } from '../../public/app/core/context-details.mjs';
 import { pqPlateRect } from '../../public/app/generated/pbr.js';
+import { compileArchitecture } from '../../public/app/core/disciplines.js';
 
 const fixture=readFileSync(new URL('../fixtures/briefs/riyadh-apartment-ar.txt',import.meta.url),'utf8');
 const sample=apartmentSample();
 const original=JSON.stringify(sample);
-const exact=apartmentFromBrief(fixture,{width:30,depth:25,levels:4});
+const exact=apartmentFromBrief(fixture);
 const near=(a,b)=>Math.abs(a-b)<0.003;
-assert.equal(createHash('sha256').update(original).digest('hex'),'25713fbe1e4ac8b93a14123b5097b18a8980b82452d400fd2d2fa00c4eb1a46e',
+{
+  // Rooms declare the ceiling light the approval gate requires, and the
+  // largest supported design still fits the context-details resource bound.
+  const largest=apartmentFromBrief('عمارة سكنية عرض المبنى ٣٢ متر وعمقه ٣٦ متر، ستة أدوار شاملة الأرضي، شقتين في كل دور');
+  for(const level of largest.levels)for(const room of largest.floors[level.template].rooms)
+    assert.ok((room.points||[]).some(point=>point.type==='light'&&point.id==='ceiling_light'),'every generated room declares its ceiling light: '+room.id);
+  assert.equal(withContextDetails(withDefaultRoof(largest)[0])[2],null,'the largest supported design keeps its context details');
+}
+{
+  // A guest project saved before these conventions still accepts an entrance
+  // or courtyard revision: no lights, role 'entry', no object repeat fields,
+  // and paired door leaves up to 1 mm apart are not manual edits.
+  const legacy=structuredClone(apartmentFromBrief(fixture));
+  let shifted=0;
+  for(const floor of Object.values(legacy.floors))for(const room of floor.rooms){
+    room.points=(room.points||[]).filter(point=>point.id!=='ceiling_light');
+    if(!room.points.length)delete room.points;
+    if(room.role==='entrance'&&room.unit_id)room.role='entry';
+    for(const obj of room.objects||[])if(obj.count===1){delete obj.count;delete obj.pitch;delete obj.dir;}
+    for(const door of room.doors||[])if(door.acs_door_pair&&shifted<5){door.offset=Math.round((door.offset+0.001)*1000)/1000;shifted++;}
+  }
+  const revised=apartmentFromRevision('خل المدخل من الشرق',legacy);
+  assert.equal(revised.meta.acs_apartment.street_edge,'E');
+  assert.ok(revised.levels.every(level=>revised.floors[level.template].rooms.every(room=>room.points?.some(point=>point.id==='ceiling_light'))));
+}
+// Re-pinned when the sample became approvable: rooms gained one ceiling light,
+// objects state count/pitch/dir, the foyer role is 'entrance' and paired door
+// offsets share one rounded centre (each moved <= 1 mm). No room rectangle moved;
+// the prebuilt USDZ was refreshed and the schematic drawings are unchanged.
+assert.equal(createHash('sha256').update(original).digest('hex'),'b1c1bf1bb2aedc5628da929888b2ebeb4505c13bec1e70a7b641ffa542eeed58',
   'the shipped sample and its prebuilt drawings/USDZ must retain their original source geometry');
 
 function outside(room,opening,step) {
@@ -164,7 +194,7 @@ const variants=[
   ['عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ.',20,25,3],
   ['أبغى عمارة سكنية، عرض المبنى ٢٠ متر وعمقه ٢٥ متر، ثلاثة أدوار شاملة الأرضي، وفي كل دور شقتين',20,25,3],
   ['أبغى عمارة عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور',24,28,4],
-  ['عمارة سكنية على شارع غربي',30,30,4],
+  ['عمارة سكنية على شارع غربي',30,30,4,{width:30,depth:30,levels:4}],
   ['عمارة سكنية طول المبنى ٢٩ متراً وعرض المبنى ٢٣ متراً، دورين',23,29,2],
   ['عمارة ٢٤×٢٨ م، أرضي وثلاثة أدوار فوقه. في كل دور شقتين',24,28,4],
   ['عمارة ٢٤×٢٨ م، أربعة أدوار شاملة الأرضي. المجموع ثماني شقق',24,28,4],
@@ -172,7 +202,7 @@ const variants=[
   ['عمارة سكنية ٣٢×٣٦ م، ستة أدوار، شقتين في كل دور',32,36,6],
   ['عمارة سكنية 23×27.5 م، دور واحد',23,27.5,1]
 ];
-for(const [txt,w,d,n] of variants) validate(apartmentFromBrief(txt,{width:30,depth:30,levels:4}),w,d,n);
+for(const [txt,w,d,n,form] of variants) validate(apartmentFromBrief(txt,form),w,d,n);
 const explicitDimensions = [
   'عمارة سكنية من ٤ أدوار، عرض المبنى ٢٤ مترًا وعمقه ٢٨ مترًا، شقتان في كل دور',
   'عمارة سكنية بطول ٢٨ مترًا وعرض ٢٤ مترًا، ٤ طوابق بإجمالي ٨ شقق',
@@ -183,7 +213,7 @@ const explicitDimensions = [
   'عمارة سكنية من ٤ أدوار، الأرض ٢٦×٣٢ م، واجهة المبنى ٢٤ م وعمق المبنى ٢٨ م'
 ];
 for(const txt of explicitDimensions) {
-  const result=apartmentFromBrief(txt,{width:20,depth:25,levels:3});
+  const result=apartmentFromBrief(txt);
   assert.deepEqual(result.site,{w:24,d:28},txt);
   assert.deepEqual([result.levels.length,result.meta.acs_apartment.units_total],[4,8],txt);
 }
@@ -239,6 +269,37 @@ for(const [direction,edge] of Object.entries({الشمال:'N',الشرق:'E',ا
     if(court) {
       assert.deepEqual(changed.meta.acs_apartment.courtyard.rect_m,[10,11.5,4,5]);
       const [roofed,,reason]=withDefaultRoof(changed); assert.equal(reason,null);
+      assert.equal(changed.meta.acs_apartment.courtyard.size_source,'client_stated');
+      // Every roof edge stretch with no deck beyond it (the courtyard opening and the
+      // facade alike) carries the 0.9 m parapet, as a whole-edge wall or a span; none
+      // crosses a neighbouring deck, and every deck keeps its source rectangle.
+      const decks=roofed.floors[roofed.levels.at(-1).template].rooms;
+      const top=changed.floors[changed.levels.at(-1).template].rooms;
+      assert.deepEqual(decks.map(deck=>deck.rect),top.map(room=>room.rect),'one deck per top-floor room, no slivers');
+      for(const deck of decks) {
+        assert.deepEqual(deck.roof_provenance.parapet_gaps,[],'no unguarded roof edge: '+deck.id);
+        assert.equal(deck.wall_h,0.9);
+        const [x,z,w,d]=deck.rect;
+        for(const edge of ['N','S','W','E']) {
+          const length=['N','S'].includes(edge)?w:d;
+          for(const f of [.031,.061,.293,.517,.739,.947,.969]) {
+            const point={N:[x+w*f,z-.02],S:[x+w*f,z+d+.02],W:[x-.02,z+d*f],E:[x+w+.02,z+d*f]}[edge];
+            const open=!decks.some(other=>other!==deck&&contains(other,point));
+            const guarded=deck.walls.includes(edge)||(deck.parapet_spans||[]).some(span=>span.edge===edge&&span.start_m<=f*length&&f*length<=span.end_m);
+            assert.equal(guarded,open,'parapet follows the open roof edge: '+deck.id+'/'+edge+'@'+f);
+          }
+        }
+      }
+      // The architectural compiler declares the opening and pierces every slab and the roof.
+      const arch=compileArchitecture(roofed), clearCourt=changed.meta.acs_apartment.courtyard.rect_m;
+      const courtVoids=arch.voids.filter(v=>v.void_type==='COURTYARD');
+      assert.deepEqual(courtVoids.map(v=>[v.level_index,v.rect,v.size_source,v.open_to_sky]),
+        roofed.levels.map(l=>[l.index,clearCourt,'client_stated',true]));
+      for(const element of [...arch.slabs,...arch.roofs]) {
+        assert.equal(element.outline_basis,'bounding_box_minus_declared_voids');
+        assert.ok(element.pieces.every(piece=>!overlaps(piece,clearCourt)),'slab or roof piece over the courtyard: '+element.id);
+        assert.ok(near(element.pieces.reduce((a,p)=>a+p[2]*p[3],0),element.outline[2]*element.outline[3]-clearCourt[2]*clearCourt[3]));
+      }
       const [detailed,,detailReason]=withContextDetails(roofed); assert.equal(detailReason,null);
       for(const level of detailed.levels) {
         const rooms=detailed.floors[level.template].rooms, clear=changed.meta.acs_apartment.courtyard.rect_m;
@@ -321,5 +382,154 @@ for(const mutate of [r=>r[1].doors[0].offset=2.01,r=>r[1].doors[0].acs_door_pair
   const edited=structuredClone(exampleClaims);mutate(edited);
   assert.equal(apartmentDoorPairs(edited).size,0,'invalid imported claim cannot suppress a leaf');
 }
+
+// Saudi phrasing: floor counts that add the ground floor, listed floors, plot
+// versus building, street width, number words and ambiguous decimals. Each was
+// read silently as a different building before (agent 03-09 phrase set).
+for(const [txt,w,d,n] of [
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاثة أدوار غير الأرضي، شقتين في كل دور',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاث أدوار بدون الأرضي',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي + دورين، شقتين بكل دور',24,28,3],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي + ٣ أدوار',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي وأول، شقتين بكل دور',24,28,2],
+  ['عمارة سكنية ٢٤×٢٨ م، أرضي وأول وثاني وثالث، شقتين بكل دور',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، عدد الأدوار أربعة، شقتين في كل دور',24,28,4],
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاث أدوار والأرضي، شقتين بكل دور',24,28,4],
+  ['عمارة سكنية واجهتها ٢٢ متر وطولها ٢٦ متر، ثلاث أدوار، شقتين بكل دور',22,26,3],
+  ['عمارة سكنية ٢٤×٢٨ على شارع عرضه ١٥ متر من الشمال، ثلاث أدوار',24,28,3],
+  ['عمارة سكنية ٢٤×٢٨، أربع أدوار، كل دور فيه شقتين، والمجموع ثمان شقق',24,28,4]
+]) validate(apartmentFromBrief(txt),w,d,n);
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين بكل دور، واجهتها جنوبية').meta.acs_apartment.street_edge,'S');
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨ على شارع عرضه ١٥ متر من الجنوب، ثلاث أدوار').meta.acs_apartment.street_edge,'S');
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، كل دور فيها شقتين','عمارة سكنية ٢٤×٢٨، أرضي وأول وثاني شقق، ومواقف أمامية','عمارة سكنية ٢٤×٢٨، عدد الأدوار ٣ شاملة الأرضي'])
+  validate(apartmentFromBrief(txt),24,28,3);
+for(const [txt,reason] of [
+  ['عمارة سكنية على قطعة ٢٠×٣٠، ثلاث أدوار، شقتين في كل دور','الأرض'],
+  ['أبغى عمارة سكنية في أرض صكها ٢٠ في ٣٠ متر، ثلاث أدوار','الأرض'],
+  ['أبغى عمارة سكنية مقاسها عشرين في خمسة وعشرين متر، ثلاث أدوار، شقتين بكل دور','بالأرقام'],
+  ['عمارة سكنية عرض المبنى 22,5 م وعمقه 26 م، 3 أدوار','بفاصلة'],
+  ['عمارة سكنية ٢٤×٢٨ م، ثلاث أدوار فيها تسع شقق','9 شقق'],
+  ['عمارة سكنية ٢٤×٢٨، ثلاث أدوار، شقتين في كل دور، والمجموع عشر شقق','10 شقق'],
+  ['عمارة سكنية ٢٤×٢٨ م فيها ٤ شقق','4 شقق'],
+  ['عمارة تجارية سكنية ٢٤×٢٨، الأرضي محلات وفوقه دورين شقق','تجاري'],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، الأرضي مواقف سيارات والشقق فوق','مواقف'],
+  ['عمارة سكنية ٢٤×٢٨ م فيها ٤ شقق، ثلاث أدوار','4 شقق']
+]) assert.throws(()=>apartmentFromBrief(txt),
+  error=>error.code==='LOCAL_APARTMENT_UNSUPPORTED'&&error.message.includes(reason),txt);
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون ملحق ولا منور','عمارة سكنية ٢٠×٢٥، أرضي ودورين وسطح، شقتين بكل دور'])
+  assert.ok(apartmentFromBrief(txt),'an excluded or default-roof feature does not block the plan: '+txt);
+// Missing building size or floors is asked, never filled from a prefilled default (owner decision 1).
+for(const [txt,missing,phrase] of [
+  ['أبغى عمارة سكنية',['width','depth','levels'],'كم عرض المبنى وعمقه بالمتر، وكم عدد أدواره شاملة الأرضي؟'],
+  ['أبغى عمارة سكنية ٣ أدوار، شقتين بكل دور',['width','depth'],'كم عرض المبنى وعمقه'],
+  ['أبغى عمارة سكنية عرضها ٢٤ متر، ٣ أدوار',['depth'],'كم عمق المبنى'],
+  ['عمارة سكنية عمقها ٢٨ متر، أربعة أدوار',['width'],'كم عرض المبنى'],
+  ['عمارة سكنية على قطعة ٢٠×٣٠، ثلاث أدوار، شقتين في كل دور',['width','depth'],'بعد الارتدادات'],
+  ['عمارة سكنية ٢٤×٢٨ م فيها ٤ شقق',['levels'],'كم عدد الأدوار شاملة الأرضي']
+]) assert.throws(()=>apartmentFromBrief(txt),error=>error.code==='LOCAL_APARTMENT_UNSUPPORTED'&&error.question===true&&
+  JSON.stringify(error.missing)===JSON.stringify(missing)&&error.message.includes(phrase),txt);
+// A refusal still comes before a question.
+assert.throws(()=>apartmentFromBrief('عمارة سكنية لها قبو'),error=>!error.question&&error.message.includes('قبو'));
+assert.throws(()=>apartmentFromBrief('عمارة سكنية ثمانية أدوار'),error=>!error.question&&error.message.includes('ستة أدوار'));
+// Form values are the visitor's own: they complete a brief, a disagreement is asked.
+validate(apartmentFromBrief('عمارة سكنية، شقتين في كل دور',{width:'20',depth:'25',levels:'3'}),20,25,3);
+for(const blank of [{},{width:'',depth:'',levels:''},{width:0,depth:null,levels:undefined}])
+  assert.throws(()=>apartmentFromBrief('عمارة سكنية',blank),error=>error.question===true,'empty fields are not values');
+// Text and field disagree: never settled silently. Every disagreement is offered; the visitor's pick is used.
+assert.throws(()=>apartmentFromBrief('عمارة سكنية ٢٠×٢٥ م، ٣ أدوار',{width:30,levels:4}),error=>error.question===true&&
+  JSON.stringify(error.conflicts.map(c=>[c.key,c.text,c.form]))===JSON.stringify([['width',20,30],['levels',3,4]])&&error.message.includes('في الوصف 20 م، وفي الحقل 30 م'));
+let picked=apartmentFromBrief('عمارة سكنية ٢٤×٢٨ م، ٣ أدوار',{levels:4,prefer:{levels:'form'}});
+validate(picked,24,28,4);
+assert.match(apartmentConfirmation(picked).rows.find(row=>row.key==='levels').note,/اخترتَه حين اختلف الوصف عن الحقل/);
+validate(apartmentFromBrief('عمارة سكنية ٢٤×٢٨ م، ٣ أدوار',{levels:4,prefer:{levels:'text'}}),24,28,3);
+assert.throws(()=>apartmentFromBrief('عمارة سكنية ٢٤×٢٨ م، ٣ أدوار',{levels:4,prefer:{levels:'other'}}),error=>error.conflicts?.length===1,'only text or form is a pick');
+assert.throws(()=>apartmentFromBrief('عمارة سكنية على أرض ٢٥×٣٠ م، والمبنى ٢٠×٢٥ م، ثلاث أدوار',{plotWidth:26,plotDepth:30}),
+  error=>JSON.stringify(error.conflicts.map(c=>[c.key,c.text,c.form]))===JSON.stringify([['plot','25 × 30','26 × 30']]));
+assert.deepEqual(apartmentFromBrief('عمارة سكنية على أرض ٢٥×٣٠ م، والمبنى ٢٠×٢٥ م، ثلاث أدوار',{plotWidth:26,plotDepth:30,prefer:{plot:'form'}})
+  .meta.acs_apartment.understanding.plot,{w:26,d:30,source:'form'});
+// Round 2 phrasing (independent check): ground floor added, and the deed is the plot.
+for(const txt of ['عمارة سكنية ٢٤×٢٨ م، ثلاثة أدوار بالإضافة للأرضي، شقتين في كل دور','عمارة سكنية ٢٤×٢٨ م مكونة من ٣ أدوار والأرضي، شقتين في كل دور',
+  'عمارة سكنية ٢٤×٢٨ م، ثلاثة أدوار علاوة على الدور الأرضي'])
+  validate(apartmentFromBrief(txt),24,28,4);
+assert.throws(()=>apartmentFromBrief('عمارة سكنية، الصك ٢٠×٣٠ م، ثلاث أدوار'),error=>error.question===true&&error.message.includes('ذكرت الأرض فقط'));
+validate(apartmentFromBrief('عمارة سكنية، الصك ٢٥×٣٠ م، ثلاث أدوار',{width:20,depth:25}),20,25,3);
+// Requests the local generator cannot honour are listed before drawing, never dropped (owner, round 2).
+const listed=apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين في كل دور، كل شقة فيها أربع غرف نوم ومجلس حريم، مع منور وملحق علوي وغرفة خادمة');
+validate(listed,24,28,3);
+assert.deepEqual(listed.meta.acs_apartment.understanding.not_drawn.map(item=>item.key),['bedrooms','lightwell','annex','ladies_majlis','staff_room']);
+const listedCard=apartmentConfirmation(listed);
+assert.equal(listedCard.notDrawn.length,5);assert.match(listedCard.notDrawn[0],/طلبت 4، ويرسم المخطط المحلي 3/);
+assert.ok(listed.meta.acs_apartment.assumptions.some(line=>line.startsWith('لم يُرسم لأنه غير مدعوم في المولّد المحلي بعد')));
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين بكل دور، كل شقة غرفتين نوم','عمارة سكنية ٢٤×٢٨، ٣ أدوار، أربع غرف نوم'])
+  assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn.map(item=>item.key),['bedrooms'],txt);
+for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون ملحق ولا منور ولا مجلس حريم','عمارة سكنية ٢٤×٢٨، ٣ أدوار، كل شقة ثلاث غرف نوم'])
+  assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn,[],txt);
+// Round 3: elevator, usable roof and separate entrances are listed, and any recognised
+// requirement word the local plan does not represent is reported as not applied.
+for(const [txt,keys] of [
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون مصعد',['no_elevator']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، مصعدين',['two_elevators']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، سطح مستخدم',['usable_roof']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، مدخل منفصل لكل شقة',['separate_entrances']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، ومواقف أمامية وارتداد ٣ م',['unmapped']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون مواقف',[]]
+]) assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn.map(item=>item.key),keys,txt);
+assert.match(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، ومواقف أمامية وارتداد ٣ م')).notDrawn[0],/لم يُطبَّق: مواقف السيارات، الارتدادات/);
+assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب والمواقف قدام',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),
+  error=>error.message.includes('مواقف السيارات'),'a revision cannot drop an unmapped request');
+// Round 4 (Buraidah brief): roof rooms and structures are listed, and a land size in the text is shown.
+const buraidah=apartmentFromBrief('عمارة سكنية في بريدة ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور، وغرفة غسيل على السطح وغرفة سائق على السطح وخزان علوي ومظلة');
+assert.deepEqual(buraidah.meta.acs_apartment.understanding.not_drawn.map(item=>item.key),['roof_structures']);
+assert.match(apartmentConfirmation(buraidah).notDrawn[0],/^على السطح: غرفة غسيل، غرفة سائق، خزان علوي، مظلة/);
+assert.deepEqual(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاث أدوار، غرفة سائق وخزان أرضي').meta.acs_apartment.understanding.not_drawn.map(item=>item.key),
+  ['staff_room','unmapped'],'rooms and tanks elsewhere keep their own rows');
+assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب وغرفة غسيل على السطح',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),error=>error.message.includes('غرفة غسيل'));
+for(const [txt,form,value] of [
+  ['عمارة سكنية عرض الأرض ٢٥ م وعمق الأرض ٣٠ م، والمبنى ٢٠×٢٥، ثلاث أدوار',{},'25 × 30 م'],
+  ['عمارة سكنية، الأرض عرضها ٢٥ وطولها ٣٠، عرض المبنى ٢٠ م وعمقه ٢٥ م، ثلاث أدوار',{},'25 × 30 م'],
+  ['عمارة سكنية مساحة الأرض ٧٥٠ م²، عرض المبنى ٢٠ م وعمقه ٢٥ م، ثلاث أدوار',{},'مساحتها 750 م²'],
+  ['عمارة سكنية مساحة الأرض ٧٥٠ م²، ثلاث أدوار',{width:20,depth:25,plotWidth:25,plotDepth:30},'25 × 30 م']
+]) {
+  const model=apartmentFromBrief(txt,form);validate(model,20,25,3);
+  assert.equal(apartmentConfirmation(model).rows.find(row=>row.key==='plot')?.value,value,txt);
+}
+// «ثلاث أدوار مع الأرضي» states the ground floor: not an assumption.
+const withGround=Object.fromEntries(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور')).rows.map(row=>[row.key,row]));
+assert.equal(withGround.levels.note,'شاملة الأرضي كما ذكرت');assert.equal(withGround.levels.assumed,false);assert.equal(withGround.levels.value,'3 أدوار: الأرضي ودوران فوقه');
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاثة أدوار شاملة للأرضي').meta.acs_apartment.understanding.levels.ground,'stated_inclusive');
+assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب ومنور في النص',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),
+  error=>error.message.includes('منور'),'a revision has no card, so it still refuses');
+// Plot and building are separate (owner decision 3): plot 25×30 with building 20×25 draws 20×25.
+for(const [txt,form] of [
+  ['عمارة سكنية على أرض ٢٥×٣٠ م، والمبنى ٢٠×٢٥ م، ثلاث أدوار',{}],
+  ['عندي قطعة أرض ٢٥×٣٠ م، أبغى عليها عمارة سكنية أبعادها ٢٠×٢٥، ثلاث أدوار',{}],
+  ['عمارة سكنية على قطعة ٢٥×٣٠، ثلاث أدوار',{width:20,depth:25}],
+  ['عمارة سكنية، ثلاث أدوار',{width:20,depth:25,plotWidth:25,plotDepth:30}]
+]) {
+  const model=apartmentFromBrief(txt,form);validate(model,20,25,3);
+  assert.deepEqual(model.meta.acs_apartment.understanding.plot,{w:25,d:30,source:form.plotWidth?'form':'text'},txt);
+  assert.deepEqual(apartmentConfirmation(model).rows.find(row=>row.key==='plot').value,'25 × 30 م',txt);
+}
+assert.throws(()=>apartmentFromBrief('عمارة سكنية، ثلاث أدوار',{width:26,depth:25,plotWidth:25,plotDepth:30}),error=>error.message.includes('أكبر من الأرض'));
+// The confirmation card says how the ground floor was counted and marks every assumption.
+const cardOf=(txt,form)=>Object.fromEntries(apartmentConfirmation(apartmentFromBrief(txt,form)).rows.map(row=>[row.key,row]));
+let card=cardOf('عمارة سكنية ٢٤×٢٨ م، ثلاثة أدوار غير الأرضي، شقتين في كل دور');
+assert.equal(card.levels.value,'4 أدوار: الأرضي و3 أدوار فوقه');assert.equal(card.levels.note,'أضفنا الأرضي إلى العدد الذي ذكرته');assert.equal(card.levels.assumed,false);
+assert.equal(card.building.value,'عرض 24 م × عمق 28 م');assert.equal(card.plot,undefined);
+assert.equal(card.units.assumed,false);assert.equal(card.entrance.assumed,true);assert.equal(card.entrance.value,'من الشمال');assert.equal(card.courtyard.value,'لا يوجد');
+card=cardOf('أبغى عمارة سكنية، عرض المبنى ٢٠ متر وعمقه ٢٥ متر، ثلاثة أدوار، والمدخل جنوبي، وبوسطها فناء مفتوح');
+assert.equal(card.levels.assumed,true,'a count that does not mention the ground floor is read as including it, and says so');
+assert.equal(card.entrance.assumed,false);assert.equal(card.entrance.value,'من الجنوب');
+assert.equal(card.units.assumed,true);assert.equal(card.courtyard.assumed,true);assert.equal(card.courtyard.value,'فناء مفتوح للسماء 4 × 5 م');
+card=cardOf('عمارة سكنية، شقتين في كل دور',{width:20,depth:25,levels:2});
+assert.equal(card.levels.note,'من حقل عدد الأدوار (شاملة الأرضي)');assert.equal(card.building.note,'من الحقول');assert.equal(card.levels.value,'دوران: الأرضي ودور واحد فوقه');
+assert.equal(apartmentConfirmation(apartmentSample()),null,'the shipped sample is not a confirmed brief');
+// Reference case 4 wording, and Saudi imperatives that must not be dropped from a revision.
+const saudiBase=apartmentFromBrief('عمارة سكنية مقاس المبنى ٢٢ في ٢٦ متر، أرضي ودورين، كل دور فيه شقتين');
+const east=apartmentFromRevision('غيّر المدخل وخله من الشرق',saudiBase);
+validate(east,22,26,3);assert.equal(east.meta.acs_apartment.street_edge,'E');
+assert.ok(!east.meta.acs_apartment.assumptions.some(line=>line.startsWith('لم تحدد جهة المدخل')),'a chosen entrance is no longer an assumption');
+for(const request of ['خل المدخل من الجنوب وزيد دور','خل المدخل جنوبي وضيف دور ثالث فوق','خل المدخل من الجنوب ونقص شقة'])
+  assert.throws(()=>apartmentFromRevision(request,saudiBase),error=>error.code==='LOCAL_APARTMENT_UNSUPPORTED'&&error.message.includes('افصل'),request);
 assert.equal(JSON.stringify(sample),original,'other local creations leave existing drafts untouched');
 console.log('PASS local apartment: four Arabic briefs, physical cardinal entries, open courtyard and roof, shared circulation, paired apertures, stairs, immutable default source and guarded revisions');

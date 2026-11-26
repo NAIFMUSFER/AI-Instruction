@@ -164,7 +164,10 @@ class GuestRoofParity(unittest.TestCase):
         cases.append({'id':'untrusted-caveat','op':'disclosure','args':[bad,bad['levels'][-1]]})
         results=self.compare(cases);report=results[2]['value'][1]
         self.assertEqual(report['deck_area_m2'],12)
-        self.assertEqual(report['parapet_gaps'],[{'room_id':'bar','edge':'S','open_length_m':2}])
+        # With a parapet the bar's open stretch is guarded by a span; an open deck still discloses it.
+        self.assertEqual(report['parapet_gaps'],[])
+        self.assertEqual(results[2]['value'][0]['floors']['roof']['rooms'][0]['parapet_spans'],[{'edge':'S','start_m':2,'end_m':4}])
+        self.assertEqual(results[0]['value'][1]['parapet_gaps'],[{'room_id':'bar','edge':'S','open_length_m':2}])
         self.assertEqual(results[0]['value'][1]['parapet_length_m'],0)
         self.assertEqual(results[-1]['value']['gap_coverage'],'NOT_VERIFIED')
 

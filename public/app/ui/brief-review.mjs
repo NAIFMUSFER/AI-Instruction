@@ -16,7 +16,20 @@ const briefStarters = {
 // Owns the existing requirements form only. No network, model or approval access.
 export function createBriefEditor(root,{storageKey,onError}) {
   const $=id=>root.querySelector('#'+id);
-  const fields={site_width_m:'cwWidth',site_depth_m:'cwDepth',level_count:'cwLevels'};
+  // The land (site) and the building are separate sizes (owner decision 3).
+  const fields={site_width_m:'cwWidth',site_depth_m:'cwDepth',level_count:'cwLevels',building_width_m:'cwBldWidth',building_depth_m:'cwBldDepth'};
+  const optional=new Set(['building_width_m','building_depth_m']);
+  // Building width and depth sit beside the land fields; created here so the
+  // workspace shell markup stays unchanged.
+  const buildingRow=document.createElement('div');
+  buildingRow.className='cw-fields';buildingRow.id='cwBuildingFields';
+  for(const [id,label] of [['cwBldWidth','عرض المبنى (م)'],['cwBldDepth','عمق المبنى (م)']]){
+    const cell=document.createElement('div'),caption=document.createElement('label'),field=document.createElement('input');
+    caption.htmlFor=id;caption.textContent=label;
+    Object.assign(field,{id,type:'number',min:'0.1',step:'any',placeholder:'بحجم الأرض'});
+    cell.append(caption,field);buildingRow.append(cell);
+  }
+  $('cwLevels').closest('.cw-fields').after(buildingRow);
   let analysis=null,savedRequirements=[];
   function el(tag,text,parent,cls){const node=document.createElement(tag);if(text!=null)node.textContent=text;if(cls)node.className=cls;if(parent)parent.append(node);return node;}
   const brief=$('cwBrief');
@@ -100,10 +113,11 @@ export function createBriefEditor(root,{storageKey,onError}) {
   $('cwBrief').after(read,panel);
 
   function rows(){return [...$('cwRequirements').children].map(row=>({metric:row.querySelector('select').value,role:row.querySelector('[data-role]').value,expected:row.querySelector('[data-value]').value}));}
-  function input(){return {brief:$('cwBrief').value,type:$('cwType').value,width:$('cwWidth').value,depth:$('cwDepth').value,levels:$('cwLevels').value,rows:rows(),savedRequirements};}
+  function input(){const residential=$('cwType').value==='residential';return {brief:$('cwBrief').value,type:$('cwType').value,width:$('cwWidth').value,depth:$('cwDepth').value,levels:$('cwLevels').value,
+    buildingWidth:residential?$('cwBldWidth').value:'',buildingDepth:residential?$('cwBldDepth').value:'',rows:rows(),savedRequirements};}
   function draft(){
     const data=input();
-    try{localStorage.setItem(storageKey(),JSON.stringify({brief:data.brief,type:data.type,w:data.width,d:data.depth,levels:data.levels,rows:data.rows,savedRequirements,starterFields:[...linkedFields]}));}catch(e){}
+    try{localStorage.setItem(storageKey(),JSON.stringify({brief:data.brief,type:data.type,w:data.width,d:data.depth,levels:data.levels,bw:$('cwBldWidth').value,bd:$('cwBldDepth').value,rows:data.rows,savedRequirements,starterFields:[...linkedFields]}));}catch(e){}
     $('cwConfirmed').checked=false;
   }
   function add(data={}){
@@ -123,7 +137,13 @@ export function createBriefEditor(root,{storageKey,onError}) {
   }
   function showQuestions(){
     const items=[...(analysis?.questions||[])];
-    for(const [metric,id] of Object.entries(fields))if($(id).value==='')items.push('ما '+metricLabels[metric]+'؟ القيمة غير محددة.');
+    const residential=$('cwType').value==='residential';
+    $('cwBuildingFields').hidden=!residential;
+    for(const [metric,id] of Object.entries(fields)){
+      if($(id).value!=='')continue;
+      if(!optional.has(metric))items.push('ما '+metricLabels[metric]+'؟ القيمة غير محددة.');
+      else if(residential&&metric==='building_width_m')items.push('ما عرض المبنى وعمقه بعد الارتدادات؟ إن تركتهما فارغين فسيُرسم المبنى بحجم الأرض كاملة.');
+    }
     sources.replaceChildren();
     try{
       const p=buildBriefProgram(input());
@@ -184,10 +204,12 @@ export function createBriefEditor(root,{storageKey,onError}) {
       if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
         $('cwBrief').value=typeof saved.brief==='string'?saved.brief:'';$('cwType').value=saved.type||'residential';
         $('cwWidth').value=saved.w??'';$('cwDepth').value=saved.d??'';$('cwLevels').value=saved.levels??'';
+        $('cwBldWidth').value=saved.bw??'';$('cwBldDepth').value=saved.bd??'';
         savedRequirements=Array.isArray(saved.savedRequirements)?saved.savedRequirements:[];
         for(const r of (Array.isArray(saved.rows)?saved.rows:[]).slice(0,97))if(r&&typeof r==='object')add(r);
       }else if(data?.brief){
         $('cwBrief').value=data.brief;savedRequirements=data.requirements||[];
+        $('cwBldWidth').value='';$('cwBldDepth').value='';
         for(const r of savedRequirements){const id=fields[r.metric];if(id)$(id).value=r.expected??'';else add(r);}
         if(typology==='warehouse')$('cwType').value='warehouse';
       }

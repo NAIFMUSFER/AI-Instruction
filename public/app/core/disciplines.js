@@ -69,6 +69,36 @@ function projectArchitecturalLevel(arch,levelIndex){
     unknown_dimensions:out.dimensions.filter(d=>d.source!=='model').length};
   return out; }
 
+/* Open-to-sky courtyards declared by the model (acs.courtyard/1). Twin of
+   acs_arch._declared_courtyards: clear rect between wall faces, void on axes. */
+const _A_COURT_SOURCES=['client_stated','default_assumption','partly_default_assumption'];
+function _aDeclaredCourtyards(building){
+  const meta=(building.meta||{}).acs_apartment;
+  const court=(meta&&typeof meta==='object'&&!Array.isArray(meta))?meta.courtyard:null;
+  if(!court||typeof court!=='object'||Array.isArray(court)||court.schema!=='acs.courtyard/1'||court.open_to_sky!==true) return [];
+  const rects=[];
+  for(const key of ['rect_m','footprint_void_m']){
+    const r=court[key];
+    if(!Array.isArray(r)||r.length!==4||r.some(v=>typeof v!=='number'||!Number.isFinite(v))||r[2]<=0||r[3]<=0) return [];
+    rects.push(r.map(Number)); }
+  const source=court.size_source;
+  return [{clear:rects[0],void:rects[1],size_source:_A_COURT_SOURCES.includes(source)?source:'not_recorded'}]; }
+function _aOverlapArea(a,b){
+  const ox=Math.min(a[0]+a[2],b[0]+b[2])-Math.max(a[0],b[0]);
+  const oz=Math.min(a[1]+a[3],b[1]+b[3])-Math.max(a[1],b[1]);
+  return Math.max(0,ox)*Math.max(0,oz); }
+function _aRectMinus(rect,holes){
+  let pieces=[rect.slice()];
+  holes.forEach(h=>{
+    const kept=[];
+    pieces.forEach(p=>{
+      const x0=p[0],z0=p[1],x1=p[0]+p[2],z1=p[1]+p[3];
+      const hx0=Math.max(x0,h[0]),hz0=Math.max(z0,h[1]),hx1=Math.min(x1,h[0]+h[2]),hz1=Math.min(z1,h[1]+h[3]);
+      if(hx1-hx0<=_A_EPS||hz1-hz0<=_A_EPS){kept.push(p);return;}
+      [[x0,z0,x1,hz0],[x0,hz1,x1,z1],[x0,hz0,hx0,hz1],[hx1,hz0,x1,hz1]].forEach(([a,b,c,d])=>{
+        if(c-a>_A_EPS&&d-b>_A_EPS)kept.push([_aq(a),_aq(b),_aq(c-a),_aq(d-b)]); }); });
+    pieces=kept; });
+  return pieces; }
 function compileArchitecture(building,buildingId,position,rotationDeg){
   const bid=buildingId||'bld_0';
   const levels=_aLevels(building,bid);
@@ -83,6 +113,7 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
     levels:levels, walls:[], openings:[], slabs:[], voids:[],
     ceilings:[], roofs:[], cores:[], spaces:[], envelope:null,
     approximations:[], issues:[]};
+  const courtyards=_aDeclaredCourtyards(building), courtyardVoids=[];
   levels.forEach(lvl=>{
     const rooms=_aRoomsOf(building,lvl.template,bid);
     const rects=[], unsupported=[], allRects=[];
@@ -142,17 +173,39 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
           op.host_status=r[1]; op.host_note=r[2];
           if(r[0]) r[0].openings.push(op.id);
           out.openings.push(op); }); }); });
+    /* A declared open-to-sky courtyard pierces this level's slab (and the roof)
+       unless a space now occupies it, which is reported rather than hidden. */
+    const openCourts=[];
+    courtyards.forEach(court=>{
+      if(allRects.some(rc=>_aOverlapArea(rc,court.clear)>_A_EPS)){
+        out.issues.push({code:'COURTYARD_OCCUPIED', subject:lvl.id}); return; }
+      openCourts.push(court);
+      const [x,z,w,d]=court.clear;
+      courtyardVoids.push({id:lvl.id+'.courtyard_void', type:'FLOOR_OPENING', void_type:'COURTYARD',
+        building_id:bid, level_id:lvl.id, level_index:lvl.index,
+        core_id:null, core_type:null, rect:[x,z,w,d],
+        footprint_void_rect:court.void.slice(), open_to_sky:true,
+        clear_width_m:w, clear_depth_m:d, clear_area_m2:_aq(w*d),
+        size_source:court.size_source, footprint_source:'declared_courtyard',
+        note:'open to the sky through every slab and the roof; not a structural design'}); });
     if(bbox){
       const slabT=(building.slab_t===undefined)?null:building.slab_t;
-      out.slabs.push({id:lvl.id+'.slab', type:'FLOOR_SLAB', building_id:bid,
+      const outline=[bbox[0],bbox[1],bbox[2]-bbox[0],bbox[3]-bbox[1]];
+      const slab={id:lvl.id+'.slab', type:'FLOOR_SLAB', building_id:bid,
         level_id:lvl.id, level_index:lvl.index,
-        outline:[bbox[0],bbox[1],bbox[2]-bbox[0],bbox[3]-bbox[1]],
+        outline:outline,
         outline_basis:'bounding_box_of_spaces',
         elevation_m:lvl.elevation_m, elevation_source:lvl.elevation_source,
         thickness_m:_aVal(slabT,ARCH_DEFAULTS.slab_thickness_m,
           (slabT!==null&&slabT!==undefined)?'imported':'system_default'),
-        structural:false, note:'architectural slab only — not a structural design'});
-      const covered=rects.reduce((s,r)=>s+r[2]*r[3],0);
+        structural:false, note:'architectural slab only — not a structural design'};
+      if(openCourts.length){
+        /* outline stays the extent; the slab itself is only its pieces. */
+        slab.outline_basis='bounding_box_minus_declared_voids';
+        slab.pieces=_aRectMinus(outline,openCourts.map(c=>c.clear));
+        slab.void_ids=[lvl.id+'.courtyard_void']; }
+      out.slabs.push(slab);
+      const covered=rects.reduce((s,r)=>s+r[2]*r[3],0)+openCourts.reduce((s,c)=>s+c.void[2]*c.void[3],0);
       if(covered<(bbox[2]-bbox[0])*(bbox[3]-bbox[1])-1e-6)
         out.approximations.push({level_id:lvl.id, reason:'SLAB_OUTLINE_IS_BOUNDING_BOX',
           detail:'spaces do not tile the level footprint; the slab outline is their '
@@ -163,7 +216,12 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
         outline:out.slabs.length?out.slabs[out.slabs.length-1].outline:null,
         elevation_m:lvl.elevation_m,
         source:lvl.auto_added?'system_default':'imported',
-        occupied_floor:false, note:'a roof level is never an occupied floor'}); }
+        occupied_floor:false, note:'a roof level is never an occupied floor'});
+      const last=out.slabs.length?out.slabs[out.slabs.length-1]:null;
+      if(last&&last.pieces){
+        const roof=out.roofs[out.roofs.length-1];
+        roof.outline_basis='bounding_box_minus_declared_voids';
+        roof.pieces=last.pieces.map(p=>p.slice()); roof.void_ids=last.void_ids.slice(); } }
     else {
       rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
         const rc=_aRect(room);
@@ -206,6 +264,7 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
       vn+=1; });
     if(core.position_source!=='imported')
       out.issues.push({code:'CORE_POSITION_NOT_STATED', subject:core.id}); });
+  courtyardVoids.forEach(v=>out.voids.push(v));
   const ext=out.walls.filter(w=>w.exposure==='exterior');
   const extOpen=out.openings.filter(o=>ext.some(w=>w.openings.indexOf(o.id)>=0));
   out.envelope={id:bid+'.envelope', type:'ENVELOPE', building_id:bid,

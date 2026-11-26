@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {apartmentFromBrief,apartmentFromRevision,apartmentSample} from '../../public/app/core/local-apartment.mjs';
 import {resolveStairGeometry,stairConnections} from '../../public/app/core/stairs.mjs';
 import {renderGuestFloorSVG} from '../../public/app/ui/guest-floor-plan.mjs';
+import {withDefaultRoof} from '../../public/app/core/roof.mjs';
 
 const level={index:2,template:'same',name:'الدور الثاني'};
 const model={levels:[level],meta:{north:'-Z',acs_apartment:{street_edge:'N'}}, floors:{same:{rooms:[
@@ -147,5 +148,12 @@ try {
     assert.equal(JSON.stringify(building),serialized, 'every-floor courtyard drawing must preserve source geometry');
   }
   assert.ok(initial.levels.every(level=>!initial.floors[level.template].courtyards), 'a courtyard revision preserves the prior project');
+  // The roof plan shows the courtyard opening too, labelled as open and guarded.
+  const [roofed]=withDefaultRoof(withCourt), roofLevel=roofed.levels.find(level=>level.kind==='roof');
+  const roofSheet=renderGuestFloorSVG(api.visFloorPlan(api.compileArchitecture(roofed,'bld_0',null,0),roofLevel.index,'TECHNICAL','bld_0'),roofed);
+  const [,,rcw,rcd]=roofed.meta.acs_apartment.courtyard.rect_m;
+  assert.ok(roofSheet.includes('data-courtyard-id="central_courtyard"')&&roofSheet.includes(`data-courtyard-width-m="${rcw}" data-courtyard-depth-m="${rcd}"`),'roof plan draws the opening');
+  assert.ok(roofSheet.includes('فناء مفتوح'),'roof plan labels the opening «فناء مفتوح»');
+  assert.ok(!renderGuestFloorSVG(api.visFloorPlan(api.compileArchitecture(withDefaultRoof(initial)[0],'bld_0',null,0),4,'TECHNICAL','bld_0'),withDefaultRoof(initial)[0]).includes('data-courtyard-id='),'no opening on a roof without a courtyard');
 } finally { rmSync(work,{recursive:true,force:true}); }
 console.log('PASS apartment JSON and every-floor courtyard plans preserve source, authored IDs, measured clear openings and actual orientation');

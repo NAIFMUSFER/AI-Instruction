@@ -51,6 +51,31 @@ class LayoutFallback(unittest.TestCase):
                     self.assertTrue(any(o['edge']==edge for o in lobby['doors']))
                     self.assertTrue(all(r.get('core_id') for r in b['floors']['residential_2']['rooms'] if r['role'] in {'stairs','elevator'}))
 
+    def test_confirmed_building_size_is_the_envelope_inside_a_larger_plot(self):
+        # Owner decision 3: plot 25x30 with a confirmed 20x25 building draws 20x25.
+        rows=program()
+        for r in rows:
+            if r['metric']=='site_width_m':r['expected']=25
+            if r['metric']=='site_depth_m':r['expected']=30
+        rows+= [{'id':'bw','metric':'building_width_m','expected':20,'confirmed':True,'source':'inferred'},
+                {'id':'bd','metric':'building_depth_m','expected':25,'confirmed':True,'source':'inferred'}]
+        brief='عمارة على أرض 25×30 والمبنى 20×25. جهة الشارع: شمال'
+        cp=manifest(brief,rows)
+        self.assertEqual(cp['envelope']['site'],{'w':20,'d':25})
+        self.assertEqual(cp['envelope']['meta']['acs_plot'],{'w':25,'d':30})
+        b=propose(brief,rows)
+        self.assertIsNotNone(b);self.assertEqual(b['site'],{'w':20,'d':25})
+        rooms=[r for f in b['floors'].values() for r in f['rooms']]
+        self.assertLessEqual(max(r['rect'][0]+r['rect'][2] for r in rooms),20+1e-9)
+        self.assertLessEqual(max(r['rect'][1]+r['rect'][3] for r in rooms),25+1e-9)
+        self.assertEqual(_program(b,brief,rows),[])
+        # The land must contain the building, and the building must be the envelope.
+        larger=copy.deepcopy(b);larger['site']={'w':26,'d':25}
+        codes={(i['code'],i.get('requirement_id')) for i in _program(larger,brief,rows)}
+        self.assertIn(('REQUIREMENT_MISMATCH','bw'),codes);self.assertIn(('REQUIREMENT_MISMATCH','0'),codes)
+        oversized=copy.deepcopy(rows);next(r for r in oversized if r['id']=='bw')['expected']=26
+        self.assertIsNone(manifest(brief,oversized),'a building wider than its land is not planned')
+
     def test_fallback_is_not_used_to_override_special_constraints_or_infeasible_program(self):
         rows=program()
         for brief in ['غرفة نوم 5×4 متر','درج 3×5 متر','عمارة مع منور','عمارة بغرفة ماستر','عمارة مع ارتداد 3 متر']:

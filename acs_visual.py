@@ -311,6 +311,21 @@ def _obj(oid, kind, layer, geom, material_id, provenance, **meta):
 
 
 # --------------------------------------------------- أجسام المعماري -------
+def _footprints(e):
+    """(id, rect) pairs a slab or roof really covers.
+
+    An element that declares ``pieces`` (an outline minus declared voids, such
+    as a courtyard open to the sky) covers only those pieces; ``outline`` stays
+    its bounding extent. Elements without pieces keep their own id and outline.
+    """
+    pieces = e.get("pieces")
+    if isinstance(pieces, list):
+        return [("%s.piece_%d" % (e["id"], k), list(p)) for k, p in enumerate(pieces)
+                if isinstance(p, (list, tuple)) and len(p) == 4
+                and all(_num(v) is not None for v in p)]
+    return [(e["id"], e.get("outline"))]
+
+
 def _arch_objects(arch, transform, bid, theme, overrides, mode):
     out = []
     if not arch:
@@ -369,19 +384,19 @@ def _arch_objects(arch, transform, bid, theme, overrides, mode):
                         engineering_color=ENGINEERING_PALETTE["ARCH_OPENING"]))
 
     for s in arch.get("slabs") or []:
-        o = s["outline"]
         t, ts = _val(s["thickness_m"])
-        if o is None or s["elevation_m"] is None or t is None:
-            continue
-        g = _world(o[0] + o[2] / 2.0, s["elevation_m"] - t / 2.0, o[1] + o[3] / 2.0,
-                   o[2], t, o[3], 0.0, transform)
-        out.append(_obj(s["id"], "SLAB", "ARCHITECTURE", g,
-                        "technical" if eng else floor_m,
-                        "SYSTEM_DEFAULT" if eng else floor_p,
-                        source_layer="ARCHITECTURE", source_element_id=s["id"],
-                        level_index=s["level_index"],
-                        geometry_source="model" if ts == "model" else "display_fallback",
-                        engineering_color=ENGINEERING_PALETTE["ARCH_SLAB"]))
+        for oid, o in _footprints(s):
+            if o is None or s["elevation_m"] is None or t is None:
+                continue
+            g = _world(o[0] + o[2] / 2.0, s["elevation_m"] - t / 2.0, o[1] + o[3] / 2.0,
+                       o[2], t, o[3], 0.0, transform)
+            out.append(_obj(oid, "SLAB", "ARCHITECTURE", g,
+                            "technical" if eng else floor_m,
+                            "SYSTEM_DEFAULT" if eng else floor_p,
+                            source_layer="ARCHITECTURE", source_element_id=s["id"],
+                            level_index=s["level_index"],
+                            geometry_source="model" if ts == "model" else "display_fallback",
+                            engineering_color=ENGINEERING_PALETTE["ARCH_SLAB"]))
 
     if mode != "ENGINEERING":
         for c in arch.get("ceilings") or []:
@@ -397,15 +412,15 @@ def _arch_objects(arch, transform, bid, theme, overrides, mode):
                             geometry_source="model" if ts == "model" else "display_fallback"))
 
     for r in arch.get("roofs") or []:
-        o = r.get("outline")
         t, ts = _val(r.get("thickness_m"))
-        if o is None or r.get("elevation_m") is None or t is None:
-            continue
-        g = _world(o[0] + o[2] / 2.0, r["elevation_m"] + t / 2.0, o[1] + o[3] / 2.0,
-                   o[2], t, o[3], 0.0, transform)
-        out.append(_obj(r["id"], "ROOF", "ARCHITECTURE", g, roof_m, roof_p,
-                        source_layer="ARCHITECTURE", source_element_id=r["id"],
-                        geometry_source="model" if ts == "model" else "display_fallback"))
+        for oid, o in _footprints(r):
+            if o is None or r.get("elevation_m") is None or t is None:
+                continue
+            g = _world(o[0] + o[2] / 2.0, r["elevation_m"] + t / 2.0, o[1] + o[3] / 2.0,
+                       o[2], t, o[3], 0.0, transform)
+            out.append(_obj(oid, "ROOF", "ARCHITECTURE", g, roof_m, roof_p,
+                            source_layer="ARCHITECTURE", source_element_id=r["id"],
+                            geometry_source="model" if ts == "model" else "display_fallback"))
 
     # درج مرئي عند نواة معلنة — موضعه وأبعاده من النموذج، لا من تقدير
     for c in arch.get("cores") or []:
@@ -444,18 +459,21 @@ def _roof_cap(arch, transform, bid, theme, overrides):
         return []
     top = lv[-1]
     tops = [s for s in slabs if s["level_index"] == top["index"]] or slabs[-1:]
-    o = tops[0]["outline"]
     hs = [_val(w["height_m"])[0] for w in (arch.get("walls") or [])
           if w["level_index"] == top["index"] and _val(w["height_m"])[0] is not None]
     h = max(hs) if hs else 3.0
     y = top["elevation_m"] + h
     roof_m, roof_p = _assign(theme, "roof", overrides, "roof")
-    g = _world(o[0] + o[2] / 2.0, y + 0.1, o[1] + o[3] / 2.0, o[2], 0.2, o[3], 0.0, transform)
-    return [_obj("%s.vis.roof_cap" % bid, "ROOF_CAP", "ARCHITECTURE", g, roof_m, roof_p,
-                 semantic=False, visual_only=True, geometry_source="display_fallback",
-                 source_layer=None, source_element_id=None,
-                 note="visual roof cap — the model states no roof; this is appearance only "
-                      "and is never engineering geometry")]
+    caps = []
+    for k, (_, o) in enumerate(_footprints(tops[0])):
+        g = _world(o[0] + o[2] / 2.0, y + 0.1, o[1] + o[3] / 2.0, o[2], 0.2, o[3], 0.0, transform)
+        caps.append(_obj("%s.vis.roof_cap" % bid + ("" if "pieces" not in tops[0] else ".piece_%d" % k),
+                         "ROOF_CAP", "ARCHITECTURE", g, roof_m, roof_p,
+                         semantic=False, visual_only=True, geometry_source="display_fallback",
+                         source_layer=None, source_element_id=None,
+                         note="visual roof cap — the model states no roof; this is appearance only "
+                              "and is never engineering geometry"))
+    return caps
 
 
 # ------------------------------------- أجسام التخصّصات الأخرى (كما هي) ----
@@ -1177,22 +1195,22 @@ def section_view(arch, axis="x", position_m=None, building_id="bld_0"):
                               "elevation_source": l["elevation_source"]})
     lv = {l["index"]: l for l in arch.get("levels") or []}
     for s in sorted((arch.get("slabs") or []), key=lambda x: str(x["id"])):
-        o = s["outline"]
-        if not o or s["elevation_m"] is None:
-            continue
-        lo = o[0] if axis == "x" else o[1]
-        hi = lo + (o[2] if axis == "x" else o[3])
-        cut_lo = o[1] if axis == "x" else o[0]
-        cut_hi = cut_lo + (o[3] if axis == "x" else o[2])
-        if not (cut_lo - _EPS <= pos <= cut_hi + _EPS):
-            continue
-        t, ts = _val(s["thickness_m"])
-        out["slabs"].append({"id": s["id"], "level_index": s["level_index"],
-                             "u0": _q(lo), "u1": _q(hi),
-                             "y0": _q(s["elevation_m"] - (t or 0.0)),
-                             "y1": _q(s["elevation_m"]),
-                             "thickness_m": None if t is None else _q(t),
-                             "thickness_source": ts})
+        for sid, o in _footprints(s):
+            if not o or s["elevation_m"] is None:
+                continue
+            lo = o[0] if axis == "x" else o[1]
+            hi = lo + (o[2] if axis == "x" else o[3])
+            cut_lo = o[1] if axis == "x" else o[0]
+            cut_hi = cut_lo + (o[3] if axis == "x" else o[2])
+            if not (cut_lo - _EPS <= pos <= cut_hi + _EPS):
+                continue
+            t, ts = _val(s["thickness_m"])
+            out["slabs"].append({"id": sid, "level_index": s["level_index"],
+                                 "u0": _q(lo), "u1": _q(hi),
+                                 "y0": _q(s["elevation_m"] - (t or 0.0)),
+                                 "y1": _q(s["elevation_m"]),
+                                 "thickness_m": None if t is None else _q(t),
+                                 "thickness_source": ts})
     # مستوى القطع عمودي على المحور الآخر عند pos، والرسم الأفقي على المحور axis.
     # الجدار الممتد عبر المستوى يُقطَع، والجدار الواقع داخل المستوى يُرى في وجهه.
     for w in sorted(walls, key=lambda x: str(x["id"])):

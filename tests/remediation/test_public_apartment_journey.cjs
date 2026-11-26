@@ -527,7 +527,7 @@ async function checkedViewport(browser,width,spec){
       await inspectOrbit(page,report);
       // Open a real mesh's palette before replacing its model. A stale palette
       // retains live color handlers even after its captured mesh is detached.
-      const selected=await page.evaluate(async()=>{
+      const pickMesh=()=>page.evaluate(async()=>{
         const {model,camera}=await import('/app/ui/workspace-ui-wiring.js');
         const {Raycaster,Vector2}=await import('three'),ray=new Raycaster();
         for(const ry of [.5,.4,.6,.3,.7])for(const rx of [.35,.45,.55,.25,.65]){
@@ -535,25 +535,37 @@ async function checkedViewport(browser,width,spec){
           if(!document.elementFromPoint(x,y)?.matches('#app canvas'))continue;
           ray.setFromCamera(new Vector2(x/innerWidth*2-1,-y/innerHeight*2+1),camera);
           const hit=ray.intersectObject(model,true).find(hit=>hit.object.visible);
-          const tag=hit?.object.userData.tag||'';
-          if(/^(WALL|FLOOR|DOOR|WINDOW)\|/.test(tag))return {x,y,tag};
+          const tag=hit?.object.userData.tag||'',[,floor,id]=tag.split('|'),built=window.ACS.exportModel();
+          // Slabs and other shared parts carry no room: the card names rooms only.
+          const level=built.levels.find(l=>'F'+l.index===floor),room=level&&built.floors[level.template]?.rooms?.find(r=>r.id===id);
+          if(/^(WALL|FLOOR|DOOR|WINDOW)\|/.test(tag)&&room)return {x,y,tag};
         }
         return null;
       });
+      let selected=await pickMesh();
       assert.ok(selected,'a visible current-model mesh must be available for selection');
+      // A guest tap shows the plain room card over the building; the inspector is one step away.
       await page.mouse.click(selected.x,selected.y);
-      const inspector=page.locator('#acsWorkspace');
+      const info=page.locator('#guestRoomCard'),inspector=page.locator('#acsWorkspace');
+      await info.waitFor({state:'visible'});
+      assert.equal(await inspector.isVisible(),false,'a room tap keeps the building visible');
+      await page.locator('#guestRoomDetails').click();
       await inspector.waitFor({state:'visible'});
       await page.locator('#guestReturnToModel').click();
       await inspector.waitFor({state:'hidden'});
-      const info=page.locator('#info');await info.waitFor({state:'visible'});
+      // The inspector may reframe the camera: pick again from the current view.
+      selected=await pickMesh();assert.ok(selected,'a visible mesh after returning from the inspector');
+      await page.mouse.click(selected.x,selected.y);await info.waitFor({state:'visible'});
       assert.ok(await info.locator('.qc input[type="color"]').isVisible(),'the selected mesh must expose actual color actions');
+      const roomName=await page.evaluate(tag=>{const [,floor,id]=tag.split('|'),model=window.ACS.exportModel();
+        const level=model.levels.find(l=>'F'+l.index===floor);return model.floors[level.template].rooms.find(r=>r.id===id)?.name;},selected.tag);
       report.selectionRetirement={selected,text:await info.textContent()};
-      assert.ok(report.selectionRetirement.text.includes(selected.tag.split('|')[2]),'palette must identify the mesh actually clicked');
+      assert.ok(roomName&&report.selectionRetirement.text.includes(roomName),'card must name the room actually clicked');
       step('warehouse_cutaway');await menu(page,'guestWarehouse');
       await page.waitForFunction(()=>window.ACS.exportModel().site.w===120);
-      report.selectionRetirement.after=await info.evaluate(el=>({hidden:getComputedStyle(el).display==='none',children:el.childElementCount,text:el.textContent}));
-      assert.deepEqual(report.selectionRetirement.after,{hidden:true,children:0,text:''},'replacing the model must retire its old palette and captured color actions');
+      report.selectionRetirement.after=await page.evaluate(()=>({hidden:document.getElementById('guestRoomCard').hidden,children:document.getElementById('guestRoomColours').childElementCount,
+        info:document.getElementById('info').childElementCount}));
+      assert.deepEqual(report.selectionRetirement.after,{hidden:true,children:0,info:0},'replacing the model must retire its old palette and captured color actions');
       const warehouse=await capture(page,report,'warehouse-workfloor','cutaway');
       assert.ok(warehouse.visibleRackSections>0,'visible racks must expose the purpose of the cutaway');
       const beforeToggle=await idleFrames(page);
@@ -569,6 +581,7 @@ async function checkedViewport(browser,width,spec){
     }
     step('complete_arabic_brief');await page.locator('#guestCreate').click();
     await page.locator('#descText').fill(brief);await page.locator('#genText').click();
+    await page.locator('#guestConfirm[data-mode="confirm"]').waitFor();await page.locator('#guestConfirmDraw').click();
     await page.waitForFunction(expected=>{
       const model=window.ACS.exportModel(),apartment=model?.meta?.acs_apartment;
       return apartment?.source==='local_brief'&&apartment.units_total===expected.units&&

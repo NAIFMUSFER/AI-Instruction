@@ -98,7 +98,7 @@ function inspect(model,c){
     assert.equal(commonAccess.size,shared.size,'all shared rooms must be connected without crossing a private apartment');
     assert.ok(commonAccess.has(stair.id),'stair landing must be reachable through shared circulation');
     if(i<levels.length-1)assert.ok(stair.objects?.some(o=>o.form==='u_return' && o.stair.target_level_index===levels[i+1].index),'stair flight reaches the next floor');
-    const entries=rooms.filter(r=>r.role==='entry');
+    const entries=rooms.filter(r=>r.role==='entrance'&&r.unit_id);
     assert.equal(entries.length,2,'apartment entrances per floor');
     assert.equal(new Set(entries.map(r=>r.unit_id)).size,2);
     for(const entry of entries){
@@ -135,6 +135,8 @@ async function submit(page,c){
   await input.fill(c.text);
   const seq=await page.evaluate(()=>window.__acceptanceGenerations.length);
   await page.locator(c.edit?'#guestApplyRevision':'#genText').click();
+  // A new brief is summarised («فهمنا: …») and drawn only after «ارسم».
+  if(!c.edit){await page.locator('#guestConfirm[data-mode="confirm"]').waitFor();await page.locator('#guestConfirmDraw').click();}
   await page.waitForFunction(n=>window.__acceptanceGenerations.length>n,seq,{timeout:90000});
   const event=await page.evaluate(n=>window.__acceptanceGenerations[n],seq);
   assert.equal(event.ok,true,event.message||'generation failed');

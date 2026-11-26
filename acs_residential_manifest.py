@@ -21,6 +21,16 @@ def manifest(brief, requirements):
     def get(metric, role=None):
         return by_key.get((metric, role))
     width, depth, levels, units = [get(k) for k in ('site_width_m','site_depth_m','level_count','unit_count')]
+    # A confirmed building size is the envelope; the land is kept as context.
+    plot = None
+    if get('building_width_m') is not None or get('building_depth_m') is not None:
+        bw, bd = get('building_width_m'), get('building_depth_m')
+        if any(type(v) not in (int, float) or not 0 < v <= 1000 for v in (bw, bd)):
+            return None
+        if any(type(v) in (int, float) and b > v + 1e-9 for b, v in ((bw, width), (bd, depth))):
+            return None
+        plot = {'w': width, 'd': depth}
+        width, depth = bw, bd
     if any(type(v) is not int or not 1 <= v <= 100 for v in (levels, units)) or units < levels:
         return None
     if any(type(v) not in (int,float) or not 0 < v <= 1000 for v in (width, depth)):
@@ -82,6 +92,6 @@ def manifest(brief, requirements):
         'levels':[{'index':i,'template':templates[n]} for i,n in enumerate(distribution)],
         'meta':{'assumptions':['ارتفاع الدور 3.2 م، وارتفاع الجدار 3 م وسماكته 0.2 م قيم أولية للمراجعة.',
                               'توزيع متماثل للشقق ذات برنامج الغرف نفسه، مع ممر داخلي لكل شقة ومدخل وممر مشتركين.'],
-                'acs_manifest_source':'confirmed_apartment_program'}}
+                'acs_manifest_source':'confirmed_apartment_program',**({'acs_plot':plot} if plot else {})}}
     return {'kind':'outline','zones':zones,'envelope':envelope,'issues':[],
             'results':[],'pending':PC.group_by_template(zones),'rate':None,'index':0}

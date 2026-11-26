@@ -38,6 +38,9 @@ async function run(){
     report.phase='generate_from_blank';
     await page.locator('#descText').fill(brief);
     await page.locator('#guestSoftwareSubmit').click();
+    await page.locator('#guestConfirm').waitFor();
+    assert.equal(await page.evaluate(()=>window.ACS.exportModel()),null,'nothing is drawn before «ارسم»');
+    await page.locator('#guestConfirmDraw').click();
     await page.locator('#guestSoftwareResult').waitFor();
     const canvas=page.locator('#guestSoftwareCanvas');
     await page.locator('#guestSoftwareView').selectOption('top');

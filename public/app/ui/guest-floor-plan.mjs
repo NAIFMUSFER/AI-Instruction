@@ -31,7 +31,12 @@ function floorData(packet, model) {
   const level = (model.levels || []).find(item => item.index === packet.level_index);
   const floor = model.floors?.[level?.template];
   const rooms = floor?.rooms || [];
-  const courtyards = (Array.isArray(floor?.courtyards) ? floor.courtyards : []).filter(court =>
+  // The roof deck has no floor record of the opening: draw the building's declared
+  // open-to-sky courtyard there too, so the roof plan shows the guarded void.
+  const declared = model.meta?.acs_apartment?.courtyard;
+  const roofCourt = level?.kind==='roof' && !Array.isArray(floor?.courtyards) && declared?.open_to_sky===true &&
+    validRect(declared.footprint_void_m) ? [{id:'central_courtyard', name:'فناء مفتوح', rect:declared.footprint_void_m, clear_rect:declared.rect_m, roof:true}] : [];
+  const courtyards = (Array.isArray(floor?.courtyards) ? floor.courtyards : roofCourt).filter(court =>
     Array.isArray(court?.rect) && court.rect.length===4 && court.rect.every(Number.isFinite) && court.rect[2]>0 && court.rect[3]>0);
   const byId = new Map(rooms.map(item => [String(item.id), item]));
   const hasUnits = rooms.some(room => room.unit_id === 'east' || room.unit_id === 'west');
@@ -134,8 +139,8 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
     const title=court.name || 'فناء مفتوح للسماء';
     const center=x(cx+cw/2), middle=y(cz+cd/2);
     groups.push(`<g data-courtyard-id="${esc(court.id)}" data-courtyard-width-m="${q(cw)}" data-courtyard-depth-m="${q(cd)}"><title>${esc(title)}</title><rect x="${q(x(cx))}" y="${q(y(cz))}" width="${q(cw*scale)}" height="${q(cd*scale)}" fill="#eff3e4"/></g>`);
-    labels.push(label(center,middle-3,'فناء',14,{color:'#41624c',weight:700})+
-      label(center,middle+12,'مفتوح للسماء',11,{color:'#41624c'}));
+    labels.push(label(center,middle-3,court.roof?'فناء مفتوح':'فناء',14,{color:'#41624c',weight:700})+
+      label(center,middle+12,court.roof?'حاجز على كل حوافه':'مفتوح للسماء',11,{color:'#41624c'}));
   }
   spaces.forEach((room,index) => {
     const number=index+1, rw=room.w*scale, rh=room.d*scale;
@@ -213,13 +218,35 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
 
 }
 
+// Plain facts for one room, from the same projection the floor plan draws:
+// the room card and the plan can never disagree on a room's size.
+export function guestRoomFacts(acs, levelIndex, roomId) {
+  const model=acs.exportModel?.();
+  const level=(model?.levels||[]).find(item=>item.index===levelIndex);
+  const room=model?.floors?.[level?.template]?.rooms?.find(item=>String(item.id)===String(roomId));
+  if(!level||!room)return null;
+  let space=null,info=null;
+  try{info=floorData(acs.floorPlan2D(levelIndex,'TECHNICAL'),model);space=info.spaces.find(item=>String(item.name)===String(roomId))||null;}catch{}
+  const rect=validRect(room.rect)?room.rect:null;
+  const w=space?space.w:rect?.[2],d=space?space.d:rect?.[3];
+  if(!Number.isFinite(w)||!Number.isFinite(d))return null;
+  const area=space&&Number.isFinite(space.area_m2)?space.area_m2:w*d;
+  const roof=level.kind==='roof';
+  return {
+    name:space?.displayName||String(room.name||room.id),
+    unit:space&&info?.hasUnits&&space.unit!=='shared'?unitName(model,space.unit):null,
+    floor:roof?'السطح':levelLabel(level),levelIndex,roomId:String(room.id),spaceId:space?.id||null,
+    area:`${fmt(area)} م²`,size:`${fmt(w)} × ${fmt(d)} م`,
+    basis:model.meta?.acs_apartment?.wall_reference==='room_wall_centrelines'?'مقاسة على محاور الجدران، قبل خصم سماكاتها.':'مقاسة على مستطيل الفراغ.',
+  };
+}
 function element(tag, text, id) {
   const node=document.createElement(tag);
   if(text)node.textContent=text;
   if(id)node.id=id;
   return node;
 }
-export function openGuestFloorPlan(acs, initialLevel=0) {
+export function openGuestFloorPlan(acs, initialLevel=0, initialRoom='') {
   const existing=document.getElementById('guestPlanDialog');
   if(existing?.open)return existing;
   const model=acs.exportModel();
@@ -284,5 +311,7 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     const a=element('a');a.href=url;a.download=`apartment-floor-${packet.level_index}.svg`;dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   dialog.addEventListener('close',()=>{dialog.remove();if(previous?.isConnected)previous.focus();},{once:true});
-  changeFloor();dialog.showModal();close.focus();return dialog;
+  changeFloor();
+  if(initialRoom&&[...roomChoice.options].some(option=>option.value===initialRoom)){roomChoice.value=initialRoom;draw();}
+  dialog.showModal();close.focus();return dialog;
 }

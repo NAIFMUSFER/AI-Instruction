@@ -111,7 +111,7 @@ class ConnectedStairIfcReader(unittest.TestCase):
                     height = room.get('wall_h', room.get('height', model['wall_h']))
                     target = expected_roofs if is_roof else expected_spaces
                     target[space_id] = (level_source if is_roof else storey_id, room['id'],
-                        ((x, x + width), (z, z + depth), (elevation, elevation + height)), source)
+                        ((x, x + width), (-(z + depth), -z), (elevation, elevation + height)), source)
 
             storeys = parsed.by_type('IfcBuildingStorey')
             spaces = parsed.by_type('IfcSpace')

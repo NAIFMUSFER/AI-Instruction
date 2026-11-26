@@ -88,6 +88,10 @@
   .btn.g{background:linear-gradient(90deg,#22c55e,#16a34a);color:#052e13}
   .ghost{background:#152241;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;cursor:pointer}
   .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  /* The isolated floor must look selected (the class was set but never styled). */
+  #floors button.active{background:var(--acc);color:#04283b;border-color:var(--acc);font-weight:800}
+  /* «إزالة السطح الافتراضي» takes its own row: beside five floor buttons it spilt out at phone width. */
+  #localRoofToggle{flex-basis:100%}
   h2{font-size:12px;color:var(--muted);margin:14px 0 6px;border-top:1px solid var(--line);padding-top:10px}
   .lay{display:flex;align-items:center;gap:8px;padding:3px 2px;font-size:12px}
   .lay input[type=checkbox]{width:15px;height:15px;accent-color:var(--acc)}

@@ -288,11 +288,22 @@ async function runGuestWorkspaceTests(){
    assert.ok(roofTarget.width>=44&&roofTarget.height>=44,'contextual roof action is a real 44 CSS-pixel touch target');
    assert.equal(await page.locator('#localRoofToggle').getAttribute('aria-describedby'),'localRoofDisclosure');
    assert.match(await page.locator('#localRoofDisclosure').textContent(),/افتراض|افتراضي|مفترض/);
+   // The guest roof button is view-only: hiding the roof never edits the design.
+   assert.equal((await page.locator('#localRoofToggle').textContent()).trim(),'إخفاء السطح');
+   await page.locator('#localRoofToggle').click();
+   assert.equal(await page.locator('#localRoofToggle').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.evaluate(()=>document.activeElement?.id),'localRoofToggle','focus stays on the view toggle');
+   assertExactRoof(await page.evaluate(()=>window.ACS.exportModel()),generatedLocal,'hiding the roof from view');
+   assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_ROOF_VIEW_ONLY'))).ok,true);
+   assert.equal(currentGuestRecord(await guestSnapshot(page)).model_hash,withRoofRecord.model_hash,'a hidden roof does not change the saved model');
+   await page.locator('#localRoofToggle').click();
+   assert.equal(await page.locator('#localRoofToggle').getAttribute('aria-pressed'),'false');
+   assert.equal(await page.locator('#localRoofRestore').count(),0,'no restore action while the design has its roof');
+   // Drafts saved before the view-only toggle may have removed the roof: they still load and can restore it.
    await page.locator('#floors').getByRole('button',{name:'السطح',exact:true}).click();
    assert.equal(await page.locator('#floors button.active').textContent(),'السطح','exercise removal while the roof is isolated');
-   await page.locator('#localRoofToggle').click();
+   await page.evaluate(()=>window.ACS.localRoof.remove());
    await page.waitForFunction(()=>window.ACS.exportModel()?.meta?.acs_roof?.removed_by_user===true);
-   assert.equal(await page.evaluate(()=>document.activeElement?.id),'localRoofToggle','focus survives rebuilding the roof controls');
    const removedLocal=await page.evaluate(()=>window.ACS.exportModel());
    assert.equal(roofLevels(removedLocal).length,0);
    assert.equal(await page.locator('#floors button.active').textContent(),'الكل','removal resets the visible floor control');
@@ -326,7 +337,8 @@ async function runGuestWorkspaceTests(){
    const editedRecord=currentGuestRecord(await guestSnapshot(page));
    assert.notEqual(editedRecord.model_hash,removedRecord.model_hash,'the requested site edit changes its saved canonical model');
    await page.locator('#guestCreate').click();await page.locator('#acsTabModel').click();
-   await page.locator('#localRoofToggle').focus();await page.locator('#localRoofToggle').press('Enter');
+   assert.equal(await page.locator('#localRoofToggle').count(),0,'a roofless draft has nothing to hide');
+   await page.locator('#localRoofRestore').focus();await page.locator('#localRoofRestore').press('Enter');
    await page.waitForFunction(()=>window.ACS.exportModel()?.levels?.some(level=>level.kind==='roof'&&level.auto===true));
    const restoredLocal=await page.evaluate(()=>window.ACS.exportModel());
    assert.equal(await page.evaluate(()=>document.activeElement?.id),'localRoofToggle','keyboard restoration retains contextual focus');
@@ -405,7 +417,7 @@ async function runGuestWorkspaceTests(){
     assert.deepEqual(imported.levels,fixture.levels,name+' import retains all level declarations');
     assert.deepEqual(imported.floors,fixture.floors,name+' import retains all canonical geometry');
     assertExactRoof(imported,fixture,name+' imported roof policy');
-    assert.equal(await page.locator('#localRoofToggle').count(),0,name+' imported roof is not offered as an automatically editable system roof');
+    assert.equal(await page.locator('#localRoofRestore').count(),0,name+' imported roof is not offered as an automatically editable system roof');
     assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_ROOF_IMPORT_TEST'))).ok,true);
     await page.reload();
     await page.waitForFunction(expected=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.meta?.name===expected,fixture.meta.name);
@@ -413,7 +425,7 @@ async function runGuestWorkspaceTests(){
     assert.deepEqual(recovered.levels,fixture.levels,name+' recovery must not add or reclassify a roof');
     assert.deepEqual(recovered.floors,fixture.floors,name+' recovery must not rewrite geometry');
     assertExactRoof(recovered,fixture,name+' recovered roof policy');
-    assert.equal(await page.locator('#localRoofToggle').count(),0,name+' recovery keeps its roof authority');
+    assert.equal(await page.locator('#localRoofRestore').count(),0,name+' recovery keeps its roof authority');
    }
    assert.deepEqual(calls,[],'roof imports/recovery remain local without auth/private/provider work');
    // The later two-tab/slow-read checks use an older roofless draft: displaying

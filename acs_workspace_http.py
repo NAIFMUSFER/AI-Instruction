@@ -20,6 +20,7 @@ from acs_plan_review import PlanError, digest
 ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace(?P<source>/plan-source)?$")
 WORKER_ID = str(uuid.uuid4())
 ACTIVE_JOBS = set()
+ACTIVE_PROJECTS = {}  # project_id -> the one job_id admitted or running for it
 PAID_TASKS = set()
 RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE",
                               "ACS_PROVIDER_BUDGET_EXHAUSTED"})
@@ -27,6 +28,39 @@ RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE"
 
 def _resumable_failure(code):
     return isinstance(code, str) and (code in RESUMABLE_ERRORS or code.startswith("PLAN_GEOMETRY_"))
+
+
+# A RUNNING receipt is only true while some process can still finish it. The
+# worker deadline terminates the child and its parent then writes a receipt, so
+# beyond deadline + grace nobody can: the owning process died (deploy, OOM,
+# crash) or its terminal receipt write was lost. Report INTERRUPTED with an
+# uncertain provider outcome instead of RUNNING forever. Read-only: nothing is
+# resubmitted and the stored receipt is not rewritten.
+ORPHAN_GRACE_S = 300
+OWN_ORPHAN_AFTER_S = 60
+
+
+def _started_at(row):
+    value = row.get("created_at")
+    if not isinstance(value, str):
+        return None
+    try:
+        started = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return started if started.tzinfo else started.replace(tzinfo=timezone.utc)
+
+
+def _orphaned(row, now=None):
+    if row.get("state") != "RUNNING" or row.get("id") in ACTIVE_JOBS:
+        return False
+    started = _started_at(row)
+    if started is None:
+        return False
+    from acs_generation_job import DEFAULT_TIMEOUT_S
+    own = row.get("worker_id") == WORKER_ID
+    limit = OWN_ORPHAN_AFTER_S if own else DEFAULT_TIMEOUT_S + ORPHAN_GRACE_S
+    return ((now or datetime.now(timezone.utc)) - started).total_seconds() > limit
 
 
 
@@ -54,14 +88,39 @@ def _job_view(row):
     state = row.get("state")
     original = row.get("resume_command") or {}
     can_restart = isinstance(original,dict) and original.get('action') == 'generate' and not original.get('source_id')
-    return {"ok": True, "job": {"id": row["id"], "state": state,
+    view = {"ok": True, "job": {"id": row["id"], "state": state,
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
         "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state in {"FAILED", "INTERRUPTED", "CANCELLED"} else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
         "can_resume": bool(row.get("checkpoint") or can_restart) and state == "FAILED" and _resumable_failure(row.get("error_code")) and not row.get("resumed_by"),
+        "choice": _choice(row),
         "storage": "supabase", "automatic_resubmission": False}}
+    if view["job"]["choice"] and view["job"]["choice"]["adopted_revision_id"]:
+        view["job"]["error_message"] = "اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته."
+    return view
+
+
+def _choice(row):
+    """Explicit owner choice for a generated version kept after a newer revision."""
+    kept = SERVICE.generated_version(row)
+    if kept is None:
+        return None
+    building = kept["building"]
+    floors = building.get("floors") if isinstance(building.get("floors"), dict) else {}
+    return {"kind": "generated_version", "options": ["keep_edit", "use_generated"],
+            "current_head": kept.get("current_head"), "adopted_revision_id": row.get("adopted_revision_id"),
+            "generated_summary": {"levels": len(building.get("levels") or []),
+                                  "rooms": sum(len(f.get("rooms") or []) for f in floors.values() if isinstance(f, dict))}}
+
+
+def _adoption(ws, job_id):
+    marker = SERVICE.adoption_marker(job_id)
+    for revision in ws.history():
+        if (revision.get("note") or "").endswith(marker):
+            return revision["revision_id"]
+    return None
 
 
 class WorkspaceMiddleware:
@@ -71,6 +130,7 @@ class WorkspaceMiddleware:
 
     async def _finish(self, store, project_id, actor_id, command):
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
+        spent, kept = {}, None
         try:
             execute = SERVICE.chat_and_save if command["action"] == "chat_edit" else SERVICE.generate_and_save
             def progress(event):
@@ -79,23 +139,43 @@ class WorkspaceMiddleware:
                 update = {"phase":event["phase"], "progress":{k:v for k,v in event.items()
                           if k in {"completed", "total"} and type(v) is int and v >= 0}}
                 if type(event.get("provider_calls")) is int:
-                    update["provider_calls"] = event["provider_calls"]
+                    update["provider_calls"] = spent["provider_calls"] = event["provider_calls"]
                 if isinstance(event.get("checkpoint"), dict):
                     update["checkpoint"] = event["checkpoint"]
-                store._request("PATCH", _job_query(project_id, command["job_id"]), update)
-            controls = {"on_progress":progress} if command["action"] == "generate" else {}
-            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, **controls)
+                try:
+                    store._request("PATCH", _job_query(project_id, command["job_id"]), update)
+                except PlanError as exc:
+                    # Progress is advisory and cumulative: the next event rewrites
+                    # counts and the latest checkpoint. A transient store failure
+                    # must not kill a worker that may already have paid provider
+                    # requests. Authorization failures still stop the job.
+                    if exc.code != "STORE_UNAVAILABLE":
+                        raise
+                    LOG.warn("workspace_progress_write_failed", request_id=command["job_id"], error_code=exc.code)
+            # Chat edits spend provider requests too; their counts must reach the receipt.
+            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, on_progress=progress)
             payload = {"state": "SUCCEEDED", "revision_id": rid, "error_code": None}
         except TimeoutError:
             payload["error_code"] = E.ACS_TIMEOUT
         except (PlanError, E.AcsApiError) as exc:
             payload["error_code"] = str(exc.code)[:80]
+            if isinstance(exc, SERVICE.GeneratedVersionConflict):
+                kept = exc.checkpoint()
         except Exception as exc:
             from acs_generation_job import JobRejected, JobError
             payload["error_code"] = "GENERATION_BUSY" if isinstance(exc, JobRejected) else "GENERATION_WORKER_FAILED" if isinstance(exc, JobError) else "GENERATION_FAILED"
             LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__, error_code=payload["error_code"])
         LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
         payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+        payload.update(spent)  # the terminal receipt carries the last known provider count
+        if kept is not None:
+            # Keep the paid version before the terminal receipt: never discarded,
+            # never saved over the newer revision; the owner chooses later. Written
+            # like a progress checkpoint so it maps onto lease-fenced job writes.
+            try:
+                await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), {"checkpoint": kept})
+            except Exception:
+                payload["error_code"] = "STALE_REVISION"   # not kept: never offer a choice we cannot honour
         try:
             await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), payload)
         except Exception:
@@ -112,9 +192,25 @@ class WorkspaceMiddleware:
             if prior.get("input_hash") != fingerprint:
                 raise PlanError("STALE_REVISION", "معرّف المهمة مستخدم لطلب مختلف؛ لم يبدأ توليد آخر.")
             return _job_view(prior)
+        # Membership is proven by this read, before any reservation below.
         before = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
         if before.head != command.get("expected_head"):
             raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التوليد.")
+        # One paid job per project at a time. Every job is checked against the
+        # same head and saved by compare-and-swap, so a second concurrent job
+        # (another tab, a second resume of the same failed job) can never be
+        # saved: its provider spend would always be wasted. Check and reserve
+        # happen with no await in between, so concurrent requests cannot both
+        # pass. Process-local: valid under the declared single-instance invariant.
+        if ACTIVE_PROJECTS.setdefault(project_id, job_id) != job_id:
+            raise PlanError("GENERATION_IN_PROGRESS", "توجد مهمة توليد أو تعديل جارية لهذا المشروع. تابعها حتى تنتهي ثم افتح آخر نسخة؛ لم يُرسل أي طلب إلى مزود النموذج.")
+        try:
+            return await self._admit(store, project_id, actor_id, command, job_id, fingerprint)
+        finally:
+            if job_id not in ACTIVE_JOBS and ACTIVE_PROJECTS.get(project_id) == job_id:
+                ACTIVE_PROJECTS.pop(project_id, None)
+
+    async def _admit(self, store, project_id, actor_id, command, job_id, fingerprint):
         if command.get("source_id"):
             await asyncio.to_thread(SOURCES.source, store, project_id, command["source_id"])
         if len(self.tasks) >= 8:
@@ -148,8 +244,11 @@ class WorkspaceMiddleware:
         task = asyncio.create_task(self._finish(store, project_id, actor_id, command))
         self.tasks.add(task)
         ACTIVE_JOBS.add(job_id)
+        ACTIVE_PROJECTS.setdefault(project_id, job_id)
         task.add_done_callback(self.tasks.discard)
         task.add_done_callback(lambda _: ACTIVE_JOBS.discard(job_id))
+        task.add_done_callback(lambda _: ACTIVE_PROJECTS.pop(project_id, None)
+                               if ACTIVE_PROJECTS.get(project_id) == job_id else None)
         return _job_view(row)
 
     async def __call__(self, scope, receive, send):
@@ -219,7 +318,36 @@ class WorkspaceMiddleware:
                         if (revision.get("note") or "").endswith("task:" + row["id"]):
                             row = dict(row, state="SUCCEEDED", revision_id=revision["revision_id"])
                             break
+                if _orphaned(row):
+                    row = dict(row, state="INTERRUPTED", error_code="PROVIDER_OUTCOME_UNKNOWN")
+                if SERVICE.generated_version(row) is not None:
+                    ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                    row = dict(row, adopted_revision_id=_adoption(ws, row["id"]))
                 result = _job_view(row)
+            elif action == "adopt_generated":
+                # Owner's explicit choice. No quota and no provider request: the
+                # version was already paid for by its job.
+                SERVICE.checked_command(command, {"job_id", "expected_head", "confirmed"})
+                if command.get("confirmed") is not True:
+                    raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "أكد اختيار النسخة المولّدة أولًا.")
+                row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
+                if not row:
+                    raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
+                rid = await asyncio.to_thread(SERVICE.adopt_generated_version, store, project_id, actor_id,
+                                              row, command.get("expected_head"))
+                result = await asyncio.to_thread(SERVICE.view, store, project_id, actor_id, rid)
+                result["job"] = _job_view(dict(row, adopted_revision_id=rid))["job"]
+            elif action == "generated_versions":
+                SERVICE.checked_command(command, set())
+                rows = await asyncio.to_thread(store._request, "GET",
+                    "/rest/v1/acs_workspace_jobs?project_id=eq." + project_id + "&error_code=eq." + SERVICE.CONFLICT_CODE
+                    + "&state=eq.FAILED&select=id,created_at,expected_head&order=created_at.desc&limit=5")
+                if not isinstance(rows, list):
+                    raise PlanError("STORE_UNAVAILABLE", "تعذّر قراءة النسخ المولّدة المحفوظة.")
+                ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                result = {"ok": True, "versions": [{"job_id": r.get("id"), "created_at": r.get("created_at"),
+                                                    "adopted_revision_id": _adoption(ws, r.get("id") or "")}
+                                                   for r in rows[:5] if isinstance(r, dict) and isinstance(r.get("id"), str)]}
             elif action == "edit_geometry":
                 result = await asyncio.to_thread(SERVICE.edit_geometry, store, project_id, actor_id, command)
             elif action == "set_roof":

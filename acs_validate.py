@@ -46,6 +46,14 @@ def _is_outdoor(rid):
     return any(k in low for k in OUTDOOR)
 
 
+def _enclosed(r):
+    """False only for a space that declares no wall on any side."""
+    walls = r.get("walls")
+    if isinstance(walls, str) and walls.lower() == "none":
+        return False
+    return not (isinstance(walls, list) and not walls)
+
+
 def _is_open_zone(r):
     """منطقة تشغيلية مفتوحة (مستودع/مصنع): محدّدة بدهان أرضي لا بجدران —
     لا تُطالَب بباب ولا كاشف دخان لكل حيّز، ولها أن تكون كبيرة جداً."""
@@ -509,7 +517,10 @@ def validate_building(b):
 
                     if reported_o >= PER_CHECK_CAP:
                         continue
-                    nbrs = _edge_neighbours(rect, e, others, (lo, hi))
+                    # A neighbour without any wall (open porch or canopy) is
+                    # outdoor space, so a window facing it is on a facade.
+                    nbrs = [n for n in _edge_neighbours(rect, e, others, (lo, hi))
+                            if _enclosed(rooms_of.get(n) or {})]
                     # لا فحص «باب لا يفتح على شيء» هنا. كُتب ثم أُسقط بالقياس:
                     # على ١٦٥ نموذجاً حقيقياً أطلق ٣٣ بلاغاً، كلّها كاذبة. السبب
                     # افتراضٌ لا يصحّ في هذا النظام — أن كل فراغ ممثَّل كغرفة.

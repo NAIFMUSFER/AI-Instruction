@@ -287,5 +287,175 @@ class AuthGatewayTests(unittest.TestCase):
         self.assertNotIn(b'private detail', messages[1]['body'])
 
 
+FIXTURE_URL = 'https://fixture-auth-project.supabase.co'
+FIXTURE_KEY = 'sb_publishable_fixture_key_value'
+CONFIGURED = {'ACS_AUTH_SUPABASE_URL': FIXTURE_URL,
+              'ACS_AUTH_SUPABASE_PUBLISHABLE_KEY': FIXTURE_KEY}
+
+
+class _Clock:
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+
+class _Response:
+    def __init__(self, body, status=200):
+        self.status, self._body = status, body
+
+    def read(self, limit):
+        return self._body[:limit]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+class AuthUpstreamReadinessTests(unittest.TestCase):
+    """Sign-in reachability is reported without probing from /health,
+    with one bounded, cached probe, and without any secret or project URL."""
+
+    def setUp(self):
+        self.clock = _Clock()
+        G._PROBE.update(fingerprint=None, at=None, checked_at=None,
+                        value=None, latency_ms=None, worker=None)
+        patcher = patch.object(G, '_clock', self.clock)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def assert_no_secret(self, view):
+        text = json.dumps(view)
+        for secret in (FIXTURE_URL, 'fixture-auth-project', FIXTURE_KEY, 'supabase'):
+            self.assertNotIn(secret, text)
+
+    def test_unconfigured_gateway_names_variables_and_never_probes(self):
+        with patch.dict(G.os.environ, {'ACS_AUTH_SUPABASE_URL': '', 'ACS_AUTH_SUPABASE_PUBLISHABLE_KEY': ''}), \
+             patch.object(G, '_probe_settings') as probe:
+            view = G.upstream_status(probe=True)
+        probe.assert_not_called()
+        self.assertEqual((view['configured'], view['ready'], view['state']), (False, False, 'not_configured'))
+        self.assertEqual(view['missing'], ['ACS_AUTH_SUPABASE_URL', 'ACS_AUTH_SUPABASE_PUBLISHABLE_KEY'])
+
+    def test_health_view_reads_the_cache_and_never_opens_a_socket(self):
+        with patch.dict(G.os.environ, CONFIGURED), patch.object(G, '_probe_settings') as probe, \
+             patch.object(G.urllib.request, 'urlopen') as urlopen:
+            view = G.upstream_status(probe=False)
+        probe.assert_not_called()
+        urlopen.assert_not_called()
+        self.assertEqual((view['configured'], view['checked'], view['state'], view['ready']),
+                         (True, False, 'unchecked', False))
+
+    def test_the_production_outage_is_reported_unreachable_without_details(self):
+        # Exactly the condition that makes /v1/auth/google/start answer
+        # 503 AUTH_UPSTREAM_UNAVAILABLE: the project host cannot be connected.
+        failure = G.urllib.error.URLError(OSError('[Errno -2] Name or service not known: ' + FIXTURE_URL))
+        with patch.dict(G.os.environ, CONFIGURED), \
+             patch.object(G.urllib.request, 'urlopen', side_effect=failure) as urlopen:
+            view = G.upstream_status(probe=True)
+        self.assertEqual(urlopen.call_count, 1)
+        sent = urlopen.call_args.args[0]
+        self.assertEqual(sent.full_url, FIXTURE_URL + '/auth/v1/settings')
+        self.assertEqual(sent.get_method(), 'GET')
+        self.assertLessEqual(urlopen.call_args.kwargs['timeout'], G._PROBE_TIMEOUT_S)
+        self.assertEqual((view['ready'], view['reachable'], view['state'], view['http_status']),
+                         (False, False, 'unreachable', None))
+        self.assertTrue(view['checked'])
+        self.assert_no_secret(view)
+        self.assertNotIn('Name or service', json.dumps(view))
+
+    def test_reachable_settings_distinguish_google_and_key_failures(self):
+        cases = [
+            (_Response(b'{"external":{"google":true,"email":true}}'), ('ok', True, True)),
+            (_Response(b'{"external":{"google":false}}'), ('google_not_configured', False, True)),
+            (_Response(b'not json'), ('error', False, True)),
+            (G.urllib.error.HTTPError(FIXTURE_URL, 401, 'private', {}, None), ('rejected', False, True)),
+            (G.urllib.error.HTTPError(FIXTURE_URL, 500, 'private', {}, None), ('error', False, True)),
+            (TimeoutError('timed out'), ('unreachable', False, False)),
+        ]
+        for outcome, (state, ready, reachable) in cases:
+            with self.subTest(state=state):
+                G._PROBE.update(fingerprint=None, value=None, worker=None)
+                kwargs = {'side_effect': outcome} if isinstance(outcome, BaseException) else {'return_value': outcome}
+                with patch.dict(G.os.environ, CONFIGURED), patch.object(G.urllib.request, 'urlopen', **kwargs):
+                    view = G.upstream_status(probe=True)
+                self.assertEqual((view['state'], view['ready'], view['reachable']), (state, ready, reachable))
+                self.assert_no_secret(view)
+
+    def test_probes_are_cached_for_the_ttl_and_refreshed_after_it(self):
+        with patch.dict(G.os.environ, CONFIGURED), \
+             patch.object(G, '_probe_settings', return_value=('unreachable', None, None)) as probe:
+            first = G.upstream_status(probe=True)
+            self.clock.now += G._PROBE_TTL_S - 1
+            for _ in range(20):
+                G.upstream_status(probe=True)
+            self.assertEqual(probe.call_count, 1)
+            cached = G.upstream_status(probe=False)
+            self.assertEqual((cached['state'], cached['age_s']), ('unreachable', G._PROBE_TTL_S - 1))
+            self.clock.now += 2
+            probe.return_value = ('ok', 200, True)
+            recovered = G.upstream_status(probe=True)
+        self.assertEqual(probe.call_count, 2)
+        self.assertEqual((first['state'], recovered['state'], recovered['ready']), ('unreachable', 'ok', True))
+
+    def test_changed_configuration_is_not_served_from_the_old_verdict(self):
+        with patch.object(G, '_probe_settings', return_value=('unreachable', None, None)) as probe:
+            with patch.dict(G.os.environ, CONFIGURED):
+                self.assertEqual(G.upstream_status(probe=True)['state'], 'unreachable')
+            with patch.dict(G.os.environ, dict(CONFIGURED, ACS_AUTH_SUPABASE_URL='https://replacement.supabase.co')):
+                self.assertEqual(G.upstream_status(probe=False)['state'], 'unchecked')
+                probe.return_value = ('ok', 200, True)
+                self.assertEqual(G.upstream_status(probe=True)['state'], 'ok')
+        self.assertEqual(probe.call_count, 2)
+
+    def test_concurrent_callers_share_one_probe(self):
+        import threading
+        calls, gate = [], threading.Event()
+
+        def slow_probe(base, key, timeout):
+            calls.append(base)
+            gate.wait(1.0)
+            return 'ok', 200, True
+
+        results = []
+        with patch.dict(G.os.environ, CONFIGURED), patch.object(G, '_probe_settings', side_effect=slow_probe):
+            threads = [threading.Thread(target=lambda: results.append(G.upstream_status(probe=True)))
+                       for _ in range(8)]
+            for thread in threads:
+                thread.start()
+            gate.set()
+            for thread in threads:
+                thread.join(5)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(len(results), 8)
+        self.assertTrue(all(r['state'] == 'ok' for r in results))
+
+    def test_a_hung_resolver_is_bounded_and_not_stacked(self):
+        import threading
+        release, calls = threading.Event(), []
+
+        def hung_probe(base, key, timeout):
+            calls.append(base)
+            release.wait(5)
+            return 'ok', 200, True
+
+        with patch.dict(G.os.environ, CONFIGURED), patch.object(G, '_PROBE_TIMEOUT_S', 0.05), \
+             patch.object(G, '_probe_settings', side_effect=hung_probe):
+            started = G.time.perf_counter()
+            view = G.upstream_status(probe=True)
+            elapsed = G.time.perf_counter() - started
+            self.assertLess(elapsed, 1.5)
+            self.assertEqual((view['state'], view['ready']), ('unreachable', False))
+            self.clock.now += G._PROBE_TTL_S + 1
+            again = G.upstream_status(probe=True)
+            self.assertEqual(again['state'], 'unreachable')
+            self.assertEqual(len(calls), 1, 'a second worker started while the first was still blocked')
+            release.set()
+            G._PROBE['worker'].join(2)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

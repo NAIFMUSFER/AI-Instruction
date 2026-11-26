@@ -103,6 +103,10 @@ def application(database):
                     cur=con.execute('insert or ignore into ci_jobs values(?,?)',(payload['id'],json.dumps(payload)))
                     return [copy.deepcopy(payload)] if cur.rowcount else []
                 query=urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
+                if 'id' not in query:  # generated-version listing: newest first, filtered
+                    documents=[json.loads(row[0]) for row in con.execute('select document from ci_jobs order by rowid desc')]
+                    return [d for d in documents if all(d.get(k)==v[0].removeprefix('eq.') for k,v in query.items()
+                                                       if k in ('project_id','error_code','state'))][:5]
                 job_id=query['id'][0].removeprefix('eq.')
                 row=con.execute('select document from ci_jobs where id=?',(job_id,)).fetchone()
                 if not row:return []

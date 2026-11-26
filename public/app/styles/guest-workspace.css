@@ -48,10 +48,12 @@
 #acsGuestBanner :is(#guestCreate,#guestRevise,#guestApplyRevision) { background: #234e40; color: #fff; }
 #acsGuestBanner button:hover, #acsGuestBanner a:hover, #guestTools:hover, #guestOptions[open] > summary { background: #e7ebe3; }
 #acsGuestBanner #guestCreate:hover { background: #183e31; }
-#guestRevisionDialog { width:min(27rem, calc(100% - 24px)); box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:20px; background:#fffdf8; color:#213c40; font:15px/1.5 system-ui,sans-serif; }
+#guestRevisionDialog { margin:auto; width:min(27rem, calc(100% - 24px)); box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:20px; background:#fffdf8; color:#213c40; font:15px/1.5 system-ui,sans-serif; }
 #guestRevisionDialog::backdrop { background:rgb(13 27 35 / 65%); }
 #guestRevisionForm { display:grid; gap:10px; }
 #guestRevisionForm h2,#guestRevisionForm p { margin:0; }
+/* The dark panel's muted 12px h2 rule must not leak into this light dialog. */
+#guestRevisionForm h2 { font-size:1.12rem; color:inherit; border:0; padding:0; }
 #guestRevisionForm textarea { box-sizing:border-box; width:100%; padding:9px; font:inherit; color:#203a31; background:white; border:1px solid #9cafa5; border-radius:6px; }
 #guestRevisionError { color:#84391e; }
 #acsGuestBanner :is(button,a,summary):focus-visible { outline: 3px solid #0b72a0; outline-offset: 1px; }
@@ -169,3 +171,60 @@ body.acs-guest-fallback-active::after{display:none!important}
 }
 .guest-native-sample::after { content: attr(aria-label); }
 .guest-native-sample img { display: block; width: 62px; height: 44px; object-fit: cover; border-radius: 5px; }
+/* «فهمنا: …» confirmation before a guest brief is drawn. */
+.guest-confirm { margin: 10px 0; padding: 12px; border: 1px solid #c9b98f; border-radius: 10px; background: #fffdf7; color: #1f2a2e; direction: rtl; text-align: right; }
+.guest-confirm[hidden], .guest-confirm [hidden] { display: none; }
+.guest-confirm h3 { margin: 0 0 8px; font-size: 15px; color: #1f2a2e; }
+.guest-confirm p { margin: 0; font-size: 14px; line-height: 1.6; }
+.guest-confirm ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.guest-confirm li { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.guest-confirm li small { display: block; color: #4f585c; font-size: 12px; }
+.guest-confirm-assumed { font-style: normal; font-size: 11px; padding: 1px 7px; border-radius: 8px; background: #fbe3b0; color: #5c3b00; }
+.guest-confirm-actions { display: flex; gap: 8px; margin-top: 12px; }
+.guest-confirm-actions button { flex: 1; min-height: 44px; font-size: 15px; font-weight: 650; border-radius: 8px; cursor: pointer; }
+#guestConfirmDraw { background: #1f6f5c; color: #fff; border: 0; }
+#guestConfirmEdit { background: #fff; color: #1f2a2e; border: 1px solid #7d8487; }
+.guest-confirm-unsupported { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #fdecea; color: #5c1a14; }
+.guest-confirm-unsupported p { font-size: 13px; font-weight: 650; margin: 0 0 4px; }
+.guest-confirm-unsupported li { font-size: 12.5px; }
+.guest-confirm-choices li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.guest-confirm-choices button { min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #1f6f5c; background: #fff; color: #1f2a2e; font-size: 14px; cursor: pointer; }
+/* Room card: sits over a corner of the 3D view; the building stays visible. */
+#guestRoomCard { position:fixed; z-index:26; inset-block-end:16px; inset-inline-end:376px; width:min(320px, calc(100% - 32px)); max-height:42vh; max-height:42dvh; overflow-y:auto; box-sizing:border-box; padding:12px 14px; border:1px solid #c8cbc3; border-radius:12px; background:#fbfaf6; color:#213c40; font:14px/1.5 system-ui,sans-serif; box-shadow:0 7px 22px #21393033; }
+#guestRoomCard[hidden] { display:none; }
+#guestRoomCard header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+#guestRoomCard h2 { margin:0; padding:0; border:0; font-size:1.1rem; color:inherit; }
+#guestRoomCard p { margin:2px 0 6px; }
+#guestRoomWhere { color:#34594d; }
+#guestRoomBasis { color:#4a5c53; font-size:12px; }
+#guestRoomCard dl { display:flex; gap:16px; margin:4px 0; }
+#guestRoomCard dt { color:#4a5c53; font-size:12px; }
+#guestRoomCard dd { margin:0; font-weight:700; font-size:15px; }
+#guestRoomCard button { min-height:44px; min-width:44px; padding:4px 12px; border:1px solid #a0b1ab; border-radius:8px; background:#fffdf8; color:#1e383a; font:inherit; cursor:pointer; }
+#guestRoomCard #guestRoomPlan { background:#234e40; border-color:#234e40; color:#fff; }
+#guestRoomCard .guest-room-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+#guestRoomCard .qcl { margin-top:6px; color:#4a5c53; font-size:12px; }
+#guestRoomCard .qc { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+#guestRoomCard .qc i { width:28px; height:28px; border-radius:6px; cursor:pointer; display:block; border:1px solid #0002; }
+#guestRoomCard .qc input[type=color] { width:28px; height:28px; padding:0; border:1px solid #a0b1ab; border-radius:6px; background:none; }
+#guestRoomCard :focus-visible { outline:3px solid #0b72a0; outline-offset:1px; }
+/* Projects on this device. */
+#guestProjectsDialog { margin:auto; width:min(30rem, calc(100% - 24px)); max-height:88dvh; box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:18px; background:#fffdf8; color:#213c40; font:15px/1.6 system-ui,sans-serif; }
+#guestProjectsDialog::backdrop { background:rgb(13 27 35 / 65%); }
+#guestProjectsDialog h2 { margin:0 0 6px; padding:0; border:0; font-size:1.15rem; color:inherit; }
+#guestProjectsDialog h3 { margin:14px 0 4px; font-size:1rem; }
+#guestProjectsDialog p, #guestProjectsDialog ol { margin:4px 0; }
+#guestProjectsList { list-style:none; margin:8px 0; padding:0; display:grid; gap:6px; }
+#guestProjectsList li { display:grid; gap:2px; padding:8px 10px; border:1px solid #d5dcd3; border-radius:8px; background:#fbfaf6; }
+#guestProjectsList li[aria-current="true"] { border-color:#234e40; }
+#guestProjectsList span { color:#4a5c53; font-size:13px; }
+#guestProjectsList em { font-style:normal; color:#234e40; font-weight:700; font-size:13px; }
+#guestProjectsList a, #guestProjectsDialog button { min-height:44px; display:inline-flex; align-items:center; justify-content:center; padding:4px 14px; border:1px solid #a0b1ab; border-radius:8px; background:#fffdf8; color:#1e383a; font:inherit; text-decoration:none; cursor:pointer; justify-self:start; }
+#guestProjectsDialog .guest-projects-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+#guestProjectsDownload { background:#234e40!important; border-color:#234e40!important; color:#fff!important; }
+#guestProjectsImportNote { color:#4a5c53; font-size:12px; }
+#guestProjectsClose { margin-top:12px; }
+#guestProjectsDialog :focus-visible { outline:3px solid #0b72a0; outline-offset:1px; }
+@media (max-width: 820px) {
+  #guestRoomCard { inset-inline:12px; inset-block-end:calc(76px + env(safe-area-inset-bottom,0px)); width:auto; }
+}

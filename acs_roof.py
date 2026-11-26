@@ -74,6 +74,31 @@ def _shared_length(edge, rect, others):
     return total
 
 
+def _open_spans(edge, rect, others):
+    """Open stretches of a partly shared edge as (start, end) offsets from its start.
+
+    A courtyard opening or a re-entrant corner leaves such a stretch with a drop;
+    it gets the facade parapet as a span, so the deck is never cut into slivers.
+    Twin of ``openSpans`` in public/app/core/roof.mjs.
+    """
+    axis, fixed, a0, a1 = _edge_span(edge, rect)
+    opposite = {"N": "S", "S": "N", "W": "E", "E": "W"}[edge]
+    cover = []
+    for other in others:
+        o_axis, o_fixed, b0, b1 = _edge_span(opposite, other)
+        if o_axis == axis and abs(o_fixed - fixed) <= _EPS and min(a1, b1) - max(a0, b0) > _EPS:
+            cover.append((max(a0, b0), min(a1, b1)))
+    cover.sort()
+    spans, at = [], a0
+    for c0, c1 in cover:
+        if c0 - at > _EPS:
+            spans.append((round(at - a0, 6), round(c0 - a0, 6)))
+        at = max(at, c1)
+    if a1 - at > _EPS:
+        spans.append((round(at - a0, 6), round(a1 - a0, 6)))
+    return spans
+
+
 def _positive_height(value):
     if value is None:
         raise ValueError("ROOF_HEIGHT_NOT_SPECIFIED")
@@ -158,7 +183,7 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
     used = set()
     for room, rc in top_rooms:
         others = [o for o in rects if o is not rc]
-        walls, room_gaps = [], []
+        walls, room_gaps, spans = [], [], []
         for edge in EDGES:
             _, _, a0, a1 = _edge_span(edge, rc)
             length = a1 - a0
@@ -167,11 +192,16 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
                 walls.append(edge)
                 parapet_m += length
             elif shared < length - _EPS:
-                # A whole-edge parapet would cross the neighbouring roof deck, so a
-                # partly shared edge is left open and reported, never guessed.
-                gap = {"edge": edge, "open_length_m": round(length - shared, 6)}
-                gaps.append({"room_id": room.get("id"), **gap})
-                room_gaps.append(gap)
+                # A whole-edge parapet would cross the neighbouring roof deck, so
+                # only the open stretches carry it, as spans of this edge. An open
+                # deck (no parapet) still discloses the stretch as a gap.
+                if parapet_h > 0:
+                    for start, end in _open_spans(edge, rc, others):
+                        spans.append({"edge": edge, "start_m": start, "end_m": end})
+                        parapet_m += end - start
+                else:
+                    gaps.append({"room_id": room.get("id"), "edge": edge,
+                                 "open_length_m": round(length - shared, 6)})
         base = ROOF_ROOM_PREFIX + str(room.get("id") or "deck")
         if len(base) > 160:
             suffix = hashlib.sha256(base.encode("utf-8")).hexdigest()[:20]
@@ -196,6 +226,8 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
         })
         if parapet_h <= 0:
             roof_rooms[-1].pop("wall_h")
+        elif spans:
+            roof_rooms[-1]["parapet_spans"] = spans
     floors[template] = {"rooms": roof_rooms}
     levels.append({"index": roof_index, "template": template,
                    "kind": "roof", "auto": True, "name": "السطح",

@@ -33,7 +33,7 @@ class ContextParity(unittest.TestCase):
             result=with_context_details(m)
             self.assertEqual(result[2],None if last_count==96 else 'CONTEXT_DETAILS_RESOURCE_LIMIT','4096/4097 aggregate parts threshold')
             add(m)
-        m=fixture();m['meta']={'note':'x'*100001};add(m)
+        m=fixture();m['meta']={'note':'x'*200001};add(m)
         m=fixture();m['floors']['g']['rooms'][0]['id']=m['floors']['g']['rooms'][1]['id'];add(m)
         first=with_context_details(fixture())[0]['floors']['g']['rooms'][0]['objects'][0]['id']
         m=fixture();m['floors']['g']['rooms'][0]['lights']=[{'id':first}];add(m)

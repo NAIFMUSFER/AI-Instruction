@@ -379,6 +379,7 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             counts[(None, room["role"])] += n
             for selector in {template}|aliases.get(template,set()):
                 counts[(selector, room['role'])] += n
+    building_axes = {r.get("metric") for r in requirements if isinstance(r, dict)} & {"building_width_m", "building_depth_m"}
     for r in requirements:
         rid = r.get("id") if isinstance(r, dict) else None
         if not isinstance(r, dict) or not _id(rid) or rid in seen:
@@ -420,6 +421,13 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         if kind in ("site_width_m", "site_depth_m"):
             site = model.get("site") or {}
             actual = site.get("w" if kind == "site_width_m" else "d") if isinstance(site, dict) else None
+            valid_expected = _number(expected) and expected > 0
+            # With a confirmed building size the model's envelope is the building;
+            # the land then only has to contain it.
+            maximum = ("building_width_m" if kind == "site_width_m" else "building_depth_m") in building_axes
+        elif kind in ("building_width_m", "building_depth_m"):
+            site = model.get("site") or {}
+            actual = site.get("w" if kind == "building_width_m" else "d") if isinstance(site, dict) else None
             valid_expected = _number(expected) and expected > 0
         elif kind == "building_target_area_m2":
             # Explicit total canonical room-rectangle area across physical levels;

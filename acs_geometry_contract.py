@@ -16,6 +16,34 @@ def wall_edges(room, industrial=False):
         return ()
     return EDGES
 
+def parapet_spans(room):
+    """Wall spans along part of an edge (a roof parapet over an open stretch).
+
+    Each span is (edge, start, end), offsets in metres from the edge's low end.
+    Only a room with explicit wall edges may carry spans; invalid data fails closed.
+    Twin of ``_aParapetSpans`` in public/app/core/standards.js.
+    """
+    value = room.get('parapet_spans')
+    if value is None:
+        return ()
+    if not isinstance(room.get('walls'), list) or not isinstance(value, list):
+        raise ValueError('Invalid parapet spans')
+    rect = room.get('rect')
+    out = []
+    for span in value:
+        if not isinstance(span, dict) or span.get('edge') not in EDGES or span['edge'] in room['walls']:
+            raise ValueError('Invalid parapet spans')
+        start, end = span.get('start_m'), span.get('end_m')
+        if (type(start) not in (int, float) or type(end) not in (int, float) or
+                not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end):
+            raise ValueError('Invalid parapet spans')
+        length = rect[2] if span['edge'] in ('N', 'S') else rect[3]
+        if end > float(length) + 1e-6:
+            raise ValueError('Invalid parapet spans')
+        out.append((span['edge'], float(start), float(end)))
+    return tuple(out)
+
+
 def level_elevation(level, floor_height):
     value = level.get('elevation')
     if value is None:

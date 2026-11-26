@@ -40,6 +40,7 @@ import acs_generation_job as JOBS
 import acs_provider as PROV
 import acs_async_jobs as ASYNC_JOBS
 import acs_plan_http as PLAN_HTTP
+import acs_auth_gateway as AUTH_GATEWAY
 
 LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine",
                                version=BUILD.SERVICE_VERSION)
@@ -604,6 +605,10 @@ def health():
             # KI-14/F-46: حالة مجمّع العمل الحاسوبيّ. `isolated=false` يعني
             # أن المنصّة منعت spawn وأننا على خيوط — تدهورٌ مُعلَن لا صامت.
             "cpu_pool": CPU.health_status(),
+            # آخر حكمٍ مخزَّن لخدمة الدخول — لا يفتح هذا المسار مقبساً أبداً، فيبقى
+            # /health حيّاً حين تتعطّل خدمة الدخول (Render يعيد التشغيل عند فشله).
+            # الفحص الفعليّ في /ready/auth. بلا عنوان ولا مفتاح ولا نصّ خطأ.
+            "auth_upstream": AUTH_GATEWAY.upstream_status(probe=False),
             "build": {k: v for k, v in BUILD.build_info().items()
                       if k in ("version", "git_sha_short", "built_at",
                                "provenance_verified")}}
@@ -657,6 +662,31 @@ def ready():
     return {"ok": True, "ready": True, "service": SERVICE_NAME,
             "version": SERVICE_VERSION, "model_configured": model,
             "api_key_configured": True, "sdk": sdk}
+
+
+@app.get("/ready/auth")
+def ready_auth():
+    """جاهزية خدمة الدخول فعلاً: هل يصل الخادم إلى مشروع المصادقة الآن؟
+
+    «مضبوط» لا يعني «متاح»: مشروعٌ محذوف أو لا يُحَلّ اسمه يبقى مضبوطاً. هذا
+    المسار للمراقبة: يفحص مرّة واحدة على الأكثر كل ثلاثين ثانية بمهلة محدودة،
+    ويردّ 503 حين يتعذّر الدخول، بينما يبقى /health و/ready (التوليد) كما هما،
+    لأن وضع الضيف يعمل بلا دخول. لا يظهر عنوان المشروع ولا المفتاح ولا نصّ خطأ."""
+    status = AUTH_GATEWAY.upstream_status(probe=True)
+    if not status["configured"]:
+        raise E.AcsApiError(
+            E.ACS_NOT_CONFIGURED,
+            "خدمة الدخول غير مضبوطة على الخادم. ناقص: %s"
+            % ", ".join(status.get("missing") or []))
+    if not status["ready"]:
+        raise E.AcsApiError(
+            E.ACS_UPSTREAM_UNAVAILABLE,
+            "خدمة الدخول غير متاحة الآن. وضع الضيف ما زال يعمل.",
+            upstream={"provider": "acs-auth", "kind": status["state"],
+                      "status": status["http_status"]},
+            retryable=status["state"] in ("unreachable", "error", "unchecked"))
+    return {"ok": True, "ready": True, "service": SERVICE_NAME,
+            "version": SERVICE_VERSION, "auth": status}
 
 
 def _generation_summary(meta):

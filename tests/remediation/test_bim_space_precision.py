@@ -68,7 +68,7 @@ class ExactSpaceGeometry(unittest.TestCase):
         room = p['model']['floors']['f']['rooms'][0]
         x, z, width, depth = room['rect']
         elevation = p['model']['levels'][0]['elevation']
-        expected = ((x, x + width), (z, z + depth), (elevation, elevation + room['wall_h']))
+        expected = ((x, x + width), (-(z + depth), -z), (elevation, elevation + room['wall_h']))
         actual = serialized_space_bounds(exported['file'])
         for actual_axis, expected_axis in zip(actual, expected):
             for value, canonical_value in zip(actual_axis, expected_axis):

@@ -168,7 +168,7 @@ class ContextDetailsService(unittest.TestCase):
         runner=Race(porch_model())
         with patch('acs_context_details.with_context_details') as helper,self.assertRaises(PlanError) as rejected:
             S.generate_and_save(self.store,PROJECT,ACTOR,command(),runner=runner)
-        helper.assert_not_called();self.assertEqual(rejected.exception.code,'STALE_REVISION')
+        helper.assert_not_called();self.assertEqual(rejected.exception.code,'GENERATION_CONFLICT')  # kept for an explicit choice
         self.assertEqual(len(S.workspace(self.store,PROJECT,ACTOR).history()),1);self.assertEqual(len(runner.calls),1)
 
 

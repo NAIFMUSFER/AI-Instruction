@@ -921,6 +921,14 @@ function _vObj(oid,kind,layer,geom,materialId,provenance,meta){
   return o; }
 
 /* ------------------------------------------------ أجسام المعماري ------ */
+/* What a slab or roof really covers: its pieces when it declares voids (a
+   courtyard open to the sky), otherwise its outline. Twin of acs_visual._footprints. */
+function _vFootprints(e){
+  if(Array.isArray(e.pieces))
+    return e.pieces.map((p,k)=>[e.id+'.piece_'+k,p]).filter(([,p])=>Array.isArray(p)&&p.length===4&&
+      p.every(v=>typeof v==='number'&&Number.isFinite(v))).map(([id,p])=>[id,p.slice()]);
+  return [[e.id,e.outline]]; }
+
 function _vArchObjects(arch,transform,bid,theme,overrides,mode){
   const out=[]; if(!arch) return out;
   const lv={}; (arch.levels||[]).forEach(l=>{lv[l.index]=l;});
@@ -961,15 +969,16 @@ function _vArchObjects(arch,transform,bid,theme,overrides,mode){
        geometry_source:(wv[1]==='model'&&hv[1]==='model')?'model':'display_fallback',
        engineering_color:VIS_ENG_PALETTE.ARCH_OPENING})); });
   (arch.slabs||[]).forEach(s=>{
-    const o=s.outline, tv=_vVal(s.thickness_m);
+    const tv=_vVal(s.thickness_m);
+    _vFootprints(s).forEach(([oid,o])=>{
     if(o===null||o===undefined||s.elevation_m===null||s.elevation_m===undefined
        ||tv[0]===null) return;
     const g=_vWorld(o[0]+o[2]/2,s.elevation_m-tv[0]/2,o[1]+o[3]/2,o[2],tv[0],o[3],0,transform);
-    out.push(_vObj(s.id,'SLAB','ARCHITECTURE',g,eng?'technical':floor[0],
+    out.push(_vObj(oid,'SLAB','ARCHITECTURE',g,eng?'technical':floor[0],
       eng?'SYSTEM_DEFAULT':floor[1],
       {source_layer:'ARCHITECTURE',source_element_id:s.id,level_index:s.level_index,
        geometry_source:tv[1]==='model'?'model':'display_fallback',
-       engineering_color:VIS_ENG_PALETTE.ARCH_SLAB})); });
+       engineering_color:VIS_ENG_PALETTE.ARCH_SLAB})); }); });
   if(mode!=='ENGINEERING'){
     (arch.ceilings||[]).forEach(c=>{
       const o=c.outline, tv=_vVal(c.thickness_m);
@@ -980,13 +989,14 @@ function _vArchObjects(arch,transform,bid,theme,overrides,mode){
         {source_layer:'ARCHITECTURE',source_element_id:c.id,space_id:c.space_id,
          geometry_source:tv[1]==='model'?'model':'display_fallback'})); }); }
   (arch.roofs||[]).forEach(r=>{
-    const o=r.outline, tv=_vVal(r.thickness_m);
+    const tv=_vVal(r.thickness_m);
+    _vFootprints(r).forEach(([oid,o])=>{
     if(o===null||o===undefined||r.elevation_m===null||r.elevation_m===undefined
        ||tv[0]===null) return;
     const g=_vWorld(o[0]+o[2]/2,r.elevation_m+tv[0]/2,o[1]+o[3]/2,o[2],tv[0],o[3],0,transform);
-    out.push(_vObj(r.id,'ROOF','ARCHITECTURE',g,roof[0],roof[1],
+    out.push(_vObj(oid,'ROOF','ARCHITECTURE',g,roof[0],roof[1],
       {source_layer:'ARCHITECTURE',source_element_id:r.id,
-       geometry_source:tv[1]==='model'?'model':'display_fallback'})); });
+       geometry_source:tv[1]==='model'?'model':'display_fallback'})); }); });
   /* درج مرئي عند نواة معلنة — موضعه وأبعاده من النموذج، لا من تقدير */
   (arch.cores||[]).forEach(c=>{
     if(c.type!=='STAIR') return;
@@ -1013,18 +1023,19 @@ function _vRoofCap(arch,transform,bid,theme,overrides){
   const top=lv[lv.length-1];
   let tops=slabs.filter(s=>s.level_index===top.index);
   if(!tops.length) tops=[slabs[slabs.length-1]];
-  const o=tops[0].outline;
   const hs=(arch.walls||[]).filter(w=>w.level_index===top.index)
     .map(w=>_vVal(w.height_m)[0]).filter(v=>v!==null);
   const h=hs.length?Math.max.apply(null,hs):3.0;
   const y=top.elevation_m+h;
   const roof=_vAssign(theme,'roof',overrides,'roof');
-  const g=_vWorld(o[0]+o[2]/2,y+0.1,o[1]+o[3]/2,o[2],0.2,o[3],0,transform);
-  return [_vObj(bid+'.vis.roof_cap','ROOF_CAP','ARCHITECTURE',g,roof[0],roof[1],
-    {semantic:false,visual_only:true,geometry_source:'display_fallback',
-     source_layer:null,source_element_id:null,
-     note:'visual roof cap — the model states no roof; this is appearance only and is '+
-          'never engineering geometry'})]; }
+  const pieced=Object.prototype.hasOwnProperty.call(tops[0],'pieces');
+  return _vFootprints(tops[0]).map(([,o],k)=>{
+    const g=_vWorld(o[0]+o[2]/2,y+0.1,o[1]+o[3]/2,o[2],0.2,o[3],0,transform);
+    return _vObj(bid+'.vis.roof_cap'+(pieced?'.piece_'+k:''),'ROOF_CAP','ARCHITECTURE',g,roof[0],roof[1],
+      {semantic:false,visual_only:true,geometry_source:'display_fallback',
+       source_layer:null,source_element_id:null,
+       note:'visual roof cap — the model states no roof; this is appearance only and is '+
+            'never engineering geometry'}); }); }
 
 /* ------------------------------- أجسام التخصّصات الأخرى (كما هي) ------ */
 function _vDisciplineObjects(items,layer,transform,colour){
@@ -1491,8 +1502,7 @@ function visSection(arch,axis,positionM,buildingId){
       elevation_m:(l.elevation_m===null||l.elevation_m===undefined)?null:_vQ(l.elevation_m),
       elevation_source:l.elevation_source}); });
   const lv={}; (arch.levels||[]).forEach(l=>{lv[l.index]=l;});
-  (arch.slabs||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(s=>{
-    const o=s.outline;
+  (arch.slabs||[]).slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(s=>_vFootprints(s).forEach(([sid,o])=>{
     if(!o||s.elevation_m===null||s.elevation_m===undefined) return;
     const lo=(axis==='x')?o[0]:o[1];
     const hi=lo+((axis==='x')?o[2]:o[3]);
@@ -1500,9 +1510,9 @@ function visSection(arch,axis,positionM,buildingId){
     const cutHi=cutLo+((axis==='x')?o[3]:o[2]);
     if(!(cutLo-_VIS_EPS<=pos&&pos<=cutHi+_VIS_EPS)) return;
     const tv=_vVal(s.thickness_m);
-    out.slabs.push({id:s.id,level_index:s.level_index,u0:_vQ(lo),u1:_vQ(hi),
+    out.slabs.push({id:sid,level_index:s.level_index,u0:_vQ(lo),u1:_vQ(hi),
       y0:_vQ(s.elevation_m-(tv[0]||0)),y1:_vQ(s.elevation_m),
-      thickness_m:tv[0]===null?null:_vQ(tv[0]),thickness_source:tv[1]}); });
+      thickness_m:tv[0]===null?null:_vQ(tv[0]),thickness_source:tv[1]}); }));
   walls.slice().sort((a,b)=>_scmp(String(a.id),String(b.id))).forEach(w=>{
     const hv=_vVal(w.height_m), t=_vVal(w.thickness_m)[0]||0.2;
     const base=(lv[w.level_index]||{}).elevation_m;

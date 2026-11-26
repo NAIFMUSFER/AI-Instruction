@@ -103,7 +103,7 @@ class ContextDetails(unittest.TestCase):
         self.assertNotIn(obj['id'],[r['element_id'] for r in list_context_details(out)])
     def test_resource_bound_before_copy_and_twelve_object_cap(self):
         from unittest.mock import patch
-        m=fixture();m['meta']={'note':'x'*100001}
+        m=fixture();m['meta']={'note':'x'*200001}
         with patch('acs_context_details.copy.deepcopy',side_effect=AssertionError('must not copy')):
             self.assertEqual(with_context_details(m)[2],'CONTEXT_DETAILS_RESOURCE_LIMIT')
         m=fixture();rooms=m['floors']['g']['rooms'];rooms.clear()

@@ -5,6 +5,7 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'tests/remediation/test_supabase_plan_store_schema.py'
+      - 'tests/remediation/test_plan_rpc_membership_postgres.py'
       - '.github/workflows/production-supabase-plan-store.yml'
 
 permissions:
@@ -24,5 +25,17 @@ jobs:
         run: python -m py_compile tests/remediation/test_supabase_plan_store_schema.py
       - name: Verify immutable owner-scoped Supabase schema
         run: python tests/remediation/test_supabase_plan_store_schema.py
+      - name: Plan RPCs deny non-members on real PostgreSQL
+        # Missing PostgreSQL fails this step (exit 1); it is never reported as skipped.
+        env:
+          PG_BINDIR: /usr/lib/postgresql/16/bin
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x "$PG_BINDIR/postgres" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends postgresql-16
+          fi
+          python tests/remediation/test_plan_rpc_membership_postgres.py
       - name: No generated diff
         run: git diff --exit-code

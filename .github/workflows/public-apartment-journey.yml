@@ -19,10 +19,13 @@ on:
       - 'tests/remediation/test_guest_quicklook.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_confirm_card.cjs'
       - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
       - 'tests/remediation/test_local_apartment.mjs'
+      - 'tests/remediation/test_apartment_floor_line_and_courtyard.py'
+      - 'acs_roof.py'
       - 'tests/remediation/test_guest_cutaway.mjs'
       - 'tests/remediation/test_guest_floor_plan.mjs'
       - 'tools/build_guest_apartment_plans.py'
@@ -45,10 +48,13 @@ on:
       - 'tests/remediation/test_guest_quicklook.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_confirm_card.cjs'
       - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/**'
       - 'tests/remediation/test_local_apartment.mjs'
+      - 'tests/remediation/test_apartment_floor_line_and_courtyard.py'
+      - 'acs_roof.py'
       - 'tests/remediation/test_guest_cutaway.mjs'
       - 'tests/remediation/test_guest_floor_plan.mjs'
       - 'tools/build_guest_apartment_plans.py'
@@ -105,6 +111,7 @@ jobs:
         run: |
           PYTHONPATH=. python3 tests/remediation/test_audit_engineering_door_meshes.py
           node tests/remediation/test_local_apartment.mjs
+          python3 tests/remediation/test_apartment_floor_line_and_courtyard.py
           python3 tools/build_guest_apartment_usdz.py --check
           python3 tests/remediation/test_guest_quicklook.py
           node tests/remediation/test_guest_cutaway.mjs
@@ -120,6 +127,10 @@ jobs:
         if: matrix.brief == 'riyadh-20x25'
         timeout-minutes: 20
         run: node tests/remediation/test_guest_brief_variations.cjs
+      - name: Verify the guest confirmation card, questions and land versus building
+        if: ${{ !cancelled() && matrix.brief == 'riyadh-20x25' && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
+        timeout-minutes: 5
+        run: node tests/remediation/test_guest_confirm_card.cjs
       - name: Verify editing and recovery when WebGL is unavailable
         if: ${{ !cancelled() && matrix.brief == 'riyadh-20x25' && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
         timeout-minutes: 5

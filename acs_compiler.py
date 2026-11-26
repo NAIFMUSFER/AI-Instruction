@@ -14,7 +14,7 @@
 
 import json
 import math
-from acs_geometry_contract import level_elevation
+from acs_geometry_contract import level_elevation, parapet_spans
 import re
 import sys
 import struct
@@ -930,6 +930,11 @@ def build_room(bld, room, fkey, base_y, defaults):
             axis, fixed, u0, u1 = edge_geom(e, rect)
             wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
                                per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
+        # A roof parapet over the open stretch of a partly shared edge.
+        for k, (e, s0, s1) in enumerate(parapet_spans(room)):
+            axis, fixed, u0, _ = edge_geom(e, rect)
+            wall_with_openings(bld, axis, fixed, u0 + s0, u0 + s1, base_y, hW, t,
+                               [], "WALL", fkey, name, "w%s%d" % (e, k), wall_mat)
 
         # Source role tints and explicit wall colors can share one glTF material.
         # Only mark default opaque walls. This hint authorizes a viewer assumption,
@@ -1045,6 +1050,25 @@ def build_site_plane(bld, defaults):
 # ---------------------------------------------------------------------------
 # بناء دور كامل (لوح أرضية + غرف)
 # ---------------------------------------------------------------------------
+def _plate_rects(rooms, defaults):
+    """Room rectangles for the level plate. A local apartment's rooms sit on wall
+    axes, so its plate grows by half a wall to reach the outer and courtyard wall
+    faces; other models keep their legacy axis plate. Twin of viewer.js."""
+    rects = [r.get("rect") for r in rooms]
+    half = defaults.get("plate_outset", 0.0)
+    if not half:
+        return rects
+    grown = []
+    for rc in rects:
+        try:
+            x, z, w, d = (float(v) for v in rc)
+        except (TypeError, ValueError):
+            grown.append(rc)
+            continue
+        grown.append([x - half, z - half, w + 2 * half, d + 2 * half])
+    return grown
+
+
 def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None, ceiling_holes=None):
     """PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان لوح الدور يمتدّ على الموقع كلّه:
 
@@ -1061,13 +1085,14 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None, ceili
     rooms = floor_def.get("rooms", []) or []
     site_rect = [0.0, 0.0, float(site.get("w") or 0.0),
                  float(site.get("d") or 0.0)]
-    pp = PBR.plate_rect([r.get("rect") for r in rooms], site_rect)
+    pp = PBR.plate_rect(_plate_rects(rooms, defaults), site_rect)
     pr = pp["rect"] if (pp.get("valid") and pp.get("rect")) else site_rect
     strips = [s for rect in (pp.get("rectangles") or [pr])
               for s in PBR.slab_strips(*rect, holes or [])]
+    slab_t = defaults.get("slab_t", 0.15)
     for k, s in enumerate(strips):
-        bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
-                    s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
+        bld.add_box(s[0] + s[2] / 2.0, base_y - slab_t / 2.0, s[1] + s[3] / 2.0,
+                    s[2], slab_t, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
     room_defaults = {**defaults, 'holes': holes, 'ceiling_holes': ceiling_holes,
                      'declared_door_pairs': (_declared_door_pairs(rooms, fkey)
                                              if defaults.get('apartment_pair_schema') else {})}
@@ -1098,6 +1123,14 @@ def compile_building(data, out_path):
     }
     floors = data.get("floors", {})
     fh = data.get("floor_height", defaults["wall_h"] + 0.2)
+    if defaults["apartment_pair_schema"]:
+        # Close the floor line: a storey's walls stop at wall_h and the slab above
+        # fills the rest of the storey, out to the outer wall faces (no slit).
+        try:
+            defaults["slab_t"] = round(max(0.15, float(fh) - float(defaults["wall_h"])), 6)
+            defaults["plate_outset"] = float(defaults["wall_t"]) / 2.0
+        except (TypeError, ValueError):
+            pass
     # مستوى الموقع العرضي أولاً، ثم ألواح الأدوار ببصمة غرف كل دور فوقه
     build_site_plane(bld, defaults)
     # فراغات النوى من المصرِّف المعماري — نفس مصدر الحقيقة الذي تقرأه الصفحة

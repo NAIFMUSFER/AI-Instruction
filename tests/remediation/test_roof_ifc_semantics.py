@@ -169,7 +169,7 @@ class RoofIfcSemantics(unittest.TestCase):
                       (origin[1]+offset[1]+center[1]-depth/2, origin[1]+offset[1]+center[1]+depth/2),
                       (origin[2]+offset[2],origin[2]+offset[2]+solid[3]))
             x,z,w,d = record['footprint']; elevation = record['elevation']
-            wanted = ((x,x+w),(z,z+d),(elevation,elevation+record['height']))
+            wanted = ((x,x+w),(-(z+d),-z),(elevation,elevation+record['height']))
             for actual_axis, expected_axis in zip(actual,wanted):
                 for value, expected_value in zip(actual_axis,expected_axis):
                     self.assertAlmostEqual(value,expected_value,places=6)

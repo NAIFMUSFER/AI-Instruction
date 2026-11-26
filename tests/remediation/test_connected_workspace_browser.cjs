@@ -80,6 +80,30 @@ async function verifyPromptStarters(page,port,width){
  console.log('PASS signed-in editable prompt choices at '+width+'px: edited text saved by the workspace, one controlled provider call');
 }
 
+// Owner decision 3: the building's size is reviewed separately from the land, and a
+// count that excludes the ground floor is confirmed with the ground floor added.
+async function verifyBuildingSeparateFromLand(page,width){
+ await newProject(page,'أرض ومبنى '+width);
+ await page.locator('#cwType').selectOption('residential');
+ const brief='عمارة سكنية على أرض ٢٥×٣٠ م، والمبنى ٢٠×٢٥ م، ٣ أدوار غير الأرضي';
+ await page.locator('#cwBrief').fill(brief);
+ await page.locator('#cwReadBrief').click();
+ const offered=await page.locator('#cwBriefCandidates [data-brief-metric]').evaluateAll(buttons=>buttons.map(b=>b.dataset.briefMetric+'='+b.textContent.replace(/[^0-9.]/g,'')));
+ for(const value of ['building_width_m=20','building_depth_m=25','site_width_m=25','site_depth_m=30','level_count=4'])
+  assert.ok(offered.includes(value),'review offers '+value+': '+offered);
+ assert.equal(await page.locator('label[for="cwBldWidth"]').textContent(),'عرض المبنى (م)');
+ for(const button of await page.locator('#cwBriefCandidates [data-brief-metric]').all())await button.click();
+ assert.deepEqual(await Promise.all(['cwWidth','cwDepth','cwBldWidth','cwBldDepth','cwLevels'].map(id=>page.locator('#'+id).inputValue())),['25','30','20','25','4']);
+ const questions=await page.locator('#cwBriefQuestions').textContent();
+ assert.ok(!questions.includes('تعارض'),'land 25 x 30 with building 20 x 25 and four floors is not a conflict: '+questions);
+ await page.locator('#cwUnits').fill('2');await page.locator('#cwUnitsScope').selectOption('per_level');
+ await page.locator('#cwConfirmed').check();
+ await page.locator('#cwBriefForm button[type=submit]').click();
+ await page.locator('[data-step-panel="2"]').waitFor({state:'visible'});
+ assert.ok(!(await page.locator('#cwStatus').textContent()).includes('تعارض'));
+ console.log('PASS signed-in land and building at '+width+'px: 25 x 30 land, 20 x 25 building and four floors confirmed');
+}
+
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
  const child=spawn(process.env.PYTHON||'python',['tests/remediation/connected_workspace_browser_server.py','--port',String(port),'--database',path.join(tmp,'plans.sqlite3')],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
@@ -132,7 +156,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
    await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
-   if(!noWebGL)await verifyPromptStarters(page,port,width);
+   if(!noWebGL){await verifyBuildingSeparateFromLand(page,width);await verifyPromptStarters(page,port,width);}
    await newProject(page,'مشروع قبول '+width);
    await page.locator('#cwBrief').waitFor({state:'visible'});
    await page.locator('#cwType').selectOption(width===393?'warehouse':'residential');

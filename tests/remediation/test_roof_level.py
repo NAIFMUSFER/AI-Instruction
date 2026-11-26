@@ -63,16 +63,67 @@ class RoofLevel(unittest.TestCase):
         self.assertNotIn("W", decks["roof_b"]["walls"])
         self.assertAlmostEqual(report["parapet_length_m"], 2 * (10 + 5))
 
-    def test_l_shape_keeps_its_recess_open_and_reports_the_partial_edge(self):
-        # 12 m² L: a 4x2 bar with a 2x2 leg under its west half.
+    def test_l_shape_guards_the_open_stretch_of_a_partly_shared_edge(self):
+        # 12 m² L: a 4x2 bar with a 2x2 leg under its west half. The bar's south
+        # edge drops off the roof over its east half. That stretch was only
+        # disclosed as a gap; it now carries the facade parapet as a span, without
+        # a stub across the leg's deck and without cutting the bar's deck.
         out, report = acs_roof.add_flat_roof_level(
             model([room("bar", [0, 0, 4, 2]), room("leg", [0, 2, 2, 2])]))
         self.assertAlmostEqual(report["deck_area_m2"], 12.0)
         decks = {r["id"]: r for r in out["floors"]["roof"]["rooms"]}
-        self.assertNotIn("S", decks["roof_bar"]["walls"])   # half shared: never guessed
+        self.assertEqual(sorted(decks), ["roof_bar", "roof_leg"])
+        self.assertEqual(decks["roof_bar"]["rect"], [0, 0, 4, 2])
+        self.assertNotIn("S", decks["roof_bar"]["walls"])   # half shared: no whole-edge wall
+        self.assertEqual(decks["roof_bar"]["parapet_spans"], [{"edge": "S", "start_m": 2.0, "end_m": 4.0}])
         self.assertNotIn("N", decks["roof_leg"]["walls"])   # fully shared
-        self.assertEqual(report["parapet_gaps"],
-                         [{"room_id": "bar", "edge": "S", "open_length_m": 2.0}])
+        self.assertNotIn("parapet_spans", decks["roof_leg"])
+        self.assertEqual(report["parapet_gaps"], [])
+        self.assertAlmostEqual(report["parapet_length_m"], 4 + 2 + 2 + 2 + 2 + 4)
+        # An open deck (no parapet) still discloses the same stretch as a gap.
+        _, open_deck = acs_roof.add_flat_roof_level(
+            model([room("bar", [0, 0, 4, 2]), room("leg", [0, 2, 2, 2])]), parapet_h=0)
+        self.assertEqual(open_deck["parapet_gaps"], [{"room_id": "bar", "edge": "S", "open_length_m": 2.0}])
+
+    def test_every_courtyard_edge_of_the_roof_carries_the_facade_parapet(self):
+        # A ring of four decks around a 2x3 open court: each long deck is only
+        # partly against its neighbours, and the middle of its court edge drops
+        # the full building height. Every stretch over the court is guarded and
+        # every deck keeps its source rectangle (no slivers).
+        rooms = [room("north", [0, 0, 6, 1]), room("west", [0, 1, 2, 3]),
+                 room("east", [4, 1, 2, 3]), room("south", [0, 4, 6, 1])]
+        out, report = acs_roof.add_flat_roof_level(model(rooms))
+        decks = {r["id"]: r for r in out["floors"]["roof"]["rooms"]}
+        self.assertEqual([d["rect"] for d in decks.values()], [r["rect"] for r in rooms])
+        self.assertEqual(decks["roof_north"]["parapet_spans"], [{"edge": "S", "start_m": 2.0, "end_m": 4.0}])
+        self.assertEqual(decks["roof_south"]["parapet_spans"], [{"edge": "N", "start_m": 2.0, "end_m": 4.0}])
+        self.assertIn("E", decks["roof_west"]["walls"])
+        self.assertIn("W", decks["roof_east"]["walls"])
+        self.assertEqual(report["parapet_gaps"], [])
+        self.assertAlmostEqual(report["parapet_length_m"], 2 * (6 + 5) + 2 * (2 + 3))
+        # The parapets are real walls in the architectural model, not only data.
+        arch = acs_arch.compile_architecture(out)
+        roof_walls = [w for w in arch["walls"] if w["level_index"] == 1]
+        court = [w for w in roof_walls if (w["axis"] == "x" and w["fixed"] in (1.0, 4.0) and w["u0"] >= 2 - 1e-9 and w["u1"] <= 4 + 1e-9)
+                 or (w["axis"] == "z" and w["fixed"] in (2.0, 4.0) and w["u0"] >= 1 - 1e-9 and w["u1"] <= 4 + 1e-9)]
+        self.assertAlmostEqual(sum(w["length_m"] for w in court), 2 + 2 + 3 + 3)
+        self.assertTrue(all(w["height_m"]["value"] == 0.9 for w in court))
+
+    def test_a_narrow_notch_is_guarded_without_a_sliver_deck(self):
+        # A chat edit narrowed a room and left a 0.3 m notch. Cutting decks there
+        # made a 0.42 m² sliver that the approval checker rejects as too small.
+        rooms = [room("b", [9.7, 0, 6, 4.4]), room("corridor", [0, 4.4, 16, 1.4]),
+                 room("lobby", [16, 0, 4, 5.8])]
+        out, report = acs_roof.add_flat_roof_level(model(rooms))
+        decks = {r["id"]: r for r in out["floors"]["roof"]["rooms"]}
+        self.assertEqual(len(decks), 3)
+        self.assertEqual(decks["roof_corridor"]["rect"], [0, 4.4, 16, 1.4])
+        self.assertEqual(decks["roof_corridor"]["parapet_spans"][-1]["edge"], "N")
+        self.assertAlmostEqual(decks["roof_corridor"]["parapet_spans"][-1]["end_m"]
+                               - decks["roof_corridor"]["parapet_spans"][-1]["start_m"], 0.3)
+        self.assertEqual(decks["roof_lobby"]["parapet_spans"], [{"edge": "W", "start_m": 0.0, "end_m": 4.4}])
+        self.assertIn("E", decks["roof_b"]["walls"])
+        self.assertEqual(report["parapet_gaps"], [])
 
     def test_elevation_follows_the_storey_convention_or_sits_on_the_walls(self):
         tall = model([room("a", [0, 0, 5, 5])], wall_h=8, floor_height=3.2)
@@ -313,13 +364,14 @@ class RoofBoundaryRegressions(unittest.TestCase):
         rev=ws.propose(roofed,brief='Synthetic gap',requirements=[],expected_head=None,note='regression')
         p=project(rev.revision,report['level_index'])
         self.assertEqual(p['level_kind'],'roof');self.assertTrue(p['level_auto'])
-        self.assertEqual(p['roof_disclosure']['parapet_gaps'],[{'room_id':'roof_bar','source_room_id':'bar','edge':'S','open_length_m':2.0}])
+        # The open stretch is now guarded by a parapet span, so no gap is left to disclose.
+        self.assertEqual(p['roof_disclosure']['parapet_gaps'],[])
         self.assertIn('roof access',p['roof_disclosure']['not_verified'])
         changed=copy.deepcopy(roofed);changed['floors']['g']['rooms'][1]['rect']=[0,2,3,2]
         updated=acs_roof.carry_auto_roof(roofed,changed)
         self.assertEqual(updated['meta'],roofed['meta'])
         self.assertEqual(updated['levels'],roofed['levels'])
-        self.assertEqual(updated['floors']['roof']['rooms'][0]['roof_provenance']['parapet_gaps'][0]['open_length_m'],1.0)
+        self.assertEqual(updated['floors']['roof']['rooms'][0]['parapet_spans'],[{'edge':'S','start_m':3.0,'end_m':4.0}])
 
     def test_only_explicit_roof_instances_waive_occupied_room_door_light_needs(self):
         import acs_validate

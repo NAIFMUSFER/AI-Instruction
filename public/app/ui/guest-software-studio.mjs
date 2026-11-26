@@ -1,5 +1,5 @@
 // Loaded only after the full guest renderer fails to initialize.
-import { apartmentFromBrief, apartmentFromRevision } from '../core/local-apartment.mjs';
+import { apartmentConfirmation, apartmentFromBrief, apartmentFromRevision } from '../core/local-apartment.mjs';
 import { carryAutoRoof, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { withContextDetails } from '../core/context-details.mjs';
 import { openGuestDraft } from '../trust/guest-draft-store.mjs';
@@ -56,7 +56,12 @@ export async function openGuestSoftwareStudio() {
       <label for="descText">وصف العمارة السكنية</label><div id="guestSoftwareInput"></div>
       <p id="guestSoftwareError" role="alert" hidden></p>
       <button id="guestSoftwareSubmit" type="submit" disabled>إنشاء التصميم</button>
-    </form></section>
+    </form>
+    <section id="guestConfirm" class="guest-confirm" dir="rtl" role="region" aria-labelledby="guestConfirmTitle" aria-live="polite" hidden>
+      <h3 id="guestConfirmTitle">فهمنا:</h3><ul id="guestConfirmRows"></ul>
+      <div id="guestConfirmUnsupported" class="guest-confirm-unsupported" hidden><p>غير مدعوم في المولّد المحلي بعد، ولن يُرسم:</p><ul></ul></div>
+      <div class="guest-confirm-actions"><button id="guestConfirmDraw" type="button">ارسم</button><button id="guestConfirmEdit" type="button">عدّل</button></div>
+    </section></section>
     <section id="guestSoftwareResult" hidden>
       <div class="gs-heading"><div><h1>العمارة السكنية</h1><p id="guestSoftwareFacts"></p></div><button id="guestRevise" type="button">تعديل التصميم</button></div>
       <div id="guestSoftwareViewport"><canvas id="guestSoftwareCanvas" role="img" aria-label="مجسّم العمارة بحسب وصف المشروع"></canvas></div>
@@ -114,6 +119,31 @@ export async function openGuestSoftwareStudio() {
     try{await storage.save(next);if(model===next)saveStatus.textContent='محفوظ على هذا الجهاز';}
     catch(error){saveStatus.textContent=error.message==='DRAFT_CHANGED'?'تغيّرت المسودة في علامة تبويب أخرى. نزّل نموذجك قبل فتح النسخة الأخرى.':'تعذّر الحفظ على الجهاز. نزّل النموذج للاحتفاظ به.';}
   }
+  // «فهمنا: …» before a new brief is drawn; «ارسم» draws exactly this model (owner decision 2).
+  const card=$('guestConfirm');
+  let pendingDraw=null;
+  function confirmBrief(raw,draw){
+    const summary=apartmentConfirmation(raw);
+    $('guestConfirmTitle').textContent=summary.title;
+    $('guestConfirmRows').replaceChildren(...summary.rows.map(row=>{
+      const item=document.createElement('li');item.dataset.key=row.key;
+      if(row.assumed)item.dataset.assumed='true';
+      const label=document.createElement('strong');label.textContent=row.label+': ';
+      const value=document.createElement('span');value.textContent=row.value;
+      item.append(label,value);
+      if(row.assumed){const tag=document.createElement('em');tag.className='guest-confirm-assumed';tag.textContent='افتراض';item.append(' ',tag);}
+      if(row.note){const note=document.createElement('small');note.textContent=row.note;item.append(note);}
+      return item;
+    }));
+    const unsupported=$('guestConfirmUnsupported');
+    unsupported.querySelector('ul').replaceChildren(...(summary.notDrawn||[]).map(text=>{const item=document.createElement('li');item.textContent=text;return item;}));
+    unsupported.hidden=!(summary.notDrawn||[]).length;
+    pendingDraw=draw;card.hidden=false;
+    $('guestConfirmDraw').scrollIntoView({block:'nearest'});$('guestConfirmDraw').focus({preventScroll:true});
+  }
+  $('guestConfirmDraw').onclick=()=>{const draw=pendingDraw;pendingDraw=null;card.hidden=true;draw?.();};
+  $('guestConfirmEdit').onclick=()=>{pendingDraw=null;card.hidden=true;description.focus();};
+  description.addEventListener('input',()=>{pendingDraw=null;card.hidden=true;});
   function submit(text, editing) {
     const field=$(editing?'guestRevisionError':'guestSoftwareError');
     let result;
@@ -121,6 +151,24 @@ export async function openGuestSoftwareStudio() {
       if(!text.trim()) throw new Error('اكتب الطلب أولاً.');
       if(model?._authoring_locks && Object.keys(model._authoring_locks).length) throw new Error('لا يمكن تعديل التصميم مع وجود نطاق مقفول.');
       const raw=editing?apartmentFromRevision(text,model):apartmentFromBrief(text);
+      if(!editing){
+        if(!raw) throw new Error('يدعم العرض المبسّط حالياً العمائر السكنية ذات الشقتين في كل دور. حدّد أبعاد المبنى وعدد الأدوار والشقق.');
+        field.hidden=true;
+        confirmBrief(raw,()=>draw(raw,false,field));
+        return;
+      }
+      draw(raw,true,field);
+      return;
+    } catch(error){
+      card.hidden=true;pendingDraw=null;
+      field.textContent=error.message;field.hidden=false;
+      result={ok:false,message:error.message,question:error.question===true};
+    }
+    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:result}));
+  }
+  function draw(raw,editing,field) {
+    let result;
+    try {
       const next=generated(raw,model);
       present(next); field.hidden=true;
       if(editing) revision.close();

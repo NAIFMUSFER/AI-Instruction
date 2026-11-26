@@ -4,7 +4,9 @@ on:
     paths:
       - 'acs_understand_api.py'
       - 'acs_auth.py'
+      - 'acs_auth_gateway.py'
       - 'tests/remediation/test_production_auth_boundary.py'
+      - 'tests/remediation/test_auth_upstream_readiness.py'
       - '.github/workflows/production-auth-boundary.yml'
 permissions:
   contents: read
@@ -25,11 +27,16 @@ jobs:
       - name: Install API contract dependencies
         run: pip install -r requirements.txt
       - name: Compile authentication contract
-        run: python -m py_compile tests/remediation/test_production_auth_boundary.py acs_understand_api.py
+        run: python -m py_compile tests/remediation/test_production_auth_boundary.py tests/remediation/test_auth_upstream_readiness.py acs_understand_api.py
       - name: Unauthenticated cost-bearing routes fail closed
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy-test-key
         run: python tests/remediation/test_production_auth_boundary.py
+      - name: Sign-in upstream outage is visible without failing liveness
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy-test-key
+        run: python tests/remediation/test_auth_upstream_readiness.py
       - name: No generated diff
         run: git diff --exit-code

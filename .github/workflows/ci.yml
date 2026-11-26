@@ -792,13 +792,17 @@ jobs:
             tests/remediation/test_workspace_recovery.py \
             tests/remediation/test_auth_gateway.py \
             tests/remediation/test_production_auth_boundary.py \
+            tests/remediation/test_auth_upstream_readiness.py \
             tests/remediation/test_plan_http_command_boundary.py \
             tests/remediation/test_plan_pdf_export.py \
             tests/remediation/test_geometry_delivery.py \
             tests/remediation/test_geometry_independent_readers.py \
+            tests/remediation/test_courtyard_slab_pieces.py \
+            tests/remediation/test_guest_apartment_approval.py \
             tests/remediation/test_requirement_vocabulary.py \
             tests/remediation/test_roof_level.py \
             tests/remediation/test_guest_roof_parity.py \
+            tests/remediation/test_apartment_floor_line_and_courtyard.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
@@ -828,6 +832,7 @@ jobs:
             tests/remediation/test_context_object_selection.mjs \
             tests/remediation/test_context_details_browser_geometry.cjs \
             tests/remediation/test_context_local_integration.cjs \
+            tests/remediation/test_warehouse_local_brief.cjs \
             tests/remediation/test_context_object_controls.mjs \
             tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_guest_recovery_writes.cjs \
@@ -848,6 +853,7 @@ jobs:
           set -euo pipefail
           bash tools/ci_run.sh --log logs/delivery-browser.log --label "delivery critical Chromium" --runner node \
             tests/remediation/test_guest_workspace.cjs \
+            tests/remediation/test_guest_dxf_import.cjs \
             tests/remediation/test_connected_workspace_browser.cjs \
             tests/remediation/test_approved_viewer_browser.cjs \
             tests/remediation/test_stairs_approved_browser.cjs \

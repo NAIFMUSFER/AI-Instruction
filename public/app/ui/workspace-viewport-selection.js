@@ -11,6 +11,7 @@ import {
   canonicalWarehouseIdentityForMesh,
   parseWarehouseMeshAddress,
 } from '../render/warehouse-canonical-identity.js';
+import { createTapTracker } from './tap-gesture.mjs';
 
 const OWNER_TYPES = new Set([
   'WALL','FLOOR','ROOF','CEILING','SLAB','RACK','LANE','STATION','CONVEYOR','DOCK'
@@ -198,7 +199,6 @@ export function installWorkspaceViewportSelection(deps={}) {
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
-  let down = null;
   let helpers = [];
   let destroyed = false;
   const previousSelectHook = window.__ACS_ON_SELECT;
@@ -242,8 +242,19 @@ export function installWorkspaceViewportSelection(deps={}) {
     return helpers.length;
   }
 
-  async function selectInWorkspace(selection) {
+  // A guest gets a plain room card over the still-visible building; the
+  // engineering inspector stays one explicit button away («تفاصيل هندسية»).
+  async function selectInWorkspace(selection, mesh) {
     if (!selection) return false;
+    const card = window.ACS && window.ACS.guest ? window.ACS.guestRoomCard : null;
+    if (card && typeof card.show === 'function') {
+      highlightTarget(selection.target_id);
+      if (card.show(selection, {mesh, clearHighlight, openInspector: () => openInspector(selection)})) return true;
+    }
+    return openInspector(selection);
+  }
+
+  async function openInspector(selection) {
     let acs = window.ACS;
     // Reuse the existing panel entry on every viewport selection when available.
     // If the workspace was already loaded, openWorkspace() re-attaches the current
@@ -269,6 +280,8 @@ export function installWorkspaceViewportSelection(deps={}) {
   async function hitAt(clientX, clientY) {
     const root = late.model, camera = late.camera, building = late.lastBuilding;
     if (!root || !camera || !building) return null;
+    // Measuring, commenting and walking own the tap while they are active.
+    if (window.ACS && typeof window.ACS.viewportBusy === 'function' && window.ACS.viewportBusy()) return null;
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
     pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -279,26 +292,14 @@ export function installWorkspaceViewportSelection(deps={}) {
       if (!hit || !hit.object || !visibleInHierarchy(hit.object)) continue;
       const selection = canonicalSelectionForMesh(hit.object, building, buildingId());
       if (!selection) continue;
-      await selectInWorkspace(selection);
+      await selectInWorkspace(selection, hit.object);
       return selection;
     }
     return null;
   }
 
-  function pointerDown(e) {
-    if (e && e.isPrimary === false) return;
-    if (e && e.button !== undefined && e.button !== 0) return;
-    down = {x:Number(e.clientX), y:Number(e.clientY), id:e.pointerId};
-  }
-  function pointerUp(e) {
-    if (!down) return;
-    const start = down; down = null;
-    if (e && e.pointerId !== undefined && start.id !== undefined && e.pointerId !== start.id) return;
-    const dx = Number(e.clientX) - start.x, dy = Number(e.clientY) - start.y;
-    if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.hypot(dx,dy) > 6) return;
-    void hitAt(Number(e.clientX), Number(e.clientY));
-  }
-  function pointerCancel(){ down = null; }
+  // Orbit, pan and pinch share pointerdown with a tap: only a real tap selects.
+  const taps = createTapTracker(canvas, {onTap: e => { void hitAt(Number(e.clientX), Number(e.clientY)); }});
 
   window.__ACS_ON_SELECT = function(id) {
     if (typeof previousSelectHook === 'function') {
@@ -307,9 +308,6 @@ export function installWorkspaceViewportSelection(deps={}) {
     highlightTarget(id);
   };
 
-  canvas.addEventListener('pointerdown', pointerDown, {passive:true});
-  canvas.addEventListener('pointerup', pointerUp, {passive:true});
-  canvas.addEventListener('pointercancel', pointerCancel, {passive:true});
 
   const api = {
     installed:true,
@@ -319,9 +317,7 @@ export function installWorkspaceViewportSelection(deps={}) {
     destroy(){
       if (destroyed) return;
       destroyed = true;
-      canvas.removeEventListener('pointerdown', pointerDown);
-      canvas.removeEventListener('pointerup', pointerUp);
-      canvas.removeEventListener('pointercancel', pointerCancel);
+      taps.destroy();
       clearHighlight();
       if (window.__ACS_ON_SELECT === api.selectHook) window.__ACS_ON_SELECT = previousSelectHook;
       if (window.__ACS_VIEWPORT_SELECTION === api) delete window.__ACS_VIEWPORT_SELECTION;

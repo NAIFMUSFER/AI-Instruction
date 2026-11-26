@@ -389,12 +389,15 @@ function dcPlanGeometry(project,view,src){
         rect:r.map(_dcQ),core_type:_dcN(v.core_type)}); });
   if(vis.SLAB) arch.slabs.forEach(s=>{
     if(s.level_id!==lid) return;
-    const o=(s.outline||[]).map(_dcNum);
+    /* pieces (outline minus a courtyard open to the sky) are what is drawn */
+    const parts=Array.isArray(s.pieces)?s.pieces.map((p,k)=>[s.id+'.piece_'+k,p]):[[s.id,s.outline]];
+    parts.forEach(([pid,part])=>{
+    const o=(part||[]).map(_dcNum);
     if(o.length===4&&!o.some(x=>x===null)){
       const th=dcStated(s.thickness_m);
-      elems.push({category:'SLAB',id:s.id,geometry_class:'PROJECTED',shape:'rect',
+      elems.push({category:'SLAB',id:pid,geometry_class:'PROJECTED',shape:'rect',
         rect:o.map(_dcQ),thickness:th.value,thickness_status:th.status,
-        outline_basis:_dcN(s.outline_basis)}); } });
+        outline_basis:_dcN(s.outline_basis)}); } }); });
   if(vis.CORE||vis.STAIR) arch.cores.forEach(c=>{
     if(lvl!==null&&(c.served_levels||[]).indexOf(lvl.index)<0) return;
     const x=_dcNum(c.x),z=_dcNum(c.z);

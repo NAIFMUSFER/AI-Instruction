@@ -43,6 +43,36 @@ GEOMETRY_MESSAGES = {
 }
 
 
+# A paid proposal that finishes after a newer revision was saved (for example a
+# manual edit from another tab) is neither discarded nor allowed to replace that
+# revision. The receipt keeps it as a separate generated version; the owner then
+# chooses explicitly. No choice makes another provider request.
+CONFLICT_CODE = "GENERATION_CONFLICT"
+GENERATED_VERSION = "generated_version"
+
+
+class GeneratedVersionConflict(PlanError):
+    def __init__(self, building, current_head):
+        PlanError.__init__(self, CONFLICT_CODE, geometry_failure_message(CONFLICT_CODE))
+        self.building, self.current_head = building, current_head
+
+    def checkpoint(self):
+        return {"kind": GENERATED_VERSION, "building": self.building, "current_head": self.current_head}
+
+
+def generated_version(row):
+    """The kept proposal of a conflict receipt, or None."""
+    kept = row.get("checkpoint") if isinstance(row, dict) else None
+    if (row.get("state") != "FAILED" or row.get("error_code") != CONFLICT_CODE or not isinstance(kept, dict)
+            or kept.get("kind") != GENERATED_VERSION or not isinstance(kept.get("building"), dict)):
+        return None
+    return kept
+
+
+def adoption_marker(job_id):
+    return "task:" + job_id
+
+
 def geometry_failure_message(code):
     messages = {
         "ACS_TIMEOUT":"انتهت مهلة المعالجة وحالة الطلب لدى المزود غير مؤكدة. احتُفظ بالمراحل؛ لن يبدأ استدعاء مكرر تلقائيًا.",
@@ -60,6 +90,8 @@ def geometry_failure_message(code):
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
         "PLAN_LAYOUT_INCOMPLETE":"لم يكتمل توزيع الغرف بعد محاولة التصحيح. راجع البرنامج والمساحة، أو استأنف ضمن حد الاستدعاءات المتبقي.",
         "PLAN_SOURCE_GEOMETRY_INCOMPLETE":"تعذّر استخراج حدود الغرف دون تداخل بعد مراجعة الصورة. راجع وضوح الصفحة والأبعاد المرجعية ثم أعد القراءة؛ الملف الأصلي محفوظ ولم يُعد ترتيب غرفه تلقائيًا.",
+        CONFLICT_CODE:"حُفظ تعديل أحدث أثناء التوليد، فاحتفظنا بالنسخة المولّدة منفصلة دون أن تستبدل تعديلك. اختر ما تريد اعتماده؛ الخيار الآخر يبقى محفوظًا، ولن يُحسب توليد جديد.",
+        "STALE_REVISION":"تغيّرت النسخة الحالية أثناء العملية، فلم تُحفظ نتيجتها فوق النسخة الأحدث. افتح آخر نسخة؛ لن يُعاد الطلب تلقائيًا.",
     }
     if code in messages:
         return messages[code]
@@ -230,6 +262,13 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
             )
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    confirmed = {r.get('metric'): r.get('expected') for r in requirements if isinstance(r, dict)}
+    if confirmed.get('building_width_m') is not None and confirmed.get('building_depth_m') is not None:
+        # The building's confirmed size is the envelope; the land is context only.
+        prompt += ("\nغلاف المبنى المؤكد: اجعل site.w = " + str(confirmed['building_width_m']) + " وsite.d = "
+                   + str(confirmed['building_depth_m']) + " (أبعاد المبنى). أبعاد الأرض "
+                   + str(confirmed.get('site_width_m')) + " × " + str(confirmed.get('site_depth_m'))
+                   + " مرجع فقط، ولا تملأها بالغرف.")
     if warehouse:
         targets=[r.get('expected') for r in requirements if isinstance(r,dict) and r.get('metric')=='building_target_area_m2']
         target=targets[0] if len(targets)==1 and type(targets[0]) in (int,float) else None
@@ -350,20 +389,36 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         raise PlanError("INVALID_PLAN", "لم يعد المزود بمخطط صالح.")
     from acs_plan_bridge import _reject_provider_authority_changes
     _reject_provider_authority_changes({}, result["building"])
-    if source_receipt:
-        result["building"].setdefault("meta", {})["acs_plan_source"] = source_receipt
+    proposal = json.loads(canonical(result["building"]))
     # Re-read after provider work, then append with compare-and-swap. Existing
     # locks apply to every new option, and an approved baseline remains unchanged.
     ws = workspace(store, project_id, actor_id)
     if ws.head != expected:
-        raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
+        raise GeneratedVersionConflict(proposal, ws.head)
+    try:
+        return _admit_generated(store, project_id, actor_id, command, result["building"], ws,
+                                source_receipt=source_receipt, on_progress=on_progress,
+                                note="البديل " + command["option"] + " · " + adoption_marker(command["job_id"]))
+    except PlanError as exc:
+        if exc.code != "STALE_REVISION":
+            raise
+        # The head moved between the re-read and the compare-and-swap append.
+        raise GeneratedVersionConflict(proposal, None) from None
+
+
+def _admit_generated(store, project_id, actor_id, command, building, ws, *, source_receipt, on_progress, note):
+    """Admit one provider building on top of ``ws.head`` and append it (no provider call)."""
+    expected = ws.head
+    result = {"building": building}
+    if source_receipt:
+        result["building"].setdefault("meta", {})["acs_plan_source"] = source_receipt
     if on_progress:
         on_progress({"phase":"REVIEW"})
     # The deterministic stair default belongs only to a new described project.
     # Imports, resumed work and every existing revision keep their authored
     # objects and lock context. This runs after stale-head detection and before
     # canonical proposal/approval; it makes no provider request.
-    fresh_describe = (expected is None and ws.head is None
+    fresh_describe = (expected is None and command.get("expected_head") is None
                      and "source_id" not in command and "resume_job_id" not in command)
     if fresh_describe:
         from acs_stairs import with_default_stairs
@@ -402,7 +457,7 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         if detail_reason in {"CONTEXT_DETAILS_RESOURCE_LIMIT", "CONTEXT_DETAILS_PROVENANCE_INVALID"}:
             raise PlanError(detail_reason, geometry_failure_message(detail_reason))
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
-                          expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
+                          expected_head=expected, note=note)
     issues, _ = _geometry(revision.model)
     # Warehouse Design Options are allowed to reach read-only 2D review while
     # vertical engineering facts remain explicitly unknown. Only those three
@@ -419,6 +474,41 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         on_progress({"phase":"SAVING"})
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return revision.id
+
+
+def adopt_generated_version(store, project_id, actor_id, row, expected_head):
+    """Owner's explicit choice: append a kept generated version on top of the current head.
+
+    No provider request and no quota: the version was paid for by its job. The
+    current head (for example the owner's manual edit) stays in history and can
+    be restored. Every canonical gate runs again against the current head
+    (provider-authority fields, roof preference, room locks, geometry and 2D
+    projection admission). Retrying the same choice returns the same revision.
+    """
+    kept = generated_version(row)
+    original = row.get("resume_command") if isinstance(row.get("resume_command"), dict) else None
+    if kept is None or original is None or original.get("action") != "generate":
+        raise PlanError("GENERATED_VERSION_NOT_FOUND", "لا توجد نسخة مولّدة محفوظة لهذه المهمة.")
+    command = generation_command(dict(original, expected_head=expected_head))
+    ws = workspace(store, project_id, actor_id)
+    marker = adoption_marker(row["id"])
+    for revision in ws.history():
+        if (revision.get("note") or "").endswith(marker):
+            return revision["revision_id"]
+    if expected_head is None or ws.head != expected_head:
+        raise PlanError("STALE_REVISION", "تغيّرت النسخة الحالية. افتح آخر نسخة ثم اختر من جديد.")
+    from acs_plan_bridge import _reject_provider_authority_changes
+    building = json.loads(canonical(kept["building"]))
+    _reject_provider_authority_changes({}, building)
+    source_receipt = None
+    if command.get("source_id"):
+        from acs_plan_sources import source
+        source_row = source(store, project_id, command["source_id"])
+        source_receipt = {k: source_row[k] for k in ("id", "sha256", "page", "page_count", "preview_sha256")}
+        source_receipt.update(mode=command["source_mode"], measurement_status="needs_review")
+    return _admit_generated(store, project_id, actor_id, command, building, ws, source_receipt=source_receipt,
+                            on_progress=None,
+                            note="اعتماد النسخة المولّدة (البديل " + command["option"] + ") بعد تعديل أحدث · " + marker)
 
 
 def set_roof(store, project_id, actor_id, command):

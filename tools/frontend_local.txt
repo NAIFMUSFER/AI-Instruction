@@ -15,6 +15,7 @@ render/scene.js
 render/warehouse-canonical-identity.js
 render/guest-presentation.mjs
 generated/pbr-bridge.js
+ui/tap-gesture.mjs
 ui/workspace-ui-wiring.js
 trust/core.js
 trust/wiring.js
@@ -24,6 +25,8 @@ ui/workspace-viewport-selection-runtime.js
 ui/residential-quality.js
 ui/generation-jobs.js
 ui/guest-floor-plan.mjs
+ui/guest-room-card.mjs
+ui/guest-projects.mjs
 ui/guest-workspace.js
 trust/guest-draft-store.mjs
 render/guest-software-view.mjs

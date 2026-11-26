@@ -605,6 +605,20 @@ function buildRoom(group,room,fkey,baseY,def){
     for(const e of edges){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
       wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
         wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
+    /* A roof parapet over the open stretch of a partly shared edge, as [edge,start,end]
+       offsets from the edge's low end. Twin of acs_geometry_contract.parapet_spans and
+       acs_compiler; kept inline so every sandboxed copy of buildRoom carries it. */
+    const spans=room.parapet_spans;
+    if(spans!==undefined&&spans!==null){
+      if(!Array.isArray(wallsMode)||!Array.isArray(spans))throw new Error('Invalid parapet spans');
+      spans.forEach((span,k)=>{
+        const e=span&&span.edge,s0=span&&span.start_m,s1=span&&span.end_m;
+        if(!['N','S','E','W'].includes(e)||wallsMode.includes(e)||typeof s0!=='number'||typeof s1!=='number'||
+          !Number.isFinite(s0)||!Number.isFinite(s1)||!(0<=s0&&s0<s1)||s1>(['N','S'].includes(e)?w:d)+1e-6)throw new Error('Invalid parapet spans');
+        const[axis,fixed,u0]=edgeGeom(e,rect);
+        wallOpenings(group,axis,fixed,u0+s0,u0+s1,baseY,hW,t,[],fkey,name,'w'+e+k,
+          wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');});
+    }
   }
   /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
   const finishW=Math.max(w-t,0.1),finishD=Math.max(d-t,0.1);
@@ -1210,6 +1224,15 @@ function compile(data){
   const industrial=/warehouse|industrial|factory|logistic/.test(bt);
   const def={site,wall_h:data.wall_h||3.0,wall_t:data.wall_t||0.15,industrial:industrial};
   const fh=data.floor_height||(def.wall_h+0.2);
+  /* A local apartment closes its floor line: walls stop at wall_h, the slab above
+     fills the rest of the storey and reaches the outer and courtyard wall faces
+     (half a wall beyond the room axes). Twin of acs_compiler._plate_rects. */
+  const apartmentPlate=data.meta?.acs_apartment?.schema==='acs.local-apartment/1';
+  const slabT=apartmentPlate?_pyRound(Math.max(0.15,Number(fh)-Number(def.wall_h)),6):0.15;
+  const plateOutset=apartmentPlate?Number(def.wall_t)/2:0;
+  const plateRects=rooms=>rooms.map(r=>{
+    const rc=r.rect;if(!plateOutset||!Array.isArray(rc)||rc.length!==4||rc.some(v=>!Number.isFinite(Number(v))))return rc;
+    return [Number(rc[0])-plateOutset,Number(rc[1])-plateOutset,Number(rc[2])+2*plateOutset,Number(rc[3])+2*plateOutset];});
   /* البلاطة تُقرأ من المصرِّف المعماري: نفس مصدر الحقيقة الذي تقرأه العلاقات
      والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
@@ -1259,10 +1282,10 @@ function compile(data){
        منفصلاً وبمقاس الموقع (ensureGround). التغيير عرضيّ بحت: لا مستطيل غرفة
        ولا مساحة ولا كمية ولا بصمة نموذج يتغيّر به. السياسة وسابقتها وسببها
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
-    const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
+    const _pp=__ACS_LATE.pqPlateRect(plateRects(fdef.rooms||[]),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
     (_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes)).forEach((s,k)=>
-      addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
+      addBox(grp,s[0]+s[2]/2,baseY-slabT/2,s[1]+s[3]/2,s[2],slabT,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
     const rooms=acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,'ROOMS_CAPPED','level.rooms');
     const ceilingHoles=physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening);
@@ -1424,7 +1447,7 @@ function parseDescription(text, siteW, siteD, nFloors){
    يغطّي البنود التسعة: استلام · تخزين · التقاط · تغليف · فرز · شحن ·
    حركة وسلامة · إدارة وخدمات · ترميز لوني وقياسات واقعية.
    ================================================================== */
-function warehouseModel(W,D,opt){
+function warehouseTemplate(W,D,opt){
   opt=opt||{};
   /* KI-26/F-46: كان ‎Math.max(30,+W||120)‎ بلا سقف — انظر acsSpan */
   W=acsSpan(W,120,30,'warehouse.site_w'); D=acsSpan(D,80,25,'warehouse.site_d');
@@ -1506,7 +1529,9 @@ function warehouseModel(W,D,opt){
   cols.forEach(([id,role,frac,rk])=>{
     const cw=sx*frac/0.817*0.94;
     Z(id,[cx,b.st1,cw,sd],role,{
-      racks:[Object.assign({x:0.6,z:0.6,w:cw-1.2,d:sd-1.2,dir:'x'},rk)],
+      // ممر رافعات رئيسي بعرض ممر البالتات عند طرفي كل كتلة: تدخل الرافعة كل ممر
+      racks:[Object.assign({x:3.4,z:0.6,w:cw-6.8,d:sd-1.2,dir:'x'},rk)],
+      lanes:[{kind:'forklift',x:0,z:0,w:3.4,d:sd,dir:'z',arrow:false},{kind:'forklift',x:cw-3.4,z:0,w:3.4,d:sd,dir:'z',arrow:false}],
       points:[P('sign',cw/2,0.8,3.6),P('camera',cw/2,0.8),P('extinguisher',1,sd-1),
               P('extinguisher',cw-1,sd-1)]});
     cx+=cw;
@@ -1545,7 +1570,7 @@ function warehouseModel(W,D,opt){
   pk.forEach(([id,role,frac,rk])=>{
     const cw=W*frac, ex={points:[P('sign',cw/2,0.6,3),P('camera',cw/2,0.8),P('smoke',cw/2,pd/2),
       P('extinguisher',cw-1,pd-0.8)]};
-    if(rk){ ex.racks=[Object.assign({x:0.6,z:0.6,w:cw-1.2,d:pd*0.55,dir:'x'},rk)];
+    if(rk){ ex.racks=[Object.assign({x:1.5,z:0.6,w:cw-3,d:pd*0.55,dir:'x'},rk)];
       ex.lanes=[{kind:'pedestrian',x:0.4,z:pd*0.66,w:cw-0.8,d:Math.max(1.2,pd*0.16),dir:'x'}];
       ex.stations=[{kind:'desk',x:1,z:pd*0.85,count:Math.max(3,Math.floor(cw/3.6)),pitch:3.6,dir:'x'}]; }
     else { ex.lanes=[{kind:'amr',x:0.5,z:pd*0.1,w:cw-1,d:1.4,dir:'x'},
@@ -1619,6 +1644,23 @@ function warehouseModel(W,D,opt){
           levels:[{index:0,name:'صالة التشغيل',template:'ops'}],
           floors:{ops:{rooms:R}}};
 }
+/* النموذج التجريبي: نفس القالب داخل الأرض بساحة شاحنات شمالاً وجنوباً أمام
+   الأرصفة، وبأبواب أفراد ومخارج حقيقية في الجدار الخارجي بدل اللافتات وحدها. */
+function warehouseModel(W,D,opt){
+  opt=opt||{};
+  W=acsSpan(W,120,30,'warehouse.site_w'); D=acsSpan(D,80,25,'warehouse.site_d');
+  const apron=D-2*WH_DEF.apron_m>=25?WH_DEF.apron_m:0;
+  const b=warehouseTemplate(W,D-2*apron,opt), rooms=b.floors.ops.rooms;
+  b.site={w:W,d:D};
+  for(const r of rooms) r.rect=[r.rect[0],whQ(r.rect[1]+apron),r.rect[2],r.rect[3]];
+  const env=rooms.find(r=>r.id==='envelope'), info=whShellDoors(env,rooms,null);
+  env.doors=info.doors;
+  env.points=(env.points||[]).filter(p=>p.type!=='exit').concat(info.signs);
+  b.meta.acs_warehouse={schema:'acs.local-warehouse/2',sample:true,truck_yard_m:{N:apron,E:0,S:apron,W:0},
+    building_rect:env.rect.slice(),personnel_and_exit_doors:info.doors.length,
+    assumptions:['نموذج تجريبي: ساحة شاحنات '+apron+' م شمالاً وجنوباً، ومواقع الأبواب والمخارج افتراضية يحددها مختص الدفاع المدني.']};
+  return b;
+}
 /* ==================================================================
    مولّد صناعي **مقاد بالوصف** — لا قالب محفوظ.
    يبني فقط المناطق التي ذكرها العميل، بأعداده ومقاساته، ولا يُقحم غيرها.
@@ -1627,7 +1669,7 @@ function warehouseModel(W,D,opt){
 const ZONE_LIB=[
   // band = ترتيب تدفّق العمل من الشمال (0) للجنوب (5)
   {id:'inbound_docks',   ar:'أرصفة الاستلام',      role:'receiving',   band:0,
-   re:/رصيف|أرصفة|ارصفة|dock|تحميل|تفريغ|استلام|وارد|inbound|receiv/i, kind:'dock'},
+   re:/استلام|نستلم|يستلم|تستلم|استقبال|وارد|تفريغ|inbound|receiv/i, kind:'dock'},
   {id:'unloading',       ar:'التفريغ السريع',       role:'receiving',   band:0,
    re:/تفريغ سريع|unload|رافعة يدوية|pallet ?jack/i, kind:'unload'},
   {id:'inbound_staging', ar:'تجهيز الوارد',         role:'receiving',   band:1,
@@ -1667,9 +1709,9 @@ const ZONE_LIB=[
   {id:'consolidation',   ar:'تجميع الطلبات',        role:'consolidation',band:4,
    re:/تجميع|consolidat|دمج الطلبات/i, kind:'rack', rack:'cage'},
   {id:'auto_sorter',     ar:'الفرز الآلي',          role:'sorting',     band:4,
-   re:/فرز|sort|سير|ناقل|conveyor|منزلق|chute|محوّل|diverter/i, kind:'conveyor'},
-  {id:'manual_sort',     ar:'الفرز اليدوي',         role:'sorting',     band:4,
-   re:/فرز يدوي|manual sort|طرود كبيرة|oversize/i, kind:'station', sta:'sort'},
+   re:/فرز\s*(?:آلي|الي|أوتوماتيكي|اوتوماتيكي)|sorter|sortation|سير|سيور|conveyor|منزلق|chute|محوّل|diverter/i, kind:'conveyor'},
+  {id:'manual_sort',     ar:'منطقة الفرز',         role:'sorting',     band:4,
+   re:/فرز(?!\s*(?:آلي|الي|أوتوماتيكي|اوتوماتيكي|أولي|اولي))|\bsort(?!er|ation)|طرود كبيرة|oversize/i, kind:'station', sta:'sort'},
   {id:'dispatch',        ar:'تجهيز الشحن',          role:'dispatch',    band:5,
    re:/شحن|ناقل|dispatch|dhl|aramex|أرامكس|سمسا|smsa|fedex|ups\b/i, kind:'staging'},
   {id:'lastmile',        ar:'الميل الأخير',         role:'shipping',    band:5,
@@ -1677,7 +1719,7 @@ const ZONE_LIB=[
   {id:'wrapping',        ar:'لفّ البالتات',         role:'shipping',    band:5,
    re:/لف|لفّ|stretch|wrap|تغليف بالتات/i, kind:'station', sta:'wrap'},
   {id:'outbound_docks',  ar:'أرصفة الصادر',         role:'shipping',    band:5,
-   re:/صادر|outbound|أرصفة الشحن|shipping dock/i, kind:'dock', edge:'S'},
+   re:/صادر|outbound|(?:أرصفة|ارصفة|رصيف)\s+(?:ال)?شحن|shipping dock/i, kind:'dock', edge:'S'},
   {id:'inventory_office',ar:'مكتب المخزون',         role:'office',      band:2, adm:true,
    re:/مكتب|office|مراقبة المخزون|إدارة/i, walls:'glass'},
   {id:'it_server_room',  ar:'غرفة السيرفرات',       role:'it',          band:2, adm:true,
@@ -1730,8 +1772,319 @@ function negatedAt(cmap, idx){
   for(const c of cmap) if(idx>=c.a && idx<=c.b) return idx>=c.neg;
   return false;
 }
+/* ==================================================================
+   مستودع يفهمه المشغّل — قراءة الوصف وتخطيطه (الجولة ٢).
+   ما يقرؤه من الوصف: جهة الاستلام وجهة الشحن وعدد أرصفة كلٍّ منهما، نوع
+   الرافعة وعرض الممر، الارتفاع الصافي، عمق ساحة الشاحنات، والمدينة. كل ما
+   لم يُذكر يُبنى بقيمة افتراضية معلنة في meta.acs_warehouse.assumptions وفي
+   تقرير التغطية، ولا يُنسب للعميل. ما لا يتّسع في الأرض يُرفض برسالة صريحة.
+   التخطيط يُحسب باتجاه قانوني (الاستلام شمالاً والتدفق جنوباً) ثم يُدار إلى
+   الجهة المطلوبة، ويوضع المبنى داخل الأرض بساحة أمام كل ضلع فيه أرصفة.
+   القيم الافتراضية هنا افتراضات تخطيطية وليست اشتراطات نظامية.
+   ================================================================== */
+const WH_EDGES=['N','E','S','W'];
+const WH_L='\\u0621-\\u064A\\u0671-\\u06D3';   // حروف عربية فقط — لا الفاصلة «،»
+const WH_SIDE_AR={N:'الشمالية',E:'الشرقية',S:'الجنوبية',W:'الغربية'};
+const WH_DEF=Object.freeze({apron_m:12,dock_pitch_m:4.5,dock_min_pitch_m:4.2,dock_w_m:3.6,dock_h_m:4.2,
+  door_w_m:1.2,door_h_m:2.4,block_max_m:30,clear_h_m:12,
+  aisle_m:Object.freeze({counterbalance:3.4,reach:2.9,vna:1.8,manual:2.4})});
+const WH_EQUIP_AR={counterbalance:'رافعة شوكية عادية',reach:'رافعة ريتش ترك',vna:'رافعة ممرات ضيقة جداً (VNA)',manual:'رافعة بالتات يدوية'};
+const WH_IN_RE=/استلام|نستلم|يستلم|تستلم|نستقبل|استقبال|وارد|تفريغ|inbound|receiv|unload/i;
+const WH_OUT_RE=/شحن|نشحن|يشحن|صادر|تحميل|ارسال|إرسال|تسليم|outbound|dispatch|shipping|loading/i;
+const WH_DOCK_RE=/(?:ال)?(?:رصيفين|رصيفان|رصيف|أرصفة|ارصفة|أرصفه|ارصفه|docks?)(?![\u0621-\u064A\u0671-\u06D3a-z])/i;
+const WH_CITIES=[['الرياض','الرياض'],['جدة','جدة'],['جده','جدة'],['الدمام','الدمام'],['مكة','مكة المكرمة'],['مكه','مكة المكرمة'],
+  ['المدينة المنورة','المدينة المنورة'],['الخبر','الخبر'],['الظهران','الظهران'],['الجبيل','الجبيل'],['الأحساء','الأحساء'],
+  ['الاحساء','الأحساء'],['الهفوف','الهفوف'],['بريدة','بريدة'],['عنيزة','عنيزة'],['تبوك','تبوك'],['أبها','أبها'],['ابها','أبها'],
+  ['خميس مشيط','خميس مشيط'],['جازان','جازان'],['جيزان','جازان'],['نجران','نجران'],['حائل','حائل'],['الطائف','الطائف'],
+  ['ينبع','ينبع'],['الخرج','الخرج'],['القطيف','القطيف'],['عرعر','عرعر'],['سكاكا','سكاكا'],['الباحة','الباحة'],['رابغ','رابغ'],
+  ['حفر الباطن','حفر الباطن'],['riyadh','الرياض'],['jeddah','جدة'],['dammam','الدمام'],['makkah','مكة المكرمة'],
+  ['mecca','مكة المكرمة'],['medina','المدينة المنورة'],['khobar','الخبر'],['jubail','الجبيل']];
+
+function warehouseUnsupported(message){
+  const error=new Error(message); error.code='LOCAL_WAREHOUSE_UNSUPPORTED'; throw error;
+}
+function whText(txt){ return normDigits(stripBidi(String(txt||''))); }
+/* الارتفاع الصافي: «الارتفاع الصافي 11 متر» و«بارتفاع صافي ١٠ م» و«clear height 9 m». */
+function warehouseClearHeight(txt){
+  const t=whText(txt);
+  const m=t.match(/ارتفاع(?:ه|ها)?\s*(?:ال)?(?:صاف(?:ي|ى|ٍ)?|داخلي|clear)?\s*(?:لل[؀-ۿ]+)?\s*(?:[:=]|هو|حوالي|تقريب(?:اً|ا)?)?\s*(\d{1,2}(?:\.\d+)?)(?!\d)\s*(?:م|متر|m)?(?![\d\u0621-\u064A\u0671-\u06D3])/)
+        ||t.match(/clear\s*height\s*(?:of\s*)?(\d{1,2}(?:\.\d+)?)/i);
+  return m?+m[1]:null;
+}
+function whCity(t){
+  let best=null;
+  for(const [key,name] of WH_CITIES){
+    const re=new RegExp('(?:^|[^'+WH_L+'a-z]|[وبفل])'+key+'(?!['+WH_L+'a-z])','i'), m=re.exec(t);
+    if(m&&(!best||m.index<best.index)) best={index:m.index,name};
+  }
+  return best?best.name:null;
+}
+function whEquipment(t){
+  if(/\bVNA\b|very\s*narrow|ممرات?\s*ضيق[ةه]\s*جد|تيرت|turret/i.test(t)) return 'vna';
+  if(/ريتش|ريج\s*ترك|reach\s*truck/i.test(t)) return 'reach';
+  if(/رافع(?:ة|ات|ه)\s*شوكي|فورك\s*لفت|فوركلفت|forklift|counter\s*balance|كاونتر\s*بالانس/i.test(t)) return 'counterbalance';
+  if(/رافع(?:ة|ه)\s*يدوي|باليت\s*جاك|pallet\s*jack|هاند\s*باليت|عرب(?:ة|ه)\s*بالتات/i.test(t)) return 'manual';
+  return null;
+}
+function whStatedAisle(t){
+  for(const m of t.matchAll(/(?:عرض\s+)?(?:ال)?ممر(?:ات)?([^\d،.\n]{0,30}?)(\d(?:\.\d+)?)\s*(?:م|متر|m)(?![\u0621-\u064A\u0671-\u06D3a-z])/gi)){
+    if(/مشا[ةه]|pedestrian|طوارئ|حريق/.test(m[0])) continue;
+    const v=+m[2]; if(v>=1&&v<=6) return v;
+  }
+  return null;
+}
+function whStatedApron(t){
+  const m=t.match(/(?:ساح[ةه]|مناور[ةه]|apron|truck\s*yard)[^\d،.\n]{0,30}?(\d{1,3}(?:\.\d+)?)\s*(?:م|متر|m)(?![\u0621-\u064A\u0671-\u06D3a-z])/i);
+  return m?+m[1]:null;
+}
+function whSides(c){
+  const s=c.replace(/(?:ال)?منطق[ةه]\s+(?:ال)?(?:شرقي|غربي|شمالي|جنوبي)[ةه]?|(?:ال)?حدود\s+(?:ال)?شمالي[ةه]/g,' ');
+  const out=new Set(), map={'شمال':'N','جنوب':'S','شرق':'E','غرب':'W',north:'N',south:'S',east:'E',west:'W'};
+  for(const m of s.matchAll(/(?<![\u0621-\u064A\u0671-\u06D3])(?:من|على|في|ب|لل|ل)?(?:ال)?(شمال|جنوب|شرق|غرب)(?:ي[ةه]|ي|ى|اً|ا)?(?![\u0621-\u064A\u0671-\u06D3])/g)) out.add(map[m[1]]);
+  for(const m of s.matchAll(/\b(north|south|east|west)(?:ern)?\b/gi)) out.add(map[m[1].toLowerCase()]);
+  return out;
+}
+/* عدد ملاصق لاسمٍ داخل جملة واحدة: «4 أرصفة» «بثلاث أرصفة» «برصيفين» «أرصفة 6».
+   لا يُؤخذ رقمٌ متبوعٌ بوحدة قياس (11 متر) ولا رقمٌ من جملة أخرى. */
+function whNounCount(seg,re){
+  const m=re.exec(seg); if(!m) return null;
+  const word=m[0], before=seg.slice(0,m.index), after=seg.slice(m.index+word.length);
+  if(/(?:ين|ان)$/.test(word)&&/رصيف|مسار|خط|محط/.test(word)) return 2;
+  let g=before.match(/(\d{1,3})\s*$/); if(g) return +g[1];
+  g=before.match(/(?:^|\s)(?:و|ب|بـ|ل)?([؀-ۿ]+)\s*$/); if(g&&AR_NUM[g[1]]!=null) return AR_NUM[g[1]];
+  const roleGap='(?:(?:لل|ل|ال)?(?:استلام|وارد|تفريغ|شحن|صادر|تحميل)\\s*)?';
+  g=after.match(new RegExp('^\\s*'+roleGap+'(?:[:=])?\\s*(\\d{1,3})(?![\\d.])(?!\\s*(?:م|متر|m|%)(?!['+WH_L+'a-z]))','i')); if(g) return +g[1];
+  g=after.match(new RegExp('^\\s*'+roleGap+'(['+WH_L+']+)')); if(g&&AR_NUM[g[1]]!=null) return AR_NUM[g[1]];
+  if(/^(?:ال)?رصيف$/.test(word)) return 1;
+  return null;
+}
+function whClauses(t){ return whSegments(t).map(x=>x.s); }
+/* جملٌ صغيرة مع رقم جملتها الأصلية: «خمسة أرصفة للاستلام وثلاثة أرصفة للشحن» تصير
+   «خمسة أرصفة للاستلام» و«وثلاثة أرصفة للشحن»، و«أرصفة استلام ٥ وشحن ٣» تصير
+   «أرصفة استلام ٥» و«وشحن ٣» التي ترث اسم الأرصفة من الجملة نفسها. */
+function whSegments(t){
+  const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
+  const split=new RegExp('\\s(?=و\\s*(?:\\d|(?:'+words+')(?!['+WH_L+'])|(?:ال|لل|ل)?(?:شحن|استلام|تحميل|صادر|وارد|تفريغ|ارسال|إرسال|نستلم|نشحن)|(?:ال)?(?:أرصفة|ارصفة|أرصفه|ارصفه|رصيف)))');
+  // «الاستلام والشحن من الجهة الجنوبية»: جزءٌ فيه دورٌ وحده بلا جهة ولا عدد ولا أرصفة
+  // يشارك ما بعده جهته، فلا يُفصل عنه.
+  const bare=x=>!/\d/.test(x)&&!WH_DOCK_RE.test(x)&&!whSides(x).size&&!new RegExp('(?:'+words+')(?!['+WH_L+'])').test(x);
+  return t.split(/[.\n؟?!؛;،,]+/).flatMap((c,g)=>{
+    const parts=c.split(split), out=[];
+    for(let i=0;i<parts.length;i++){ if(i+1<parts.length&&bare(parts[i])){parts[i+1]=parts[i]+' '+parts[i+1];continue;} out.push({s:parts[i].trim(),g}); }
+    return out;
+  }).filter(x=>x.s);
+}
+/* الدور الملاصق لاسم الأرصفة: «خمسة أرصفة استلام» «أرصفة للشحن» — يحسم العدد في
+   جملة ذُكر فيها الاستلام والشحن معاً («الاستلام والشحن من الجنوب: خمسة أرصفة استلام»). */
+function whDockRole(seg){
+  const m=WH_DOCK_RE.exec(seg); if(!m) return null;
+  const after=seg.slice(m.index+m[0].length);
+  if(/^\s*(?:لل|ل|ال)?(?:استلام|وارد|تفريغ)/.test(after)) return 'receiving';
+  if(/^\s*(?:لل|ل|ال)?(?:شحن|صادر|تحميل)/.test(after)) return 'shipping';
+  return null;
+}
+function whRoleCount(seg){
+  const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
+  const m=seg.match(new RegExp('(?:استلام|وارد|تفريغ|شحن|صادر|تحميل)\\s*(?:[:=])?\\s*(?:(\\d{1,3})(?![\\d.])(?!\\s*(?:م|متر|m|%)(?!['+WH_L+'a-z]))|('+words+')(?!['+WH_L+']))','i'));
+  return m?(m[1]!=null?+m[1]:AR_NUM[m[2]]):null;
+}
+function whClauseAt(t,idx){
+  let a=0,b=t.length; const re=/[.\n؟?!؛;،,]/g; let m;
+  while((m=re.exec(t))!==null){ if(m.index<idx) a=m.index+1; else { b=m.index; break; } }
+  return t.slice(a,b);
+}
+/* حقائق الأرصفة والتشغيل من الوصف — كل حقل يحمل مصدره (العميل أو افتراض). */
+function warehouseBriefFacts(txt){
+  const t=whText(txt), cmap=clauseMap(t);
+  const role=()=>({side:null,count:null,mentioned:false,dockMentioned:false});
+  const f={receiving:role(),shipping:role(),generic:null,clear:warehouseClearHeight(t),city:whCity(t),
+           equipment:whEquipment(t),aisle:whStatedAisle(t),apron:whStatedApron(t)};
+  let dockGroup=-1; const leadSide={};
+  for(const {s:c,g} of whSegments(t)){
+    const at=t.indexOf(c);
+    if(at>=0&&negatedAt(cmap,at)) continue;
+    const roles=[]; if(WH_IN_RE.test(c)) roles.push('receiving'); if(WH_OUT_RE.test(c)) roles.push('shipping');
+    const own=WH_DOCK_RE.test(c), inherited=!own&&dockGroup===g&&roles.length===1&&whRoleCount(c)!=null;
+    const sides=whSides(c), dock=own||inherited, count=own?whNounCount(c,WH_DOCK_RE):inherited?whRoleCount(c):null;
+    if(own) dockGroup=g;
+    for(const r of roles) f[r].mentioned=true;
+    // «…، كلها من الجهة الجنوبية» و«الأرصفة كلها في الجنوب»: جهةٌ واحدة لكل الأرصفة المذكورة
+    if(!roles.length){
+      if(sides.size===1&&(/(?:^|\s|و)(?:كل(?:ّ)?(?:ها|هم)|جميع(?:ها|هم)|الكل|كلاهما|all|both)(?![ء-ي])/i.test(c)||(own&&count==null))){
+        const sd=[...sides][0];
+        if(f.sharedSide&&f.sharedSide!==sd) warehouseUnsupported('ذكرت جهتين مختلفتين للأرصفة كلها. حدّد جهة واحدة.');
+        f.sharedSide=sd;
+      }
+      if(dock&&count!=null) f.generic=count; continue; }
+    // جهةٌ تسبق الأدوار والأرصفة في جملتها («من الجهة الجنوبية خمسة أرصفة للاستلام وثلاثة للشحن») تعمّ الجملة
+    const sideAt=c.search(/شمال|جنوب|شرق|غرب|north|south|east|west/i), roleAt=Math.min(...[WH_IN_RE,WH_OUT_RE,WH_DOCK_RE].map(re=>{const i=c.search(re);return i<0?Infinity:i;}));
+    if(sides.size===1&&sideAt>=0&&sideAt<roleAt&&leadSide[g]===undefined) leadSide[g]=[...sides][0];
+    if(!sides.size&&leadSide[g]) sides.add(leadSide[g]);
+    if(sides.size>1) warehouseUnsupported('ذكرت أكثر من جهة في: «'+c.slice(0,120)+'». حدّد جهة واحدة لكل من الاستلام والشحن.');
+    const side=sides.size?[...sides][0]:null;
+    const bound=dock&&count!=null&&roles.length>1?whDockRole(c):null;
+    if(dock&&count!=null&&roles.length>1&&!bound) warehouseUnsupported('حدّد عدد أرصفة الاستلام وعدد أرصفة الشحن كلاً على حدة في: «'+c.slice(0,120)+'».');
+    for(const r of roles){
+      const label=r==='receiving'?'الاستلام':'الشحن';
+      if(side){ if(f[r].side&&f[r].side!==side) warehouseUnsupported('ذكرت جهتين مختلفتين لـ'+label+'. حدّد جهة واحدة.'); f[r].side=side; }
+      if(dock&&(!bound||bound===r)){ f[r].dockMentioned=true;
+        if(count!=null){ if(f[r].count!=null&&f[r].count!==count) warehouseUnsupported('ذكرت عددين مختلفين لأرصفة '+label+'. حدّد عدداً واحداً.'); f[r].count=count; } }
+    }
+  }
+  if(f.sharedSide) for(const [r,label] of [['receiving','الاستلام'],['shipping','الشحن']]){
+    if(!(f[r].mentioned||f[r].dockMentioned)) continue;
+    if(f[r].side&&f[r].side!==f.sharedSide) warehouseUnsupported('جهة '+label+' في وصفك تخالف الجهة المذكورة للأرصفة كلها. حدّد جهة واحدة.');
+    f[r].side=f.sharedSide;
+  }
+  if(f.generic!=null&&f.receiving.count==null&&!f.shipping.dockMentioned){ f.receiving.count=f.generic; f.receiving.mentioned=true; f.receiving.dockMentioned=true; }
+  return f;
+}
+function warehouseAsk(message,missing){
+  const error=new Error(message); error.code='LOCAL_WAREHOUSE_UNSUPPORTED'; error.question=true; error.missing=missing; throw error;
+}
+/* الأرض أم المبنى؟ «الأرض 80×50» أرضٌ تُترك منها ساحة الشاحنات، و«المبنى 60×40» يُبنى
+   بأبعاده نفسها، و«مستودع 60×40» بلا تحديد يُسأل عنه (نفس قرار السكني). الحقول
+   تُستعمل حين يخلو الوصف، وأي اختلاف بينها وبين الوصف يُذكر صراحةً. */
+const WH_BLDG_TERM=/(?:ال)?مبنى|(?:ال)?بناء|مسطح|بصم[ةه]|building|footprint|(?:ال)?مستودع\s+(?:نفسه\s+)?(?:أبعاده|ابعاده|مقاسه|مقاساته)|(?:أبعاد|ابعاد|مقاس)\s+(?:ال)?مستودع/gi;
+const WH_PLOT_TERM=/(?:ال)?(?:أرض|ارض)|قطع[ةه]|(?:ال)?صك|(?:ال)?موقع|plot|land|\bsite\b/gi;
+function warehouseDimensions(txt,form,W,D){
+  const t=whText(txt), found={building:[],plot:[]}, unclear=[], out={building:null,plot:null,notes:[]};
+  for(const m of t.matchAll(/(\d{1,4}(?:\.\d+)?)\s*(?:م|متر|مترا|m)?\s*(?:[×xX*]|في)\s*(\d{1,4}(?:\.\d+)?)/g)){
+    const w=+m[1], d=+m[2], before=t.slice(Math.max(0,m.index-40),m.index).split(/[.\n؟?!؛;،,]/).pop();
+    let owner=null,last=-1;
+    for(const [re,role] of [[WH_BLDG_TERM,'building'],[WH_PLOT_TERM,'plot']]) for(const x of before.matchAll(re)) if(x.index>last){last=x.index;owner=role;}
+    if(owner) found[owner].push({w,d}); else if(Math.min(w,d)>=15) unclear.push({w,d});
+  }
+  const one=(list,label)=>{const u=[...new Set(list.map(v=>v.w+'×'+v.d))];
+    if(u.length>1) warehouseUnsupported('ذكرت أكثر من مقاس لـ'+label+' ('+u.join(' و')+' م). اذكر مقاساً واحداً.');
+    return list.length?{...list[0],source:'text'}:null;};
+  const num=v=>{const n=+v;return Number.isFinite(n)&&n>0?n:undefined;};
+  const fb=form&&num(form.width)&&num(form.depth)?{w:num(form.width),d:num(form.depth),source:'form'}:null;
+  const fp=form&&num(form.plotWidth)&&num(form.plotDepth)?{w:num(form.plotWidth),d:num(form.plotDepth),source:'form'}:null;
+  let b=one(found.building,'المبنى'), p=one(found.plot,'الأرض');
+  const same=(x,y)=>Boolean(x&&y&&x.w===y.w&&x.d===y.d);
+  for(const u of unclear){
+    if(same(u,b)||same(u,p)) continue;
+    if(!b&&same(u,fb)){b=fb;continue;} if(!p&&same(u,fp)){p=fp;continue;}
+    warehouseAsk('هل '+u.w+'×'+u.d+' م أبعاد الأرض أم أبعاد المبنى نفسه؟ اكتب «الأرض '+u.w+'×'+u.d+'» إن كانت الأرض، فنترك منها ساحة للشاحنات أمام الأرصفة، أو «المبنى '+u.w+'×'+u.d+'» فنبنيه بهذا المقاس.',['dimension_owner']);
+  }
+  const pick=(text,field,key,label)=>{
+    if(text&&field&&!same(text,field)){
+      if(form?.prefer?.[key]==='form') return field;
+      out.notes.push('وصفك يذكر '+label+' '+text.w+'×'+text.d+' م والحقل '+field.w+'×'+field.d+' م؛ اعتمدنا الوصف.');
+    }
+    return text||field;};
+  out.building=pick(b,fb,'width','المبنى'); out.plot=pick(p,fp,'plot','الأرض');
+  if(!out.building&&!out.plot){
+    if(form) warehouseAsk('اذكر أبعاد المبنى أو الأرض بالمتر، مثل «الأرض 80×50» أو «المبنى 60×40».',['building_or_plot_size']);
+    out.plot={w:W,d:D,source:'argument'};
+  }
+  if(out.building&&out.plot&&(out.building.w>out.plot.w||out.building.d>out.plot.d))
+    warehouseUnsupported('المبنى '+out.building.w+'×'+out.building.d+' م أكبر من الأرض '+out.plot.w+'×'+out.plot.d+' م. صحّح أحد المقاسين.');
+  return out;
+}
+/* تحويل غرفة من الإطار القانوني (الاستلام شمالاً) إلى الإطار الفعلي بعدد أرباع دورة
+   مع عقارب الساعة. نفس اصطلاح orientedPoint في المخطط السكني المحلي. */
+function whPt(x,z,t,Wc,Dc){ return [[x,z],[Dc-z,x],[Wc-x,Dc-z],[z,Wc-x]][t]; }
+function whRect(r,t,Wc,Dc){
+  const p=whPt(r[0],r[1],t,Wc,Dc), q=whPt(r[0]+r[2],r[1]+r[3],t,Wc,Dc);
+  return [Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.abs(q[0]-p[0]),Math.abs(q[1]-p[1])];
+}
+const whEdge=(e,t)=>WH_EDGES[(WH_EDGES.indexOf(e)+t)%4];
+const whQ=v=>+(+v).toFixed(3);
+function whOrientRoom(room,t,Wc,Dc){
+  if(!t) return room;
+  const [rx,rz,rw,rd]=room.rect, nr=whRect(room.rect,t,Wc,Dc), odd=t%2===1;
+  const onEdge=(e,off)=>{const p=e==='N'?[rx+off,rz]:e==='S'?[rx+off,rz+rd]:e==='W'?[rx,rz+off]:[rx+rw,rz+off];return whPt(p[0],p[1],t,Wc,Dc);};
+  const along=(e,p)=>(e==='N'||e==='S')?p[0]-nr[0]:p[1]-nr[1];
+  const vec=v=>[[v[0],v[1]],[-v[1],v[0]],[-v[0],-v[1]],[v[1],-v[0]]][t];
+  const out={...room,rect:nr.map(whQ)};
+  for(const key of ['doors','windows']) if(Array.isArray(room[key]))
+    out[key]=room[key].map(o=>{const ne=whEdge(o.edge,t);return {...o,edge:ne,offset:whQ(along(ne,onEdge(o.edge,o.offset)))};});
+  if(Array.isArray(room.docks)) out.docks=room.docks.map(o=>{const ne=whEdge(o.edge,t),n=o.count||1;
+    const offs=[...Array(n)].map((_,i)=>along(ne,onEdge(o.edge,o.offset+o.pitch*i)));return {...o,edge:ne,offset:whQ(Math.min(...offs))};});
+  const rectItem=(o,lane)=>{const r=whRect([rx+o.x,rz+o.z,o.w,o.d],t,Wc,Dc);
+    const it={...o,x:whQ(r[0]-nr[0]),z:whQ(r[1]-nr[1]),w:whQ(r[2]),d:whQ(r[3])};
+    if(o.dir&&odd) it.dir=o.dir==='x'?'z':'x';
+    if(lane&&o.dir){const v=vec(o.dir==='z'?[0,1]:[1,0]); if(v[0]<0||v[1]<0) it.reverse=!o.reverse;}
+    return it;};
+  if(Array.isArray(room.racks)) out.racks=room.racks.map(o=>rectItem(o,false));
+  if(Array.isArray(room.lanes)) out.lanes=room.lanes.map(o=>rectItem(o,true));
+  if(Array.isArray(room.stations)) out.stations=room.stations.map(S=>{
+    const K=STA_DEF[S.kind]||STA_DEF.pack, w=+S.w||K.w, d=+S.d||K.d, p=+S.pitch||K.pitch, n=S.count||1, dz=S.dir==='z';
+    const bb=dz?[rx+S.x,rz+S.z,w,p*(n-1)+d]:[rx+S.x,rz+S.z,p*(n-1)+w,d], r=whRect(bb,t,Wc,Dc);
+    return {...S,x:whQ(Math.max(0.05,r[0]-nr[0])),z:whQ(Math.max(0.05,r[1]-nr[1])),dir:odd?(dz?'x':'z'):(dz?'z':'x'),
+      w:odd?d:w,d:odd?w:d};});
+  if(Array.isArray(room.points)) out.points=room.points.map(o=>{const p=whPt(rx+o.x,rz+o.z,t,Wc,Dc);return {...o,x:whQ(p[0]-nr[0]),z:whQ(p[1]-nr[1])};});
+  if(Array.isArray(room.furniture)) out.furniture=room.furniture.map(o=>{const p=whPt(rx+o.x,rz+o.z,t,Wc,Dc);
+    return {...o,x:whQ(p[0]-nr[0]),z:whQ(p[1]-nr[1]),w:odd?o.d:o.w,d:odd?o.w:o.d};});
+  if(Array.isArray(room.walls)) out.walls=room.walls.map(e=>whEdge(e,t));
+  return out;
+}
+/* أبواب الأفراد ومخارج الطوارئ فتحاتٌ حقيقية في الجدار الخارجي — لا لافتات.
+   العدد والمواقع افتراض أوّلي يحدّده مختص الدفاع المدني. */
+function whShellDoors(env,rooms,entrance){
+  const [ex,ez,ew,ed]=env.rect, doors=[], signs=[];
+  const span=e=>(e==='N'||e==='S')?[ex,ex+ew]:[ez,ez+ed];
+  const line=e=>({N:ez,S:ez+ed,W:ex,E:ex+ew})[e];
+  const blocked={N:[],S:[],E:[],W:[]};
+  for(const room of rooms){
+    if(room===env||!Array.isArray(room.docks)) continue;
+    const [rx,rz,rw,rd]=room.rect;
+    for(const D of room.docks){
+      const e=D.edge, fixed={N:rz,S:rz+rd,W:rx,E:rx+rw}[e];
+      if(Math.abs(fixed-line(e))>0.02) continue;
+      for(let i=0;i<(D.count||1);i++){const c=((e==='N'||e==='S')?rx:rz)+D.offset+D.pitch*i,w=(D.width||3)/2+0.6;blocked[e].push([c-w,c+w]);}
+    }
+  }
+  const inside=(e,u)=>{const p=e==='N'?[u,ez+0.5]:e==='S'?[u,ez+ed-0.5]:e==='W'?[ex+0.5,u]:[ex+ew-0.5,u];
+    return rooms.find(r=>r!==env&&p[0]>r.rect[0]&&p[0]<r.rect[0]+r.rect[2]&&p[1]>r.rect[1]&&p[1]<r.rect[1]+r.rect[3]);};
+  const free=(e,u,w)=>{const [s0,s1]=span(e);return u-w/2>=s0+0.3&&u+w/2<=s1-0.3&&
+    blocked[e].every(([a,b])=>u+w/2<=a||u-w/2>=b);};
+  const add=(id,e,u,name)=>{const w=WH_DEF.door_w_m;doors.push({id,name,edge:e,offset:whQ(u-span(e)[0]),width:w,height:WH_DEF.door_h_m,material:'door'});
+    blocked[e].push([u-w/2-2,u+w/2+2]);
+    const p=e==='N'?[u-ex,0.4]:e==='S'?[u-ex,ed-0.4]:e==='W'?[0.4,u-ez]:[ew-0.4,u-ez];
+    signs.push({type:'exit',x:whQ(p[0]),z:whQ(p[1]),height:WH_DEF.door_h_m+0.15});};
+  if(entrance){
+    const [rx,rz,rw,rd]=entrance.room.rect, e=entrance.edge;
+    const u=(e==='N'||e==='S')?rx+rw/2:rz+rd/2;
+    if(free(e,u,WH_DEF.door_w_m)) add('personnel_entrance',e,u,'مدخل الموظفين');
+  }
+  for(const e of WH_EDGES){
+    const [s0,s1]=span(e);
+    for(const target of [s0+3,s1-3]){
+      for(let k=0;k<=40;k++){
+        const u=target+(target<(s0+s1)/2?1:-1)*k*0.5, room=inside(e,u);
+        if(!free(e,u,WH_DEF.door_w_m)||!room||(room.walls&&room.walls!=='none')) continue;
+        add('exit_'+e+'_'+(doors.length+1),e,u,doors.length?'مخرج طوارئ':'مدخل الموظفين'); break;
+      }
+    }
+  }
+  return {doors,signs};
+}
+/* الحدّ الأدنى للعمق والعرض ووزن التوزيع لكل نوع منطقة (افتراض تخطيطي معلن). */
+function whRackSpec(kind,A){
+  const K={pallet:[1.1,A,4],shelf:[0.6,1.6,5],bin:[0.45,1.2,6],flow:[1.2,1.8,4],cage:[1.0,1.2,2]}[kind]||[0.6,1.6,4];
+  return {depth:K[0],aisle:K[1],levels:K[2]};
+}
+function whZoneNeed(f,C){
+  if(f.kind==='dock') return {d:7,w:Math.max(6,(f.dockCount-1)*WH_DEF.dock_min_pitch_m+WH_DEF.dock_w_m+2),wt:1};
+  if(f.kind==='rack'){const s=whRackSpec(f.rack,C);return {d:2*s.depth+s.aisle+1.2,w:2*C+5.4,wt:f.rack==='pallet'?3:2};}
+  if(f.kind==='pick') return {d:5,w:2*C+5.4,wt:1.5};
+  return {d:4,w:6,wt:1};
+}
+/* صفوف رفوف مقسومة إلى كتل بممرات عرضية، وممرٌّ رئيسي بعرض ممر الرافعة عند طرفي
+   صالة التشغيل في كل شريط، فتدخل الرافعة كل ممر بين صفّين. */
+function whRackBlocks(w,depthAvail,cl0,cl1,cross,base,laneKind,laneDepth){
+  const usable=w-cl0-cl1, racks=[], lanes=[];
+  if(usable<2.7) return {racks,lanes};
+  const n=Math.max(1,Math.ceil((usable+cross)/(WH_DEF.block_max_m+cross))), bl=(usable-(n-1)*cross)/n;
+  for(let i=0;i<n;i++) racks.push(Object.assign({x:whQ(cl0+i*(bl+cross)),z:0.6,w:whQ(bl),d:whQ(depthAvail),dir:'x'},base));
+  for(let i=1;i<n;i++) lanes.push({kind:laneKind,x:whQ(cl0+i*bl+(i-1)*cross),z:0,w:whQ(cross),d:whQ(laneDepth),dir:'z',arrow:false});
+  return {racks,lanes};
+}
 function warehouseFromText(txt, W, D, opt){
-  opt=opt||{}; const t=normDigits(stripBidi(txt||''));
+  opt=opt||{}; const t=whText(txt);
   W=acsSpan(W,100,20,'text.site_w'); D=acsSpan(D,60,15,'text.site_d');
   const found=[], excluded=[], cmap=clauseMap(t);
   for(const Zd of ZONE_LIB){
@@ -1741,144 +2094,275 @@ function warehouseFromText(txt, W, D, opt){
       if(negatedAt(cmap,m.index)) sawNeg=true; else { positive=m.index; break; }
     }
     if(positive===null){ if(sawNeg) excluded.push(Zd.ar); continue; }
-    found.push(Object.assign({}, Zd, {count:numNear(t, new RegExp(Zd.re.source,'i'))}));
+    found.push(Object.assign({}, Zd, {clause:whClauseAt(t,positive)}));
   }
-  if(!found.length) return null;              // لا شيء معروف في الوصف → لا نفرض قالباً
-
-  const H=Math.max(4,Math.min(+opt.clear|| (function(){
-    const m=t.match(/ارتفاع\s*(?:صاف[يٍ]?|clear)?\s*(\d{1,2})/); return m?+m[1]:12; })(),18));
-  const R=[], cov=[];
-  const P=(k,x,z,h)=>{const o={type:k,x:+x.toFixed(2),z:+z.toFixed(2)};if(h!=null)o.height=h;return o;};
-  const auto=p=>Object.assign({},p,{auto:true});
-
-  // وزّع المناطق على الحزم التي ظهرت فقط (لا حزم فارغة)
-  const adm=found.filter(f=>f.adm), ops=found.filter(f=>!f.adm);
+  if(!found.length) return null;
+  const cold=found.find(f=>f.id==='cold_storage'), pal=found.find(f=>f.id==='pallet_storage');
+  if(cold&&pal&&/مستودع|warehouse/i.test(cold.clause)){ found.splice(found.indexOf(pal),1); cold.ar='تخزين بالتات مبرّد'; }
+  const facts=warehouseBriefFacts(t), assumptions=[], cov=[], dims=warehouseDimensions(t,opt.form,W,D);
+  const assume=s=>{if(!assumptions.includes(s)) assumptions.push(s);};
+  const hasZone=id=>found.some(f=>f.id===id);
+  const hasRecv=hasZone('inbound_docks')||facts.receiving.dockMentioned||facts.receiving.side!=null;
+  const hasShip=hasZone('outbound_docks')||hasZone('dispatch')||hasZone('lastmile')||hasZone('wrapping')||facts.shipping.mentioned;
+  if(hasRecv&&!hasZone('inbound_docks')) found.push(Object.assign({},ZONE_LIB.find(z=>z.id==='inbound_docks'),{clause:''}));
+  if(hasShip&&!hasZone('outbound_docks')) found.push(Object.assign({},ZONE_LIB.find(z=>z.id==='outbound_docks'),{clause:''}));
+  // جهات وأعداد الأرصفة: ما قاله العميل، وإلا افتراض معلن.
+  const recv={...facts.receiving}, ship={...facts.shipping};
+  if(hasRecv){
+    if(!recv.side){ recv.side=ship.side?WH_EDGES[(WH_EDGES.indexOf(ship.side)+2)%4]:'N';
+      assume('افتراض: جهة الاستلام '+WH_SIDE_AR[recv.side]+' لأنها لم تُذكر — حدّدها في الوصف.'); recv.sideAssumed=true; }
+    if(recv.count==null){ recv.count=1; recv.countAssumed=true; assume('افتراض: رصيف استلام واحد لأن العدد لم يُذكر — اذكر عدد أرصفة الاستلام.'); }
+  }
+  if(hasShip){
+    if(!ship.side) ship.sideAssumed=true;
+    if(ship.count==null){ ship.count=1; ship.countAssumed=true; assume('افتراض: رصيف شحن واحد لأن العدد لم يُذكر — اذكر عدد أرصفة الشحن.'); }
+  }
+  const lim=SCENE_LIMITS.max_docks_per_room;
+  for(const [r,l] of [[recv,'الاستلام'],[ship,'الشحن']]) if(r.count!=null&&(r.count<1||r.count>lim))
+    warehouseUnsupported('عدد أرصفة '+l+' ('+r.count+') خارج المدى المدعوم 1–'+lim+'.');
+  // المعدات والممرات والارتفاع والساحة
+  const equipment=facts.equipment||'counterbalance';
+  if(!facts.equipment) assume('افتراض: '+WH_EQUIP_AR.counterbalance+' لأن نوع الرافعة لم يُذكر؛ عرض الممر يتغيّر بنوعها — حدّد الموديل.');
+  let A=facts.aisle||WH_DEF.aisle_m[equipment];
+  if(!facts.aisle) assume('افتراض: ممر رفوف البالتات '+A+' م لـ'+WH_EQUIP_AR[equipment]+' — يؤكَّد من بيانات مصنّع الرافعة.');
+  else if(A<WH_DEF.aisle_m[equipment]) assume('تنبيه: الممر المطلوب '+A+' م أضيق من الافتراض المعتاد لـ'+WH_EQUIP_AR[equipment]+' ('+WH_DEF.aisle_m[equipment]+' م) — تأكد من المصنّع.');
+  const C=A;
+  let H=+opt.clear||facts.clear||null;
+  if(!H){ H=WH_DEF.clear_h_m; assume('افتراض: ارتفاع صافٍ '+H+' م لأنه لم يُذكر.'); }
+  if(H<4||H>18){ assume('تنبيه: الارتفاع الصافي '+H+' م خارج المدى المدعوم 4–18 م وقُصّ إليه.'); H=Math.max(4,Math.min(H,18)); }
+  const apron=facts.apron!=null?facts.apron:WH_DEF.apron_m;
+  if(facts.apron==null&&(hasRecv||hasShip))
+    assume('افتراض: ساحة شاحنات بعمق '+apron+' م أمام كل ضلع فيه أرصفة — يحددها مهندس المرور حسب نوع الشاحنة ومناورتها.');
+  assume('الارتدادات النظامية غير مطبّقة: يحددها اشتراط البلدية للموقع.');
+  // الاتجاه: يُحسب التخطيط والاستلام شمالاً ثم يُدار إلى جهته الفعلية.
+  const P=(k,x,z,h)=>{const o={type:k,x:whQ(x),z:whQ(z)};if(h!=null)o.height=h;return o;};
+  const plan=shipSide=>{
+  cov.length=0; const notes=[]; if(hasShip) ship.side=shipSide;
+  const turns=WH_EDGES.indexOf(hasRecv?recv.side:'N');
+  const shipCanon=hasShip?WH_EDGES[(WH_EDGES.indexOf(ship.side)-turns+4)%4]:null;
+  const yard={N:0,E:0,S:0,W:0};
+  if(hasRecv) yard[recv.side]=apron; if(hasShip) yard[ship.side]=apron;
+  let SW,SD,bx0,bz0,Wb,Db;
+  if(dims.building){ Wb=dims.building.w; Db=dims.building.d;
+    if(dims.plot){ SW=dims.plot.w; SD=dims.plot.d;
+      const fx=SW-yard.W-yard.E-Wb, fz=SD-yard.N-yard.S-Db;
+      if(fx<-1e-6||fz<-1e-6) warehouseUnsupported('المبنى '+Wb+'×'+Db+' م لا يترك في الأرض '+SW+'×'+SD+' م ساحة شاحنات بعمق '+apron
+        +' م أمام الأرصفة. كبّر الأرض أو صغّر المبنى أو اجعل الاستلام والشحن على جهة واحدة أو اذكر عمق الساحة.');
+      bx0=yard.W+fx/2; bz0=yard.N+fz/2;
+    } else { SW=Wb+yard.W+yard.E; SD=Db+yard.N+yard.S; bx0=yard.W; bz0=yard.N; }
+  } else { SW=dims.plot.w; SD=dims.plot.d; bx0=yard.W; bz0=yard.N; Wb=SW-yard.W-yard.E; Db=SD-yard.N-yard.S; }
+  if(Wb<15||Db<15) warehouseUnsupported('الأرض '+SW+'×'+SD+' م لا تتّسع لساحة شاحنات بعمق '+apron+' م أمام الأرصفة ومبنى صالح؛ يتبقّى للمبنى '+Math.max(0,whQ(Wb))+'×'+Math.max(0,whQ(Db))+' م. كبّر الأرض أو اجعل الاستلام والشحن على جهة واحدة أو اذكر عمق الساحة.');
+  const odd=turns%2===1, Wc=odd?Db:Wb, Dc=odd?Wb:Db;
+  const R=[];
+  const adm=found.filter(f=>f.adm);
+  let ops=found.filter(f=>!f.adm);
+  const sideCol=(shipCanon==='E'||shipCanon==='W')?shipCanon:null;
+  const admSide=sideCol==='E'?'W':'E';
+  const admW=adm.length?Math.min(Wc*0.16,18):0, colW=sideCol?9:0;
+  const opsX0=(admSide==='W'?admW:0)+(sideCol==='W'?colW:0), opsX1=Wc-(admSide==='E'?admW:0)-(sideCol==='E'?colW:0), opsW=opsX1-opsX0;
+  // تجميع الأشرطة حسب نوع التدفق
+  for(const f of ops){
+    if(f.id==='inbound_docks'){ f.dockCount=recv.count; f.edge='N'; f.band=0; }
+    if(f.id==='outbound_docks'){ f.dockCount=ship.count; f.edge=shipCanon; f.band=shipCanon==='N'?0:shipCanon==='S'?5:-1; }
+    if(shipCanon==='N'&&f.band===5&&f.id!=='outbound_docks') f.band=1;
+  }
+  const colZone=ops.find(f=>f.band===-1); ops=ops.filter(f=>f.band!==-1);
   const bands=[...new Set(ops.map(f=>f.band))].sort((a,b)=>a-b);
-  const admW=adm.length? Math.min(W*0.16, 18) : 0;
-  const opsW=W-admW;
-  const bandH=D/(bands.length||1);
-
-  bands.forEach((b,bi)=>{
-    const list=ops.filter(f=>f.band===b);
-    const z0=bi*bandH, hz=bandH;
-    let x=0;
-    list.forEach((f,fi)=>{
-      const w=opsW/list.length, rect=[x,z0,w,hz]; x+=w;
-      const ex={points:[]}, half=[w/2,hz/2];
-      if(f.color) ex.wall_color=f.color;
-      if(f.kind==='dock'){
-        const n=f.count||Math.max(2,Math.floor(w/6.2));
-        ex.docks=[{edge:f.edge||'N',offset:Math.min(4.5,w/4),width:3.6,height:4.2,
-                   count:Math.min(n,Math.max(1,Math.floor(w/4.2))),pitch:Math.max(4.2,w/(n+0.5))}];
-        ex.lanes=[{kind:'forklift',x:0.5,z:hz-4,w:Math.max(3,w-1),d:3.4,dir:'x'}];
-        for(let i=0;i<Math.min(n,10);i++) ex.points.push(P('scanner',Math.min(3+6.2*i,w-1),1.2));
-        cov.push({req:f.ar+(f.count?(' ('+f.count+')'):''),where:f.id,how:'أرصفة بمسويات ومصدّات وممر رافعات'});
-      }else if(f.kind==='rack'){
-        const RD={pallet:[3.4,4,Math.min(H-3,9)],shelf:[1.6,5,2.6],bin:[1.2,6,2.2],
-                  flow:[1.8,4,2.4],cage:[1.2,2,2.0]}[f.rack]||[1.6,4,2.4];
-        ex.racks=[{kind:f.rack,x:0.6,z:0.6,w:Math.max(1,w-1.2),d:Math.max(1,hz-1.2),
-                   dir:'x',aisle:RD[0],levels:f.count&&f.count<=10?f.count:RD[1],h:RD[2]}];
-        ex.points.push(P('sign',half[0],0.8,3.2));
-        cov.push({req:f.ar+(f.count?(' — '+f.count+' مستويات'):''),where:f.id,
-                  how:'صفوف رفوف '+f.rack+' بممر '+RD[0]+' م'});
-      }else if(f.kind==='pick'){
-        ex.racks=[{kind:f.rack||'shelf',x:0.6,z:0.6,w:Math.max(1,w-1.2),d:Math.max(1,hz*0.55),
-                   dir:'x',aisle:1.5,levels:4,h:2.3}];
-        ex.lanes=[{kind:'pedestrian',x:0.4,z:hz*0.68,w:Math.max(2,w-0.8),d:Math.max(1.2,hz*0.16),dir:'x'}];
-        if(f.ptl) for(let i=0;i<Math.min(Math.floor(w/1.6),24);i++) ex.points.push(P('ptl',1.6*i+1,1.2));
-        ex.points.push(P('sign',half[0],0.6,3));
-        cov.push({req:f.ar,where:f.id,how:'رفوف التقاط + ممر مشاة'+(f.ptl?' + pick-to-light':'')});
-      }else if(f.kind==='amr'){
-        const n=Math.max(2,Math.min(f.count||3,6));
-        ex.lanes=[]; for(let i=0;i<n;i++) ex.lanes.push({kind:'amr',x:0.5,z:hz*(i+0.5)/(n+0.6),
-          w:Math.max(2,w-1),d:1.4,dir:'x',reverse:i%2===1});
-        ex.stations=[{kind:'charger',x:1,z:hz-1.2,count:Math.max(2,Math.floor(w/2)),pitch:2,dir:'x'}];
-        ex.points.push(P('robot',w*0.3,hz*0.3),P('estop',Math.max(0.6,w-0.6),hz/2));
-        cov.push({req:f.ar+(f.count?(' — '+f.count+' مسارات'):''),where:f.id,how:n+' مسارات AMR + محطات شحن'});
-      }else if(f.kind==='conveyor'){
-        ex.lanes=[{kind:'conveyor',x:1,z:hz*0.2,w:Math.max(2,w-2),d:1,dir:'x',h:0.95},
-                  {kind:'conveyor',x:1,z:hz*0.55,w:Math.max(2,w-2),d:1,dir:'x',h:0.85},
-                  {kind:'pedestrian',x:0.5,z:hz*0.85,w:Math.max(2,w-1),d:1.4,dir:'x'}];
-        const nd=Math.max(2,Math.min(f.count||Math.floor(w/3),16));
-        for(let i=0;i<nd;i++){ ex.points.push(P('diverter',Math.min(3+3*i,w-1),hz*0.35));
-                               ex.points.push(P('chute',Math.min(3+3*i,w-1),hz*0.72)); }
-        cov.push({req:f.ar+(f.count?(' — '+f.count+' مخارج'):''),where:f.id,
-                  how:'سيور بحواجز وإيقاف طوارئ + محوّلات ومنزلقات'});
-      }else if(f.kind==='station'){
-        const n=f.count||Math.max(2,Math.floor(w/2.7));
-        ex.stations=[{kind:f.sta,x:1,z:1,count:Math.min(n,Math.max(1,Math.floor(w/2))),
-                      pitch:Math.max(1.8,Math.min(2.7,(w-2)/Math.max(n,1))),dir:'x'}];
-        if(f.sta==='pack'){ for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scale',Math.min(2.4+2.7*i,w-1),hz*0.4)); }
-        if(f.sta==='label'){ for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scanner',Math.min(2+2*i,w-1),hz*0.4)); }
-        ex.points.push(P('sign',half[0],0.5,3));
-        cov.push({req:f.ar+(f.count?(' — '+f.count+' محطة'):''),where:f.id,how:n+' محطة '+f.sta});
-      }else if(f.kind==='aisle'){
-        ex.lanes=[{kind:'one_way',x:0.4,z:Math.max(0.4,hz*0.25),w:Math.max(3,w-0.8),
-                   d:Math.max(3.2,hz*0.5),dir:'x'}];
-        cov.push({req:f.ar,where:f.id,how:'ممر باتجاه واحد بأسهم أرضية'});
-      }else if(f.kind==='staging'){
-        const n=f.count||Math.max(3,Math.floor(w/5));
-        ex.lanes=[]; for(let i=0;i<Math.min(n,20);i++)
-          ex.lanes.push({kind:'zone',x:(w/Math.min(n,20))*i+0.3,z:0.3,
-                         w:Math.max(1,w/Math.min(n,20)-0.6),d:Math.max(1,hz-0.6),dir:'z',arrow:false});
-        ex.points.push(P('sign',half[0],0.5,2.8));
-        cov.push({req:f.ar+(f.count?(' — '+f.count+' مسار'):''),where:f.id,how:'مسارات مرقّمة بدهان أرضي'});
-      }else if(f.kind==='inspect'||f.kind==='unload'){
-        ex.stations=[{kind:'inspect',x:1,z:1,count:Math.max(2,Math.floor(w/4)),pitch:4,dir:'x'}];
-        ex.points.push(P('scale',half[0],hz*0.5),P('sign',half[0],0.5,3));
-        cov.push({req:f.ar,where:f.id,how:'محطات فحص بموازين وماسحات'});
-      }else if(f.kind==='cross'){
-        ex.lanes=[{kind:'conveyor',x:1,z:hz*0.45,w:Math.max(2,w-2),d:0.9,dir:'x',h:0.9},
-                  {kind:'forklift',x:0.5,z:hz-4,w:Math.max(3,w-1),d:3.4,dir:'x'}];
-        cov.push({req:f.ar,where:f.id,how:'سير عبور مباشر + ممر رافعات'});
-      }
-      R.push(Object.assign({id:f.id,rect:rect.map(v=>+v.toFixed(2)),role:f.role,walls:'none'},ex));
+  const mk=list=>{const n=list.map(f=>whZoneNeed(f,C));
+    return {list,n,d:Math.max(...n.map(x=>x.d)),w:n.reduce((s,x)=>s+x.w,0),wt:Math.max(...n.map(x=>x.wt))};};
+  let needs=[];
+  // شريط أعرض من صالة التشغيل يُقسم إلى شريطين بالترتيب نفسه
+  for(const b of bands){ let cur=[];
+    for(const f of ops.filter(z=>z.band===b)){ if(cur.length&&mk(cur.concat([f])).w>opsW+1e-6){needs.push(mk(cur));cur=[];} cur.push(f); }
+    if(cur.length) needs.push(mk(cur)); }
+  // وإذا لم يتّسع العمق تُدمج أشرطة متجاورة غير رفوف جنباً إلى جنب بترتيب التدفق
+  const isRack=B=>B.list.some(f=>f.kind==='rack');
+  while(needs.reduce((s,b)=>s+b.d,0)>Dc+1e-6){
+    let best=-1,save=0;
+    for(let i=0;i+1<needs.length;i++){ const a=needs[i],b=needs[i+1];
+      if(isRack(a)||isRack(b)||a.w+b.w>opsW+1e-6) continue;
+      const g=Math.min(a.d,b.d); if(g>save){save=g;best=i;} }
+    if(best<0) break;
+    needs.splice(best,2,mk(needs[best].list.concat(needs[best+1].list)));
+  }
+  const needD=needs.reduce((s,b)=>s+b.d,0), needW=Math.max(...needs.map(b=>b.w))+admW+colW;
+  const flowSpan=odd?'العرض':'العمق';
+  if(Dc+1e-6<needD||Wc+1e-6<needW)
+    warehouseUnsupported((dims.building?'المبنى المطلوب ':'المبنى المتبقي بعد ساحات الشاحنات ')+whQ(Wb)+'×'+whQ(Db)+' م أصغر من الحد الأدنى لهذا البرنامج ('
+      +whQ(odd?needD:needW)+'×'+whQ(odd?needW:needD)+' م تقريباً، '+flowSpan+' باتجاه التدفق '+whQ(needD)+' م). كبّر الأرض أو قلّل المناطق أو اذكر عمق ساحة أصغر.');
+  if(colZone){const need=(colZone.dockCount-1)*WH_DEF.dock_min_pitch_m+WH_DEF.dock_w_m+2;
+    if(Dc<need) warehouseUnsupported('ضلع الشحن لا يتّسع لـ'+colZone.dockCount+' أرصفة.');}
+  const extra=Dc-needD, sumWt=needs.reduce((s,b)=>s+b.wt,0);
+  let z0=0;
+  const rackH=k=>({pallet:Math.max(2.4,Math.min(H-3,9)),shelf:2.6,bin:2.2,flow:2.4,cage:2.0}[k]||2.4);
+  const zoneRoom=(f,rect,cl0,cl1)=>{
+    const [,,w,hz]=rect, ex={points:[]}, half=[w/2,hz/2], laneK=C>=2.4?'forklift':'pedestrian';
+    if(f.color) ex.wall_color=f.color;
+    const nounCount=re=>f.clause?whNounCount(f.clause,re):null;
+    if(f.kind==='dock'){
+      const n=f.dockCount, e=f.edge, len=(e==='N'||e==='S')?w:hz;
+      let pitch=WH_DEF.dock_pitch_m;
+      if(n>1&&(n-1)*pitch+WH_DEF.dock_w_m+2>len) pitch=Math.max(WH_DEF.dock_min_pitch_m,(len-WH_DEF.dock_w_m-2)/(n-1));
+      if((n-1)*pitch+WH_DEF.dock_w_m+2>len+1e-6)
+        warehouseUnsupported('جهة '+(f.id==='inbound_docks'?'الاستلام':'الشحن')+' بطول '+whQ(len)+' م لا تتّسع لـ'+n+' أرصفة بعرض '+WH_DEF.dock_w_m+' م.');
+      ex.docks=[{id:f.id+'_group',edge:e,offset:whQ((len-(n-1)*pitch)/2),width:WH_DEF.dock_w_m,height:WH_DEF.dock_h_m,count:n,pitch:whQ(pitch)}];
+      ex.lanes=(e==='N'||e==='S')?[{kind:'forklift',x:0.5,z:e==='N'?whQ(Math.max(0.3,hz-3.9)):0.5,w:whQ(Math.max(3,w-1)),d:3.4,dir:'x'}]
+                                 :[{kind:'forklift',x:e==='W'?whQ(Math.max(0.3,w-3.9)):0.5,z:0.5,w:3.4,d:whQ(Math.max(3,hz-1)),dir:'z'}];
+      for(let i=0;i<Math.min(n,10);i++){const c=(len-(n-1)*pitch)/2+pitch*i;
+        ex.points.push(e==='N'?P('scanner',c,1.2):e==='S'?P('scanner',c,hz-1.2):e==='E'?P('scanner',w-1.2,c):P('scanner',1.2,c));}
+      const r=f.id==='inbound_docks'?recv:ship;
+      cov.push({req:f.ar+' ('+n+') — الجهة '+WH_SIDE_AR[f.id==='inbound_docks'?recv.side:ship.side],where:f.id,
+        how:n+' رصيف بمسويات ومصدّات، تباعد '+whQ(pitch)+' م، وممر رافعات'+(r.countAssumed||r.sideAssumed?' — فيه افتراض معلن':'')});
+    }else if(f.kind==='rack'){
+      const s=whRackSpec(f.rack,A), lv=nounCount(/مستويات|مستوى|levels?/i);
+      const levels=lv&&lv<=SCENE_LIMITS.max_rack_levels?lv:s.levels;
+      const base={kind:f.rack,aisle:s.aisle,levels,h:rackH(f.rack)};
+      const cross=f.rack==='pallet'?C:Math.max(s.aisle,1.5);
+      const b=whRackBlocks(w,Math.max(1,hz-1.2),cl0,cl1,cross,base,f.rack==='pallet'?laneK:'pedestrian',hz);
+      ex.racks=b.racks; ex.lanes=b.lanes;
+      for(const [x0,ww] of [[0,cl0],[w-cl1,cl1]]) if(ww>=C-1e-6) ex.lanes.push({kind:laneK,x:whQ(x0),z:0,w:whQ(ww),d:whQ(hz),dir:'z',arrow:false});
+      ex.points.push(P('sign',half[0],0.8,3.2));
+      cov.push({req:f.ar+' — '+levels+' مستويات'+(lv?'':' (افتراض)'),where:f.id,
+        how:b.racks.length+' كتلة رفوف '+f.rack+' بممر '+s.aisle+' م وممرات عرضية '+whQ(cross)+' م'});
+    }else if(f.kind==='pick'){
+      const b=whRackBlocks(w,Math.max(1,hz*0.55),cl0,cl1,1.5,{kind:f.rack||'shelf',aisle:1.5,levels:4,h:2.3},'pedestrian',hz*0.62);
+      ex.racks=b.racks; ex.lanes=b.lanes.concat([{kind:'pedestrian',x:0.4,z:whQ(hz*0.68),w:whQ(Math.max(2,w-0.8)),d:whQ(Math.max(1.2,hz*0.16)),dir:'x'}]);
+      if(f.ptl) for(let i=0;i<Math.min(Math.floor((w-cl0-cl1)/1.6),24);i++) ex.points.push(P('ptl',cl0+1.6*i+1,1.2));
+      ex.points.push(P('sign',half[0],0.6,3));
+      cov.push({req:f.ar,where:f.id,how:'رفوف التقاط مقسومة بممرات عرضية + ممر مشاة'+(f.ptl?' + pick-to-light':'')});
+    }else if(f.kind==='amr'){
+      const c=nounCount(/مسارات|مسار|روبوتات|روبوت|robots?/i), n=Math.max(2,Math.min(c||3,6));
+      ex.lanes=[]; for(let i=0;i<n;i++) ex.lanes.push({kind:'amr',x:0.5,z:whQ(hz*(i+0.5)/(n+0.6)),w:whQ(Math.max(2,w-1)),d:1.4,dir:'x',reverse:i%2===1});
+      ex.stations=[{kind:'charger',x:whQ(cl0),z:whQ(hz-1.2),count:Math.max(2,Math.floor((w-cl0-cl1)/2)),pitch:2,dir:'x'}];
+      ex.points.push(P('robot',w*0.3,hz*0.3),P('estop',Math.max(0.6,w-0.6),hz/2));
+      cov.push({req:f.ar+(c?(' — '+c+' مسارات'):''),where:f.id,how:n+' مسارات AMR + محطات شحن'});
+    }else if(f.kind==='conveyor'){
+      const c=nounCount(/مخارج|مخرج|منزلقات|منزلق|chutes?/i), cw=Math.max(2,w-cl0-cl1);
+      ex.lanes=[{kind:'conveyor',x:whQ(cl0),z:whQ(hz*0.2),w:whQ(cw),d:1,dir:'x',h:0.95},
+                {kind:'conveyor',x:whQ(cl0),z:whQ(hz*0.55),w:whQ(cw),d:1,dir:'x',h:0.85},
+                {kind:'pedestrian',x:0.5,z:whQ(hz*0.85),w:whQ(Math.max(2,w-1)),d:1.4,dir:'x'}];
+      const nd=Math.max(2,Math.min(c||Math.floor(cw/3),16));
+      for(let i=0;i<nd;i++){ ex.points.push(P('diverter',Math.min(cl0+2+3*i,w-cl1),hz*0.35)); ex.points.push(P('chute',Math.min(cl0+2+3*i,w-cl1),hz*0.72)); }
+      cov.push({req:f.ar+(c?(' — '+c+' مخارج'):''),where:f.id,how:'سيور آلية بحواجز وإيقاف طوارئ + محوّلات ومنزلقات'});
+    }else if(f.kind==='station'){
+      const c=nounCount(/محطات|محطة|طاولات|طاولة|stations?/i), K=STA_DEF[f.sta]||STA_DEF.pack;
+      const room=Math.max(1,Math.floor((w-cl0-cl1-K.w)/Math.max(K.pitch,1))+1), n=Math.min(c||Math.max(2,room),room);
+      ex.stations=[{kind:f.sta,x:whQ(cl0),z:1,count:n,pitch:K.pitch,dir:'x'}];
+      if(f.sta==='pack') for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scale',cl0+K.pitch*i+K.w/2,hz*0.45));
+      if(f.sta==='label') for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scanner',cl0+K.pitch*i+K.w/2,hz*0.45));
+      ex.points.push(P('sign',half[0],0.5,3));
+      cov.push({req:f.ar+(c?(' — '+c+' محطة'):''),where:f.id,how:n+' محطة '+f.sta+(c&&n<c?' (لم يتّسع غير '+n+')':'')});
+    }else if(f.kind==='aisle'){
+      ex.lanes=[{kind:'one_way',x:0.4,z:whQ(Math.max(0.4,hz*0.25)),w:whQ(Math.max(3,w-0.8)),d:whQ(Math.max(3.2,hz*0.5)),dir:'x'}];
+      cov.push({req:f.ar,where:f.id,how:'ممر باتجاه واحد بأسهم أرضية'});
+    }else if(f.kind==='staging'){
+      const c=nounCount(/مسارات|مسار|lanes?/i), n=Math.min(c||Math.max(3,Math.floor(w/5)),20);
+      ex.lanes=[]; for(let i=0;i<n;i++) ex.lanes.push({kind:'zone',x:whQ((w/n)*i+0.3),z:0.3,w:whQ(Math.max(1,w/n-0.6)),d:whQ(Math.max(1,hz-0.6)),dir:'z',arrow:false});
+      ex.points.push(P('sign',half[0],0.5,2.8));
+      cov.push({req:f.ar+(c?(' — '+c+' مسار'):''),where:f.id,how:'مسارات مرقّمة بدهان أرضي'});
+    }else if(f.kind==='inspect'||f.kind==='unload'){
+      ex.stations=[{kind:'inspect',x:whQ(cl0),z:1,count:Math.max(1,Math.floor((w-cl0-cl1)/4)),pitch:4,dir:'x'}];
+      ex.points.push(P('scale',half[0],hz*0.5),P('sign',half[0],0.5,3));
+      cov.push({req:f.ar,where:f.id,how:'محطات فحص بموازين وماسحات'});
+    }else if(f.kind==='cross'){
+      ex.lanes=[{kind:'conveyor',x:whQ(cl0),z:whQ(hz*0.45),w:whQ(Math.max(2,w-cl0-cl1)),d:0.9,dir:'x',h:0.9},
+                {kind:'forklift',x:0.5,z:whQ(Math.max(0.3,hz-3.9)),w:whQ(Math.max(3,w-1)),d:3.4,dir:'x'}];
+      cov.push({req:f.ar,where:f.id,how:'سير عبور مباشر + ممر رافعات'});
+    }
+    return Object.assign({id:f.id,name:f.ar,rect:rect.map(whQ),role:f.role,walls:'none'},ex);
+  };
+  needs.forEach((B,bi)=>{
+    const hz=B.d+extra*B.wt/sumWt;
+    const ws=B.n.map(x=>x.w), share=(opsW-ws.reduce((s,v)=>s+v,0))/B.list.length;
+    let x=opsX0;
+    B.list.forEach((f,fi)=>{
+      const w=ws[fi]+share, rect=[x,z0,w,hz];
+      const cl0=Math.abs(x-opsX0)<1e-6?C:0.6, cl1=Math.abs(x+w-opsX1)<1e-6?C:0.6;
+      R.push(zoneRoom(f,rect,cl0,cl1)); x+=w;
     });
+    z0+=hz;
   });
-
-  // العمود الإداري: فقط إن ذُكر
+  if(colZone) R.push(zoneRoom(colZone,[sideCol==='E'?Wc-colW:0,0,colW,Dc],0.6,0.6));
+  // العمود الإداري: على الضلع الخالي من الأرصفة، وجداره الخارجي هو جدار المبنى
+  let entrance=null;
   if(adm.length){
-    const hz=D/adm.length;
+    const hz=Math.min(Dc/adm.length,8), inner=admSide==='E'?'W':'E', ax=admSide==='E'?Wc-admW:0;
+    const rest=Dc-hz*adm.length;
+    if(rest>=4){ R.push({id:'unassigned_reserve',name:'مساحة غير مخصصة (توسعة)',rect:[ax,hz*adm.length,admW,rest].map(whQ),role:'expansion',walls:'none',points:[]});
+      notes.push('مساحة غير مخصصة '+whQ(admW)+'×'+whQ(rest)+' م بجانب المكاتب: لم يُطلب لها استخدام، فتُركت للتوسعة.'); }
     adm.forEach((f,i)=>{
-      const rect=[W-admW,i*hz,admW,hz];
-      const ex={walls:f.walls||'full',wall_h:Math.min(3.2,H),
-        doors:[{edge:'W',offset:hz/2,width:1.0,height:2.1,material:f.walls==='glass'?'glass':'wood'}],
+      const walls=opt.strict?(f.walls||'full'):['N','S','E','W'].filter(e=>e!==admSide);
+      const ex={walls,wall_h:Math.min(3.2,H),
+        doors:[{edge:inner,offset:whQ(hz/2),width:1.0,height:2.1,material:f.walls==='glass'?'glass':'wood'}],
         points:[P('light',admW/2,hz/2),P('smoke',admW/2,hz/2),P('ac',admW/2,0.4),
                 P('outlet',1.5,hz-0.4,0.40),P('switch',admW*0.3,hz-0.6,1.20)]};
       if(f.id==='it_server_room') ex.points.push(P('server',2,1),P('server',4,1),P('network',1,hz/2,0.40));
       if(f.id==='lockers') ex.stations=[{kind:'locker',x:0.6,z:0.4,count:Math.max(3,Math.floor(admW/0.98)),pitch:0.98,dir:'x'}];
       if(f.id==='meeting_room') ex.furniture=[{name:'table',x:admW/2,z:hz/2,w:Math.min(3.4,admW*0.6),d:1.3,h:0.75,mat:'furn'}];
       if(f.id==='inventory_office'){ ex.stations=[{kind:'desk',x:1,z:1,count:Math.max(2,Math.floor(admW/2.6)),pitch:2.6,dir:'x'}];
-        ex.windows=[{edge:'W',offset:hz*0.8,width:Math.min(3,hz*0.35),sill:0.9,height:1.6}]; }
-      R.push(Object.assign({id:f.id,rect:rect.map(v=>+v.toFixed(2)),role:f.role},ex));
-      cov.push({req:f.ar,where:f.id,how:'غرفة مغلقة'+(f.walls==='glass'?' بزجاج مطلّ':'')+' بإنارة وتكييف وأفياش'});
+        ex.windows=[{edge:inner,offset:whQ(hz*0.8),width:whQ(Math.min(3,hz*0.35)),sill:0.9,height:1.6}]; }
+      const room=Object.assign({id:f.id,name:f.ar,rect:[ax,i*hz,admW,hz].map(whQ),role:f.role},ex);
+      R.push(room);
+      if(!entrance||f.id==='inventory_office') entrance={room,edge:admSide};
+      cov.push({req:f.ar,where:f.id,how:'غرفة مغلقة بإنارة وتكييف وأفياش، بابها على صالة التشغيل'});
     });
   }
-
-  // الغلاف + السلامة: إضافات كود موسومة auto (لا تُنقص من طلب العميل)
-  const added=[];
+  // من الإطار القانوني إلى الجهة الفعلية، ثم إلى موضع المبنى داخل الأرض
+  const placed=R.map(r=>{const o=whOrientRoom(r,turns,Wc,Dc);o.rect=[whQ(o.rect[0]+bx0),whQ(o.rect[1]+bz0),o.rect[2],o.rect[3]];return o;});
+  const entranceActual=entrance?{room:placed[R.indexOf(entrance.room)],edge:whEdge(entrance.edge,turns)}:null;
+  return {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db,SW,SD,notes};
+  };
+  let L=null;
+  if(hasShip&&ship.sideAssumed){
+    const opposite=WH_EDGES[(WH_EDGES.indexOf(hasRecv?recv.side:'N')+2)%4], same=hasRecv?recv.side:'S';
+    try{ L=plan(opposite); }catch(e){ if(e.code!=='LOCAL_WAREHOUSE_UNSUPPORTED'||!hasRecv) throw e; L=plan(same); }
+    assume('افتراض: الشحن من الجهة '+WH_SIDE_AR[ship.side]+(ship.side===opposite?' المقابلة للاستلام':' نفسها مع الاستلام لأن الأرض لا تتّسع لساحتين')+' لأن جهة الشحن لم تُذكر — حدّدها في الوصف.');
+  }else L=plan(hasShip?ship.side:null);
+  const {placed,entranceActual,turns,shipCanon,yard,bx0,bz0,Wb,Db,SW,SD}=L; L.notes.forEach(assume);
+  // سطر صريح عن مقاس المبنى وسببه — لا يكفي أن يكون افتراضاً بين الافتراضات
+  const dockSides=WH_EDGES.filter(e=>yard[e]>0).map(e=>WH_SIDE_AR[e]).join(' و'), q=whQ;
+  let sizeNote=dims.building
+    ?(dims.plot?'بنينا المبنى بأبعاده المطلوبة '+q(Wb)+'×'+q(Db)+' م داخل الأرض '+q(SW)+'×'+q(SD)+' م'+(dockSides?'، وأمام الأرصفة '+dockSides+' ساحة شاحنات '+apron+' م على الأقل.':'.')
+               :'بنينا المبنى بأبعاده المطلوبة '+q(Wb)+'×'+q(Db)+' م. لم تذكر أبعاد الأرض'+(dockSides?'، فرسمنا ساحة شاحنات '+apron+' م أمام الأرصفة '+dockSides+' فقط؛ حدود الأرض الفعلية من صكها.':'.'))
+    :(dockSides?'المبنى '+q(Wb)+'×'+q(Db)+' م أصغر من الأرض '+q(SW)+'×'+q(SD)+' م لأننا تركنا ساحة شاحنات بعمق '+apron+' م أمام الأرصفة '+dockSides+' لتقف الشاحنات وتناور خارج المبنى.'
+               :'المبنى يملأ الأرض '+q(SW)+'×'+q(SD)+' م لأنه لا أرصفة فيه.');
+  if(dims.notes.length) sizeNote+=' '+dims.notes.join(' ');
+  const added=[]; let doorsInfo={doors:[],signs:[]};
   if(!opt.strict){
-    const shell=[];
-    const nc=Math.max(4,Math.round(W/28));
-    for(let i=0;i<nc;i++){const x=W*(i+0.5)/nc; shell.push(auto(P('camera',x,1)),auto(P('camera',x,D-1)));}
-    const ne=Math.max(6,Math.round(W/14));
-    for(let i=0;i<ne;i++){const x=W*(i+0.5)/ne; shell.push(auto(P('extinguisher',x,0.6)),auto(P('extinguisher',x,D-0.6)));}
-    shell.push(auto(P('exit',2,0.4,2.4)),auto(P('exit',W-2,0.4,2.4)),auto(P('exit',2,D-0.4,2.4)),
-      auto(P('exit',W-2,D-0.4,2.4)),auto(P('assembly',W*0.5,D-2)),
-      auto(P('hydrant',0.6,D*0.5)),auto(P('hydrant',W-0.6,D*0.5)));
-    R.unshift({id:'envelope',rect:[0,0,W,D],walls:'full',wall_h:H,points:shell});
-    // صياغة صادقة: هذه إعدادات افتراضية للمولّد، لا نتيجة تحقّق مطابقة لكود
-    added.push('غلاف المبنى وجدرانه الخارجية','مخارج طوارئ وطفايات وحنفيات ونقطة تجمّع (إعداد افتراضي للنظام)',
-               'كاميرات محيطية');
+    const env={id:'envelope',rect:[bx0,bz0,Wb,Db].map(whQ),walls:'full',wall_h:H};
+    doorsInfo=whShellDoors(env,placed,entranceActual);
+    const shell=[]; const auto=p=>Object.assign({},p,{auto:true});
+    const nc=Math.max(4,Math.round(Wb/28));
+    for(let i=0;i<nc;i++){const x=Wb*(i+0.5)/nc; shell.push(auto(P('camera',x,1)),auto(P('camera',x,Db-1)));}
+    const ne=Math.max(6,Math.round(Wb/14));
+    for(let i=0;i<ne;i++){const x=Wb*(i+0.5)/ne; shell.push(auto(P('extinguisher',x,0.6)),auto(P('extinguisher',x,Db-0.6)));}
+    shell.push(auto(P('hydrant',0.6,Db*0.5)),auto(P('hydrant',Wb-0.6,Db*0.5)));
+    for(const s of doorsInfo.signs) shell.push(auto(s));
+    env.doors=doorsInfo.doors; env.points=shell;
+    placed.unshift(env);
+    added.push('غلاف المبنى وجدرانه الخارجية',
+      doorsInfo.doors.length+' باب أفراد ومخرج طوارئ في الجدار الخارجي (مواقع وعدد افتراضيان يحددهما مختص الدفاع المدني)',
+      'طفايات وحنفيات وكاميرات محيطية (إعداد افتراضي للنظام)');
   }
-
-  return {building:{
-    meta:{name:'منشأة حسب وصف العميل', city:'الرياض', north:'-Z', type:'warehouse',
-          requirements:cov, added:added, excluded:excluded,
-          strict:!!opt.strict, source:'local-from-text'},
-    site:{w:W,d:D}, floor_height:H+1, wall_h:H, wall_t:0.25,
-    levels:[{index:0,name:'صالة التشغيل',template:'ops'}],
-    floors:{ops:{rooms:R}}}, coverage:cov, added:added, excluded:excluded};
+  added.unshift(sizeNote);
+  for(const a of assumptions) added.push(a);
+  const meta={name:'منشأة حسب وصف العميل', north:'-Z', type:'warehouse',
+    requirements:cov, added:added, excluded:excluded, strict:!!opt.strict, source:'local-from-text',
+    acs_warehouse:{schema:'acs.local-warehouse/2',
+      receiving:hasRecv?{side:recv.side,count:recv.count,side_source:recv.sideAssumed?'assumption':'brief',count_source:recv.countAssumed?'assumption':'brief'}:null,
+      shipping:hasShip?{side:ship.side,count:ship.count,side_source:ship.sideAssumed?'assumption':'brief',count_source:ship.countAssumed?'assumption':'brief'}:null,
+      flow:!hasRecv||!hasShip?null:shipCanon==='S'?'I':shipCanon==='N'?'U':'L',
+      truck_yard_m:yard, truck_yard_source:facts.apron!=null?'brief':'assumption', building_rect:[bx0,bz0,Wb,Db].map(whQ),
+      size_basis:dims.building?'building':'plot', building_source:dims.building?dims.building.source:'derived_from_plot',
+      plot_source:dims.plot?dims.plot.source:'derived_from_building', size_note:sizeNote,
+      equipment, equipment_source:facts.equipment?'brief':'assumption', rack_aisle_m:A, rack_aisle_source:facts.aisle?'brief':'assumption',
+      main_aisle_m:C, rack_block_max_m:WH_DEF.block_max_m, clear_height_m:H, clear_height_source:(+opt.clear||facts.clear)?'brief':'assumption',
+      personnel_and_exit_doors:doorsInfo.doors.length, assumptions:assumptions.slice(),
+      not_verified:['fire_protection','civil_defense_exits','structural','traffic','setbacks']}};
+  if(facts.city) meta.city=facts.city;
+  return {building:{meta, site:{w:whQ(SW),d:whQ(SD)}, floor_height:H+1, wall_h:H, wall_t:0.25,
+    levels:[{index:0,name:'صالة التشغيل',template:'ops'}], floors:{ops:{rooms:placed}}},
+    coverage:cov, added:added, excluded:excluded, sizeNote};
 }
 
 /* ==================================================================
@@ -3001,4 +3485,4 @@ function distanceSummary(m){
    ================================================================== */
 
 
-export { acsRenderLevel, ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, SCENE_LIMITS, DEGRADING_KINDS, acsCount, acsFit, acsCapList, acsSpan, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };
+export { acsRenderLevel, ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, SCENE_LIMITS, DEGRADING_KINDS, acsCount, acsFit, acsCapList, acsSpan, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseClearHeight, warehouseFromText, warehouseModel, warehouseBriefFacts };
