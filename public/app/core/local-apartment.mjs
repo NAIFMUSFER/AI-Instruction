@@ -443,12 +443,25 @@ function dimensions(text) {
   const sizeOfBuilding=new RegExp('(?:ابعاد|مقاس|مسطح|بصمه|واجهه|عرض|طول|عمق)\\s+'+owner+
     '|(?:^|[\\s،.,])و?(?:ال)?(?:مبنى|عماره|بنايه)(?:\\s+سكني(?:ه)?)?\\s+(?:(?:ابعادها|ابعاده|مقاسها|مقاسه|بمقاس|بابعاد)\\s*)?(?=\\d)');
   // «قطعة ٢٠×٣٠» and deed («صك») dimensions describe the plot, not the building.
-  const lotTerms=/(?:قطعه\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?قطعه(?:\s+(?:ال)?ارض)?(?![ء-ي])|(?:^|[\s،.,])(?:ال)?صك(?:ها|ه)?(?![ء-ي])|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها))/;
+  const lotTerms=/(?:قطعه\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?قطعه(?:\s+(?:ال)?ارض)?(?![ء-ي])|(?:^|[\s،.,])(?:ال)?صك(?:ها|ه)?(?![ء-ي])|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها|عرضها|طولها|عمقها|واجههها))/;
   const opening=s=>s.split(/\n\s*\n|(?:مجلس|غرفه نوم|صاله عائليه|مطبخ|فناء|حوش|باحه|courtyard|atrium)/,1)[0].slice(0,650);
   const intro=opening(text), lot=lotTerms.exec(intro), building=sizeOfBuilding.exec(text);
   // The plot is context for the building, never its envelope.
   const plotPair=lot&&intro.slice(lot.index+lot[0].length).slice(0,30).match(new RegExp('^\\s*'+decimal+'\\s*(?:مترا?|امتار|م)?\\s*(?:[×x*]|في|بـ?)\\s*'+decimal));
-  const plot=plotPair?{w:+plotPair[1],d:+plotPair[2]}:null;
+  let plot=plotPair?{w:+plotPair[1],d:+plotPair[2]}:null;
+  if(!plot) {
+    const land='(?:ال)?(?:ارض|قطعه)';
+    const named=axis=>{
+      const m=text.match(new RegExp('(?:'+axis+')\\s+'+land+'\\s*[:=]?\\s*'+decimal))||
+        text.match(new RegExp(land+'\\s+(?:ب?(?:'+axis+')|(?:'+axis+')ها)\\s*[:=]?\\s*'+decimal))||
+        text.match(new RegExp(land+'[^،.\\n]{0,25}?(?:'+axis+')ها\\s*[:=]?\\s*'+decimal));
+      return m?+m[1]:undefined;
+    };
+    const plotWidth=named('عرض|واجهه'), plotDepth=named('عمق|طول');
+    const area=text.match(new RegExp('(?:مساحه\\s+'+land+'|'+land+'\\s+مساحتها)\\s*[:=]?\\s*'+decimal));
+    if(plotWidth!==undefined&&plotDepth!==undefined) plot={w:plotWidth,d:plotDepth};
+    else if(area) plot={area:+area[1]};
+  }
   let scope=lot?intro.slice(0,lot.index):intro;
   // Later named building dimensions are admissible even if a separate lot or
   // room programme came first. Stop again at any following lot description.
@@ -644,7 +657,7 @@ export function apartmentConfirmation(model) {
   rows.push({key:'building',label:'المبنى',value:'عرض '+metresAr(a.width_m)+' م × عمق '+metresAr(a.depth_m)+' م',
     note:(u.width.source===u.depth.source?from(u.width.source):'العرض '+from(u.width.source)+' والعمق '+from(u.depth.source))+
       (u.width.chosen||u.depth.chosen?' — اخترتَه حين اختلف الوصف عن الحقل':''),assumed:false});
-  if(u.plot) rows.push({key:'plot',label:'الأرض',value:metresAr(u.plot.w)+' × '+metresAr(u.plot.d)+' م',note:from(u.plot.source),assumed:false});
+  if(u.plot) rows.push({key:'plot',label:'الأرض',value:u.plot.area!==undefined?'مساحتها '+metresAr(u.plot.area)+' م²':metresAr(u.plot.w)+' × '+metresAr(u.plot.d)+' م',note:from(u.plot.source),assumed:false});
   rows.push({key:'units',label:'الشقق',value:'شقتان في كل دور، '+flatsAr(a.units_total)+' في المجموع',
     note:u.units.source==='assumed'?'يرسم المخطط المحلي شقتين في كل دور':null,assumed:u.units.source==='assumed'});
   rows.push({key:'bedrooms',label:'غرف النوم',value:'3 في كل شقة',note:u.bedrooms.source==='assumed'?'لم تحدد عددها':null,assumed:u.bedrooms.source==='assumed'});
@@ -682,7 +695,7 @@ function buildRequestedApartment(t,form,options) {
   if(levels!==undefined&&(ground===undefined||chosen.levels==='form')) ground='form';
   let plot=size.plot;
   if(brief&&form.plotWidth!==undefined&&form.plotDepth!==undefined) {
-    if(plot&&(plot.w!==form.plotWidth||plot.d!==form.plotDepth)&&form.prefer?.plot!=='text') {
+    if(plot&&plot.area===undefined&&(plot.w!==form.plotWidth||plot.d!==form.plotDepth)&&form.prefer?.plot!=='text') {
       if(form.prefer?.plot==='form') plot={w:form.plotWidth,d:form.plotDepth,source:'form'};
       else conflicts.push({key:'plot',label:'أبعاد الأرض',unit:' م',text:plot.w+' × '+plot.d,form:form.plotWidth+' × '+form.plotDepth});
     } else if(!plot||form.prefer?.plot!=='text') plot={w:form.plotWidth,d:form.plotDepth,source:plot?'text':'form'};
@@ -728,7 +741,19 @@ function buildRequestedApartment(t,form,options) {
       'يتضمن وصفك ملحقاً. يضيف المخطط المحلي سطحاً بلا غرف فقط؛ الملحق العلوي يحتاج إلى توزيع آخر.');
   if(/مجلس\s+(?:لل)?(?:حريم|نساء|السيدات|النساء)|مجلس(?:ين|ان)(?![ء-ي])/.test(positive))
     cannotDraw('ladies_majlis','مجلس حريم منفصل: يرسم المخطط المحلي مجلس ضيوف واحداً في كل شقة','يرسم المخطط المحلي مجلس ضيوف واحداً في كل شقة؛ مجلس الحريم المنفصل يحتاج إلى توزيع آخر.');
-  if(/غرف(?:ه|ة)?\s+(?:لل)?(?:خادمه|خدامه|عامله|سائق|سواق)/.test(positive))
+  // Roof rooms and structures: the local plan adds an unoccupied roof with nothing on it.
+  const roofWords={غسيل:'غرفة غسيل',سائق:'غرفة سائق',سواق:'غرفة سائق',خادمه:'غرفة خادمة',حارس:'غرفة حارس',تخزين:'غرفة تخزين'};
+  const onRoof='(?:على|فوق|في|ب)\\s*(?:ال)?سطح';
+  const roofItems=[];
+  let offRoof=positive.replace(new RegExp('غرف(?:ه|ة)?\\s+(?:لل)?([ء-ي]+)\\s+'+onRoof,'g'),(_,kind)=>{roofItems.push(roofWords[kind]||'غرفة '+kind);return ' ';});
+  offRoof=offRoof.replace(new RegExp('خزان(?:ات)?\\s+(?:(?:ال)?(?:مياه|ماء)\\s+)?(?:علوي(?:ه)?|'+onRoof+')','g'),()=>{roofItems.push('خزان علوي');return ' ';});
+  if(new RegExp('مظل(?:ه|ات)\\s+'+onRoof+'|'+onRoof+'[^،.\\n]{0,40}?مظل(?:ه|ات)').test(positive)) {
+    roofItems.push('مظلة');offRoof=offRoof.replace(/مظل(?:ه|ات)/g,' ');
+  }
+  if(roofItems.length)
+    cannotDraw('roof_structures','على السطح: '+[...new Set(roofItems)].join('، ')+' — يضيف المخطط المحلي سطحاً غير مشغول بلا غرف أو منشآت',
+      'يضيف المخطط المحلي سطحاً غير مشغول بلا غرف أو منشآت؛ '+[...new Set(roofItems)].join('، ')+' تحتاج إلى توزيع آخر.');
+  if(/غرف(?:ه|ة)?\s+(?:لل)?(?:خادمه|خدامه|عامله|سائق|سواق)/.test(offRoof))
     cannotDraw('staff_room','غرفة خادمة أو سائق: لا يرسمها المخطط المحلي','يرسم المخطط المحلي غرف الشقة المعتادة فقط؛ غرفة الخادمة أو السائق تحتاج إلى توزيع آخر.');
   if(/(?<![ء-ي])(?:و|ب)?(?:ال)?مسبح(?![ء-ي])/.test(positive))
     cannotDraw('pool','مسبح: لا يرسمه المخطط المحلي','لا يرسم المخطط المحلي مسبحاً.');
@@ -750,7 +775,7 @@ function buildRequestedApartment(t,form,options) {
     [/(?:الواح|طاقه)\s+شمسيه/,'الطاقة الشمسية'],[/(?<![ء-ي])(?:و|ب|ل)?(?:ال)?خزان(?:ات)?(?![ء-ي])/,'الخزانات'],
     [/كاميرات|كاميرا/,'الكاميرات'],[/(?<![ء-ي])(?:و|ب|ل)?(?:ال)?مظل(?:ه|ات)(?![ء-ي])/,'المظلات'],
     [/غرف(?:ه|ة)?\s+مكتب|(?<![ء-ي])(?:و|ب|ل)?(?:ال)?مكتب(?![ء-ي])/,'غرفة المكتب']]
-    .filter(([pattern])=>pattern.test(positive)).map(([,label])=>label);
+    .filter(([pattern])=>pattern.test(offRoof)).map(([,label])=>label);
   if(unmapped.length)
     cannotDraw('unmapped','لم يُطبَّق: '+unmapped.join('، ')+' (ذُكر في وصفك، ولا يمثله المخطط المحلي بعد)',
       'تعديل المدخل والفناء لا يشمل: '+unmapped.join('، ')+'. افصل هذا الطلب في وصف جديد حتى لا نفقد جزءاً منه.');
@@ -793,7 +818,7 @@ function buildRequestedApartment(t,form,options) {
     depth:{value:depth,source:size.depth!==undefined&&chosen.depth!=='form'?'text':'form',...(chosen.depth?{chosen:true}:{})},
     not_drawn:notDrawn,
     levels:{value:levels,ground,...(chosen.levels?{chosen:true}:{})},
-    plot:plot?{w:plot.w,d:plot.d,source:plot.source}:null,
+    plot:plot?{...(plot.area!==undefined&&plot.w===undefined?{area:plot.area}:{w:plot.w,d:plot.d}),source:plot.source}:null,
     units:{per_floor:2,total:2*levels,source:unitsStated?'text':'assumed'},
     bedrooms:{per_unit:3,source:bedroomsStated?'text':'assumed'}
   });

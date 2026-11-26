@@ -477,6 +477,22 @@ for(const [txt,keys] of [
 assert.match(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، ومواقف أمامية وارتداد ٣ م')).notDrawn[0],/لم يُطبَّق: مواقف السيارات، الارتدادات/);
 assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب والمواقف قدام',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),
   error=>error.message.includes('مواقف السيارات'),'a revision cannot drop an unmapped request');
+// Round 4 (Buraidah brief): roof rooms and structures are listed, and a land size in the text is shown.
+const buraidah=apartmentFromBrief('عمارة سكنية في بريدة ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور، وغرفة غسيل على السطح وغرفة سائق على السطح وخزان علوي ومظلة');
+assert.deepEqual(buraidah.meta.acs_apartment.understanding.not_drawn.map(item=>item.key),['roof_structures']);
+assert.match(apartmentConfirmation(buraidah).notDrawn[0],/^على السطح: غرفة غسيل، غرفة سائق، خزان علوي، مظلة/);
+assert.deepEqual(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاث أدوار، غرفة سائق وخزان أرضي').meta.acs_apartment.understanding.not_drawn.map(item=>item.key),
+  ['staff_room','unmapped'],'rooms and tanks elsewhere keep their own rows');
+assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب وغرفة غسيل على السطح',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),error=>error.message.includes('غرفة غسيل'));
+for(const [txt,form,value] of [
+  ['عمارة سكنية عرض الأرض ٢٥ م وعمق الأرض ٣٠ م، والمبنى ٢٠×٢٥، ثلاث أدوار',{},'25 × 30 م'],
+  ['عمارة سكنية، الأرض عرضها ٢٥ وطولها ٣٠، عرض المبنى ٢٠ م وعمقه ٢٥ م، ثلاث أدوار',{},'25 × 30 م'],
+  ['عمارة سكنية مساحة الأرض ٧٥٠ م²، عرض المبنى ٢٠ م وعمقه ٢٥ م، ثلاث أدوار',{},'مساحتها 750 م²'],
+  ['عمارة سكنية مساحة الأرض ٧٥٠ م²، ثلاث أدوار',{width:20,depth:25,plotWidth:25,plotDepth:30},'25 × 30 م']
+]) {
+  const model=apartmentFromBrief(txt,form);validate(model,20,25,3);
+  assert.equal(apartmentConfirmation(model).rows.find(row=>row.key==='plot')?.value,value,txt);
+}
 // «ثلاث أدوار مع الأرضي» states the ground floor: not an assumption.
 const withGround=Object.fromEntries(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور')).rows.map(row=>[row.key,row]));
 assert.equal(withGround.levels.note,'شاملة الأرضي كما ذكرت');assert.equal(withGround.levels.assumed,false);assert.equal(withGround.levels.value,'3 أدوار: الأرضي ودوران فوقه');

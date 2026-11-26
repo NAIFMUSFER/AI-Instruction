@@ -151,6 +151,16 @@ async function run(browser, width) {
     await onScreen(page, '#guestConfirmDraw', viewport);
     await page.screenshot({ path: path.join(out, width + '-round3.png') });
 
+    // Round 4 (Buraidah): roof rooms and structures are listed; a land size written in the text is shown.
+    await open(page);
+    await generate(page, 'عمارة سكنية في بريدة، عرض الأرض ٢٥ م وعمق الأرض ٣٠ م، والمبنى ٢٠×٢٥، ثلاث أدوار مع الأرضي، شقتين في كل دور، وغرفة غسيل على السطح وخزان علوي ومظلة');
+    summary = await card(page, 'confirm');
+    assert.match(summary.rows.plot.text, /25 × 30 م/);
+    assert.match(summary.rows.plot.text, /من وصفك/);
+    assert.match(summary.unsupported.join(' | '), /على السطح: غرفة غسيل، خزان علوي، مظلة/);
+    await onScreen(page, '#guestConfirmDraw', viewport);
+    await page.screenshot({ path: path.join(out, width + '-round4.png') });
+
     // 5. Text says 3 floors, the field says 4: the visitor picks; neither is preferred silently.
     await open(page);
     await generate(page, 'عمارة سكنية ٢٤×٢٨ م، ٣ أدوار، شقتين في كل دور', { nFloors: 4 });
