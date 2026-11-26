@@ -184,7 +184,13 @@ export function createBriefEditor(root,{storageKey,onError}) {
         const use=el('button','استخدام '+c.expected,card);use.type='button';use.dataset.briefMetric=c.metric;use.dataset.briefRole=c.role||'';
         use.setAttribute('aria-label','استخدام '+requirementLabel(c)+' '+c.expected);use.addEventListener('click',()=>apply(c));
       }
-      notice.textContent=analysis.candidates.length?'اختر القيم التي تريد إضافتها، ثم راجع البرنامج. تغيير الوصف أو القيم يلغي التأكيد السابق.':'لم أجد أبعادًا أو أعدادًا صريحة بهذه الصياغة. أدخلها في الحقول؛ وصفك سيبقى محفوظًا كاملًا.';
+      if(analysis.candidates.length>1){
+        const all=el('button','استخدام كل القيم ('+analysis.candidates.length+')',cards,'cw-use-all');all.type='button';all.id='cwUseAllBrief';
+        all.addEventListener('click',()=>{for(const c of analysis.candidates)apply(c);notice.textContent='أضيفت كل القيم المقروءة إلى البرنامج. راجعها ثم أكد المتطلبات.';});
+      }
+      const area=analysis.site_area_m2;
+      notice.textContent=(analysis.candidates.length?'اختر القيم التي تريد إضافتها، ثم راجع البرنامج. تغيير الوصف أو القيم يلغي التأكيد السابق.':'لم أجد أبعادًا أو أعدادًا صريحة بهذه الصياغة. أدخلها في الحقول، أو جرّب القراءة الذكية؛ وصفك سيبقى محفوظًا كاملًا.')
+        +(area?' مساحة الأرض في الوصف '+area.value+' م²'+(area.matches?' وتطابق العرض × العمق.':'.'):'');
       $('cwConfirmed').checked=false;showQuestions();
     }catch(e){onError(e);}
   }
@@ -214,6 +220,8 @@ export function createBriefEditor(root,{storageKey,onError}) {
   });
   return {
     program(){try{return buildBriefProgram(input());}catch(e){showQuestions();throw e;}},
+    // Confirmed values from another reader (the smart-reading card): fields or requirement rows.
+    useValues(values){for(const value of values)apply(value);},
     fill(data,typology){
       let saved=null;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}
       linkedFields=new Set(starterFieldIds.filter(id=>Array.isArray(saved?.starterFields)&&saved.starterFields.includes(id)));

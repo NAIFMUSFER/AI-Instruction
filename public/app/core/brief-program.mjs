@@ -46,10 +46,10 @@ const normal = s => s.replace(/[٠-٩۰-۹أإآ]/g,c=>{
 }).replace(/٫/g,'.');
 const cp = s => Array.from(s).length;
 const N = '[0-9]+(?:\\.[0-9]+)?';
-const U = '(?:millimeters?|centimeters?|metres?|meters?|mm|cm|m|مليمتر|سنتيمتر|متر|سم|مم|م)';
+const U = '(?:millimeters?|centimeters?|metres?|meters?|mm|cm|m|مليمتر|سنتيمتر|امتار|مترا?|سم|مم|م)';
 const site = '(?:الموقع|الارض|موقع|ارض|site|plot)';
 const factor = u => /^(?:mm|millimeter|مم|مليمتر)/i.test(u)?0.001:/^(?:cm|centimeter|سم|سنتيمتر)/i.test(u)?0.01:1;
-const ambiguous = /(?:\b(?:if|or|not|about|around|approximately|per|each)\b|(?:^|\s)و?(?:لا|ليس|بدون|اذا|ان|او)(?:\s|$)|تقريب|حوالي|لكل|كل\s+(?:دور|طابق|شقه|شقة)|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|[-−]\s*[0-9]|[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]|[0-9][,٬][0-9])/iu;
+const ambiguous = /(?:\b(?:if|or|not|about|around|approximately|per|each)\b|(?:^|\s)و?(?:لا|ليس|بدون|اذا|ان|او)(?:\s|$)|تقريب|حوالي|نحو\s*[0-9]|تقارب|قراب[ةه]|لكل|كل\s+(?:دور|طابق|شقه|شقة)|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|(?:هذا|ذلك)\s+(?:الدور|الطابق)|[-−]\s*[0-9]|[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]|[0-9][,٬][0-9])/iu;
 const bounded = /(?:على\s+(?:الاقل|الاكثر)|حد\s+(?:ادنى|اقصى)|at\s+(?:least|most)|minimum|maximum|less\s+than|more\s+than|[<>])/iu;
 // مفردات محدودة لغرف النوم؛ لا نبدّل الكلمات في الوصف حتى تبقى شواهده حرفية.
 const bedroomWords = Object.freeze({ثلاث:3,ثلاثة:3,اربع:4,اربعة:4,خمس:5,خمسة:5,ست:6,ستة:6,سبع:7,سبعة:7,ثمان:8,ثماني:8,ثمانية:8,تسع:9,تسعة:9,عشر:10,عشرة:10});
@@ -66,9 +66,58 @@ const compoundWordCount = (text,match) => {
   return compoundBefore.test(text.slice(0,match.index)) || (compoundAfter.test(after)&&!followingBedroom.test(after));
 };
 
+// The building's own size, separate from the land («عرض المبنى ٢٠ م وعمقه ٢٥ م»، «والمبنى ٢٠×٢٥ م»).
+const building='(?:المبنى|العمار[ةه]|البناء|البناي[ةه])';
+const buildingPair=`(?:ابعاد\\s+${building}|(?<![\\p{L}])و?(?:ال)?مبنى|العمار[ةه]\\s+(?:ابعادها|مقاسها))\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+const sitePair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+const buildingSides=[
+  ['building_width_m',`عرض\\s+${building}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+  ['building_depth_m',`(?:عمق\\s+${building}|(?<=عرض\\s+${building}[^،.\\n]{0,40})و?عمق(?:ه|ها))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+];
+const patterns=[
+  ['site_width_m',`(?:عرض\\s+${site}|${site}\\s+(?:ب?عرض(?:ها)?|width))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+  ['site_depth_m',`(?:عمق\\s+${site}|${site}\\s+(?:ب?عمق(?:ها)?|depth)|(?<=${site}\\s+عرضها[^،.\\n]{0,25})و?عمقها)\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
+  ['level_count',`عدد\\s+(?:الادوار|الطوابق)\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
+  ['level_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s*(?:ادوار|طوابق|floors?|storeys?|stories)(?![\\p{L}\\p{N}])`],
+  ['room_count',`(?<![\\p{L}\\p{N}.])(?:و\\s*)?(?<n>${N})\\s+(?:غرف(?:ة|ه)?\\s+نوم|bedrooms?)(?![\\p{L}\\p{N}])`,'bedroom'],
+  ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مكاتب|offices?)(?![\\p{L}\\p{N}])`,'office'],
+  ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مطابخ|kitchens?)(?![\\p{L}\\p{N}])`,'kitchen'],
+  ['dock_count',`عدد\\s+الارصفه?\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
+  ['dock_count',`عدد\\s+الارصفة\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
+  ['dock_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:ارصفه|ارصفة|docks?)(?![\\p{L}\\p{N}])`],
+  ['min_rack_group_count',`(?:على\\s+الاقل|at\\s+least)\\s+(?<n>${N})\\s+(?:مجموعات\\s+رفوف|rack\\s+groups?)(?![\\p{L}\\p{N}])`],
+];
+// A plot's street frontage is its width along that street: «عرض الواجهة الشمالية ٢٠ م على الشارع».
+const frontage=`عرض\\s+(?:ال)?واجه[ةه](?:\\s+(?:ال)?(?<side>شمالي|جنوبي|شرقي|غربي)[ةه])?\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])(?=[^،.\\n]{0,16}?(?:ال)?شارع)`;
+const landFrontage=`(?:عرض\\s+)?(?:ال)?واجه[ةه]\\s+${site}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+// The plot's own area («أرض مستطيلة مساحتها ٥٠٠ م²»): a check on width × depth, never a requirement.
+const plotArea=`(?:مساح[ةه]\\s+${site}|(?<![\\p{L}])${site}(?:\\s+[\\p{L}\\u064B-\\u0652]+){0,2}?\\s+مساحت(?:ها|ه))\\s*[:=]?\\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\\.[0-9]+)?)\\s*(?:م(?:تر)?\\s*(?:مربع|²)|m²|sqm)(?![\\p{L}\\p{N}])`;
+// What a qualified sentence would have yielded: only these deserve a question.
+const quantityHints=[...patterns.map(p=>p[1]),...buildingSides.map(p=>p[1]),buildingPair,sitePair,frontage,landFrontage,plotArea,
+  `(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*${N}\\s*[×x]\\s*${N}`].map(p=>new RegExp(p,'iu'));
+// «أرضي وأول وثانٍ» lists every floor; «أرضي + ٢» counts the floors above the ground floor.
+const ordinals=['اول','ثان','ثالث','رابع','خامس','سادس','سابع','ثامن','تاسع','عاشر'];
+const storey='(?:(?:ال)?(?:دور|طابق)\\s+)?(?:ال)?';
+const floorList=new RegExp(`(?<![\\p{L}])${storey}ارضي(?:\\s*(?:[،,+]\\s*)?و?\\s*${storey}(?:${ordinals.join('|')})(?:ي|[\\u064B-\\u0652])*(?![\\p{L}]))+`,'gu');
+const groundPlus=/(?<![\p{L}])(?:ال)?ارضي\s*(?:\+|زائد)\s*(?<n>[0-9]+)(?![0-9]|\.[0-9]|\s*(?:ادوار|طوابق|دور|طابق))/gu;
+const listGuard=/(?:^|\s)و?(?:لا|ليس|بدون|اذا|او)(?:\s|$)|تقريب|حوالي|(?:في|على|عن|الى)\s*$/u;
+// Sentences inside one line: a full stop that is not a decimal point.
+const sentences=chunk=>Array.from(chunk[0].matchAll(/(?:[^.]|\.(?=[0-9٠-٩۰-۹]))+\.?/gu),m=>({0:m[0],index:chunk.index+m.index}));
+const scopeWords=/(?:\b(?:per|each)\b|كل\s+(?:دور|طابق|شقه|شقة)|لكل|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|(?:هذا|ذلك)\s+(?:الدور|الطابق))/iu;
+const approximate=/(?:\b(?:about|around|approximately)\b|تقريب|حوالي|نحو\s*[0-9]|تقارب|قراب[ةه])/iu;
+const rangeWords=/[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]/iu;
+// The reason a sentence with a quantity is not read as an exact project total.
+function qualifiedQuestion(text,quote){
+  const q='«'+quote.trim().slice(0,200)+'»';
+  if(rangeWords.test(text))return 'ورد نطاق أرقام في '+q+'. اختر قيمة واحدة مؤكدة وأدخلها في الحقل.';
+  if(approximate.test(text))return 'القيمة تقريبية في '+q+'. أدخل القيمة المؤكدة في الحقل إن أردت اعتمادها.';
+  if(scopeWords.test(text))return 'العدد في '+q+' لدور أو لشقة، لا للمبنى كله. أدخل الإجمالي المؤكد في الجدول، أو حدّد عدد الشقق ونطاقه في «الشقق واحتياجات الأسرة».';
+  return 'راجع الشرط أو نطاق العدد في: '+q+'. أضف القيم الإجمالية المؤكدة في الحقول.';
+}
+
 export function analyzeBrief(brief) {
   if(typeof brief!=='string'||cp(brief)>60000)throw new Error('الوصف يتجاوز الحد المسموح.');
-  const candidates=[],questions=[],seen=new Set();
+  const candidates=[],questions=[],seen=new Set(),areas=[];
   const chunks=brief.matchAll(/[^\n؛;!?؟]+/gu);
   const add=(metric,n,unit,match,base,source='requested',role)=>{
     const numeric=typeof n==='string'?n.replace(/[,٬]/g,''):n;
@@ -82,8 +131,21 @@ export function analyzeBrief(brief) {
       evidence:brief.slice(start,end),source_span:{start:cp(brief.slice(0,start)),end:cp(brief.slice(0,end))},
       confirmed:false,...(role?{role}:{})});
   };
-  for(const chunk of chunks){
+  // An enumerated floor list stays exact even beside a per-floor qualifier
+  // («أرضي وأول وثانٍ، وفي كل دور شقة»); a negation, condition or «أو» near it does not.
+  const floorLists=(text,chunk)=>{
+    const near=match=>listGuard.test(text.slice(Math.max(0,match.index-25),match.index))
+      ||listGuard.test(text.slice(match.index,match.index+match[0].length+25).replace(/\s*$/,' '));
+    for(const match of text.matchAll(floorList)){
+      const named=Array.from(match[0].matchAll(new RegExp(ordinals.join('|'),'gu')),m=>m[0]);
+      if(near(match)||!named.every((name,i)=>name===ordinals[i]))continue;
+      add('level_count',1+named.length,null,match,chunk.index);
+    }
+    for(const match of text.matchAll(groundPlus))if(!near(match))add('level_count',Number(match.groups.n)+1,null,match,chunk.index);
+  };
+  const scan=(chunk,line)=>{
     const text=normal(chunk[0]);
+    floorLists(text,chunk);
     const wordCounts=[
       ...Array.from(text.matchAll(new RegExp(wordBedroom,'gu')),match=>({metric:'room_count',role:'bedroom',n:bedroomWords[match.groups.word],match})),
       ...Array.from(text.matchAll(oneLevel),match=>({metric:'level_count',n:1,match})),
@@ -99,8 +161,11 @@ export function analyzeBrief(brief) {
     // matched above; confirmed form values remain the source of truth.
     const groupedMeasuredArea=/[0-9]+(?:[,٬][0-9]{3})+\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/iu;
     if((ambiguous.test(text)&&!areaPattern.test(text)&&!groupedMeasuredArea.test(text))||(wordCounts.length&&wordRange.test(text))){
-      if(/[0-9]/.test(text)||wordCounts.length)questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
-      continue;
+      // Only the qualified sentence is held back; the line's other sentences are still read.
+      const parts=line?sentences(chunk):[];
+      if(parts.length>1){for(const part of parts)scan(part,false);return;}
+      if(/[0-9]/.test(text)||wordCounts.length)if(wordCounts.length||quantityHints.some(hint=>hint.test(text)))questions.push(qualifiedQuestion(text,chunk[0]));
+      return;
     }
     // «٣ أدوار غير الأرضي» and «أرضي + ٣ أدوار» are four floors with the ground floor.
     const groundAfter=/^\s+(?:غير|عدا|ماعدا|بخلاف|فوق)\s+(?:(?:ال)?(?:دور|طابق)\s+)?(?:ال)?ارضي(?![\p{L}\p{N}])/u;
@@ -113,30 +178,24 @@ export function analyzeBrief(brief) {
       const end=match.index+match[0].length+(after?after[0].length:0);
       add('level_count',Number(n)+1,null,{index:start,0:text.slice(start,end)},chunk.index);
     };
-    // The building's own size, separate from the land («عرض المبنى ٢٠ م وعمقه ٢٥ م»، «والمبنى ٢٠×٢٥ م»).
-    const building='(?:المبنى|العمار[ةه]|البناء|البناي[ةه])';
-    for(const [metric,pattern] of [
-      ['building_width_m',`عرض\\s+${building}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
-      ['building_depth_m',`(?:عمق\\s+${building}|(?<=عرض\\s+${building}[^،.\\n]{0,40})و?عمق(?:ه|ها))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
-    ])for(const match of text.matchAll(new RegExp(pattern,'gu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
-    const buildingPair=`(?:ابعاد\\s+${building}|(?<![\\p{L}])و?(?:ال)?مبنى|العمار[ةه]\\s+(?:ابعادها|مقاسها))\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+    for(const [metric,pattern] of buildingSides)for(const match of text.matchAll(new RegExp(pattern,'gu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
     for(const match of text.matchAll(new RegExp(buildingPair,'gu'))){
       add('building_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
       add('building_depth_m',match.groups.d,match.groups.u,match,chunk.index,'inferred');
     }
-    const patterns=[
-      ['site_width_m',`(?:عرض\\s+${site}|${site}\\s+(?:ب?عرض|width))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
-      ['site_depth_m',`(?:عمق\\s+${site}|${site}\\s+(?:ب?عمق|depth))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
-      ['level_count',`عدد\\s+(?:الادوار|الطوابق)\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
-      ['level_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s*(?:ادوار|طوابق|floors?|storeys?|stories)(?![\\p{L}\\p{N}])`],
-      ['room_count',`(?<![\\p{L}\\p{N}.])(?:و\\s*)?(?<n>${N})\\s+(?:غرف(?:ة|ه)?\\s+نوم|bedrooms?)(?![\\p{L}\\p{N}])`,'bedroom'],
-      ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مكاتب|offices?)(?![\\p{L}\\p{N}])`,'office'],
-      ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مطابخ|kitchens?)(?![\\p{L}\\p{N}])`,'kitchen'],
-      ['dock_count',`عدد\\s+الارصفه?\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
-      ['dock_count',`عدد\\s+الارصفة\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
-      ['dock_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:ارصفه|ارصفة|docks?)(?![\\p{L}\\p{N}])`],
-      ['min_rack_group_count',`(?:على\\s+الاقل|at\\s+least)\\s+(?<n>${N})\\s+(?:مجموعات\\s+رفوف|rack\\s+groups?)(?![\\p{L}\\p{N}])`],
-    ];
+    for(const match of text.matchAll(new RegExp(plotArea,'gu')))
+      areas.push({value:Number(match.groups.n.replace(/[,٬]/g,'')),match:{index:match.index,0:match[0]},base:chunk.index});
+    for(const [pattern,street] of [[frontage,true],[landFrontage,false]]){
+      for(const match of text.matchAll(new RegExp(pattern,'gu'))){
+        const quote=chunk[0].substr(match.index,match[0].length);
+        if(bounded.test(text)){questions.push('راجع الحد الأدنى أو الأعلى في: «'+chunk[0].trim().slice(0,200)+'». حدّد نوع المتطلب وقيمته قبل التوليد.');continue;}
+        // An east or west street runs north–south: that frontage is the plot's depth (z), not its width (x).
+        if(/شرقي|غربي/.test(match.groups.side||'')){
+          questions.push('الواجهة على الشارع في «'+quote+'» '+(/شرقي/.test(match.groups.side)?'شرقية':'غربية')+'، وطولها يمتد من الشمال إلى الجنوب: أدخله في «عمق الموقع»، والبعد الآخر في «عرض الموقع»، واختر جهة الشارع.');continue;
+        }
+        add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,street&&!match.groups.side?'inferred':'requested');
+      }
+    }
     for(const [metric,pattern,role] of patterns){
       for(const match of text.matchAll(new RegExp(pattern,'giu'))){
         // A minimum dock request must not become an exact count.
@@ -158,21 +217,20 @@ export function analyzeBrief(brief) {
     // Standalone project-dimension lines, never a room's dimensions or a
     // unitless number. An unlabelled pair still needs explicit order review.
     if(!bounded.test(text)){
-      for(const [metric,label] of [['site_width_m','عرض'],['site_depth_m','عمق']]){
+      for(const [metric,label] of line?[['site_width_m','عرض'],['site_depth_m','عمق']]:[]){
         for(const pattern of [
           `^\\s*(?:ال)?${label}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})\\s*[.،,]?\\s*$`,
           `^\\s*(?<n>${N})\\s*(?<u>${U})\\s+(?:ال)?${label}\\s*[.،,]?\\s*$`,
         ])for(const match of text.matchAll(new RegExp(pattern,'giu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
       }
       const compact=`^\\s*(?<n>${N})\\s*(?<u>${U})\\s*(?:×|x|في)\\s*(?<d>${N})\\s*(?<du>${U})\\s*[.،,]?\\s*$`;
-      for(const match of text.matchAll(new RegExp(compact,'giu'))){
+      for(const match of line?text.matchAll(new RegExp(compact,'giu')):[]){
         add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
         add('site_depth_m',match.groups.d,match.groups.du,match,chunk.index,'inferred');
       }
       for(const match of text.matchAll(/(?<![\p{L}])(?:دورين|دوران|طابقين|طابقان)(?![\p{L}])/gu))levelCount(2,match);
     }
-    const pair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
-    for(const match of text.matchAll(new RegExp(pair,'giu'))){
+    for(const match of text.matchAll(new RegExp(sitePair,'giu'))){
       add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
       add('site_depth_m',match.groups.d,match.groups.u,match,chunk.index,'inferred');
     }
@@ -182,9 +240,26 @@ export function analyzeBrief(brief) {
       const quote=chunk[0].slice(match.index,match.index+match[0].length);
       questions.push('أكّد وحدة أبعاد الموقع «'+quote+'» وترتيب العرض والعمق، ثم أدخل القيم بالمتر في الحقول.');
     }
+  };
+  for(const chunk of chunks)scan(chunk,true);
+  // The plot's stated area checks width × depth, or supplies the one side not written.
+  const stated=[...new Set(areas.map(a=>a.value))];
+  let siteArea=null;
+  if(stated.length>1)questions.push('وردت مساحة الأرض بأكثر من قيمة ('+stated.join(' و')+' م²). وضّح المساحة المقصودة.');
+  else if(stated.length===1){
+    const area=stated[0],fact=areas[0],one=metric=>{const v=[...new Set(candidates.filter(c=>c.metric===metric).map(c=>c.expected))];return v.length===1?v[0]:null;};
+    const w=one('site_width_m'),d=one('site_depth_m'),start=fact.base+fact.match.index;
+    siteArea={value:area,evidence:brief.slice(start,start+fact.match[0].length)};
+    if(w&&d){
+      if(Math.abs(w*d-area)>Math.max(0.5,area*0.01))questions.push('مساحة الأرض في الوصف ('+area+' م²) لا تساوي العرض × العمق ('+w+' × '+d+' = '+Math.round(w*d*100)/100+' م²). راجع الأبعاد قبل التأكيد.');
+      else siteArea.matches=true;
+    }else if(w||d){
+      const other=Math.round(area/(w||d)*100)/100;
+      if(other>0&&Math.abs(other*(w||d)-area)<=area*0.005)add(w?'site_depth_m':'site_width_m',other,null,fact.match,fact.base,'inferred');
+    }
   }
   if(candidates.length>100)throw new Error('الوصف يحتوي متطلبات أكثر من الحد المسموح. اختصره قبل المتابعة.');
-  return {candidates,questions:[...new Set(questions)]};
+  return {candidates,questions:[...new Set(questions)],...(siteArea?{site_area_m2:siteArea}:{})};
 }
 
 export function buildBriefProgram(input) {

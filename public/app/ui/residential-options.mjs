@@ -19,7 +19,7 @@ export function createResidentialOptions(root,{storageKey,api,onError}) {
   $('cwResidentialSummary').textContent=count>0?( $('cwUnitsScope').value==='per_level'?flats(count)+' في كل دور؛ الإجمالي '+(levels>0?flats(count*levels):'يحتاج عدد الأدوار')+'.':flats(count)+' في إجمالي المبنى. غيّر الاختيار إن كنت تقصد العدد في كل دور.'):'للعمارة، حدّد عدد الشقق لعرض برامج غرف قابلة للمقارنة. للفيلا يمكنك متابعة وصف الغرف مباشرة.';
  }
  section.addEventListener('input',save);section.addEventListener('change',save);$('cwLevels').addEventListener('input',summary);$('cwType').addEventListener('change',summary);
- $('cwReadBrief').addEventListener('click',()=>{const found=readResidential($('cwBrief').value);if(found.units){$('cwUnits').value=found.units;$('cwUnitsScope').value=found.scope;}if(found.bedrooms)$('cwBedrooms').value=found.bedrooms;if(found.guests)$('cwGuests').value=found.guests;save();});
+ $('cwReadBrief').addEventListener('click',()=>{const found=readResidential($('cwBrief').value);if(found.units){$('cwUnits').value=found.units;$('cwUnitsScope').value=found.scope;}if(found.bedrooms)$('cwBedrooms').value=found.bedrooms;if(found.guests)$('cwGuests').value=found.guests;if(found.street&&$('cwStreet').value==='unknown'){$('cwStreet').value=found.street;$('cwStreet').dispatchEvent(new Event('change',{bubbles:true}));}save();});
  async function sources(){
   const epoch=++researchEpoch;note.textContent='جارٍ جلب المراجع الرسمية…';links.replaceChildren();
   try{const data=await api({action:'research',city:$('cwCity').value,building_type:$('cwType').value});if(epoch!==researchEpoch)return;note.textContent=data.message;
