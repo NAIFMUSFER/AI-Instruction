@@ -1612,9 +1612,12 @@ def _plan_spatial_context(envelope, zones_by_id, results, template):
 def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
                 telemetry=None, request_id=None, spatial_context=None):
     """شريحة واحدة من الخطّة — مخرجها محدود سلفاً بحجم الشريحة (F-36)."""
+    # A confirmed floor program's manifest (acs_floor_program) gives each zone
+    # its Arabic name and target size; other outlines carry neither key.
     ask = [{"id": z, "role": (zones_by_id.get(z) or {}).get("role", ""),
             "template": chunk.get("template"),
-            **{k:zones_by_id[z][k] for k in ('unit_id','core_id') if k in zones_by_id.get(z,{})}}
+            **{k:zones_by_id[z][k] for k in ('unit_id','core_id','name','target_m','approx','ensuite')
+               if k in zones_by_id.get(z,{})}}
            for z in chunk["zone_ids"]]
     body = (PLAN_CHUNK_MSG
             + "المناطق المطلوب هندستها الآن (%d منطقة):\n" % len(ask)

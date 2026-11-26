@@ -104,6 +104,12 @@ def geometry_failure_message(code):
         return "لم يجتز المخطط فحص الهندسة. تفاصيل هذه المحاولة القديمة غير محفوظة."
     if isinstance(code, str) and code.startswith("PLAN_GEOMETRY_"):
         return GEOMETRY_MESSAGES.get(code[len("PLAN_GEOMETRY_"):])
+    from acs_floor_program import FLOOR_NOT_FITTED, floor_name
+    if isinstance(code, str) and code.startswith(FLOOR_NOT_FITTED) and code[len(FLOOR_NOT_FITTED):].isdigit():
+        return ("لم يكتمل مقترح الذكاء الاصطناعي، وتعذّر على التوزيع البديل الحتمي ترتيب غرف "
+                + floor_name(int(code[len(FLOOR_NOT_FITTED):]))
+                + " ببرنامجه ومقاساته داخل كتلة المبنى. لم تُحفظ نسخة بأدوار متطابقة. راجع برنامج هذا الدور ومقاساته "
+                "أو ارفع حد الاستدعاءات ثم أعد المحاولة.")
     return None
 
 
@@ -223,7 +229,11 @@ def plot_rules(command):
     import acs_understand as U
     if not U._is_residential(U.detect_type(command["brief"])):
         raise PlanError("INVALID_PLOT_RULES", "بيانات الأرض والمواقف مدعومة حاليًا للمشاريع السكنية فقط.")
-    return P.resolve(plot, command["brief"], command["requirements"], command.get("option"))
+    program = None
+    if command.get("program") is not None:
+        import acs_brief_reader as BRIEF
+        program = BRIEF.usable(command["program"])  # an invalid program is refused by generation_command
+    return P.resolve(plot, command["brief"], command["requirements"], command.get("option"), program=program)
 
 
 def chat_command(command):
@@ -303,14 +313,28 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 'WAREHOUSE_BUILDING_TARGET_INFEASIBLE',
                 'مساحة المبنى المستهدفة لا يمكن احتواؤها حسابيًا ضمن أبعاد الموقع وعدد الأدوار المؤكدة.'
             )
-    rules = None
-    if plot is not None and residential:
-        rules = plot_rules({"plot": plot, "brief": brief, "requirements": requirements, "option": option})
-    prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
-    prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    floor_program = None
     if program is not None and residential:
         import acs_brief_reader as BRIEF
-        prompt += BRIEF.prompt_summary(BRIEF.validate_program(program))
+        floor_program = BRIEF.validate_program(program)
+    rules = None
+    if plot is not None and residential:
+        rules = plot_rules({"plot": plot, "brief": brief, "requirements": requirements, "option": option,
+                            "program": floor_program})
+    # A confirmed apartment program is planned floor by floor from a manifest
+    # (acs_floor_program): its rooms reach each planning call with their own
+    # zones, so the prompt keeps a short building summary and leaves out the
+    # per-floor requirement rows the zones already carry.
+    per_floor = None
+    if floor_program is not None:
+        import acs_floor_program as F
+        per_floor = F.manifest(floor_program, brief, requirements, rules)
+    shown = requirements if per_floor is None else [
+        r for r in requirements if not (isinstance(r, dict) and r.get("metric") in F.PER_LEVEL_METRICS)]
+    prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(shown)
+    prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    if floor_program is not None:
+        prompt += F.prompt_text(floor_program) if per_floor is not None else BRIEF.prompt_summary(floor_program)
     confirmed = {r.get('metric'): r.get('expected') for r in requirements if isinstance(r, dict)}
     if (rules is None and confirmed.get('building_width_m') is not None
             and confirmed.get('building_depth_m') is not None):
@@ -341,17 +365,20 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
             prompt += VILLA_ROOM_PROGRAM + villa_program_text(requirements)
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
-            resume = manifest(brief, requirements, rules)
+            resume = per_floor or manifest(brief, requirements, rules)
         if rules is not None:
             import acs_plot_rules as P
             levels = (resume or {}).get('envelope', {}).get('levels') if isinstance(resume, dict) else None
             names = list(dict.fromkeys(l['template'] for l in levels or []))
-            prompt += "\n" + P.prompt_text(rules, names[0] if names else None, names[1] if len(names) > 1 else None)
+            typical = names[1] if len(names) > 1 and per_floor is None else None
+            prompt += "\n" + P.prompt_text(rules, names[0] if names else None, typical)
     policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
     if villa:
         policy += SINGLE_DWELLING_PLANNING
     if residential and rules is not None:
         policy += P.PLANNING_ADDENDUM
+    if per_floor is not None:
+        policy += F.PLANNING_ADDENDUM
     with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
@@ -360,14 +387,22 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         if residential:
             try:
                 before_layout = canonical(_canonical_room_roles(result["building"]))
-                result["building"] = prepare_layout(result["building"], brief, requirements, budget, plot=rules)
+                result["building"] = prepare_layout(result["building"], brief, requirements, budget, plot=rules,
+                                                    program=floor_program)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
                 result["building"] = detail(result["building"], brief, budget,
-                                            resume.get("done") if reuse_details else None, requirements, plot=rules)
+                                            resume.get("done") if reuse_details else None, requirements, plot=rules,
+                                            program=floor_program)
             except PlanError as exc:
                 if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
                     raise
-                if rules is None:
+                if floor_program is not None and not F.is_villa(floor_program, brief, requirements):
+                    # Never the uniform-flat fallback for a confirmed floor program:
+                    # it would draw identical floors. This one fits each floor's
+                    # own program or names the floor it could not fit.
+                    from acs_floor_layout import propose as propose_floors
+                    fallback = propose_floors(floor_program, brief, requirements, rules)
+                elif rules is None:
                     from acs_residential_layout import propose
                     fallback = propose(brief, requirements)
                 else:

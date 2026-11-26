@@ -47,6 +47,8 @@ COPY acs_plot_rules.py acs_plot_layout.py ./
 COPY acs_brief_reader.py ./
 # One villa or house: its confirmed program and livability checks (review and layout repair).
 COPY acs_villa_program.py ./
+# A confirmed per-floor program: its manifest, per-floor checks and target sizes, and its fallback.
+COPY acs_floor_program.py acs_floor_layout.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.
 COPY acs_compiler.py acs_pbr.py acs_pbr.json acs_bim.py acs_bim.json ./
 COPY tools/acs_plan_handoff.py tools/acs_plan_cad_export.py tools/acs_plan_pdf_export.py tools/acs_plan_ifc_export.py tools/

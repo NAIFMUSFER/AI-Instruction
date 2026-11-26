@@ -399,7 +399,7 @@ def _on_plot(building, plot):
     return P.fit_to_envelope(building, plot)[0]
 
 
-def prepare_layout(building, brief, requirements, budget, plot=None):
+def prepare_layout(building, brief, requirements, budget, plot=None, program=None):
     """Bounded correction before openings; every result is checked again.
 
     A single dwelling may first align its stairs deterministically. One repair
@@ -414,10 +414,18 @@ def prepare_layout(building, brief, requirements, budget, plot=None):
     budget also covers the openings stage, but never a second one and never a
     failed job. A layout without hard findings is kept even when they remain,
     so the review states them instead.
+
+    ``program`` is a validated confirmed brief program (acs_brief_reader) or
+    None. Its per-floor rows (room_count_by_level) are hard like any confirmed
+    count; counts no row measures, floors drawn alike and sizes beyond the
+    blocking tolerance (acs_floor_program.layout_findings) are soft. A repair
+    call then also receives each floor template's own program.
     """
     import acs_understand as U
     from acs_residential_access import SINGLE_DWELLING, dwelling_kind, issues as access_issues
     from acs_villa_program import PROGRAM_ROLES, layout_findings
+    from acs_floor_program import layout_findings as floor_findings
+    floors = program
     building = _on_plot(_canonical_room_roles(building), plot)
     villa_rows = {r.get('id') for r in requirements if isinstance(r, dict) and r.get('metric') == 'room_count'
                   and r.get('role') in PROGRAM_ROLES and r.get('template') is None}
@@ -438,14 +446,19 @@ def prepare_layout(building, brief, requirements, budget, plot=None):
         except PlanError as exc:
             issues.append({'code':exc.code, **(_core_report(value) if exc.code == 'RESIDENTIAL_CORE_MISSING' else {})})
         # Other engineering requirements remain visible in the normal review.
-        counts=[r for r in requirements if r.get('metric') in {'site_width_m','site_depth_m','building_width_m','building_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit'}]
-        program = _program(value, brief, counts) if counts else []
+        counts=[r for r in requirements if r.get('metric') in {'site_width_m','site_depth_m','building_width_m','building_depth_m','level_count','unit_count','unit_count_per_level','room_count','room_count_per_unit','room_count_by_level'}]
+        # Measured as the review measures it: with plot rules the confirmed
+        # building size is the footprint the rooms fit in, not the land.
+        measured = value if plot is None else dict(value, meta=dict(value.get('meta') or {}, acs_plot_rules=plot))
+        program = _program(measured, brief, counts) if counts else []
         soft = []
         if single:
             soft = [i for i in program if i.get('requirement_id') in villa_rows]
             program = [i for i in program if i.get('requirement_id') not in villa_rows]
             if geometry_ok:
                 soft += layout_findings(value, requirements)
+        if floors is not None and geometry_ok:
+            soft += floor_findings(value, floors, requirements)
         return issues + program, soft
     def settle(value, found):
         """Try the deterministic stair alignment; keep it only if it adds no finding."""
@@ -490,6 +503,10 @@ def prepare_layout(building, brief, requirements, budget, plot=None):
             import acs_plot_rules as P
             context['plot'] = {k: plot[k] for k in ('land', 'streets', 'setbacks_m', 'envelope')}
             system += P.PLANNING_ADDENDUM + P.repair_instruction(issues)
+        if floors is not None:
+            import acs_floor_program as F
+            context['program'] = F.floor_programs(floors, building)
+            system += F.REPAIR_ADDENDUM
         response=U.extract_json(U.call_llm(canonical(context),btype='residential',user_msg='',
                          system_override=system,max_tokens=9000,stage='repair'))
         if not isinstance(response,dict) or set(response)!={'floors'} or not isinstance(response['floors'],dict) or set(response['floors'])!=set(building['floors']):
@@ -516,7 +533,9 @@ def prepare_layout(building, brief, requirements, budget, plot=None):
         building, issues, soft = candidate, remaining, soft_left
         emit('LAYOUT',{'kind':'layout','building':building},provider_calls=budget['used'])
 
-def detail(building, brief, budget, done=None, requirements=None, plot=None):
+def detail(building, brief, budget, done=None, requirements=None, plot=None, program=None):
+    """Openings per room group. ``program`` (a validated confirmed brief program)
+    adds the target floor's own rooms to each call's context, nothing more."""
     import acs_understand as U
     import acs_plot_rules as P
     from acs_residential_access import SINGLE_DWELLING, dwelling_kind
@@ -524,6 +543,11 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None):
     system = OPENINGS_SYSTEM + (SINGLE_DWELLING_OPENINGS if dwelling == SINGLE_DWELLING else '')
     if plot is not None:
         system += P.OPENINGS_ADDENDUM
+    floors = None
+    if program is not None:
+        import acs_floor_program as F
+        floors = F.floor_programs(program, building)
+        system += F.OPENINGS_ADDENDUM
     done=set(done or [])
     groups=[]
     for template, floor in building['floors'].items():
@@ -540,6 +564,8 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None):
                  'requested_ids':[r['id'] for r in rooms], 'brief':brief}
         if plot is not None:
             context['plot']=P.opening_context(plot,building)
+        if floors is not None and template in floors:
+            context['program']=floors[template]
         if findings:
             context['findings_to_correct']=findings
         raw=U.call_llm(canonical(context),btype='residential',user_msg='',
