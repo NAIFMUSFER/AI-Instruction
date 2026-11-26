@@ -74,6 +74,35 @@ def _shared_length(edge, rect, others):
     return total
 
 
+def _deck_pieces(rect, others):
+    """Cut a deck where the neighbouring coverage of a partly shared edge changes.
+
+    A partly shared edge (a courtyard opening, a re-entrant corner) has an open
+    stretch with a drop. After the cut every piece edge is wholly shared or wholly
+    open, so every open stretch carries the same per-edge parapet as the facade.
+    Twin of ``deckPieces`` in public/app/core/roof.mjs.
+    """
+    xs, zs = {rect[0], rect[0] + rect[2]}, {rect[1], rect[1] + rect[3]}
+    opposite_of = {"N": "S", "S": "N", "W": "E", "E": "W"}
+    for edge in EDGES:
+        axis, fixed, a0, a1 = _edge_span(edge, rect)
+        shared = _shared_length(edge, rect, others)
+        if shared <= _EPS or shared >= a1 - a0 - _EPS:
+            continue
+        for other in others:
+            o_axis, o_fixed, b0, b1 = _edge_span(opposite_of[edge], other)
+            if o_axis != axis or abs(o_fixed - fixed) > _EPS:
+                continue
+            for v in (b0, b1):
+                if a0 + _EPS < v < a1 - _EPS:
+                    (xs if axis == "x" else zs).add(round(v, 6))
+    if len(xs) == 2 and len(zs) == 2:
+        return [rect]
+    sx, sz = sorted(xs), sorted(zs)
+    return [(sx[i], sz[j], round(sx[i + 1] - sx[i], 6), round(sz[j + 1] - sz[j], 6))
+            for j in range(len(sz) - 1) for i in range(len(sx) - 1)]
+
+
 def _positive_height(value):
     if value is None:
         raise ValueError("ROOF_HEIGHT_NOT_SPECIFIED")
@@ -156,8 +185,11 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
     rects = [rc for _, rc in top_rooms]
     roof_rooms, gaps, parapet_m = [], [], 0.0
     used = set()
-    for room, rc in top_rooms:
-        others = [o for o in rects if o is not rc]
+    decks = [(room, piece) for room, rc in top_rooms
+             for piece in _deck_pieces(rc, [o for o in rects if o is not rc])]
+    pieces = [piece for _, piece in decks]
+    for room, rc in decks:
+        others = [o for o in pieces if o is not rc]
         walls, room_gaps = [], []
         for edge in EDGES:
             _, _, a0, a1 = _edge_span(edge, rc)
@@ -167,7 +199,8 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
                 walls.append(edge)
                 parapet_m += length
             elif shared < length - _EPS:
-                # A whole-edge parapet would cross the neighbouring roof deck, so a
+                # Unreachable for cut decks; an edge that still mixes cover and drop
+                # cannot take a whole-edge parapet without crossing the deck, so a
                 # partly shared edge is left open and reported, never guessed.
                 gap = {"edge": edge, "open_length_m": round(length - shared, 6)}
                 gaps.append({"room_id": room.get("id"), **gap})

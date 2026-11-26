@@ -56,6 +56,27 @@ function sharedLength(edge,r,others){
   for(const other of others){const [otherAxis,otherFixed,b0,b1]=edgeSpan(opposite,other);if(otherAxis===axis&&Math.abs(otherFixed-fixed)<=EPS)total+=Math.max(0,Math.min(a1,b1)-Math.max(a0,b0));}
   return total;
 }
+// A roof deck edge that is only partly against another deck (a courtyard opening,
+// a re-entrant corner) has an open stretch with a drop. Cut the deck at every point
+// where the neighbouring coverage changes, so each piece's edges are wholly shared
+// or wholly open, and every open stretch carries the same parapet as the facade.
+function deckPieces(r,others){
+  const xs=new Set([r[0],r[0]+r[2]]),zs=new Set([r[1],r[1]+r[3]]);
+  for(const edge of EDGES){
+    const [axis,fixed,a0,a1]=edgeSpan(edge,r),shared=sharedLength(edge,r,others);
+    if(shared<=EPS||shared>=a1-a0-EPS)continue;
+    const opposite={N:'S',S:'N',W:'E',E:'W'}[edge];
+    for(const other of others){
+      const [otherAxis,otherFixed,b0,b1]=edgeSpan(opposite,other);
+      if(otherAxis!==axis||Math.abs(otherFixed-fixed)>EPS)continue;
+      for(const v of [b0,b1])if(v>a0+EPS&&v<a1-EPS)(axis==='x'?xs:zs).add(round(v));
+    }
+  }
+  if(xs.size===2&&zs.size===2)return [r];
+  const sx=[...xs].sort((a,b)=>a-b),sz=[...zs].sort((a,b)=>a-b),pieces=[];
+  for(let j=0;j<sz.length-1;j++)for(let i=0;i<sx.length-1;i++)pieces.push([sx[i],sz[j],round(sx[i+1]-sx[i]),round(sz[j+1]-sz[j])]);
+  return pieces;
+}
 function compareText(a,b){const aa=Array.from(a),bb=Array.from(b);for(let i=0;i<Math.min(aa.length,bb.length);i++){const delta=aa[i].codePointAt(0)-bb[i].codePointAt(0);if(delta)return delta;}return aa.length-bb.length;}
 const caveats=()=>['structure','drainage','waterproofing','roof access','code compliance'];
 const disclosure=height=>({schema:'acs.roof/1',source:'system_default',form:'flat',parapet_height_m:height,occupied_floor:false});
@@ -81,8 +102,10 @@ export function addFlatRoofLevel(model,parapetH=DEFAULT_PARAPET_H){
   const rise=floorHeight>=topWall+.15-EPS?floorHeight:topWall+.15,roofElevation=round(elevation(top,floorHeight)+rise);
   let template='roof',n=2;while(own(floors,template))template='roof_'+n++;
   const rects=topRooms.map(([,r])=>r),roofRooms=[],gaps=[],used=new Set();let parapetM=0;
-  for(const [room,r]of topRooms){
-    const others=rects.filter(other=>other!==r),walls=[],roomGaps=[];
+  const decks=topRooms.flatMap(([room,r])=>deckPieces(r,rects.filter(other=>other!==r)).map(piece=>[room,piece]));
+  const pieces=decks.map(([,piece])=>piece);
+  for(const [room,r]of decks){
+    const others=pieces.filter(other=>other!==r),walls=[],roomGaps=[];
     for(const edge of EDGES){const [,,a0,a1]=edgeSpan(edge,r),length=a1-a0,shared=sharedLength(edge,r,others);
       if(shared<=EPS){walls.push(edge);parapetM+=length;}
       else if(shared<length-EPS){const gap={edge,open_length_m:round(length-shared)};gaps.push({room_id:room.id??null,...gap});roomGaps.push(gap);}
