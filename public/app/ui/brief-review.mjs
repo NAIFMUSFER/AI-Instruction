@@ -1,4 +1,4 @@
-import {analyzeBrief,buildBriefProgram,metricLabels,requirementKey,requirementLabel} from '../core/brief-program.mjs';
+import {analyzeBrief,asciiNumberText,buildBriefProgram,metricLabels,normalizeNumberText,requirementKey,requirementLabel} from '../core/brief-program.mjs';
 import {readResidential} from '../core/residential-program.mjs';
 
 const briefStarters = {
@@ -26,7 +26,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
   for(const [id,label] of [['cwBldWidth','عرض المبنى (م)'],['cwBldDepth','عمق المبنى (م)']]){
     const cell=document.createElement('div'),caption=document.createElement('label'),field=document.createElement('input');
     caption.htmlFor=id;caption.textContent=label;
-    Object.assign(field,{id,type:'number',min:'0.1',step:'any',placeholder:'بحجم الأرض'});
+    Object.assign(field,{id,type:'text',inputMode:'decimal',autocomplete:'off',placeholder:'بحجم الأرض'});
     cell.append(caption,field);buildingRow.append(cell);
   }
   $('cwLevels').closest('.cw-fields').after(buildingRow);
@@ -131,7 +131,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
     const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
     if(data.role&&!Object.hasOwn(uses,data.role))uses[data.role]=data.role;
     for(const [id,label] of Object.entries(uses)){const o=el('option',label,role);o.value=id;}role.value=data.role||'bedroom';
-    const expected=el('input',null,cell('القيمة'));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
+    const expected=el('input',null,cell('القيمة'));expected.dataset.value='';expected.type='text';expected.inputMode='decimal';expected.autocomplete='off';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
     const remove=el('button','حذف',cell(''));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
     remove.addEventListener('click',()=>{row.remove();draft();showQuestions();});
     return row;
@@ -182,6 +182,15 @@ export function createBriefEditor(root,{storageKey,onError}) {
     }catch(e){onError(e);}
   }
   read.addEventListener('click',readBrief);
+  // Number fields are text fields with a numeric keyboard, so Arabic digits and
+  // «٫» are accepted: typed digits become ASCII at once (caret kept), and the
+  // value is tidied when the field is left. Capture phase: before other readers.
+  const numeric=target=>target?.matches?.('input[inputmode="decimal"],input[inputmode="numeric"]');
+  $('cwBriefForm').addEventListener('input',e=>{
+    if(!numeric(e.target))return;const before=e.target.value,after=asciiNumberText(before);if(after===before)return;
+    const start=e.target.selectionStart,end=e.target.selectionEnd;e.target.value=after;try{e.target.setSelectionRange(start,end);}catch(err){}
+  },true);
+  $('cwBriefForm').addEventListener('change',e=>{if(numeric(e.target)){const tidy=normalizeNumberText(e.target.value);if(tidy!==e.target.value)e.target.value=tidy;}},true);
   $('cwAddRequirement').addEventListener('click',()=>{add();draft();showQuestions();});
   $('cwBriefForm').addEventListener('input',e=>{
     if(e.target.id==='cwConfirmed')return;

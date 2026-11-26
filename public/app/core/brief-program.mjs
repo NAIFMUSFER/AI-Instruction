@@ -4,6 +4,24 @@
 import {metricLabels,requirementMetrics} from '../generated/requirement-metrics.mjs';
 export {metricLabels};
 const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ',living:'الصالات',bathroom:'دورات المياه',majlis:'المجالس',stairs:'الدرج',elevator:'المصاعد'};
+// Digits as typed on an Arabic phone keyboard: Arabic-Indic or Persian digits and
+// the Arabic decimal separator «٫». Length-preserving, so a caret can be kept.
+export const asciiNumberText = text => String(text ?? '')
+  .replace(/[\u0660-\u0669]/g, c => String(c.charCodeAt(0) - 0x660))
+  .replace(/[\u06F0-\u06F9]/g, c => String(c.charCodeAt(0) - 0x6F0))
+  .replace(/\u066B/g, '.');
+// Also drops spaces, direction marks and the Arabic thousands separator «٬», and
+// reads a single comma as the decimal separator («20,5» or «20،5»).
+export function normalizeNumberText(text) {
+  let out = asciiNumberText(text).replace(/[\u066C\s\u200E\u200F]/g, '');
+  if (!out.includes('.') && /^[0-9]+[,،][0-9]+$/.test(out)) out = out.replace(/[,،]/, '.');
+  return out;
+}
+// Planning limits checked before any paid request; they name the limit in Arabic.
+export const PROGRAM_LIMITS = Object.freeze({
+  residential: {side_m: 200, levels: 30, units_per_level: 20, units: 100, rooms_per_unit: 8},
+  warehouse: {side_m: 1000, levels: 10},
+});
 export const requirementKey = r => JSON.stringify([r.metric, r.role || '']);
 export const requirementLabel = r => (r.metric==='room_count_per_unit' ? (roles[r.role]||r.role)+' في كل شقة' : r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
 export function warehouseRequirementsPreflight(requirements) {
@@ -189,6 +207,7 @@ export function buildBriefProgram(input) {
     if(!Object.hasOwn(metricLabels,r.metric))throw new Error('نوع المتطلب غير مدعوم.');
     if(r.expected===''||r.expected===null||r.expected===undefined||(typeof r.expected==='string'&&!r.expected.trim()))throw new Error('حدّد '+requirementLabel(r)+'؛ القيمة غير محددة.');
     if(!['number','string'].includes(typeof r.expected))throw new Error('أدخل قيمة رقمية في '+requirementLabel(r)+'.');
+    if(typeof r.expected==='string')r.expected=normalizeNumberText(r.expected);
     r.expected=Number(r.expected);
     if(!Number.isFinite(r.expected)||r.expected<0||(['site_width_m','site_depth_m','building_width_m','building_depth_m','level_count'].includes(r.metric)&&r.expected<=0))throw new Error('أدخل أبعادًا وأعداد أدوار موجبة، وقيم متطلبات غير سالبة.');
     if(!['min_space_area_by_role_m2','building_target_area_m2'].includes(r.metric)&&!r.metric.endsWith('_m')&&!Number.isInteger(r.expected))throw new Error('أدخل عددًا صحيحًا في '+requirementLabel(r)+'.');
@@ -198,6 +217,13 @@ export function buildBriefProgram(input) {
     const key=requirementKey(r);
     if(known.has(key))throw new Error('تعارض أو تكرار في '+requirementLabel(r)+'. اجمعه في متطلب واحد.');
     known.set(key,r);
+  }
+  const limits=PROGRAM_LIMITS[input.type],kind=input.type==='residential'?'للمشاريع السكنية':'للمستودعات';
+  for(const r of known.values()){
+    if(['site_width_m','site_depth_m','building_width_m','building_depth_m'].includes(r.metric)&&r.expected>limits.side_m)
+      throw new Error(requirementLabel(r)+' ('+r.expected+' م) أكبر من الحد المدعوم '+kind+' ('+limits.side_m+' م). راجع القيمة؛ وإن كانت صحيحة فقسّم المشروع إلى مبانٍ أصغر.');
+    if(r.metric==='level_count'&&r.expected>limits.levels)
+      throw new Error('عدد الأدوار ('+r.expected+') أكبر من الحد المدعوم '+kind+' ('+limits.levels+' دورًا). راجع العدد قبل المتابعة.');
   }
   for(const [building,land] of [['building_width_m','site_width_m'],['building_depth_m','site_depth_m']]){
     const b=known.get(requirementKey({metric:building})),l=known.get(requirementKey({metric:land}));
