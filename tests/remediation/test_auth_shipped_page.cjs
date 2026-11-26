@@ -81,8 +81,16 @@ async function runAuthShippedPage(){
           else if(url.pathname==='/v1/auth/projects')body={ok:true,projects:firstProject?[firstProject]:[]};
           else if(url.pathname==='/v1/projects/fixture-project/workspace'){
             assert.equal(req.headers().authorization,'Bearer fixture-access');
-            assert.deepEqual(req.postDataJSON(),{action:'state'});
-            body={ok:true,head:null,baseline:null,history:[],revision_id:null};
+            // Sign-in may only read the workspace: its state and the list of saved
+            // generated versions (kept when a paid result lost to a manual edit).
+            const input=req.postDataJSON();
+            if(input?.action==='generated_versions'){
+              assert.deepEqual(input,{action:'generated_versions'},'sign-in must only read saved generated versions');
+              body={ok:true,versions:[]};
+            }else{
+              assert.deepEqual(input,{action:'state'},'sign-in must only read the workspace state');
+              body={ok:true,head:null,baseline:null,history:[],revision_id:null};
+            }
           }else if(url.pathname===sourcePath){
             assert.equal(req.headers().authorization,'Bearer fixture-access');
             assert.deepEqual(req.postDataJSON(),{action:'list'},'sign-in must only read existing sources');
