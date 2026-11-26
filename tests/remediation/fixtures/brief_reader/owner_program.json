@@ -1,0 +1,70 @@
+{
+  "schema": "acs.brief-program/1",
+  "building_type": "apartments",
+  "city": "الرياض",
+  "site": {
+    "width_m": 20, "depth_m": 25, "area_m2": 500,
+    "street_sides": ["N"], "street_width_m": null,
+    "setbacks_m": {"N": 5.5, "E": 5.5, "S": 3.5, "W": 1.5},
+    "footprint": {"width_m": 13, "depth_m": 16, "position": "W"}
+  },
+  "levels": [
+    {"name": "الدور الأرضي", "use": "residential", "note": "شقة عائلية بثلاث غرف نوم واتصال مباشر بالحوش",
+     "units": [{"name": "شقة الأرضي", "bedrooms": 3, "bathrooms": 4, "rooms": [
+       {"role": "majlis", "name": "مجلس الضيوف", "count": 1, "width_m": 4, "depth_m": 4.5, "approx": false, "ensuite": false, "note": "في الواجهة الشمالية قريب من المدخل"},
+       {"role": "bathroom", "name": "مغاسل ودورة مياه الضيوف", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "خلف انعطافة قصيرة"},
+       {"role": "entrance", "name": "ردهة مدخل الضيوف", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "تفتح على المجلس وتحجب الصالة وغرف النوم"},
+       {"role": "living", "name": "الصالة العائلية", "count": 1, "width_m": 4.2, "depth_m": 4.8, "approx": false, "ensuite": false, "note": "على الواجهة الشرقية بباب سحاب على الجلسة"},
+       {"role": "dining", "name": "السفرة", "count": 1, "width_m": 3, "depth_m": 3.4, "approx": false, "ensuite": false, "note": "بين الصالة والمطبخ لطاولة 6–8 أشخاص"},
+       {"role": "kitchen", "name": "المطبخ الرئيسي", "count": 1, "width_m": 3.4, "depth_m": 4, "approx": false, "ensuite": false, "note": "غربًا بباب خدمة للمقاضي"},
+       {"role": "pantry", "name": "مستودع المؤن", "count": 1, "width_m": 1.5, "depth_m": 1.8, "approx": false, "ensuite": false, "note": "يدخل إليه من المطبخ"},
+       {"role": "bedroom", "name": "غرفة النوم الرئيسية", "count": 1, "width_m": 3.8, "depth_m": 4, "approx": false, "ensuite": true, "note": "في طرف هادئ مع خزانة ملابس وحمام خاص بدش"},
+       {"role": "bathroom", "name": "حمام غرفة النوم الرئيسية", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "حمام خاص بدش"},
+       {"role": "bedroom", "name": "غرفة نوم للأبناء", "count": 2, "width_m": 3.2, "depth_m": 3.5, "approx": true, "ensuite": false, "note": "بينهما حمام عائلي"},
+       {"role": "bathroom", "name": "الحمام العائلي", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "بمدخل من الممر"},
+       {"role": "laundry", "name": "الغسيل والتخزين", "count": 1, "width_m": 1.8, "depth_m": 2, "approx": true, "ensuite": false, "note": "قرب المطبخ وحوش الخدمة"},
+       {"role": "bathroom", "name": "حمام المسبح", "count": 1, "width_m": 1.6, "depth_m": 2.2, "approx": true, "ensuite": false, "note": "بابه من الحوش"}
+     ]}]},
+    {"name": "الدور الأول", "use": "residential", "note": null,
+     "units": [{"name": "شقة الدور الأول", "bedrooms": 4, "bathrooms": 3, "rooms": [
+       {"role": "majlis", "name": "مجلس أمامي", "count": 1, "width_m": 3.6, "depth_m": 4, "approx": true, "ensuite": false, "note": null},
+       {"role": "bathroom", "name": "دورة مياه المجلس", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "قريبة من المجلس"},
+       {"role": "living", "name": "الصالة والسفرة", "count": 1, "width_m": 4.4, "depth_m": 6, "approx": true, "ensuite": false, "note": "صالة وسفرة متصلة"},
+       {"role": "bedroom", "name": "جناح الوالدين", "count": 1, "width_m": 3.8, "depth_m": 4, "approx": false, "ensuite": true, "note": "بحمام"},
+       {"role": "bathroom", "name": "حمام جناح الوالدين", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null},
+       {"role": "bedroom", "name": "غرفة نوم ثانية", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": "قرب الجناح"},
+       {"role": "bedroom", "name": "غرفة نوم إضافية", "count": 2, "width_m": 3.1, "depth_m": 3.4, "approx": true, "ensuite": false, "note": null},
+       {"role": "kitchen", "name": "مطبخ مغلق", "count": 1, "width_m": 3.3, "depth_m": 3.8, "approx": true, "ensuite": false, "note": null},
+       {"role": "pantry", "name": "خزانة مؤن", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null},
+       {"role": "laundry", "name": "غرفة غسيل", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null}
+     ]}]},
+    {"name": "الدور الثاني", "use": "residential", "note": "شقة بغرفتي نوم ومكتب وتراس",
+     "units": [{"name": "شقة الدور الثاني", "bedrooms": 2, "bathrooms": 2, "rooms": [
+       {"role": "terrace", "name": "تراس شمالي", "count": 1, "width_m": 4, "depth_m": 5, "approx": true, "ensuite": false, "note": null},
+       {"role": "living", "name": "الصالة والسفرة", "count": 1, "width_m": 4.5, "depth_m": 6, "approx": true, "ensuite": false, "note": null},
+       {"role": "kitchen", "name": "مطبخ شبه مفتوح", "count": 1, "width_m": 3.5, "depth_m": 4, "approx": true, "ensuite": false, "note": null},
+       {"role": "bedroom", "name": "الجناح الرئيسي", "count": 1, "width_m": 4, "depth_m": 4.2, "approx": true, "ensuite": true, "note": "بغرفة ملابس وحمام"},
+       {"role": "dressing", "name": "غرفة الملابس", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null},
+       {"role": "bathroom", "name": "حمام الجناح", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null},
+       {"role": "bedroom", "name": "غرفة نوم ثانية", "count": 1, "width_m": 3.4, "depth_m": 3.6, "approx": true, "ensuite": false, "note": "قرب حمام كامل"},
+       {"role": "bathroom", "name": "حمام كامل", "count": 1, "width_m": null, "depth_m": null, "approx": false, "ensuite": false, "note": null},
+       {"role": "office", "name": "مكتب", "count": 1, "width_m": 3, "depth_m": 3.2, "approx": true, "ensuite": false, "note": "قرب المدخل"}
+     ]}]}
+  ],
+  "core": {"stair": "u_two_flights", "elevator": true, "landing_entries": true, "position": "NW", "note": "في الموضع نفسه بجميع الأدوار"},
+  "parking": {"count": 2, "stall_width_m": 2.7, "stall_depth_m": 5.2, "placement": "front_setback", "note": "موقفان متجاوران غربًا"},
+  "outdoor": [
+    {"kind": "yard", "name": "الحوش الأمامي", "width_m": 20, "depth_m": 5.5, "location": "N", "note": "موقفان ومدخل مشاة ومدخل جانبي للحوش العائلي"},
+    {"kind": "walkway", "name": "الممر الغربي", "width_m": null, "depth_m": null, "location": "W", "note": "بعرض 1.5 م من الأمام إلى باب المطبخ وحوش الخدمة"},
+    {"kind": "yard", "name": "الحوش الشرقي", "width_m": 5.5, "depth_m": 16, "location": "E", "note": "مسبح طولي وممشى وجلسة"},
+    {"kind": "yard", "name": "الحوش الخلفي", "width_m": 20, "depth_m": 3.5, "location": "S", "note": "حديقة وجلسة مظللة شرقًا وغسيل وخدمات غربًا"},
+    {"kind": "pool", "name": "المسبح", "width_m": 3, "depth_m": 7, "location": "SE", "note": "ممشى 1.5 م جهة الصالة و1 م جهة السور"},
+    {"kind": "seating", "name": "جلسة مظللة", "width_m": 3.5, "depth_m": 4, "location": "E", "note": "أمام الصالة"},
+    {"kind": "garden", "name": "مسطح أخضر", "width_m": 4, "depth_m": 3, "location": "SE", "note": "في الركن الخلفي الشرقي"},
+    {"kind": "outdoor_dining", "name": "طاولة طعام خارجية", "width_m": null, "depth_m": null, "location": "S", "note": "لستة أشخاص"},
+    {"kind": "equipment", "name": "حجرة معدات المسبح", "width_m": null, "depth_m": null, "location": null, "note": "للمضخة والفلتر"}
+  ],
+  "facade": {"materials": ["حجر رملي فاتح", "إطارات نوافذ برونزية داكنة"], "notes": ["مدخل شمالي مظلل"]},
+  "outputs": {"furnished_plans": true, "site_plan": true, "outdoor_plan": true, "section": true, "views_3d": true, "floor_isolation": true},
+  "other_requests": ["اجمع المطابخ والحمامات حول مجاري خدمات رأسية متقاربة", "السطح للخدمات والصيانة"]
+}

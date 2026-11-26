@@ -7,11 +7,20 @@ export function readResidential(text) {
   const unit=s.match(new RegExp(n+'\\s*(?:شقق|شقه|وحدات سكنيه|apartments?|flats?)','i'));
   if(unit){out.units=quantity(unit[1]);out.scope=/في\s*كل\s*(?:دور|طابق)|كل\s*(?:دور|طابق)\s*\d|لكل\s*(?:دور|طابق)|per\s*(?:floor|storey)/i.test(s)?'per_level':'total';out.unitEvidence=unit[0];}
   if(/شقتين|شقتان/.test(s)){out.units=2;out.scope=/كل\s*(?:دور|طابق)/.test(s)?'per_level':'total';}
+  // «وفي كل دور شقة» and «شقة واحدة في كل دور»: one flat on every floor.
+  const single=out.units?null:s.match(/(?:كل|لكل)\s*(?:دور|طابق)\s*(?:فيه\s+|به\s+)?(?:ال)?شقه(?:\s+واحده)?(?![ء-ي])|(?:^|[\s،.,])(?:ال)?شقه\s+(?:واحده\s+)?(?:في|لكل|بكل)\s*(?:كل\s*)?(?:دور|طابق)(?![ء-ي])/);
+  if(single){out.units=1;out.scope='per_level';out.unitEvidence=single[0].trim();}
   const floors=s.match(new RegExp(n+'\\s*(?:ادوار|طوابق|floors?)','i'));
   if(floors)out.levels=quantity(floors[1]);else if(/دورين|دوران|طابقين|طابقان/.test(s))out.levels=2;
   const bedrooms=s.match(new RegExp('(?:كل شقه|لكل شقه|في الشقه)[^؛\\n]{0,35}?'+n+'\\s*غرف(?:ه)?\\s*نوم'));
   if(bedrooms)out.bedrooms=quantity(bedrooms[1]);
   if(/مجلس\s*(?:منفصل|مستقل)/.test(s))out.guests='separate';
+  // The street side: «الواجهة الشمالية … على الشارع», «الشارع من الشمال», «أرض شمالية».
+  const sides=new Set(),side={شمال:'N',جنوب:'S',شرق:'E',غرب:'W'};
+  for(const m of s.matchAll(/واجهه\s+(?:ال)?(شمال|جنوب|شرق|غرب)يه[^.\n؛]{0,40}?(?:على|علي|تطل\s+على|مطله\s+على)\s+(?:ال)?شارع(?![ء-ي])/g))sides.add(side[m[1]]);
+  for(const m of s.matchAll(/(?:^|[\s،.,])و?(?:ال)?شارع\s+(?:(?:من|في)\s+)?(?:(?:ال)?(?:جهه|ناحيه)\s+)?(?:ال)?(شمال|جنوب|شرق|غرب)(?:ي|يه)?(?![ء-ي])/g))sides.add(side[m[1]]);
+  for(const m of s.matchAll(/(?:^|[\s،.,])(?:ال)?(?:ارض|قطعه)\s+(شمال|جنوب|شرق|غرب)يه(?![ء-ي])/g))sides.add(side[m[1]]);
+  if(sides.size===1)out.street=[...sides][0];
   return out;
 }
 export function residentialOptions({units,scope='total',levels,width,depth,bedrooms,bathrooms,guests='suggest',purpose='unknown'}) {

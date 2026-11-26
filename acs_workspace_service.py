@@ -163,11 +163,15 @@ def view(store, project_id, actor_id, revision_id=None):
     if plot is not None:
         from acs_plot_rules import summary
         result["plot_rules"] = summary(revision.model, plot)
+    # Step-01 inputs travel with the revision, so another device restores them.
+    import acs_brief_reader as BRIEF
+    result["plot_input"] = BRIEF.plot_input(plot)
+    result["brief_program"] = BRIEF.usable(meta.get(BRIEF.META_KEY)) if isinstance(meta, dict) and BRIEF.META_KEY in meta else None
     return result
 
 
 def generation_command(command):
-    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id", "plot"})
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id", "plot", "program"})
     if "source_id" in out:
         from acs_plan_sources import identity
         identity(out["source_id"])
@@ -197,6 +201,11 @@ def generation_command(command):
     _requirements(SimpleNamespace(requirements_json=canonical(requirements), brief=brief))
     if "plot" in out:
         plot_rules(out)  # preflight: an impossible plot fails before any paid call
+    if "program" in out:
+        if "source_id" in out:
+            raise PlanError("INVALID_BRIEF_PROGRAM", "برنامج الوصف يُستخدم مع توليد مخطط من الوصف، لا مع قراءة ملف مخطط.")
+        from acs_brief_reader import confirmed_program
+        out["program"] = confirmed_program(out["program"], requirements, brief)
     return out
 
 
@@ -266,7 +275,7 @@ def chat_and_save(store, project_id, actor_id, command, *, on_progress=None):
     return result["revision_id"]
 
 
-def generate_plan_candidate(brief, requirements, option, max_provider_calls, resume=None, used_calls=0, plot=None):
+def generate_plan_candidate(brief, requirements, option, max_provider_calls, resume=None, used_calls=0, plot=None, program=None):
     """Isolated worker: has no actor, bearer, project, store or approval input.
 
     ``plot`` is the client's plot block; it is resolved here exactly as the
@@ -299,6 +308,9 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         rules = plot_rules({"plot": plot, "brief": brief, "requirements": requirements, "option": option})
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    if program is not None and residential:
+        import acs_brief_reader as BRIEF
+        prompt += BRIEF.prompt_summary(BRIEF.validate_program(program))
     confirmed = {r.get('metric'): r.get('expected') for r in requirements if isinstance(r, dict)}
     if (rules is None and confirmed.get('building_width_m') is not None
             and confirmed.get('building_depth_m') is not None):
@@ -428,6 +440,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     }
     if "plot" in command:
         kwargs["plot"] = command["plot"]
+    if "program" in command:
+        kwargs["program"] = command["program"]
     source_receipt = None
     target = "acs_workspace_service:generate_plan_candidate"
     if command.get("source_id"):
@@ -443,7 +457,7 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         from acs_workspace_http import _read_job, _id
         prior = _read_job(store, project_id, _id(command["resume_job_id"]))
         original = prior.get("resume_command") if prior else None
-        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode", "plot")
+        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode", "plot", "program")
         if not original or any(canonical(original.get(k)) != canonical(command.get(k)) for k in bound_keys):
             raise PlanError("INVALID_RESUME", "تغيّر وصف المهمة أو مرجعها. ابدأ طلبًا جديدًا.")
         kwargs.update(resume=prior.get("checkpoint"), used_calls=prior.get("provider_calls",0))
@@ -480,6 +494,8 @@ def _admit_generated(store, project_id, actor_id, command, building, ws, *, sour
     # stamped block never comes from the worker or the provider.
     import acs_plot_rules as P
     P.stamp(result["building"], plot_rules(command))
+    import acs_brief_reader as BRIEF
+    BRIEF.stamp(result["building"], command.get("program"))
     if source_receipt:
         result["building"].setdefault("meta", {})["acs_plan_source"] = source_receipt
     if on_progress:
