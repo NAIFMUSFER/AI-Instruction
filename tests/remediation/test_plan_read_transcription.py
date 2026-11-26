@@ -132,6 +132,26 @@ class TranscribedReadsAreApprovedAndExported(Store):
                     out = S.artifact(self.store, PROJECT, ACTOR, {'action': 'artifact', 'revision_id': rid, 'format': fmt})
                     self.assertTrue(base64.b64decode(out['data_base64']), fmt)
 
+    def test_a_read_with_doors_approves_and_compiles_to_3d(self):
+        # Live 2026-11-26 (the owner's photographed PDF): the read kept its
+        # drawn doors without a material, the transcription was approved, and
+        # «عرض 3D» failed with DOWNSTREAM_GEOMETRY_NOT_SPECIFIED. The recorded
+        # fixtures carry no doors, so they never reached this check.
+        case = fixture('a_cad_ground')
+        building = copy.deepcopy(case['read'])
+        rooms = building['floors']['ground']['rooms']
+        rooms[0]['doors'] = [{'edge': 'S', 'offset': 3, 'width': 0.9}]
+        rooms[2]['doors'] = [{'edge': 'E', 'offset': 2.5, 'width': 0.9}]
+        rid = self.save(case, building=building)
+        revision = S.workspace(self.store, PROJECT, ACTOR).get(rid)
+        doors = [d for f in revision.model['floors'].values() for r in f['rooms'] for d in r['doors']]
+        self.assertEqual(len(doors), 2)
+        self.assertTrue(all(d['material'] == SRC.DOOR_MATERIAL and d['height'] == 2.1 for d in doors))
+        self.assertIn(SRC.DOOR_DEFAULTS_NOTE, revision.model['meta']['assumptions'])
+        self.approve(rid, acknowledge_transcription=True)
+        out = S.artifact(self.store, PROJECT, ACTOR, {'action': 'artifact', 'revision_id': rid, 'format': 'gltf'})
+        self.assertTrue(base64.b64decode(out['data_base64']))
+
     def test_the_upper_floor_alone_is_blocked_only_by_the_confirmed_floor_count(self):
         # Two floors confirmed, one page mapped: refused before the paid read
         # (it used to be read, paid, and then fail the floor-count check).
@@ -189,8 +209,8 @@ class VisibleDoors(unittest.TestCase):
         rooms[1]['windows'] = [{'edge': 'N', 'offset': 1, 'width': 1}]
         result, _ = read(case, building=building)
         out = result['building']['floors']['ground']['rooms']
-        self.assertEqual([{k: d[k] for k in ('edge', 'offset', 'width', 'height')} for d in out[0]['doors']],
-                         [{'edge': 'S', 'offset': 3, 'width': 1.0, 'height': 2.1}])
+        self.assertEqual([{k: d[k] for k in ('edge', 'offset', 'width', 'height', 'material')} for d in out[0]['doors']],
+                         [{'edge': 'S', 'offset': 3, 'width': 1.0, 'height': 2.1, 'material': 'wood'}])
         self.assertNotEqual(out[0]['doors'][0]['id'], 'provider-id')
         self.assertNotIn('points', out[0])
         self.assertEqual(out[1]['windows'], [], 'no window is invented or kept from the provider')
