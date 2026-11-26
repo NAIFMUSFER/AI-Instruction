@@ -13,6 +13,8 @@ import './generated/requirement-metrics.mjs';
 import './core/brief-program.mjs';
 import './core/residential-program.mjs';
 import './ui/residential-options.mjs';
+import './core/plot-rules.mjs';
+import './ui/plot-rules.mjs';
 import './ui/brief-review.mjs';
 import './ui/plan-upload.mjs';
 import './ui/connected-workspace.mjs';

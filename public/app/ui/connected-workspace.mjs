@@ -3,6 +3,7 @@ import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
 import {createPlanUpload} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
+import {createPlotRules} from './plot-rules.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'محاذاة النوى بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
@@ -33,6 +34,7 @@ function projectCopy() {
 }
 let root, briefEditor, planUpload, residentialOptions, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerEpoch = 0, activeStep = 1, viewerDispose = null;
 let progressState=null,progressTimer=null,starting=false,objectSelection=null;
+let plotRules=null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
@@ -98,7 +100,7 @@ function step(n) {
   if(n!==4)clearViewer();
 }
 function briefProgram() { return briefEditor.program(); }
-function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();projectCopy(); }
+function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();plotRules?.fill();projectCopy(); }
 // A selected option is not authoritative until its matching revision is loaded.
 function loadedRevisionSelected() { return !!state?.revision_id&&$('cwRevision')?.value===state.revision_id; }
 function headRevisionSelected() { return loadedRevisionSelected()&&state.revision_id===state.head; }
@@ -245,6 +247,7 @@ function draw() {
   const pad=Math.max(p.site.w,p.site.d)*.035;$('cwPlan').setAttribute('viewBox',[-pad,-pad,p.site.w+2*pad,p.site.d+2*pad].join(' '));
   svg('title',{},$('cwPlan'),'مخطط '+levelLabel(p));
   svg('rect',{x:0,y:0,width:p.site.w,height:p.site.d,fill:'#f7f9fb',stroke:'#668194','stroke-width':.06},$('cwPlan'));
+  plotRules?.draw(p,state?.plot_rules,(tag,attrs)=>svg(tag,attrs,$('cwPlan')));
   for(const item of p.primitives){
     const [x,z,w,d]=item.rect_xz_m;
     const label=roomLabel(item.label);
@@ -281,6 +284,7 @@ async function generation(option) {
   const source=planUpload.command();
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
   const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
+  if(!source.source_id)Object.assign(body,plotRules.command());
   beginJob(body.job_id);
   setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
@@ -443,6 +447,7 @@ function mount(){
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
   briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
   residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError});
+  plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   const resumeButton=el('button','استئناف المراحل المحفوظة',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
   resumeButton.addEventListener('click',()=>run(async()=>{const oldId=pendingJob;if(!oldId)return;const nextId=crypto.randomUUID();beginJob(nextId);resumeButton.hidden=true;$('cwDismissJob').hidden=true;try{await handleJob((await api({action:'resume',job_id:nextId,resume_job_id:oldId,confirmed:true,max_provider_calls:Number($('cwBudget').value)})).job);}catch(e){beginJob(oldId,{startedAt:Date.now()});resumeButton.hidden=false;throw e;}}));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
