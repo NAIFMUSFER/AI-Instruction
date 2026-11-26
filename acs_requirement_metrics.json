@@ -76,6 +76,22 @@
       "measurement": "bedrooms_with_private_bathroom",
       "scope": "BEDROOM_WITH_A_BATHROOM_WHOSE_EVERY_DOOR_OPENS_INTO_IT_ACROSS_PHYSICAL_LEVEL_INSTANCES"
     },
+    "room_count_by_level": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "عدد فراغات الاستخدام في دور",
+      "brief_supported": false,
+      "measurement": "rooms_of_role_on_one_occupied_level",
+      "scope": "OCCUPIED_LEVEL_BY_INDEX_FROM_THE_GROUND_FLOOR_UP"
+    },
+    "ensuite_bedroom_count_by_level": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "غرف نوم بحمام خاص في دور",
+      "brief_supported": false,
+      "measurement": "bedrooms_with_private_bathroom",
+      "scope": "OCCUPIED_LEVEL_BY_INDEX_FROM_THE_GROUND_FLOOR_UP"
+    },
     "min_room_area_m2": {
       "unit": "m2",
       "operator": "minimum",
