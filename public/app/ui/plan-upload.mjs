@@ -18,12 +18,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
   function node(tag,text,parent){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;}
   const section=node('section');section.className='cw-source';section.id='cwSource';
   section.innerHTML=`<label for="cwStartMode">كيف تريد بدء المخطط؟</label><select id="cwStartMode"><option value="describe">وصف مشروع جديد</option><option value="upload">رفع مخطط جاهز</option></select>
-  <div id="cwUploadPanel" hidden><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف منها بيانات الكاميرا والموقع. في PDF اختر الصفحة التي تريد قراءتها.</p>
+  <div id="cwUploadPanel" hidden><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف بيانات الكاميرا والموقع من كل صورة قبل حفظها، ويُحفظ الملف المتطابق مرة واحدة. في PDF اختر الصفحة التي تريد قراءتها.</p>
   <label for="cwPlanFile">ملف المخطط</label><input id="cwPlanFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" data-mutate>
   <div id="cwPdfPagePanel" hidden><label for="cwPdfPage">الصفحة المطلوب استخدامها</label><select id="cwPdfPage" data-mutate></select></div>
   <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
   <button id="cwSaveSource" type="button" data-mutate disabled>حفظ المخطط في المشروع</button>
-  <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button>
+  <label for="cwSavedSource">مخطط محفوظ في هذا المشروع</label><select id="cwSavedSource" data-mutate><option value="">اختر مخططًا</option></select><button id="cwDownloadSource" type="button" disabled>تنزيل الملف الأصلي</button><button id="cwDeleteSource" type="button" data-mutate disabled>حذف الملف من المشروع</button>
   <label for="cwSourceMode">كيف نستخدم المخطط؟</label><select id="cwSourceMode" data-mutate><option value="preserve">قراءة التوزيع الحالي للمراجعة</option><option value="revise">اقتراح تعديلات حسب وصفي</option><option value="complete">قراءة المخطط ثم إكمال الأبواب (تصميم كامل)</option></select>
   <p class="cw-muted">راجع أبعاد الموقع والأدوار أدناه. قراءة الصورة لا تثبت المقياس أو دقة نقل جميع العناصر؛ راجع المسودة مقابل الأصل قبل اعتمادها. تُقرأ الصفحة المختارة فقط.</p></div>`;
   $('cwBriefForm').querySelector('h2').after(section);
@@ -36,7 +36,9 @@ export function createPlanUpload(root,{storageKey,onError}) {
     $('cwConfirmed').checked=false;
     try{localStorage.setItem(storageKey(),JSON.stringify({id:selected,mode:$('cwStartMode').value,policy:$('cwSourceMode').value}));}catch(e){}
   }
-  function selectSource(id){selected=rows.some(r=>r.id===id)?id:null;$('cwSavedSource').value=selected||'';$('cwDownloadSource').disabled=!selected;}
+  function selectSource(id){selected=rows.some(r=>r.id===id)?id:null;$('cwSavedSource').value=selected||'';$('cwDownloadSource').disabled=!selected;armDelete(false);}
+  // Two taps: the first asks, the second deletes. Only the member who uploaded a file can delete it.
+  function armDelete(on){const b=$('cwDeleteSource');b.dataset.armed=String(on);b.textContent=on?'تأكيد حذف الملف نهائيًا':'حذف الملف من المشروع';b.disabled=!selected||uploading||opening;}
   function renderRows(){
     $('cwSavedSource').replaceChildren();const blank=node('option','اختر مخططًا',$('cwSavedSource'));blank.value='';
     for(const row of rows){const o=node('option',row.name+(row.media_type==='application/pdf'?' · الصفحة '+row.page+' من '+row.page_count:''),$('cwSavedSource'));o.value=row.id;}
@@ -113,7 +115,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
       return new File([out],name,{type:out.type});
     }finally{canvas.width=canvas.height=0;}
   }
-  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode'])$(id).disabled=blocked;}
+  function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode'])$(id).disabled=blocked;$('cwDeleteSource').disabled=blocked||!selected;}
   $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';persist();});
   $('cwSourceMode').addEventListener('change',persist);
   async function prepare(fn){opening=true;sync();try{await fn();}catch(e){ready=false;releasePreview();notice(e.message);onError(e);}finally{opening=false;sync();}}
@@ -134,6 +136,13 @@ export function createPlanUpload(root,{storageKey,onError}) {
       if(!refused)onError(e);
     }
     finally{uploading=false;sync();}
+  });
+  $('cwDeleteSource').addEventListener('click',async()=>{
+    if(!selected)return;if($('cwDeleteSource').dataset.armed!=='true'){armDelete(true);notice('سيُحذف الملف وصفحاته المحفوظة من المشروع. النسخ المقروءة منه تبقى، ولن يمكن تنزيل الأصل بعدها.');return;}
+    const id=selected;uploading=true;sync();
+    try{await api({action:'delete',source_id:id});rows=rows.filter(r=>r.id!==id);selected=null;renderRows();persist();notice('حُذف الملف من المشروع. النسخ المقروءة منه محفوظة كما هي.');}
+    catch(e){notice(e?.code==='PLAN_SOURCE_NOT_OWNER'?e.message:'لم يُحذف الملف. '+(e?.message||''));}
+    finally{uploading=false;armDelete(false);sync();}
   });
   $('cwDownloadSource').addEventListener('click',async()=>{
     if(!selected)return;try{const data=await api({action:'download',source_id:selected});const raw=Uint8Array.from(atob(data.data_base64),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([raw],{type:data.media_type}));const a=node('a',null,document.body);a.href=url;a.download=data.name;a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch(e){onError(e);}
