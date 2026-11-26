@@ -46,7 +46,7 @@ function projectCopy() {
   $('cwChat').placeholder=residential?'مثال: افصل مجلس الضيوف عن الصالة، وأكمل اتصال الدرج بالدور العلوي، مع الحفاظ على الأقفال الحالية.':'مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية.';
 }
 let root, briefEditor, planUpload, residentialOptions, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerEpoch = 0, activeStep = 1, viewerDispose = null;
-let progressState=null,progressTimer=null,starting=false,objectSelection=null;
+let progressState=null,progressTimer=null,starting=false,objectSelection=null,failedJob=null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
@@ -70,7 +70,7 @@ function progressPhase(phase,confirmed=false){
   progressTick();
 }
 function beginJob(id,saved=null){
-  clearInterval(progressTimer);pendingJob=id;
+  clearInterval(progressTimer);pendingJob=id;failedJob=null;if($('cwResumeJob'))$('cwResumeJob').hidden=true;
   const valid=typeof saved?.startedAt==='number'&&Number.isFinite(saved.startedAt)&&saved.startedAt>0&&saved.startedAt<=Date.now();
   progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0};
   try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission}));}catch(e){}
@@ -352,10 +352,15 @@ async function handleJob(job) {
     status('حُفظ تعديل أحدث أثناء التوليد، فاحتفظنا بالنسخة المولّدة منفصلة دون أن تستبدل تعديلك. اختر: الإبقاء على تعديلك أو استخدام النسخة المولّدة.',true);return;
   }
   if(['FAILED','INTERRUPTED'].includes(job.state)){
-    stopProgress();
-    clearTimeout(pollTimer);$('cwDismissJob').hidden=false;$('cwResumeJob').hidden=!job.can_resume;
-    const reason=typeof job.error_message==='string'&&job.error_message.length<=500?job.error_message:'تعذّر إكمال التوليد ('+(job.error_code||'GENERATION_FAILED')+').';
-    status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. تحقق من آخر النسخ المحفوظة؛ لن يُعاد التوليد تلقائيًا.':reason+' لم تُحفظ نسخة جديدة، ونسخك السابقة كما هي.',true);return;
+    // A finished job holds nothing open: release the workspace at once instead
+    // of asking the owner to find «إنهاء المتابعة». Only a resumable failure
+    // keeps its id, for the paid «استئناف» action.
+    stopProgress();clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
+    failedJob=job.can_resume===true?job.id:null;
+    $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;$('cwResumeJob').hidden=!failedJob;
+    const reason=typeof job.error_message==='string'&&job.error_message.length<=500?job.error_message:'تعذّر إكمال التوليد.';
+    const next=failedJob?' يمكنك استئناف المراحل المحفوظة (استدعاء مدفوع) أو تعديل طلبك.':'';
+    status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. راجع قائمة النسخ؛ يمكنك إرسال الطلب مرة أخرى إن لم تظهر نسخة جديدة.':reason+' لم تُحفظ نسخة جديدة، ونسخك السابقة كما هي.'+next,true);setBusy(false);return;
   }
   progressPhase(job.phase||job.state,true);if(job.progress?.total)$('cwJobHeartbeat').textContent+=' اكتملت '+job.progress.completed+' من '+job.progress.total+' مجموعات في هذه المرحلة.';status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
   clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll().catch(e=>{status('انقطع الاتصال. اضغط متابعة المهمة عند عودة الشبكة.',true);}),4000);
@@ -480,8 +485,17 @@ function mount(){
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
   briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
   residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError});
-  const resumeButton=el('button','استئناف المراحل المحفوظة',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
-  resumeButton.addEventListener('click',()=>run(async()=>{const oldId=pendingJob;if(!oldId)return;const nextId=crypto.randomUUID();beginJob(nextId);resumeButton.hidden=true;$('cwDismissJob').hidden=true;try{await handleJob((await api({action:'resume',job_id:nextId,resume_job_id:oldId,confirmed:true,max_provider_calls:Number($('cwBudget').value)})).job);}catch(e){beginJob(oldId,{startedAt:Date.now()});resumeButton.hidden=false;throw e;}}));
+  const resumeButton=el('button','استئناف المراحل المحفوظة · استدعاء مدفوع',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
+  resumeButton.addEventListener('click',()=>run(async()=>{
+    const oldId=failedJob;if(!oldId||pendingJob)return;
+    const nextId=crypto.randomUUID();beginJob(nextId);failedJob=null;resumeButton.hidden=true;$('cwRecoverJob').hidden=false;
+    try{await handleJob((await api({action:'resume',job_id:nextId,resume_job_id:oldId,confirmed:true,max_provider_calls:Number($('cwBudget').value)})).job);}
+    catch(e){
+      // The service answered with a refusal: no job started, so nothing stays open.
+      if(e?.status>0){stopProgress();pendingJob=null;try{localStorage.removeItem(jobKey());}catch(err){}$('cwRecoverJob').hidden=true;failedJob=oldId;resumeButton.hidden=false;throw e;}
+      progressPhase('UNKNOWN');status('لم يصل تأكيد طلب الاستئناف. اضغط «متابعة المهمة» للتحقق قبل أي طلب جديد. '+e.message,true);
+    }
+  }));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
@@ -491,7 +505,7 @@ function mount(){
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwKeepEdit').addEventListener('click',()=>run(keepEdit));
   $('cwUseGenerated').addEventListener('click',()=>run(()=>useGenerated($('cwChoice').dataset.job)));
-  $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
+  $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;failedJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
   $('cwLevel').addEventListener('change',draw);
   $('cwType').addEventListener('change',projectCopy);
