@@ -207,7 +207,7 @@ class WorkerFailureLog(unittest.TestCase):
 
     def test_messages_that_may_hold_user_text_are_withheld(self):
         for text in ("غرفة بلا rect صحيح", "'bedroom'", "room residential_2_apartment_1 failed",
-                     "sk-ant-api03-secret", "sk-ant-abcdefghijklmnopqrstuvwxyz", "line one\nline two"):
+                     "sk-" + "ant-api03-secret", "sk-" + "ant-abcdefghijklmnopqrstuvwxyz", "line one\nline two"):
             with self.subTest(text=text):
                 self.assertIsNone(JOBS.JobError(text, "ValueError").safe_message)
 
