@@ -7,13 +7,17 @@ export const TRANSCRIPTION={
   approved:'حُفظ اعتماد المخطط المقروء من ملفك كنسخة منقولة مبدئية. يمكنك الآن تحويلها أو تصديرها.',
   issues:{PLAN_SOURCE_TRANSCRIPTION:'مخطط مقروء من ملفك',DOOR_NOT_VISIBLE:'باب غير ظاهر في ملفك',PATH_NOT_VISIBLE:'مسار وصول غير ظاهر في ملفك',LIGHTING_NOT_DECLARED:'نقاط الإنارة لم تُحدَّد بعد',TRANSCRIPTION_ACKNOWLEDGEMENT_REQUIRED:'أكد اعتماد المخطط كنسخة مقروءة من ملفك'},
 };
+// Limits shared with the engine (acs_plan_sources / acs_upload_security):
+// 5 MB stored file, 40 MP and 12000 px per side at most, and the vision read's
+// 2576 px long side. Larger photos are downscaled here before upload.
+export const LIMITS={file:5*1024*1024,image:25*1024*1024,pixels:40000000,side:12000,read:2576,preview:2*1024*1024};
 export function createPlanUpload(root,{storageKey,onError}) {
-  const $=id=>root.querySelector('#'+id),MAX=5*1024*1024;
+  const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
   let file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
   function node(tag,text,parent){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;}
   const section=node('section');section.className='cw-source';section.id='cwSource';
   section.innerHTML=`<label for="cwStartMode">كيف تريد بدء المخطط؟</label><select id="cwStartMode"><option value="describe">وصف مشروع جديد</option><option value="upload">رفع مخطط جاهز</option></select>
-  <div id="cwUploadPanel" hidden><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. يُحفظ الأصل في مشروعك. في PDF اختر الصفحة التي تريد قراءتها.</p>
+  <div id="cwUploadPanel" hidden><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف منها بيانات الكاميرا والموقع. في PDF اختر الصفحة التي تريد قراءتها.</p>
   <label for="cwPlanFile">ملف المخطط</label><input id="cwPlanFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" data-mutate>
   <div id="cwPdfPagePanel" hidden><label for="cwPdfPage">الصفحة المطلوب استخدامها</label><select id="cwPdfPage" data-mutate></select></div>
   <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
@@ -57,10 +61,11 @@ export function createPlanUpload(root,{storageKey,onError}) {
     ++epoch;ready=false;uploadId=null;preview64=null;selectSource(null);persist();releasePreview();sync();
     if(pdf){await pdf.destroy();pdf=null;}$('cwPdfPagePanel').hidden=true;
     file=$('cwPlanFile').files[0]||null;if(!file){notice('');return;}
-    if(!file.size||file.size>MAX)throw new Error('اختر ملفًا لا يتجاوز 5 ميجابايت.');
+    if(!file.size)throw new Error('الملف فارغ. اختر ملف المخطط مرة أخرى.');
     notice('جارٍ فتح الملف…');const current=epoch;
     const magic=new Uint8Array(await file.slice(0,12).arrayBuffer());
     const isPdf=String.fromCharCode(...magic.subarray(0,5))==='%PDF-';
+    if(file.size>(isPdf?MAX:LIMITS.image))throw new Error(isPdf?'اختر ملف PDF لا يتجاوز 5 ميجابايت.':'اختر صورة لا تتجاوز 25 ميجابايت؛ نصغّرها إلى 5 ميجابايت قبل الرفع.');
     if(isPdf){
       const pdfjs=await import('/vendor/pdfjs@4.10.38/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.10.38/pdf.worker.min.mjs';
       const loading=pdfjs.getDocument({data:await file.arrayBuffer(),isEvalSupported:false});
@@ -75,9 +80,33 @@ export function createPlanUpload(root,{storageKey,onError}) {
       if(!png&&!jpg&&!webp)throw new Error('الملف ليس صورة مدعومة أو PDF.');
       objectUrl=URL.createObjectURL(file);const img=$('cwSourcePreview');img.src=objectUrl;
       await img.decode();if(current!==epoch)return;
-      if(img.naturalWidth*img.naturalHeight>40000000||Math.max(img.naturalWidth,img.naturalHeight)>12000)throw new Error('أبعاد الصورة كبيرة. صدّر صورة أصغر.');
-      img.dataset.media=png?'image/png':jpg?'image/jpeg':'image/webp';img.hidden=false;ready=true;uploadId=crypto.randomUUID();notice('المعاينة جاهزة. احفظ المخطط ثم راجع المتطلبات.');sync();
+      if(img.naturalWidth*img.naturalHeight>LIMITS.pixels||Math.max(img.naturalWidth,img.naturalHeight)>LIMITS.side)throw new Error('أبعاد الصورة أكبر من 40 مليون بكسل أو 12000 بكسل للضلع. صدّر صورة أصغر.');
+      img.dataset.media=png?'image/png':jpg?'image/jpeg':'image/webp';
+      const before=[img.naturalWidth,img.naturalHeight];
+      if(Math.max(...before)>LIMITS.read||file.size>MAX){
+        file=await downscale(img,file,png);if(current!==epoch)return;
+        releasePreview();objectUrl=URL.createObjectURL(file);img.src=objectUrl;await img.decode();if(current!==epoch)return;
+        img.dataset.media=file.type;
+      }
+      img.hidden=false;ready=true;uploadId=crypto.randomUUID();
+      notice((file.size&&before[0]!==img.naturalWidth?'صغّرنا الصورة من '+before.join('×')+' إلى '+img.naturalWidth+'×'+img.naturalHeight+' بكسل على جهازك (حد قراءة المخطط). ':'')+'المعاينة جاهزة. احفظ المخطط ثم راجع المتطلبات.');sync();
     }
+  }
+  // Long side at most 2576 px (the vision read's limit), re-encoded from pixels:
+  // no camera or GPS metadata leaves the device. A drawing stays PNG unless that
+  // is still over 5 MB; a photo becomes JPEG.
+  async function downscale(img,source,png){
+    const scale=Math.min(1,LIMITS.read/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    const blob=(type,q)=>new Promise(r=>canvas.toBlob(r,type,q));
+    try{
+      let out=png?await blob('image/png'):null;
+      for(const q of [.9,.82,.72,.6]){if(out&&out.size<=MAX)break;out=await blob('image/jpeg',q);}
+      if(!out||out.size>MAX)throw new Error('تعذّر تصغير الصورة إلى 5 ميجابايت. صدّرها بدقة أقل ثم أعد الرفع.');
+      const name=out.type==='image/jpeg'?source.name.replace(/\.(png|webp|jpe?g)$/i,'')+'.jpg':source.name;
+      return new File([out],name,{type:out.type});
+    }finally{canvas.width=canvas.height=0;}
   }
   function sync(){const blocked=uploading||opening||root.getAttribute('aria-busy')==='true'||!$('cwRecoverJob').hidden;$('cwSaveSource').disabled=blocked||!ready;for(const id of ['cwStartMode','cwPlanFile','cwPdfPage','cwSavedSource','cwSourceMode'])$(id).disabled=blocked;}
   $('cwStartMode').addEventListener('change',()=>{$('cwUploadPanel').hidden=$('cwStartMode').value!=='upload';persist();});

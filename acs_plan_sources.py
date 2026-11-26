@@ -63,11 +63,12 @@ def validate_upload(command):
             pages = checked["pages"]
             if type(page) is not int or not 1 <= page <= pages:
                 raise PlanError("INVALID_PLAN_SOURCE", "اختر صفحة موجودة في ملف PDF.")
-            preview = U.validate_image(decode(command.get("preview_base64"), MAX_PREVIEW), "image/jpeg")
+            preview = U.validate_image(decode(command.get("preview_base64"), MAX_PREVIEW), "image/jpeg",
+                                       max_side=U.VISION_MAX_SIDE)
         elif media in {"image/png", "image/jpeg", "image/webp"}:
             if page != 1 or command.get("preview_base64"):
                 raise PlanError("INVALID_PLAN_SOURCE", "ارفع الصورة الأصلية دون معاينة بديلة.")
-            preview = U.validate_image(raw, media)
+            preview = U.validate_image(raw, media, max_side=U.VISION_MAX_SIDE)
             pages = 1
         else:
             raise PlanError("INVALID_PLAN_SOURCE", "الصيغ المدعومة: PDF وPNG وJPEG وWebP.")
