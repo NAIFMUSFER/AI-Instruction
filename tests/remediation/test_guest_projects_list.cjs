@@ -54,6 +54,15 @@ async function run(){
    await L.press(page,size,'#guestProjectsList a');
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.meta?.name==='عمارة أبو فهد');
    assert.equal(page.url(),draftUrl);
+   // From the draft, the main project is listed and linked back.
+   await L.press(page,size,'#guestTools');await L.press(page,size,'#guestProjects');
+   await page.waitForFunction(()=>document.getElementById('guestProjectsList').getAttribute('aria-busy')==='false');
+   const back=await page.locator('#guestProjectsList > li').evaluateAll(items=>items.map(li=>({text:li.innerText,current:li.getAttribute('aria-current'),href:li.querySelector('a')?.getAttribute('href')||null})));
+   assert.equal(back.length,2,size.name+': the draft lists both projects too');
+   assert.match(back[0].text,/عمارة أبو فهد/);assert.equal(back[0].current,'true');
+   assert.equal(back[1].href,'/?guest=1',size.name+': the draft links back to the main project');
+   assert.match(back[1].text,/3 أدوار · 6 شقق/,size.name+': counts read as Arabic');
+   await L.press(page,size,'#guestProjectsClose');
    // A second device, before its first save, describes what is on screen.
    const fresh=await L.guestContext(browser,size,ORIGIN);const device2=await L.openGuest(fresh.context,ORIGIN,'?guest=1');
    await device2.page.evaluate(()=>indexedDB.deleteDatabase('acs_guest_project_v1'));

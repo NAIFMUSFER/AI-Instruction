@@ -22,12 +22,16 @@ function describe(model) {
   const sample = model?.meta?.acs_apartment?.source === 'synthetic_sample';
   return {sample, name: sample ? 'العمارة التجريبية' : String(model?.meta?.name || 'مشروع محلي'), facts: facts(model)};
 }
+// Arabic number agreement: دور واحد، دوران، ٣ أدوار، ١١ دورًا.
+const count = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : n <= 10 ? `${n} ${few}` : `${n} ${many}`;
+const floors = n => count(n, 'دور واحد', 'دوران', 'أدوار', 'دورًا');
+const flats = n => count(n, 'شقة واحدة', 'شقتان', 'شقق', 'شقة');
 function facts(model) {
   const a = model?.meta?.acs_apartment;
-  if (a) return `${a.width_m} × ${a.depth_m} م · ${a.occupied_levels} أدوار · ${a.units_total} شقق`;
+  if (a) return `${a.width_m} × ${a.depth_m} م · ${floors(a.occupied_levels)} · ${flats(a.units_total)}`;
   const levels = (model?.levels || []).filter(level => level.kind !== 'roof').length;
   const w = model?.site?.w, d = model?.site?.d;
-  return [Number.isFinite(w) && Number.isFinite(d) ? `${w} × ${d} م` : null, levels ? `${levels} أدوار` : null].filter(Boolean).join(' · ');
+  return [Number.isFinite(w) && Number.isFinite(d) ? `${w} × ${d} م` : null, levels ? floors(levels) : null].filter(Boolean).join(' · ');
 }
 async function readProject(scope, persistence) {
   let db;
