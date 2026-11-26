@@ -1,7 +1,7 @@
 // Step 01 plot inputs: street side(s), setbacks, coverage and parking. Empty
 // fields use labelled default assumptions that the server resolves and writes
 // into the review; nothing here is a regulatory ruling.
-import {PLACEMENTS,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES,SIDES,SIDE_AR,SOURCE_TITLE,SOURCE_URL,overlay,parseNumber,plotCommand,preview,summaryText} from '../core/plot-rules.mjs';
+import {PLACEMENTS,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES,SIDES,SIDE_AR,SOURCE_TITLE,SOURCE_URL,overlay,parseNumber,plotCommand,preview,summaryText,villaBrief} from '../core/plot-rules.mjs';
 
 const sideOptions = first => first+SIDES.map(s => '<option value="'+s+'">'+SIDE_AR[s].replace('ال','')+'</option>').join('');
 
@@ -40,7 +40,7 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     const levels = parseNumber(value('cwLevels')) || 1, units = parseNumber(value('cwUnits')) || null;
     const pilotis = value('cwPlotParking') === 'pilotis';
     const total = units && value('cwUnitsScope') === 'per_level' ? units * Math.max(1, levels - (pilotis ? 1 : 0)) : units;
-    const villa = /فيل[اه]|villa|بيت|منزل/i.test(value('cwBrief')) && (!total || total === 1);
+    const villa = villaBrief(value('cwBrief'), total);
     return {levels, units:total, villa};
   }
   function refresh() {
