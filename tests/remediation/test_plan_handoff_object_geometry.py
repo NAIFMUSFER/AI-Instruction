@@ -51,6 +51,14 @@ def residential_model():
                 "pitch": 1.2,
                 "dir": "x",
             }],
+        }, {
+            # The brief is one villa: a guest WC keeps it livable (acs_villa_program),
+            # so the approval this suite depends on is not refused for a missing bathroom.
+            "id": "guest_wc",
+            "role": "wc",
+            "rect": [10.0, 0.0, 2.0, 2.0],
+            "doors": [],
+            "windows": [],
         }]}},
     }
 

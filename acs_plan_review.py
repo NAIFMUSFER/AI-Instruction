@@ -496,6 +496,18 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             actual = ensuite_bedroom_count(model)
             valid_expected = type(expected) is int and expected >= 0
             minimum = True
+        elif kind in {"room_count_by_level", "ensuite_bedroom_count_by_level"}:
+            # One occupied floor of a confirmed per-floor program, counted from
+            # the ground floor up (acs_floor_program); an en-suite count is
+            # unknown (None) before openings exist, never a guessed zero.
+            from acs_floor_program import level_ensuite_count, level_role_count
+            level, role = r.get("level"), r.get("role")
+            per_role = kind == "room_count_by_level"
+            valid_selector = type(level) is int and level >= 0 and (_id(role) if per_role else role is None)
+            if valid_selector:
+                actual = level_role_count(model, level, role) if per_role else level_ensuite_count(model, level)
+            valid_expected = type(expected) is int and expected >= 0 and valid_selector
+            minimum = not per_role
         elif kind == "room_count":
             template, role = r.get("template"), r.get("role")
             valid_selector = ((template is None or (_id(template) and template in model["floors"]))
@@ -911,6 +923,25 @@ class PlanWorkspace:
             issues.extend(blocking)
             advisories = advisories + advice
             scopes["dwelling_program"] = "FAIL" if blocking else "PASS"
+        # A confirmed step-01 program (acs_brief_reader) is checked floor by
+        # floor: rooms, floors drawn alike, target sizes and wet stacks
+        # (acs_floor_program). Revisions without one review as before.
+        brief_program = meta.get("acs_brief_program") if isinstance(meta, dict) else None
+        if brief_program is not None:
+            from acs_brief_reader import usable
+            program = usable(brief_program)
+            if program is None:
+                issues.append({"code": "BRIEF_PROGRAM_INVALID", "severity": "error",
+                               "message": "برنامج الأدوار المحفوظ مع هذه النسخة غير صالح؛ أعد التوليد من بطاقة البرنامج."})
+                scopes["brief_program"] = "FAIL"
+            elif geometry_issues:
+                scopes["brief_program"] = "NOT_VERIFIED"
+            else:
+                from acs_floor_program import check as program_check
+                blocking, advice = program_check(model, program, json.loads(rev.requirements_json))
+                issues.extend(blocking)
+                advisories = advisories + advice
+                scopes["brief_program"] = "FAIL" if blocking else "PASS"
         ready = not issues and all(
             scopes[k] == "PASS" or (transcription and k in ("topology", "vertical_circulation")
                                     and scopes[k] == "NOT_VERIFIED")
@@ -922,7 +953,7 @@ class PlanWorkspace:
                   "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
                   "metrics": metrics, "issues": issues, "construction_approved": False,
                   "coverage": coverage}
-        if plot is not None or single or notes:
+        if plot is not None or single or brief_program is not None or notes:
             result["advisories"] = notes + advisories  # never block approval
         if transcription:
             result["transcription"] = True

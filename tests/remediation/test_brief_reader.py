@@ -51,8 +51,9 @@ class Validator(unittest.TestCase):
         # The brief says three bathrooms on the first floor but names two: a check, not a failure.
         self.assertEqual([c['code'] for c in p['checks']], ['UNIT_BATHROOMS'])
         self.assertIn('الدور الأول', p['checks'][0]['message'])
+        # Phase 2 plans and checks per-floor programs, target sizes and the stated stall size.
         self.assertEqual([c['code'] for c in p['cannot_do']],
-                         ['OUTDOOR', 'PER_LEVEL_PROGRAMS', 'TARGET_SIZES', 'STALL_SIZE', 'STAIR_TYPE', 'FACADE',
+                         ['OUTDOOR', 'STAIR_TYPE', 'FACADE',
                           'OUTPUT_FURNISHED_PLANS', 'OUTPUT_OUTDOOR_PLAN', 'OUTPUT_SECTION', 'OUTPUT_SITE_PLAN'])
         self.assertEqual(B.validate_program(p), p, 'a validated program is a fixed point (incoming checks are recomputed)')
 
