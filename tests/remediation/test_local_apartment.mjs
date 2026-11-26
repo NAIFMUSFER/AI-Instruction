@@ -464,6 +464,23 @@ for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، شقتين
   assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn.map(item=>item.key),['bedrooms'],txt);
 for(const txt of ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون ملحق ولا منور ولا مجلس حريم','عمارة سكنية ٢٤×٢٨، ٣ أدوار، كل شقة ثلاث غرف نوم'])
   assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn,[],txt);
+// Round 3: elevator, usable roof and separate entrances are listed, and any recognised
+// requirement word the local plan does not represent is reported as not applied.
+for(const [txt,keys] of [
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون مصعد',['no_elevator']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، مصعدين',['two_elevators']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، سطح مستخدم',['usable_roof']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، مدخل منفصل لكل شقة',['separate_entrances']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، ومواقف أمامية وارتداد ٣ م',['unmapped']],
+  ['عمارة سكنية ٢٤×٢٨، ٣ أدوار، بدون مواقف',[]]
+]) assert.deepEqual(apartmentFromBrief(txt).meta.acs_apartment.understanding.not_drawn.map(item=>item.key),keys,txt);
+assert.match(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار، ومواقف أمامية وارتداد ٣ م')).notDrawn[0],/لم يُطبَّق: مواقف السيارات، الارتدادات/);
+assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب والمواقف قدام',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),
+  error=>error.message.includes('مواقف السيارات'),'a revision cannot drop an unmapped request');
+// «ثلاث أدوار مع الأرضي» states the ground floor: not an assumption.
+const withGround=Object.fromEntries(apartmentConfirmation(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور')).rows.map(row=>[row.key,row]));
+assert.equal(withGround.levels.note,'شاملة الأرضي كما ذكرت');assert.equal(withGround.levels.assumed,false);assert.equal(withGround.levels.value,'3 أدوار: الأرضي ودوران فوقه');
+assert.equal(apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ثلاثة أدوار شاملة للأرضي').meta.acs_apartment.understanding.levels.ground,'stated_inclusive');
 assert.throws(()=>apartmentFromRevision('خل المدخل من الجنوب ومنور في النص',apartmentFromBrief('عمارة سكنية ٢٤×٢٨، ٣ أدوار')),
   error=>error.message.includes('منور'),'a revision has no card, so it still refuses');
 // Plot and building are separate (owner decision 3): plot 25×30 with building 20×25 draws 20×25.

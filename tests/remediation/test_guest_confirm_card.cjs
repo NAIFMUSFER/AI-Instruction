@@ -139,6 +139,18 @@ async function run(browser, width) {
     model = await page.evaluate(() => window.ACS.exportModel());
     assert.equal(model.meta.acs_apartment.understanding.not_drawn.length, 3, 'the model records what was not drawn');
 
+    // Round 3: elevator, usable roof, separate entrances and unmapped words are listed; «مع الأرضي» is stated.
+    await open(page);
+    await generate(page, 'عمارة سكنية ٢٤×٢٨، ثلاث أدوار مع الأرضي، شقتين في كل دور، بدون مصعد، سطح مستخدم ومدخل منفصل لكل شقة، ومواقف أمامية');
+    summary = await card(page, 'confirm');
+    assert.equal(summary.unsupported.length, 4, JSON.stringify(summary.unsupported));
+    for (const pattern of [/بدون مصعد/, /سطح مستخدم/, /مدخل منفصل لكل شقة/, /لم يُطبَّق: مواقف السيارات/])
+      assert.match(summary.unsupported.join(' | '), pattern);
+    assert.match(summary.rows.levels.text, /شاملة الأرضي كما ذكرت/);
+    assert.equal(summary.rows.levels.assumed, false, 'the ground floor was stated, not assumed');
+    await onScreen(page, '#guestConfirmDraw', viewport);
+    await page.screenshot({ path: path.join(out, width + '-round3.png') });
+
     // 5. Text says 3 floors, the field says 4: the visitor picks; neither is preferred silently.
     await open(page);
     await generate(page, 'عمارة سكنية ٢٤×٢٨ م، ٣ أدوار، شقتين في كل دور', { nFloors: 4 });
