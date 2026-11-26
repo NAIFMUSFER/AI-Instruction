@@ -22,7 +22,11 @@ async function pick(page,record){
   const p=new THREE.Vector3().fromArray(group.center).project(camera),box=document.querySelector('#cwViewer canvas').getBoundingClientRect();return {x:box.x+(p.x+1)*box.width/2,y:box.y+(1-p.y)*box.height/2,canvas:{left:box.left,right:box.right,top:box.top,bottom:box.bottom},viewport:{width:innerWidth,height:innerHeight}};
  },record);
  assert.ok(point.x>Math.max(0,point.canvas.left)&&point.x<Math.min(point.viewport.width,point.canvas.right)&&point.y>Math.max(0,point.canvas.top)&&point.y<Math.min(point.viewport.height,point.canvas.bottom),'canonical object pick must lie inside the visible canvas and viewport');
- await page.mouse.click(point.x,point.y);await page.locator('#cwObjectSelection').waitFor({state:'visible'});await page.waitForFunction(id=>document.querySelector('#cwObjectDescription')?.textContent.includes(id),record.object_id);
+ await page.mouse.click(point.x,point.y);await page.locator('#cwObjectSelection').waitFor({state:'visible'});
+ // The owner sees the element's Arabic kind; its internal id only in the engineer view.
+ const kind={column:'عمود',railing:'درابزين',plant:'نبات',planter:'حوض نباتات'}[record.kind];
+ await page.waitForFunction(kind=>document.querySelector('#cwObjectDescription')?.textContent.startsWith(kind+' · إزالة العنصر'),kind);
+ assert.equal((await page.locator('#cwObjectDescription').textContent()).includes(record.object_id),false,'no internal object id in the owner view');
 }
 (async()=>{let browser,child,page;const evidence=[];try{
  browser=await PW.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});
