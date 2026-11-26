@@ -1,9 +1,9 @@
 import {parseReviewFile} from '../core/plan-review-packet.mjs';
 import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
+import {createPlotRules} from './plot-rules.mjs';
 import {createPlanUpload} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
-import {createPlotRules} from './plot-rules.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'محاذاة النوى بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
@@ -34,9 +34,9 @@ function projectCopy() {
 }
 let root, briefEditor, planUpload, residentialOptions, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerEpoch = 0, activeStep = 1, viewerDispose = null;
 let progressState=null,progressTimer=null,starting=false,objectSelection=null;
-let plotRules=null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
+let plotRules=null;
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
 function status(text, bad=false) { $('cwStatus').textContent=text;$('cwStatus').classList.toggle('bad',bad);$('cwStatus').setAttribute('role',bad?'alert':'status'); }
 function progressTick(){
@@ -282,10 +282,11 @@ async function generation(option) {
   if(pendingJob)throw new Error('توجد مهمة معلّقة. استعد حالتها أولًا.');
   if(!$('cwConfirmed').checked)throw new Error('راجع برنامج المشروع وأكد المتطلبات أولًا.');
   const source=planUpload.command();
+  const plot=source.source_id?{}:plotRules.command(); // validated before any paid call
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
   const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
-  if(!source.source_id)Object.assign(body,plotRules.command());
   beginJob(body.job_id);
+  Object.assign(body,plot);
   setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+e.message,true);}
@@ -447,10 +448,10 @@ function mount(){
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
   briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
   residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError});
-  plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   const resumeButton=el('button','استئناف المراحل المحفوظة',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
   resumeButton.addEventListener('click',()=>run(async()=>{const oldId=pendingJob;if(!oldId)return;const nextId=crypto.randomUUID();beginJob(nextId);resumeButton.hidden=true;$('cwDismissJob').hidden=true;try{await handleJob((await api({action:'resume',job_id:nextId,resume_job_id:oldId,confirmed:true,max_provider_calls:Number($('cwBudget').value)})).job);}catch(e){beginJob(oldId,{startedAt:Date.now()});resumeButton.hidden=false;throw e;}}));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
+  plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));

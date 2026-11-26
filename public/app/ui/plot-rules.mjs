@@ -37,7 +37,7 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
       placement:value('cwPlotParking') || 'front_setback', count:value('cwPlotParkingCount'), landing:value('cwPlotLanding')};
   }
   function program() {
-    const levels = Number(value('cwLevels')) || 1, units = Number(value('cwUnits')) || null;
+    const levels = parseNumber(value('cwLevels')) || 1, units = parseNumber(value('cwUnits')) || null;
     const pilotis = value('cwPlotParking') === 'pilotis';
     const total = units && value('cwUnitsScope') === 'per_level' ? units * Math.max(1, levels - (pilotis ? 1 : 0)) : units;
     const villa = /فيل[اه]|villa|بيت|منزل/i.test(value('cwBrief')) && (!total || total === 1);
