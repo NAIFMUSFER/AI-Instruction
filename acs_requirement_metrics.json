@@ -68,6 +68,14 @@
       "label_ar": "عدد الفراغات داخل كل شقة",
       "brief_supported": true
     },
+    "ensuite_bedroom_count": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "غرف نوم بحمام خاص",
+      "brief_supported": true,
+      "measurement": "bedrooms_with_private_bathroom",
+      "scope": "BEDROOM_WITH_A_BATHROOM_WHOSE_EVERY_DOOR_OPENS_INTO_IT_ACROSS_PHYSICAL_LEVEL_INSTANCES"
+    },
     "min_room_area_m2": {
       "unit": "m2",
       "operator": "minimum",

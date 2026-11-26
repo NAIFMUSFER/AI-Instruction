@@ -315,10 +315,18 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                        "اجعل مجموع مساحات مستطيلات الفراغات في جميع الأدوار المشغولة مساويًا للمساحة المستهدفة. احسب كل دور متكرر واستبعد السطح غير المشغول. "
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
+    # One villa or house: the livable-villa rules and the confirmed villa program
+    # (step 01 villa fields) join the prompt and the planning policy. Apartment
+    # buildings keep exactly their prompt and policy.
+    from acs_plot_rules import VILLA, dwelling as brief_dwelling
+    villa = residential and brief_dwelling(brief, requirements) == VILLA
     if residential:
         from acs_residential_generation import (ROOM_PROGRAM, ROOM_PROGRAM_PLOT, PLANNING_SYSTEM, prepare_layout,
-                                                detail, _canonical_room_roles)
+                                                detail, _canonical_room_roles, VILLA_ROOM_PROGRAM,
+                                                SINGLE_DWELLING_PLANNING, villa_program_text)
         prompt += "\n" + (ROOM_PROGRAM if rules is None else ROOM_PROGRAM_PLOT)
+        if villa:
+            prompt += VILLA_ROOM_PROGRAM + villa_program_text(requirements)
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
             resume = manifest(brief, requirements, rules)
@@ -328,6 +336,8 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
             names = list(dict.fromkeys(l['template'] for l in levels or []))
             prompt += "\n" + P.prompt_text(rules, names[0] if names else None, names[1] if len(names) > 1 else None)
     policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
+    if villa:
+        policy += SINGLE_DWELLING_PLANNING
     if residential and rules is not None:
         policy += P.PLANNING_ADDENDUM
     with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):

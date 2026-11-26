@@ -3,7 +3,7 @@
 // All external source offsets are Unicode code points, matching Python slicing.
 import {metricLabels,requirementMetrics} from '../generated/requirement-metrics.mjs';
 export {metricLabels};
-const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ',living:'الصالات',bathroom:'دورات المياه',majlis:'المجالس',stairs:'الدرج',elevator:'المصاعد'};
+const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ',living:'الصالات',bathroom:'دورات المياه',majlis:'المجالس',stairs:'الدرج',elevator:'المصاعد',maid_room:'غرف الخادمة',driver_room:'غرف السائق'};
 // Digits as typed on an Arabic phone keyboard: Arabic-Indic or Persian digits and
 // the Arabic decimal separator «٫». Length-preserving, so a caret can be kept.
 export const asciiNumberText = text => String(text ?? '')

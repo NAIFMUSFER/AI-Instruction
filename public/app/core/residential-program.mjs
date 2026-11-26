@@ -35,3 +35,116 @@ export function residentialOptions({units,scope='total',levels,width,depth,bedro
       feasibilityNote:'تقدير مساحة أولي يشمل حركة داخلية و15٪ للجدران و25 م² للنواة المشتركة؛ لا يشمل الارتدادات والمواقف. يفحص التوزيع والفتحات بعد التوليد.'};
   });
 }
+
+// ── One villa or house: the step-01 villa program ───────────────────────────
+// The fields become confirmed requirement rows (room_count per role and
+// ensuite_bedroom_count) that the server measures; acs_villa_program.py checks
+// the livability rules the counts cannot see. Defaults are stated, editable
+// planning assumptions.
+export const VILLA_SOURCE = 'brief:villa-program';
+export const VILLA_DEFAULTS = Object.freeze({bedrooms: 4, master: true, maid: false, driver: false});
+export const VILLA_LIMITS = Object.freeze({bedrooms: 10, bathrooms: 14});
+const whole = (text, label, lo, hi) => {
+  const s = normalize(String(text ?? '')).replace(/[\s‎‏]/g, '');
+  if (s === '') return null;
+  const n = Number(s);
+  if (!/^[0-9]+$/.test(s) || n < lo || n > hi) throw new Error(label + ': أدخل عددًا صحيحًا من ' + lo + ' إلى ' + hi + '.');
+  return n;
+};
+const yes = v => v === true || v === 'yes';
+/** Resolve the villa fields (text as typed, Arabic-Indic digits accepted) with
+ *  their defaults: 4 bedrooms, a master suite, bathrooms = bedrooms + 1 (the
+ *  guest WC) plus one WC per service room, no maid's or driver's room. */
+export function villaProgram({bedrooms = '', master = 'yes', bathrooms = '', maid = 'no', driver = 'no'} = {}) {
+  const beds = whole(bedrooms, 'غرف النوم', 1, VILLA_LIMITS.bedrooms) ?? VILLA_DEFAULTS.bedrooms;
+  const suite = yes(master), hasMaid = yes(maid), hasDriver = yes(driver);
+  const auto = beds + 1 + (hasMaid ? 1 : 0) + (hasDriver ? 1 : 0);
+  const typed = whole(bathrooms, 'الحمامات ودورات المياه', 1, VILLA_LIMITS.bathrooms);
+  const baths = typed ?? Math.min(auto, VILLA_LIMITS.bathrooms);
+  const least = (suite ? 2 : 1) + (hasMaid ? 1 : 0) + (hasDriver ? 1 : 0);
+  if (baths < least) throw new Error('الحمامات ودورات المياه (' + baths + ') أقل من الحد الأدنى لهذا البرنامج (' + least + '): '
+    + (suite ? 'حمام خاص لغرفة النوم الرئيسية و' : '') + 'دورة مياه للضيوف' + (hasMaid || hasDriver ? ' ودورة مياه لكل غرفة خدمة' : '') + '.');
+  return {bedrooms: beds, master: suite, bathrooms: baths, autoBathrooms: typed == null, maid: hasMaid, driver: hasDriver};
+}
+// Arabic counting: 1 مفرد، 2 مثنى، 3–10 جمع، 11+ مفرد.
+const counted = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : n >= 3 && n <= 10 ? n + ' ' + few : n + ' ' + many;
+export const bedroomsText = n => counted(n, 'غرفة نوم واحدة', 'غرفتا نوم', 'غرف نوم', 'غرفة نوم');
+export const bathroomsText = n => counted(n, 'حمام واحد', 'حمامان', 'حمامات ودورات مياه', 'حمامًا ودورة مياه');
+/** One line for the owner: what the program asks for, defaults included. */
+export function villaSummary(p) {
+  return bedroomsText(p.bedrooms) + (p.master ? '، منها غرفة نوم رئيسية بحمام خاص' : '') + '؛ '
+    + bathroomsText(p.bathrooms) + ' منها دورة مياه للضيوف' + (p.master ? ' والحمام الخاص' : '')
+    + (p.maid || p.driver ? ' ودورة مياه لكل غرفة خدمة' : '') + (p.autoBathrooms ? ' (تلقائي)' : '') + '؛ '
+    + (p.maid ? 'غرفة خادمة' : 'بدون غرفة خادمة') + '؛ ' + (p.driver ? 'غرفة سائق' : 'بدون غرفة سائق') + '.';
+}
+/** Confirmed requirement rows for the program: [{metric, role?, expected, label}]. */
+export function villaRows(p) {
+  const rows = [{metric: 'room_count', role: 'bedroom', expected: p.bedrooms, label: 'غرف النوم في الفيلا'}];
+  if (p.master) rows.push({metric: 'ensuite_bedroom_count', expected: 1, label: 'غرف نوم بحمام خاص'});
+  rows.push({metric: 'room_count', role: 'bathroom', expected: p.bathrooms, label: 'الحمامات ودورات المياه في الفيلا'});
+  if (p.maid) rows.push({metric: 'room_count', role: 'maid_room', expected: 1, label: 'غرفة الخادمة'});
+  if (p.driver) rows.push({metric: 'room_count', role: 'driver_room', expected: 1, label: 'غرفة السائق'});
+  return rows;
+}
+/** Bedrooms and service rooms written in a villa brief («٥ غرف نوم»، «غرفة خادمة»). */
+export function readVilla(text) {
+  const s = normalize(String(text || '')), out = {};
+  const n = '(\\d{1,2}|ثلاثه?|اربعه?|خمسه?|سته?)';
+  const beds = s.match(new RegExp('(?<![\\p{L}\\p{N}])' + n + '\\s*غرف(?:ه)?\\s*نوم', 'u'));
+  if (beds) out.bedrooms = quantity(beds[1]);
+  if (/غرف[هة]?\s*(?:ال)?(?:خادم|عامل|شغال)/.test(s)) out.maid = 'yes';
+  if (/غرف[هة]?\s*(?:ال)?سائق/.test(s)) out.driver = 'yes';
+  return out;
+}
+// Three villa concepts that differ in what they give space to. Areas are
+// planning assumptions (m²), not a design: each card's estimate is the sum of
+// its rooms plus walls and circulation.
+const VILLA_VARIANTS = [
+  {id: 'A', title: 'بيت عائلي مدمج', factor: 1.15,
+   areas: {bedroom: 13, master: 18, ensuite: 5, bath: 4.5, guestWc: 2.5, majlis: 20, living: 24, dining: 12, kitchen: 12, entrance: 6, service: 9, stairs: 12},
+   rooms: 'مجلس بجوار المدخل، صالة أسرة مفتوحة على الطعام، مطبخ',
+   why: 'أقل مساحة مبنية لنفس عدد الغرف، فتبقى مساحة أكبر للحديقة والمواقف.',
+   tradeoff: 'الضيوف والأسرة يتشاركون المدخل، والغرف بمقاسات اقتصادية.'},
+  {id: 'B', title: 'فصل الضيوف عن العائلة', factor: 1.2,
+   areas: {bedroom: 14, master: 20, ensuite: 6, bath: 4.5, guestWc: 3, majlis: 28, guestDining: 16, guestEntrance: 6, living: 28, dining: 12, kitchen: 14, entrance: 6, service: 9, stairs: 12},
+   rooms: 'مدخل ومجلس ومقلط ودورة مياه للضيوف منفصلة، ومدخل وصالة وطعام للأسرة، مطبخ',
+   why: 'يدخل الضيوف إلى المجلس دون المرور بمنطقة الأسرة.',
+   tradeoff: 'مدخلان ومقلط يحتاجان مساحة إضافية في الدور الأرضي.'},
+  {id: 'C', title: 'جناح رئيسي واسع', factor: 1.2,
+   areas: {bedroom: 14, master: 26, ensuite: 9, dressing: 6, bath: 4.5, guestWc: 2.5, majlis: 22, living: 28, dining: 14, kitchen: 14, entrance: 6, service: 9, stairs: 12},
+   rooms: 'جناح رئيسي بحمام واسع وغرفة ملابس، مجلس، صالة أسرة، طعام، مطبخ',
+   why: 'غرفة نوم رئيسية أوسع مع غرفة ملابس وحمام أكبر.',
+   tradeoff: 'تصغر الصالة أو الغرف الأخرى إن ضاقت المساحة المبنية.'},
+];
+/** Villa option cards: {id, title, roomsText, why, tradeoff, estimatedArea, available, feasible, recommended}.
+ *  ``buildable`` is the footprint (m²) left by the setbacks, or null when unknown. */
+export function villaOptions(program, {levels = 1, buildable = null, guests = 'suggest'} = {}) {
+  const floors = Number.isInteger(Number(levels)) && Number(levels) >= 1 ? Number(levels) : 1;
+  const available = Number.isFinite(buildable) && buildable > 0 ? Math.round(buildable * floors) : null;
+  return VILLA_VARIANTS.map(v => {
+    const a = v.areas, others = program.bedrooms - (program.master ? 1 : 0);
+    const shared = program.bathrooms - 1 - (program.master ? 1 : 0) - (program.maid ? 1 : 0) - (program.driver ? 1 : 0);
+    let sum = others * a.bedroom + (program.master ? a.master + a.ensuite + (a.dressing || 0) : a.bedroom)
+      + Math.max(0, shared) * a.bath + a.guestWc + a.majlis + (a.guestDining || 0) + (a.guestEntrance || 0)
+      + a.living + a.dining + a.kitchen + a.entrance + (program.maid ? a.service + 2.5 : 0) + (program.driver ? a.service + 2.5 : 0)
+      + (floors > 1 ? a.stairs * floors : 0);
+    const estimatedArea = Math.round(sum * v.factor);
+    return {...v, villa: true, program, levels: floors, estimatedArea, available,
+      feasible: available == null || estimatedArea <= available,
+      recommended: guests === 'separate' ? v.id === 'B' : v.id === 'A',
+      roomsText: bedroomsText(program.bedrooms) + (program.master ? ' منها رئيسية بحمام خاص' : '') + '، ' + bathroomsText(program.bathrooms)
+        + '، ' + v.rooms + (program.maid ? '، غرفة خادمة' : '') + (program.driver ? '، غرفة سائق' : '') + '.'};
+  });
+}
+// Arabic names of the villa review findings (acs_villa_program.py) and scope.
+export const VILLA_ISSUE_NAMES = Object.freeze({
+  VILLA_AGGREGATE_ROOM: 'فراغ واحد يجمع عدة غرف',
+  VILLA_BEDROOM_OVERSIZED: 'غرفة نوم أكبر من المعتاد',
+  VILLA_NO_BATHROOM: 'المسكن بلا حمام',
+  VILLA_FLOOR_WITHOUT_BATHROOM: 'دور فيه غرف نوم بلا حمام',
+  VILLA_GUEST_WC_MISSING: 'لا دورة مياه للضيوف في الدور الأرضي',
+  VILLA_MAJLIS_FAR: 'المجلس بعيد عن المدخل',
+  VILLA_KITCHEN_INTERIOR: 'المطبخ بلا جدار خارجي',
+  VILLA_ENSUITE_MISSING: 'غرفة النوم الرئيسية بلا حمام خاص',
+});
+export const VILLA_SCOPE_NAMES = Object.freeze({dwelling_program: 'برنامج الفيلا وصلاحية السكن'});

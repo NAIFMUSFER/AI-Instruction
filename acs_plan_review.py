@@ -489,6 +489,13 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 unit_counts.extend(sum(room.get("unit_id") == unit and room.get("role") == role for room in level_rooms) for unit in units)
             actual = unit_counts[0] if unit_counts and len(set(unit_counts)) == 1 else None
             valid_expected = type(expected) is int and expected >= 0 and _id(role)
+        elif kind == "ensuite_bedroom_count":
+            # Bedrooms whose private bathroom opens only into them; unknown
+            # (None) before openings exist, never a guessed zero.
+            from acs_villa_program import ensuite_bedroom_count
+            actual = ensuite_bedroom_count(model)
+            valid_expected = type(expected) is int and expected >= 0
+            minimum = True
         elif kind == "room_count":
             template, role = r.get("template"), r.get("role")
             valid_selector = ((template is None or (_id(template) and template in model["floors"]))
@@ -874,6 +881,20 @@ class PlanWorkspace:
                 blocking, advisories = plot_check(model, plot)
                 issues.extend(blocking)
                 scopes["plot_rules"] = "FAIL" if blocking else "PASS"
+        # One villa or house: separate bedrooms, bathrooms per storey, guest WC,
+        # kitchen and majlis (acs_villa_program). Apartment revisions are unchanged.
+        # Malformed geometry already blocks; the dwelling is then not read.
+        single = False
+        if not geometry_issues:
+            requirements = json.loads(rev.requirements_json)
+            from acs_residential_access import SINGLE_DWELLING, dwelling_kind
+            single = dwelling_kind(model, rev.brief, requirements) == SINGLE_DWELLING
+        if single:
+            from acs_villa_program import check as villa_check
+            blocking, advice = villa_check(model, rev.brief, requirements, plot=plot)
+            issues.extend(blocking)
+            advisories = advisories + advice
+            scopes["dwelling_program"] = "FAIL" if blocking else "PASS"
         ready = not issues and all(scopes[k] == "PASS" for k in
                                     ("rectangular_geometry", "program", "topology", "vertical_circulation"))
         # لا ننقل ادعاء مشي من المقترح أو المدقّق؛ هذه التغطية مشتقة من النموذج.
@@ -883,7 +904,7 @@ class PlanWorkspace:
                   "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
                   "metrics": metrics, "issues": issues, "construction_approved": False,
                   "coverage": coverage}
-        if plot is not None:
+        if plot is not None or single:
             result["advisories"] = advisories  # never block approval
         return result
 
