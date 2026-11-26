@@ -577,7 +577,7 @@ def edit_geometry(store, project_id, actor_id, command):
     # user-authored roof is never touched.
     candidate = carry_roof_for_admission(before.model, candidate)
     revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
-                          expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
+                          expected_head=expected, note="تعديل أبعاد وموضع " + (room["name"].strip()[:120] if isinstance(room.get("name"), str) and room["name"].strip() else ref[1]))
     result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return result

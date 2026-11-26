@@ -12,6 +12,7 @@ import './ui/approved-viewer.mjs';
 import './generated/requirement-metrics.mjs';
 import './core/brief-program.mjs';
 import './core/residential-program.mjs';
+import './core/plan-labels.mjs';
 import './ui/residential-options.mjs';
 import './ui/brief-review.mjs';
 import './ui/plan-upload.mjs';

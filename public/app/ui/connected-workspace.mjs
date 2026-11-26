@@ -3,6 +3,7 @@ import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
 import {createPlanUpload} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
+import {floorLabel,planRoomName} from '../core/plan-labels.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'محاذاة النوى بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
@@ -44,7 +45,6 @@ const metricValue = (key, v) => {
   const arabic=hasArabic(reason)?reason:key==='rack_declared_height_max_m'&&/^No declared rack groups/.test(reason)?'لا توجد مجموعات رفوف معلنة، فلا يوجد أقصى ارتفاع.':unavailableReasons[key]||'لا توجد طريقة قياس معتمدة لهذا المقياس في النموذج الحالي.';
   return 'غير متاح / غير قابل للقياس — '+arabic;
 };
-const floorLabel = index => index < 0 ? 'القبو '+Math.abs(index) : index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
 // Canonical level kind is explicit; room names never determine roof authority.
 const isRoofProjection = p => p?.level_kind === 'roof';
 const levelLabel = p => isRoofProjection(p) ? (p.level_auto===true?'السطح · افتراضي غير مشغول':'السطح · غير مشغول') : floorLabel(p.level_index);
@@ -65,6 +65,31 @@ function autoRoofFinding(issue){
 function roomLabel(label) {
   const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس',lobby:'البهو',porch:'الرواق',balcony:'الشرفة',courtyard:'الفناء',dining:'غرفة الطعام',laundry:'الغسيل',office:'المكتب',storage:'التخزين',staging:'التجهيز',receiving:'الاستلام',shipping:'الشحن',expansion:'مساحة التوسع',roof_deck:'السطح',circulation:'الحركة',service:'الخدمات'};
   return names[label] || (/^flat_\d+$/.test(label) ? 'شقة '+label.slice(5) : label);
+}
+// Internal ids (room/element ids, Python reprs) appear only in the engineer view.
+const engineerIds=()=>$('cwEngineerIds')?.checked===true;
+const roomName=(template,roomId)=>planRoomName(packet?.projections,template,roomId);
+function revisionNote(note){
+  const raw=String(note||'').replace(/\s*[·،]?\s*task:[0-9a-f-]+$/,'');
+  if(engineerIds())return raw;
+  const lock=/^(UN)?LOCK \('([^']*)', '([^']*)'\)$/.exec(raw);
+  if(lock)return (lock[1]?'إلغاء قفل ':'قفل ')+roomName(lock[2],lock[3]);
+  const edit=/^تعديل أبعاد وموضع ([^\s\u0600-\u06FF]+)$/.exec(raw);
+  return edit?'تعديل أبعاد وموضع '+roomName(null,edit[1]):raw;
+}
+// «[template/room] نص» becomes «اسم الفراغ – الدور: نص»; the bracket breaks RTL.
+function findingMessage(message){
+  const text=String(message||'');
+  if(engineerIds())return text;
+  return text.replace(/^\s*\[([^/\]]+)\/([^\]]+)\]\s*/,(all,template,roomId)=>roomName(template,roomId)+': ');
+}
+function renderVersions(data){
+  $('cwRevision').replaceChildren();$('cwCompareRevision').replaceChildren();
+  for(const revision of data?.history||[]){
+    const label='V'+revision.version+' · '+(revision.state==='APPROVED'?'معتمدة':'مسودة')+' · '+revisionNote(revision.note);
+    const o=el('option',label,$('cwRevision'));o.value=revision.revision_id;
+    const ref=el('option',label,$('cwCompareRevision'));ref.value=revision.revision_id;
+  }
 }
 function projectCopy() {
   const residential=$('cwType').value==='residential';
@@ -189,7 +214,7 @@ function syncObjectSelection(){
   panel.hidden=!objectSelection;
   const target=objectRemovalTarget(),requiresDraft=state?.object_actions?.requires_new_draft===true;
   const names={column:'عمود',railing:'درابزين',plant:'نبات',planter:'حوض نباتات'};
-  $('cwObjectDescription').textContent=target?(names[target.kind]+' · '+target.object_id+' · إزالة العنصر من هندسة النسخة، وليست إخفاءً للعرض. يُعاد فحص الأقفال والصلاحيات في الخادم.'):'العنصر المحدد غير متاح للإزالة هنا؛ اختر عنصرًا مدعومًا من آخر نسخة وبمصدر موثّق. العناصر المكررة أو القوالب المشتركة تُعدّل من مخططها.';
+  $('cwObjectDescription').textContent=target?(names[target.kind]+($('cwEngineerIds')?.checked===true?' · '+target.object_id:'')+' · إزالة العنصر من هندسة النسخة، وليست إخفاءً للعرض. يُعاد فحص الأقفال والصلاحيات في الخادم.'):'العنصر المحدد غير متاح للإزالة هنا؛ اختر عنصرًا مدعومًا من آخر نسخة وبمصدر موثّق. العناصر المكررة أو القوالب المشتركة تُعدّل من مخططها.';
   $('cwObjectConfirmation').hidden=!target||!requiresDraft;
   $('cwObjectRemove').hidden=!target;
   $('cwObjectRemove').disabled=busy||!!pendingJob||!target||(requiresDraft&&!$('cwObjectConfirm').checked);
@@ -247,13 +272,7 @@ async function renderState(data, {keepStep=false}={}) {
   const parsed=data.review_packet?await parseReviewFile(JSON.stringify(data.review_packet)):null;
   if(epoch!==revisionEpoch)return;
   state=data;packet=parsed;selected=null;
-  $('cwRevision').replaceChildren();
-  $('cwCompareRevision').replaceChildren();
-  for(const revision of data.history||[]){
-    const label='V'+revision.version+' · '+(revision.state==='APPROVED'?'معتمدة':'مسودة')+' · '+revision.note.replace(/\s*[·،]?\s*task:[0-9a-f-]+$/,'');
-    const o=el('option',label,$('cwRevision'));o.value=revision.revision_id;
-    const ref=el('option',label,$('cwCompareRevision'));ref.value=revision.revision_id;
-  }
+  renderVersions(data);
   $('cwRevision').value=data.revision_id||'';
   const position=(data.history||[]).findIndex(v=>v.revision_id===data.revision_id);
   const reference=data.history?.[Math.max(0,position-1)];
@@ -291,7 +310,7 @@ async function renderState(data, {keepStep=false}={}) {
     const findings=data.review_findings||packet.review.issues;
     $('cwIssues').replaceChildren();for(const issue of findings){
       const requirement=data.requirements?.find(r=>r.id===issue.requirement_id);
-      const text=(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+(requirement?.evidence||issue.requirement_id):'')+(issue.message?' — '+issue.message:'');
+      const text=(issueNames[issue.code]||(engineerIds()?issue.code:'ملاحظة تحتاج المراجعة'))+(issue.requirement_id?' · '+(requirement?.evidence||issue.requirement_id):'')+(issue.message?' — '+findingMessage(issue.message):'');
       const li=el('li',text,$('cwIssues'));
       // The automatic roof is rebuilt from the top storey after every edit, so
       // an AI request cannot act on it. Its deterministic fix is offered once,
@@ -509,7 +528,7 @@ function mount(){
   <section id="cwJobProgress" class="cw-card cw-job-progress" aria-label="متابعة إعداد المخطط" hidden><strong id="cwJobPhase" role="status" aria-live="polite"></strong><progress id="cwJobActivity" aria-label="جارٍ تنفيذ المهمة"></progress><output id="cwJobElapsed" aria-live="off"></output><p id="cwJobHeartbeat" class="cw-muted" aria-live="off"></p><p class="cw-muted">يمكنك العودة لاحقًا ومتابعة المهمة نفسها. يظهر المخطط بعد اكتماله وحفظه.</p></section>
   <section data-step-panel="1" class="cw-grid"><form id="cwBriefForm" class="cw-card"><h2>متطلبات المشروع</h2><label for="cwType">نوع المشروع</label><select id="cwType"><option value="residential">سكني / عمارة / فيلا</option><option value="warehouse">مستودع / صناعي</option></select><label for="cwBrief">صف المشروع والاستخدامات والعلاقات المطلوبة</label><textarea id="cwBrief" rows="6" maxlength="58000" placeholder="الموقع، الفراغات المطلوبة، المداخل، الحركة، والقيود التي يجب الحفاظ عليها…"></textarea><div class="cw-fields"><div><label for="cwWidth">عرض الموقع (م)</label><input id="cwWidth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwDepth">عمق الموقع (م)</label><input id="cwDepth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwLevels">عدد الأدوار</label><input id="cwLevels" type="number" min="1" step="1" placeholder="غير محدد"></div></div><h3>برنامج الفراغات والمتطلبات المقاسة</h3><p class="cw-muted">أضف أعداد الفراغات أو المساحات أو المتطلبات الأخرى المطلوب التحقق منها. اكتب بقية القيود في الوصف لمراجعتها مع المخطط.</p><div class="cw-table-wrap"><table><thead><tr><th>المتطلب</th><th>الاستخدام</th><th>القيمة</th><th></th></tr></thead><tbody id="cwRequirements"></tbody></table></div><button id="cwAddRequirement" type="button">+ إضافة متطلب</button><label class="cw-check"><input id="cwConfirmed" type="checkbox">راجعت الوصف والأبعاد وبرنامج المتطلبات وأؤكد استخدامها في المقترح.</label><button type="submit" class="cw-primary">متابعة إلى البدائل ←</button></form><aside class="cw-card"><h2>ماذا سنحفظ؟</h2><p>وصفك ومتطلباتك مع كل نسخة، ثم تعديلات المخطط والأقفال وقرار الاعتماد.</p><p class="cw-muted">الحفظ السحابي يتم بعد اكتمال كل عملية. الكتابة التي لم ترسلها بعد تُستعاد على هذا الجهاز.</p><h3 id="cwTypeHelpTitle">للمستودعات</h3><p id="cwTypeHelp" class="cw-muted">حدد وحدات التخزين والرفوف والمعدات وارتفاعاتها والأرصفة والممرات ومناطق التشغيل. البيانات غير المحددة تبقى غير متحققة.</p><a href="/plan-review/" target="_blank" rel="noopener">فتح ملف مراجعة محلي</a></aside></section>
   <section data-step-panel="2" hidden><div class="cw-card"><h2>اختر برنامج المخطط</h2><p class="cw-muted">راجع غرف كل خيار والمساحة المقترحة، ثم اختره لإنشاء مسودة. تستطيع تعديل احتياجاتك من خطوة المتطلبات.</p><p class="cw-muted">اختيار أي خيار يبدأ توليدًا بالذكاء الاصطناعي بعد تأكيدك؛ يستغرق بضع دقائق ويستهلك من رصيدك.</p></div><div class="cw-options"><article class="cw-card"><span class="cw-option-code">A</span><h2>استثمار المساحة</h2><p>تركيز على توزيع البرنامج المطلوب ضمن الأبعاد والقيود.</p><button data-option="A" data-mutate class="cw-primary">توليد البديل A</button></article><article class="cw-card"><span class="cw-option-code">B</span><h2>وضوح الحركة</h2><p>تركيز على العلاقات بين الفراغات وقرب الأنشطة المرتبطة.</p><button data-option="B" data-mutate class="cw-primary">توليد البديل B</button></article><article class="cw-card"><span class="cw-option-code">C</span><h2>المرونة والفصل</h2><p>تركيز على فصل الاستخدامات ومرونة التوسع المطلوبة.</p><button data-option="C" data-mutate class="cw-primary">توليد البديل C</button></article></div><details id="cwGenerationSettings" class="cw-card cw-advanced"><summary>خيارات متقدمة (اختياري)</summary><label for="cwBudget">الحد الأقصى لطلبات الذكاء الاصطناعي في هذا المقترح</label><select id="cwBudget"><option value="3">حتى 3 طلبات</option><option value="6" selected>حتى 6 طلبات</option><option value="12">حتى 12 طلبًا</option></select><p class="cw-muted">قد يُقسَّم المخطط إلى مراحل ضمن هذا الحد. لا يبدأ توليد بديل آخر تلقائيًا، ولا توجد تكلفة ثابتة يمكن تأكيدها قبل اكتمال الطلب.</p></details></section>
-  <section data-step-panel="3" hidden><div id="cwReviewEmpty" class="cw-card"><h2>لا توجد مسودة محفوظة بعد</h2><p>أكد متطلباتك ثم ولّد مقترحًا لبدء المراجعة.</p></div><div id="cwReviewContent" hidden><div class="cw-toolbar"><label for="cwRevision">النسخة المحفوظة</label><select id="cwRevision"></select><label for="cwLevel">الدور</label><select id="cwLevel"></select><button id="cwRestore" data-mutate>استعادة كمسودة جديدة</button><button id="cwCompare">عرض المقارنة</button></div><label id="cwEditApprovalNotice" class="cw-check cw-card" hidden><input id="cwEditApprovalConfirm" type="checkbox">أفهم أن التعديل ينشئ مسودة جديدة تحتاج المراجعة والاعتماد. النسخة المعتمدة السابقة تبقى محفوظة.</label><div class="cw-review"><div class="cw-card"><div class="cw-drawing"><svg id="cwPlan" role="group" aria-label="المخطط القابل للاختيار"></svg><p id="cwExtent"></p></div><p class="cw-muted">حدود الفراغات وأبعادها بالمتر. ملفات CAD الحالية تمثل حدود الفراغات؛ ليست مخططات تنفيذية كاملة.</p></div><aside class="cw-card"><h2>الفراغات</h2><form id="cwSelection" hidden><h3 id="cwSelectedName"></h3><details class="cw-position-details"><summary>موضع الفراغ المتقدم</summary><div class="cw-fields"><div><label for="cwX">X (م)</label><input id="cwX" type="number" step="any"></div><div><label for="cwZ">Z (م)</label><input id="cwZ" type="number" step="any"></div></div></details><div class="cw-fields"><div><label for="cwW">العرض (م)</label><input id="cwW" type="number" step="any" min=".01"></div><div><label for="cwD">العمق (م)</label><input id="cwD" type="number" step="any" min=".01"></div></div><div class="cw-actions"><button id="cwSaveGeometry" type="submit" data-mutate>حفظ التعديل</button><button id="cwLock" type="button" data-mutate>قفل الفراغ</button></div></form><div id="cwSpaces" class="cw-space-list"></div></aside></div><section id="cwAssumptionsCard" class="cw-card" hidden><h2>افتراضات التوزيع للمراجعة</h2><ul id="cwAssumptions"></ul></section><div class="cw-results"><section class="cw-card"><details><summary>قياسات المخطط</summary><div class="cw-table-wrap"><table><tbody id="cwMetrics"></tbody></table></div></details></section><section class="cw-card"><h2>ما الذي يحتاج المراجعة؟</h2><ul id="cwIssues"></ul><details><summary>تفاصيل الفحوصات</summary><div class="cw-table-wrap"><table><tbody id="cwChecks"></tbody></table></div></details><p class="cw-muted">تخص الفحوصات نطاقها المعلن. المتطلبات النصية غير المقاسة تحتاج مراجعة المختص.</p></section></div><section class="cw-card"><h2>تعديل بالمحادثة</h2><form id="cwChatForm"><label for="cwChat">ما الذي تريد تغييره؟</label><textarea id="cwChat" rows="3" maxlength="6000" placeholder="مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية."></textarea><p class="cw-muted">يولد طلب التعديل مقترحًا واحدًا بحد أقصى 3 استدعاءات. الأقفال محفوظة، وكل تعديل يصبح مسودة جديدة.</p><button id="cwChatSubmit" type="submit" data-mutate>إرسال التعديل وحفظ المقترح</button></form><details><summary>مصادر المتطلبات وتفاصيل المقارنة</summary><pre id="cwRequirementEvidence"></pre><pre id="cwDiff"></pre></details><h2>اعتماد النسخة</h2><p id="cwApprovalNote" role="status"></p><button id="cwApprovalFix" type="button" hidden>إزالة السطح الافتراضي</button><label class="cw-check"><input id="cwApproveConfirm" type="checkbox">راجعت هذه النسخة وأعتمدها تخطيطيًا فقط. هذا لا يُعد اعتمادًا إنشائيًا أو تصريحًا للتنفيذ.</label><button id="cwApprove" class="cw-primary" data-mutate disabled>اعتماد النسخة المختارة</button></section></div></section>
+  <section data-step-panel="3" hidden><div id="cwReviewEmpty" class="cw-card"><h2>لا توجد مسودة محفوظة بعد</h2><p>أكد متطلباتك ثم ولّد مقترحًا لبدء المراجعة.</p></div><div id="cwReviewContent" hidden><div class="cw-toolbar"><label for="cwRevision">النسخة المحفوظة</label><select id="cwRevision"></select><label for="cwLevel">الدور</label><select id="cwLevel"></select><button id="cwRestore" data-mutate>استعادة كمسودة جديدة</button><button id="cwCompare">عرض المقارنة</button></div><label id="cwEditApprovalNotice" class="cw-check cw-card" hidden><input id="cwEditApprovalConfirm" type="checkbox">أفهم أن التعديل ينشئ مسودة جديدة تحتاج المراجعة والاعتماد. النسخة المعتمدة السابقة تبقى محفوظة.</label><div class="cw-review"><div class="cw-card"><div class="cw-drawing"><svg id="cwPlan" role="group" aria-label="المخطط القابل للاختيار"></svg><p id="cwExtent"></p></div><p class="cw-muted">حدود الفراغات وأبعادها بالمتر. ملفات CAD الحالية تمثل حدود الفراغات؛ ليست مخططات تنفيذية كاملة.</p></div><aside class="cw-card"><h2>الفراغات</h2><form id="cwSelection" hidden><h3 id="cwSelectedName"></h3><details class="cw-position-details"><summary>موضع الفراغ المتقدم</summary><div class="cw-fields"><div><label for="cwX">X (م)</label><input id="cwX" type="number" step="any"></div><div><label for="cwZ">Z (م)</label><input id="cwZ" type="number" step="any"></div></div></details><div class="cw-fields"><div><label for="cwW">العرض (م)</label><input id="cwW" type="number" step="any" min=".01"></div><div><label for="cwD">العمق (م)</label><input id="cwD" type="number" step="any" min=".01"></div></div><div class="cw-actions"><button id="cwSaveGeometry" type="submit" data-mutate>حفظ التعديل</button><button id="cwLock" type="button" data-mutate>قفل الفراغ</button></div></form><div id="cwSpaces" class="cw-space-list"></div></aside></div><section id="cwAssumptionsCard" class="cw-card" hidden><h2>افتراضات التوزيع للمراجعة</h2><ul id="cwAssumptions"></ul></section><div class="cw-results"><section class="cw-card"><details><summary>قياسات المخطط</summary><div class="cw-table-wrap"><table><tbody id="cwMetrics"></tbody></table></div></details></section><section class="cw-card"><h2>ما الذي يحتاج المراجعة؟</h2><ul id="cwIssues"></ul><details><summary>تفاصيل الفحوصات</summary><div class="cw-table-wrap"><table><tbody id="cwChecks"></tbody></table></div></details><p class="cw-muted">تخص الفحوصات نطاقها المعلن. المتطلبات النصية غير المقاسة تحتاج مراجعة المختص.</p></section></div><section class="cw-card"><h2>تعديل بالمحادثة</h2><form id="cwChatForm"><label for="cwChat">ما الذي تريد تغييره؟</label><textarea id="cwChat" rows="3" maxlength="6000" placeholder="مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية."></textarea><p class="cw-muted">يولد طلب التعديل مقترحًا واحدًا بحد أقصى 3 استدعاءات. الأقفال محفوظة، وكل تعديل يصبح مسودة جديدة.</p><button id="cwChatSubmit" type="submit" data-mutate>إرسال التعديل وحفظ المقترح</button></form><details><summary>مصادر المتطلبات وتفاصيل المقارنة</summary><label class="cw-check"><input id="cwEngineerIds" type="checkbox">إظهار المعرّفات الهندسية في النسخ والملاحظات والأقفال (للمهندس)</label><pre id="cwRequirementEvidence"></pre><pre id="cwDiff"></pre></details><h2>اعتماد النسخة</h2><p id="cwApprovalNote" role="status"></p><button id="cwApprovalFix" type="button" hidden>إزالة السطح الافتراضي</button><label class="cw-check"><input id="cwApproveConfirm" type="checkbox">راجعت هذه النسخة وأعتمدها تخطيطيًا فقط. هذا لا يُعد اعتمادًا إنشائيًا أو تصريحًا للتنفيذ.</label><button id="cwApprove" class="cw-primary" data-mutate disabled>اعتماد النسخة المختارة</button></section></div></section>
   <section data-step-panel="4" hidden class="cw-card"><h2>النسخة المعتمدة والتسليم</h2><p id="cwExportNote"></p><button id="cwShow3D" class="cw-primary" disabled>عرض النموذج ثلاثي الأبعاد</button><div id="cwViewer" hidden aria-label="عارض النسخة المعتمدة"></div><div class="cw-actions" role="group" aria-label="تنزيل ملفات النسخة"><button data-format="gltf" disabled>تنزيل 3D</button><button data-format="svg" disabled>SVG</button><button data-format="dxf" disabled>DXF</button><button data-format="pdf" disabled>PDF</button><button data-format="ifc" disabled>IFC4</button><button data-format="review">ملف مراجعة</button></div><p class="cw-muted">DXF وSVG وPDF تعرض حدود الفراغات. IFC4 يصدر الفراغات، والسطح غير المشغول كمنطقة مرجعية مستقلة؛ ليس دورًا ولا نموذجًا إنشائيًا للسطح. بيانات المصدر والنسخة وحدود التصدير مرفقة بكل ملف. قد يتوقف 3D إذا كانت أبعاد عناصره غير مكتملة.</p></section>
   <dialog id="cwPaidConfirm" class="cw-dialog" aria-labelledby="cwPaidConfirmTitle"><form method="dialog"><h2 id="cwPaidConfirmTitle">بدء توليد بالذكاء الاصطناعي؟</h2><p id="cwPaidConfirmText"></p><div class="cw-actions"><button id="cwConfirmGenerate" value="go" class="cw-primary">ابدأ التوليد</button><button id="cwCancelGenerate" value="cancel">ليس الآن</button></div></form></dialog>
   <footer>ACS · المخطط ونسخه محفوظة في مشروعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></footer>`;
@@ -562,6 +581,13 @@ function mount(){
   $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;failedJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
   $('cwLevel').addEventListener('change',draw);
+  try{$('cwEngineerIds').checked=localStorage.getItem('acs_engineer_ids')==='1';}catch(e){}
+  $('cwEngineerIds').addEventListener('change',()=>{
+    try{localStorage.setItem('acs_engineer_ids',$('cwEngineerIds').checked?'1':'0');}catch(e){}
+    if(!state||busy)return;const revision=$('cwRevision').value,reference=$('cwCompareRevision').value;
+    renderVersions(state);$('cwRevision').value=revision;$('cwCompareRevision').value=reference;
+    if(packet)renderState(state,{keepStep:true}).catch(safeError);
+  });
   $('cwType').addEventListener('change',projectCopy);
   $('cwApproveConfirm').addEventListener('change',syncApproval);
   $('cwApprovalFix').addEventListener('click',()=>{$('cwRoof')?.click();});
