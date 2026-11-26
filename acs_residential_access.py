@@ -148,6 +148,24 @@ def shared(a,b,doors):
                 if overlap>EPS and overlap>=min(q-p,s-r)-EPS:return True
     return False
 
+# A small ground-floor service room the brief opens to a yard (pump and filter
+# room, garden store) is reached from outside. Habitable rooms never are.
+YARD_SERVICE_ROLES={'storage','equipment','utility','pump_room','service'}
+YARD_SERVICE_MAX_M2=6.0
+
+def opens_outside(room,rooms):
+    """A door on a side no enclosed room touches: it opens to the exterior."""
+    return any(not any(abs(edge(room,side)[0]-edge(other,OPPOSITE[side])[0])<=EPS
+                       and min(hi,edge(other,OPPOSITE[side])[2])-max(lo,edge(other,OPPOSITE[side])[1])>EPS
+                       for other in rooms if other['id']!=room['id'] and enclosed(other))
+               for side in OPPOSITE for lo,hi in portals(room,side))
+
+def yard_service(room,rooms):
+    role=str(room.get('role') or '').lower()
+    rect=room.get('rect') or [0,0,0,0]
+    small=len(rect)==4 and all(isinstance(v,(int,float)) for v in rect) and rect[2]*rect[3]<=YARD_SERVICE_MAX_M2
+    return (role in YARD_SERVICE_ROLES or role=='other') and small and opens_outside(room,rooms)
+
 def reachable(roots,allowed,graph):
     seen=set(roots)&allowed;pending=list(seen)
     while pending:
@@ -200,6 +218,7 @@ def issues(building,doors=True,dwelling=None):
             own={r['id'] for r in rooms if r.get('unit_id')==unit}
             entries={rid for rid in own if by_id[rid].get('role') in {'corridor','entrance','living','majlis'} and graph[rid]&access}
             for rid in sorted(own-reachable(entries,own,graph)):
+                if doors and at_ground and yard_service(by_id[rid],rooms):continue
                 issue(rid,'أكمل مسار الدخول من الممر المشترك إلى هذه الشقة ثم غرفها، دون المرور بشقة أخرى'+('؛ يجب أن تتقابل الأبواب على الجدار المشترك.' if doors else '.'))
     return out[:128]
 
