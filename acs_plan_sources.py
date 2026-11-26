@@ -42,6 +42,11 @@ def decode(value, limit):
     return raw
 
 
+def unusable(reason):
+    """A rejected file cannot be used as it is: say so, and what to do instead."""
+    return "لا يمكن استخدام هذا الملف كما هو: " + reason
+
+
 def validate_upload(command):
     """CPU worker: inspect real bytes, bound decoding and strip image metadata."""
     import acs_upload_security as U
@@ -80,7 +85,8 @@ def validate_upload(command):
                "preview_sha256": sha(normalized), "preview_media_type": preview["media_type"]}
         return {"row": row, "original": raw, "preview": normalized}
     except U.UploadRejected as exc:
-        return {"error": {"code": "INVALID_PLAN_SOURCE", "message": str(exc)}}
+        # The owner reads the Arabic reason; the English detail is for logs only.
+        return {"error": {"code": "INVALID_PLAN_SOURCE", "message": unusable(exc.message_ar)}}
     except PlanError as exc:
         return {"error": {"code": exc.code, "message": str(exc)}}
 

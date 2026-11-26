@@ -11,6 +11,7 @@ export const TRANSCRIPTION={
 // 5 MB stored file, 40 MP and 12000 px per side at most, and the vision read's
 // 2576 px long side. Larger photos are downscaled here before upload.
 export const LIMITS={file:5*1024*1024,image:25*1024*1024,pixels:40000000,side:12000,read:2576,preview:2*1024*1024};
+const UNUSABLE='لا يمكن استخدام هذا الملف كما هو: ';
 export function createPlanUpload(root,{storageKey,onError}) {
   const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
   let file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
@@ -69,8 +70,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
     if(isPdf){
       const pdfjs=await import('/vendor/pdfjs@4.10.38/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.10.38/pdf.worker.min.mjs';
       const loading=pdfjs.getDocument({data:await file.arrayBuffer(),isEvalSupported:false});
-      loading.onPassword=()=>{loading.destroy();onError(new Error('ملف PDF محمي بكلمة مرور. ارفع نسخة غير محمية.'));};
-      const doc=await loading.promise;if(current!==epoch){await doc.destroy();return;}
+      let locked=false;loading.onPassword=()=>{locked=true;loading.destroy();};
+      let doc;try{doc=await loading.promise;}catch(e){
+        // pdf.js reports in English; the owner gets the reason and the way out.
+        throw new Error(locked||e?.name==='PasswordException'?UNUSABLE+'ملف PDF محمي بكلمة مرور. أزل الحماية واحفظ نسخة مفتوحة ثم ارفعها.':UNUSABLE+'تعذّر فتح ملف PDF؛ يبدو تالفًا أو غير مكتمل. صدّره من جديد ثم ارفعه.');
+      }
+      if(current!==epoch){await doc.destroy();return;}
       if(doc.numPages>200){await doc.destroy();throw new Error('ملف PDF يتجاوز 200 صفحة. ارفع الصفحات المطلوبة في ملف أصغر.');}
       pdf=doc;$('cwPdfPage').replaceChildren();for(let i=1;i<=pdf.numPages;i++){const o=node('option','الصفحة '+i,$('cwPdfPage'));o.value=i;}
       $('cwPdfPagePanel').hidden=false;await renderPage();
@@ -122,7 +127,12 @@ export function createPlanUpload(root,{storageKey,onError}) {
       const body={action:'upload',source_id:uploadId,name:file.name,media_type:pdf?'application/pdf':$('cwSourcePreview').dataset.media,data_base64:base64(new Uint8Array(await file.arrayBuffer())),page:pdf?Number($('cwPdfPage').value):1};
       if(pdf)body.preview_base64=preview64;
       const result=await api(body);rows=[result.source,...rows.filter(r=>r.id!==result.source.id)];selected=result.source.id;renderRows();persist();notice('حُفظ الأصل في المشروع. راجع المتطلبات ثم تابع لاستخدام المخطط.');
-    }catch(e){ready=true;notice('لم يتأكد حفظ الملف. أعد المحاولة؛ الرفع لا يبدأ توليدًا مدفوعًا.');onError(e);}
+    }catch(e){
+      // A refused file stays refused: say why and that it cannot be used, not "retry".
+      const refused=e?.status>=400&&e?.status<500&&['INVALID_PLAN_SOURCE','INPUT_LIMIT'].includes(e?.code);
+      ready=!refused;notice(refused?(/[\u0600-\u06FF]/.test(e.message||'')&&e.message.startsWith(UNUSABLE)?e.message:UNUSABLE+(e.message||'')):'لم يتأكد حفظ الملف. أعد المحاولة؛ الرفع لا يبدأ توليدًا مدفوعًا.');
+      if(!refused)onError(e);
+    }
     finally{uploading=false;sync();}
   });
   $('cwDownloadSource').addEventListener('click',async()=>{
