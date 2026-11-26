@@ -22,8 +22,16 @@ export const PROGRAM_LIMITS = Object.freeze({
   residential: {side_m: 200, levels: 30, units_per_level: 20, units: 100, rooms_per_unit: 8},
   warehouse: {side_m: 1000, levels: 10},
 });
-export const requirementKey = r => JSON.stringify([r.metric, r.role || '']);
-export const requirementLabel = r => (r.metric==='room_count_per_unit' ? (roles[r.role]||r.role)+' في كل شقة' : r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
+// A per-floor row (a confirmed floor program, core/floor-program.mjs) is keyed by its floor too.
+// Its labels repeat floor-program's ROLE_LABEL and floor names (a UI test keeps them equal).
+export const requirementKey = r => JSON.stringify(Number.isInteger(r.level) ? [r.metric, r.role || '', r.level] : [r.metric, r.role || '']);
+const floorRoles = {bedroom:'غرف النوم',bathroom:'الحمامات ودورات المياه',living:'الصالات',majlis:'المجالس',dining:'غرف الطعام',kitchen:'المطابخ',pantry:'مستودعات المؤن',laundry:'غرف الغسيل',storage:'المخازن',office:'المكاتب',dressing:'غرف الملابس',maid_room:'غرف الخادمة',driver_room:'غرف السائق',terrace:'التراسات',balcony:'الشرفات'};
+const floorNames = ['الدور الأرضي','الدور الأول','الدور الثاني','الدور الثالث','الدور الرابع','الدور الخامس','الدور السادس','الدور السابع','الدور الثامن','الدور التاسع'];
+const floorName = i => floorNames[i] ?? 'الدور ' + i;
+const floorLabel = r => r.metric === 'ensuite_bedroom_count_by_level' ? 'غرف النوم بحمام خاص' : (floorRoles[r.role] || roles[r.role] || r.role);
+export const requirementLabel = r => (r.metric==='room_count_per_unit' ? (roles[r.role]||r.role)+' في كل شقة'
+  : ['room_count_by_level','ensuite_bedroom_count_by_level'].includes(r.metric) && Number.isInteger(r.level) ? floorLabel(r)+' في '+floorName(r.level)
+  : r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
 export function warehouseRequirementsPreflight(requirements) {
   const reqs=Array.isArray(requirements)?requirements:[];
   const confirmed=metric=>{

@@ -117,7 +117,7 @@ export function programFields(program) {
     if (total % all.length === 0) rows.push({metric:'room_count', role, expected:total});
     else notes.push('مجموع '+label+' ('+total+') لا يتوزع بالتساوي على '+all.length+' شقق؛ أدخل العدد المطلوب يدويًا.');
   }
-  if (bedrooms == null && beds.length) notes.push('برنامج كل دور مختلف: يرسم المولّد الحالي توزيعًا موحّدًا ويُرسل برنامج كل دور للنموذج وصفًا.');
+  if (bedrooms == null && beds.length) notes.push('برنامج كل دور مختلف: يُرسم كل دور ببرنامجه، وتُفحص أعداد غرفه ومقاساتها المستهدفة بعد التوليد.');
   const majlis = all.map(u => counted(u, 'majlis') > 0);
   return {
     ...base(program), units,

@@ -1,10 +1,13 @@
 import {readResidential,residentialOptions,readVilla,villaProgram,villaSummary,villaRows,villaOptions,VILLA_DEFAULTS,VILLA_SOURCE,VILLA_ISSUE_NAMES,VILLA_SCOPE_NAMES} from '../core/residential-program.mjs';
 import {PROGRAM_LIMITS,normalizeNumberText} from '../core/brief-program.mjs';
 import {villaBrief} from '../core/plot-rules.mjs';
+import {floorProgram,programOptions,programRows,programConflicts,MAX_REQUIREMENTS,PROGRAM_ISSUE_NAMES,PROGRAM_SCOPE_NAMES} from '../core/floor-program.mjs';
 // buildable(): the plot preview's buildable footprint (m²) or null; it sizes the villa cards.
-// issueNames/scopeNames: the review's label tables; the villa codes are added to them.
-export function createResidentialOptions(root,{storageKey,api,onError,buildable=()=>null,issueNames,scopeNames}) {
- if(issueNames)Object.assign(issueNames,VILLA_ISSUE_NAMES);if(scopeNames)Object.assign(scopeNames,VILLA_SCOPE_NAMES);
+// issueNames/scopeNames: the review's label tables; the villa and per-floor codes are added to them.
+// confirmedProgram(): the smart-reading card ({program, confirmed}) or null; a confirmed
+// apartment program replaces the per-flat cards with layouts of its own floors.
+export function createResidentialOptions(root,{storageKey,api,onError,buildable=()=>null,issueNames,scopeNames,confirmedProgram=()=>null}) {
+ if(issueNames)Object.assign(issueNames,VILLA_ISSUE_NAMES,PROGRAM_ISSUE_NAMES);if(scopeNames)Object.assign(scopeNames,VILLA_SCOPE_NAMES,PROGRAM_SCOPE_NAMES);
  const $=id=>root.querySelector('#'+id),el=(tag,text,parent)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;};
  const section=el('section');section.className='cw-brief-review';section.id='cwResidential';
  const choice=(id,options)=>'<select id="'+id+'">'+options.map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select>';
@@ -17,7 +20,9 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
  const bedrooms=n=>counted(n,'غرفة نوم','غرفتا نوم','غرف نوم','غرفة نوم'),baths=n=>counted(n,'دورة مياه','دورتا مياه','دورات مياه','دورة مياه'),flats=n=>counted(n,'شقة واحدة','شقتان','شقق','شقة');
  const villaFields=['cwVillaBedrooms','cwVillaMaster','cwVillaBathrooms','cwVillaMaid','cwVillaDriver'];
  const fields=['cwUnits','cwUnitsScope','cwPurpose','cwBedrooms','cwBathrooms','cwGuests','cwCity','cwStreet',...villaFields];let choices=[],prepared=null,researchEpoch=0;const originals=[...root.querySelectorAll('[data-option]')].map(b=>({id:b.dataset.option,title:b.closest('article').querySelector('h2').textContent,body:b.closest('article').querySelector('p').textContent,button:b.textContent}));
- function fingerprint(base){return JSON.stringify([base,snapshot(),$('cwLevels').value,$('cwWidth').value,$('cwDepth').value,$('cwBldWidth').value,$('cwBldDepth').value,$('cwType').value]);}
+ function fingerprint(base){const card=confirmedProgram();return JSON.stringify([base,snapshot(),$('cwLevels').value,$('cwWidth').value,$('cwDepth').value,$('cwBldWidth').value,$('cwBldDepth').value,$('cwType').value,card?.confirmed?card.program.levels:null]);}
+ // The confirmed card's program when it is planned floor by floor (an apartment building).
+ function perFloor(){const card=confirmedProgram();return $('cwType').value==='residential'&&card?.confirmed&&floorProgram(card.program)&&!villa()?card.program:null;}
  function snapshot(){return Object.fromEntries(fields.map(id=>[id,$(id).value]));}
  // One villa or house, read as the server reads it (acs_residential_access._brief_says).
  function villa(){
@@ -72,6 +77,34 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
    p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار «'+o.title+'» والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
   }
  }
+ function showProgram(base,program){
+  choices=programOptions(program,{buildable:buildable(),guests:$('cwGuests').value});
+  // A confirmed requirement that the program contradicts is shown now, not after a paid call.
+  const conflict=programConflicts(program,base.requirements)[0];
+  for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');
+   card.querySelector('p').textContent='الغرف نفسها من برنامجك المؤكد، بتوزيع مختلف: '+o.why+' '+o.tradeoff;
+   card.querySelector('[data-residential-detail]')?.remove();
+   if(conflict)o.feasible=false;
+   const p=el('p',o.floors.join('؛ ')+'. '+(conflict?'متطلب مؤكد يخالف برنامج الأدوار: '+conflict+' احذفه من جدول المتطلبات أو أكّد بطاقة البرنامج من جديد.':o.feasible?(o.sized?'تُفحص أعداد غرف كل دور ومقاساتها المستهدفة بعد التوليد.':'تُفحص أعداد غرف كل دور بعد التوليد.'):'مجموع المقاسات المستهدفة في أكبر دور ('+o.largestTarget+' م²) مع الجدران والدرج لا يتسع في نحو '+o.available+' م². راجع المقاسات في بطاقة «فهمنا».'),card);
+   p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار «'+o.title+'» والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
+  }
+ }
+ // A confirmed floor program: per-floor rows (the same on every card) and one brief line.
+ function programCommand(base,o,program){
+  let brief=base.brief;const requirements=base.requirements.map(r=>({...r}));
+  const conflicts=programConflicts(program,requirements);
+  if(conflicts.length)throw new Error('المتطلبات المؤكدة تخالف برنامج الأدوار المؤكد: '+conflicts[0]+' احذف المتطلب المخالف من الجدول أو أكّد بطاقة البرنامج من جديد.');
+  const units=program.levels.map(l=>l.units.length),rows=[{id:'program-unit_count',metric:'unit_count',expected:units.reduce((a,b)=>a+b,0),source:'inferred',source_id:'brief:program',evidence:'إجمالي الشقق: '+units.reduce((a,b)=>a+b,0),confirmed:true},...programRows(program)];
+  for(const row of rows){
+   const old=requirements.find(r=>r.metric===row.metric&&(r.role||'')===(row.role||'')&&(r.level??null)===(row.level??null)&&r.template==null);
+   if(old)continue; // equal by programConflicts
+   if(requirements.some(r=>r.id===row.id))throw new Error('معرّف متطلب مكرر: '+row.id+'. أعد تحميل الصفحة ثم أعد المحاولة.');
+   requirements.push(row);
+  }
+  if(requirements.length>MAX_REQUIREMENTS)throw new Error('برنامج الأدوار يحتاج '+requirements.length+' متطلبًا، والحد '+MAX_REQUIREMENTS+'. اجمع الأدوار المتماثلة في بطاقة البرنامج أو احذف متطلبات مكررة.');
+  brief+='\nتصور التوزيع المختار: '+o.title+' — '+o.why+' يُرسم كل دور ببرنامجه من بطاقة «فهمنا» المؤكدة.\nالمدينة: '+($('cwCity').value||'غير محددة')+'؛ جهة الشارع: '+$('cwStreet').selectedOptions[0].textContent+'.';
+  return {brief,requirements};
+ }
  // The villa program as confirmed requirement rows, each with its own evidence line in the brief.
  function villaCommand(base,o){
   let brief=base.brief;const requirements=base.requirements.map(r=>({...r}));const p=o.program;
@@ -104,6 +137,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
    if($('cwType').value==='residential')sources();
    if($('cwType').value!=='residential')return;
    if(villa()){showVilla(base);return;}
+   const program=perFloor();if(program){showProgram(base,program);return;}
    if(!$('cwUnits').value)return;
    const levels=$('cwPlotParking')?.value==='pilotis'?String(Number($('cwLevels').value)-1):$('cwLevels').value; // parking floor holds no flats
    const units=Number($('cwUnits').value)*($('cwUnitsScope').value==='per_level'?Number(levels):1);
@@ -115,8 +149,9 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
   },
   program(base,id){
    if(choices.length&&prepared!==fingerprint(base))throw new Error('تغيّرت المدخلات. اضغط متابعة إلى البدائل لتحديث المقارنة.');
-   const o=choices.find(x=>x.id===id);if(!o){if($('cwType').value==='residential'&&(villa()||$('cwUnits').value))throw new Error(villa()?'راجع برنامج الفيلا من زر متابعة إلى البدائل أولًا.':'راجع خيارات الغرف من زر متابعة إلى البدائل أولًا.');return base;}if(!o.feasible)throw new Error('عدّل البرنامج ليتناسب مع مساحة الموقع أولًا.');
+   const o=choices.find(x=>x.id===id);if(!o){if($('cwType').value==='residential'&&(villa()||perFloor()||$('cwUnits').value))throw new Error(villa()?'راجع برنامج الفيلا من زر متابعة إلى البدائل أولًا.':'راجع خيارات الغرف من زر متابعة إلى البدائل أولًا.');return base;}if(!o.feasible)throw new Error('عدّل البرنامج ليتناسب مع مساحة الموقع أولًا.');
    if(o.villa)return villaCommand(base,o);
+   if(o.floorProgram){const program=perFloor();if(!program)throw new Error('تغيّرت بطاقة البرنامج. اضغط متابعة إلى البدائل لتحديث المقارنة.');return programCommand(base,o,program);}
    let brief=base.brief;const requirements=base.requirements.map(r=>({...r}));
    const add=(metric,expected,label,role)=>{const old=requirements.find(r=>r.metric===metric&&(r.role||'')===(role||''));if(old){if(old.expected!==expected)throw new Error('الخيار يتعارض مع المتطلب المؤكد: '+label);return;}
     const evidence=label+': '+expected,start=Array.from(brief).length+1;brief+='\n'+evidence;let rid='option-'+id+'-'+metric+'-'+(role||'all');while(requirements.some(r=>r.id===rid))rid+='x';requirements.push({id:rid,metric,expected,...(role?{role}:{}),source:'inferred',source_id:'brief:selected-option',evidence,source_span:{start,end:Array.from(brief).length},confirmed:true});};

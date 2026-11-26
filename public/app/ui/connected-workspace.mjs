@@ -576,7 +576,8 @@ function mount(){
   root.querySelectorAll('[data-format]').forEach(b=>b.addEventListener('click',()=>run(()=>exportFile(b.dataset.format))));
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
   briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
-  residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError,buildable:()=>plotRules?.buildable()??null,issueNames,scopeNames});
+  residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError,buildable:()=>plotRules?.buildable()??null,issueNames,scopeNames,
+    confirmedProgram:()=>briefReader?.current()??null});
   const resumeButton=el('button','استئناف المراحل المحفوظة · استدعاء مدفوع',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
   resumeButton.addEventListener('click',()=>run(async()=>{
     const oldId=failedJob;if(!oldId||pendingJob)return;
