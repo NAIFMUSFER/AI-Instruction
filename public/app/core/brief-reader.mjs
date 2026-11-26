@@ -5,7 +5,7 @@
 export const SCHEMA = 'acs.brief-program/1';
 export const SIDE_AR = {N:'الشمال',E:'الشرق',S:'الجنوب',W:'الغرب'};
 export const POSITION_AR = {N:'الشمال',NE:'الشمال الشرقي',E:'الشرق',SE:'الجنوب الشرقي',S:'الجنوب',SW:'الجنوب الغربي',W:'الغرب',NW:'الشمال الغربي',center:'الوسط'};
-export const ROLE_AR = {bedroom:'غرفة نوم',bathroom:'حمام',living:'صالة',majlis:'مجلس',dining:'سفرة',kitchen:'مطبخ',pantry:'مؤن',laundry:'غسيل',storage:'تخزين',office:'مكتب',dressing:'ملابس',maid:'خادمة',driver:'سائق',corridor:'ممر',entrance:'مدخل',terrace:'تراس',balcony:'شرفة',other:'آخر'};
+export const ROLE_AR = {bedroom:'غرفة نوم',bathroom:'حمام',living:'صالة',majlis:'مجلس',dining:'سفرة',kitchen:'مطبخ',pantry:'مؤن',laundry:'غسيل',storage:'تخزين',office:'مكتب',dressing:'ملابس',maid_room:'خادمة',driver_room:'سائق',corridor:'ممر',entrance:'مدخل',terrace:'تراس',balcony:'شرفة',other:'آخر'};
 export const OUTDOOR_AR = {pool:'مسبح',garden:'حديقة',seating:'جلسة',courtyard:'فناء',yard:'حوش',service_yard:'حوش خدمة',walkway:'ممر خارجي',outdoor_dining:'طعام خارجي',equipment:'غرفة معدات',other:'عنصر خارجي'};
 export const STAIR_AR = {u_two_flights:'درج على شكل U بقلبتين وبسطة وسطية',straight:'درج مستقيم',l_shape:'درج على شكل L',spiral:'درج حلزوني'};
 export const OUTPUT_AR = {furnished_plans:'مخططات أدوار مؤثثة',site_plan:'مخطط موقع بالأبعاد',outdoor_plan:'مخطط الأحواش والحديقة',section:'قطاع رأسي',views_3d:'مجسّم ثلاثي الأبعاد',floor_isolation:'عزل كل دور في المجسّم'};
@@ -99,7 +99,7 @@ export function programFields(program) {
     const bathrooms = stated.length === all.length && all.length ? stated.reduce((n, v) => n + v, 0) : total('bathroom');
     return {...base(program), units:null, bedrooms:null, bathrooms:null, guests:null, rows:[], notes,
       villa:{bedrooms:total('bedroom') || null, master:rooms.some(r => r.role === 'bedroom' && r.ensuite) ? 'yes' : null,
-        bathrooms:bathrooms || null, maid:total('maid') ? 'yes' : null, driver:total('driver') ? 'yes' : null}};
+        bathrooms:bathrooms || null, maid:total('maid_room') ? 'yes' : null, driver:total('driver_room') ? 'yes' : null}};
   }
   if (all.length) {
     if (perLevel.length === 1 && (occupied.length === levels.length || (pilotisGround && occupied.length === levels.length - 1)))

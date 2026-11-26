@@ -36,8 +36,8 @@ const VILLA = python('import acs_brief_reader as B;print(json.dumps(B.validate_p
   parking: {count: 2, stall_width_m: null, stall_depth_m: null, placement: 'front_setback', note: null},
   levels: [
     {name: 'الدور الأرضي', use: 'residential', note: null, units: [{name: 'الفيلا', bedrooms: null, bathrooms: null, rooms: [
-      room('majlis', 'مجلس الرجال'), room('bathroom', 'دورة مياه الضيوف'), room('kitchen', 'المطبخ'), room('maid', 'غرفة الخادمة'),
-      room('driver', 'غرفة السائق'), room('bathroom', 'حمام الخدمة', 2), room('bedroom', 'غرفة نوم الضيوف')]}]},
+      room('majlis', 'مجلس الرجال'), room('bathroom', 'دورة مياه الضيوف'), room('kitchen', 'المطبخ'), room('maid_room', 'غرفة الخادمة'),
+      room('driver_room', 'غرفة السائق'), room('bathroom', 'حمام الخدمة', 2), room('bedroom', 'غرفة نوم الضيوف')]}]},
     {name: 'الدور الأول', use: 'residential', note: null, units: [{name: 'الفيلا', bedrooms: null, bathrooms: null, rooms: [
       room('bedroom', 'غرفة النوم الرئيسية', 1, {ensuite: true}), room('bathroom', 'حمام الرئيسية'), room('bedroom', 'غرف الأبناء', 3),
       room('bathroom', 'حمام مشترك', 2), room('living', 'الصالة العلوية')]}]}]});
