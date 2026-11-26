@@ -482,7 +482,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const buttons={};for(const [name,label]of Object.entries(VIEW_LABELS)){const button=element('button',label,toolbar);button.type='button';button.dataset.view=name;buttons[name]=button;}
   const floorLabel=element('label','الدور المعروض',toolbar);const floors=element('select',null,floorLabel);floors.setAttribute('aria-label','الدور المعروض في 3D');
   const all=element('option','جميع الأدوار',floors);all.value='all';
-  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':index<0?'القبو '+Math.abs(index):index===0?'الأرضي':'الدور '+index,floors);option.value=String(index);});
+  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':storeyName(index),floors);option.value=String(index);});
   floors.disabled=!levels.size;
   const reset=element('button','إعادة الضبط',toolbar);reset.type='button';
   const tourButton=element('button','جولة تلقائية',toolbar);tourButton.type='button';tourButton.setAttribute('aria-pressed','false');

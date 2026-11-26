@@ -7,13 +7,16 @@ export function createResidentialOptions(root,{storageKey,api,onError}) {
  ($('cwBuildingFields')||$('cwLevels').closest('.cw-fields')).after(section);
  const sourcePanel=el('section',null,root.querySelector('[data-step-panel="2"]'));sourcePanel.className='cw-card';sourcePanel.id='cwResearch';
  el('h3','مراجع تساعدك على مراجعة التصميم',sourcePanel);const note=el('p','',sourcePanel);note.id='cwResearchStatus';const links=el('div',null,sourcePanel);
+ // Arabic counting: 1 مفرد، 2 مثنى، 3–10 جمع، 11+ مفرد منصوب.
+ const counted=(n,one,two,few,many)=>{n=Number(n);return n===1?one:n===2?two:n>=3&&n<=10?n+' '+few:n+' '+many;};
+ const bedrooms=n=>counted(n,'غرفة نوم','غرفتا نوم','غرف نوم','غرفة نوم'),baths=n=>counted(n,'دورة مياه','دورتا مياه','دورات مياه','دورة مياه'),flats=n=>counted(n,'شقة واحدة','شقتان','شقق','شقة');
  const fields=['cwUnits','cwUnitsScope','cwPurpose','cwBedrooms','cwBathrooms','cwGuests','cwCity','cwStreet'];let choices=[],prepared=null,researchEpoch=0;const originals=[...root.querySelectorAll('[data-option]')].map(b=>({id:b.dataset.option,title:b.closest('article').querySelector('h2').textContent,body:b.closest('article').querySelector('p').textContent,button:b.textContent}));
  function fingerprint(base){return JSON.stringify([base,snapshot(),$('cwLevels').value,$('cwWidth').value,$('cwDepth').value,$('cwBldWidth').value,$('cwBldDepth').value,$('cwType').value]);}
  function snapshot(){return Object.fromEntries(fields.map(id=>[id,$(id).value]));}
  function save(){try{localStorage.setItem(storageKey(),JSON.stringify(snapshot()));}catch(e){}$('cwConfirmed').checked=false;summary();}
  function summary(){
   const count=Number($('cwUnits').value),levels=Number($('cwLevels').value);section.hidden=$('cwType').value!=='residential';
-  $('cwResidentialSummary').textContent=count>0?( $('cwUnitsScope').value==='per_level'?count+' شقق في كل دور؛ الإجمالي '+(levels>0?count*levels:'يحتاج عدد الأدوار')+'.':count+' شقق في إجمالي المبنى. غيّر الاختيار إن كنت تقصد العدد في كل دور.'):'للعمارة، حدّد عدد الشقق لعرض برامج غرف قابلة للمقارنة. للفيلا يمكنك متابعة وصف الغرف مباشرة.';
+  $('cwResidentialSummary').textContent=count>0?( $('cwUnitsScope').value==='per_level'?flats(count)+' في كل دور؛ الإجمالي '+(levels>0?flats(count*levels):'يحتاج عدد الأدوار')+'.':flats(count)+' في إجمالي المبنى. غيّر الاختيار إن كنت تقصد العدد في كل دور.'):'للعمارة، حدّد عدد الشقق لعرض برامج غرف قابلة للمقارنة. للفيلا يمكنك متابعة وصف الغرف مباشرة.';
  }
  section.addEventListener('input',save);section.addEventListener('change',save);$('cwLevels').addEventListener('input',summary);$('cwType').addEventListener('change',summary);
  $('cwReadBrief').addEventListener('click',()=>{const found=readResidential($('cwBrief').value);if(found.units){$('cwUnits').value=found.units;$('cwUnitsScope').value=found.scope;}if(found.bedrooms)$('cwBedrooms').value=found.bedrooms;if(found.guests)$('cwGuests').value=found.guests;save();});
@@ -42,8 +45,8 @@ export function createResidentialOptions(root,{storageKey,api,onError}) {
    const units=Number($('cwUnits').value)*($('cwUnitsScope').value==='per_level'?Number($('cwLevels').value):1);
    const fixed=role=>base.requirements.find(r=>r.metric==='room_count'&&r.role===role)?.expected;
    choices=residentialOptions({units:$('cwUnits').value,scope:$('cwUnitsScope').value,levels:$('cwLevels').value,width:$('cwBldWidth').value||$('cwWidth').value,depth:$('cwBldDepth').value||$('cwDepth').value,bedrooms:fixed('bedroom')!=null?fixed('bedroom')/units:$('cwBedrooms').value,bathrooms:fixed('bathroom')!=null?fixed('bathroom')/units:$('cwBathrooms').value,guests:$('cwGuests').value,purpose:$('cwPurpose').value});
-   for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.querySelector('p').textContent=o.bedrooms+' غرف نوم، صالة، مطبخ، '+o.bathrooms+' دورات مياه'+(o.majlis?'، مجلس مستقل':'')+' في كل شقة. '+o.why+' '+o.tradeoff;
-    card.querySelector('[data-residential-detail]')?.remove();const p=el('p',o.total+' شقق؛ توزيعها على الأدوار: '+o.distribution.join('، ')+'. تقدير الشقة '+o.estimatedUnitArea+' م². '+(o.feasible?o.feasibilityNote:'المساحة الإجمالية لا تكفي هذا البرنامج المقترح. قلّل عدد الشقق أو عدّل الغرف قبل التوليد.'),card);p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار '+o.title+' والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
+   for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.querySelector('p').textContent=bedrooms(o.bedrooms)+'، صالة، مطبخ، '+baths(o.bathrooms)+(o.majlis?'، مجلس مستقل':'')+' في كل شقة. '+o.why+' '+o.tradeoff;
+    card.querySelector('[data-residential-detail]')?.remove();const p=el('p',flats(o.total)+'؛ توزيعها على الأدوار: '+o.distribution.join('، ')+'. تقدير الشقة '+o.estimatedUnitArea+' م². '+(o.feasible?o.feasibilityNote:'المساحة الإجمالية لا تكفي هذا البرنامج المقترح. قلّل عدد الشقق أو عدّل الغرف قبل التوليد.'),card);p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار '+o.title+' والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
    }
   },
   program(base,id){

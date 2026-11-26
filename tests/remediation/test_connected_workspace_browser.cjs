@@ -214,7 +214,7 @@ w.write(sys.argv[1])`,pdfFixture]);
      await page.locator('#cwConfirmed').check();
      await page.locator('#cwBriefForm button[type=submit]').click();
      await page.locator('[data-option="A"]').waitFor({state:'visible'});
-     assert.ok((await page.locator('[data-residential-detail]').first().textContent()).includes('2 شقق'));
+     assert.ok((await page.locator('[data-residential-detail]').first().textContent()).includes('شقتان'),'Arabic dual form for two flats');
      assert.ok((await page.locator('.cw-options').textContent()).includes('خصوصية الضيوف'));
      assert.equal(await page.locator('[data-option="A"]').isEnabled(),true);
      await page.locator('[data-step="1"]').click();
@@ -307,7 +307,7 @@ w.write(sys.argv[1])`,pdfFixture]);
 
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();
    await page.locator('#cwShow3D').waitFor({state:'visible'});assert.equal(await page.locator('#cwShow3D').isEnabled(),true);
-   const downloadPromise=page.waitForEvent('download');await page.locator('[data-format=svg]').click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'acs-approved.svg');
+   const downloadPromise=page.waitForEvent('download');await page.locator('[data-format=svg]').click();const download=await downloadPromise;assert.match(download.suggestedFilename(),/^مخطط-الدور-الأرضي-V\d+\.svg$/,'one owner-named file per floor, no manifest beside it');
    await page.locator('#cwShow3D').click();
    if(noWebGL){
     await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('العرض ثلاثي الأبعاد غير متاح'));

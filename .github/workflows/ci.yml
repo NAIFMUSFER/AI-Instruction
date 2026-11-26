@@ -823,6 +823,7 @@ jobs:
           bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
             tests/remediation/test_approved_revision_race.mjs \
             tests/remediation/test_connected_revision_controls.mjs \
+            tests/remediation/test_plan_labels.mjs \
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \
             tests/remediation/test_guest_roof_integration.cjs \

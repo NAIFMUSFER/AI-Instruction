@@ -106,6 +106,23 @@ def _level_title(projection: dict) -> str:
     return f"Level {index}"
 
 
+_AR_ORDINALS = ("الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر")
+
+
+def _arabic_level_title(projection: dict) -> str:
+    """Arabic page title: «مخطط الدور الأرضي», «مخطط السطح (غير مشغول)»."""
+    index = projection.get("level_index")
+    if projection.get("level_kind") == "roof":
+        return "مخطط السطح (غير مشغول)"
+    if type(index) is not int:
+        return "مخطط الدور"
+    if index == 0:
+        return "مخطط الدور الأرضي"
+    if 1 <= index <= len(_AR_ORDINALS):
+        return "مخطط الدور " + _AR_ORDINALS[index - 1]
+    return "مخطط الدور %d" % index
+
+
 def _page_stream(projection: dict, page_number: int, total_pages: int,
                  *, revision_id: str, model_hash: str, provenance_hash: str,
                  unicode_font=None) -> tuple[bytes, dict]:
@@ -193,8 +210,21 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
         f"{_num(MARGIN)} {_num(MARGIN - 2)} Td",
         "(SCHEMATIC SPACE BOUNDARIES ONLY - NOT FOR CONSTRUCTION - REGULATORY COMPLIANCE NOT VERIFIED) Tj",
         "ET",
-        "Q",
     ])
+    if unicode_font is not None:
+        # The owner reads Arabic: the same title and limits, right-aligned above
+        # and below the drawing. The English lines stay for engineers and readers.
+        from acs_pdf_text import PdfTextError
+        try:
+            for text, size, y in ((_arabic_level_title(projection) + " · صفحة %d من %d" % (page_number, total_pages),
+                                   11, PAGE_H - MARGIN + 8),
+                                  ("حدود فراغات تخطيطية فقط · ليست للتنفيذ · الامتثال النظامي غير متحقق",
+                                   7, MARGIN - 13)):
+                width = unicode_font.shape(text)[2]
+                commands.append(unicode_font.command(text, PAGE_W - MARGIN - width * size, y, size))
+        except PdfTextError as exc:
+            raise PlanError('PDF_TEXT_UNSUPPORTED', 'تعذّر كتابة عنوان PDF العربي بالخط المضمّن.') from exc
+    commands.append("Q")
     stream = ("\n".join(commands) + "\n").encode("ascii")
     manifest = {
         "page_number": page_number,

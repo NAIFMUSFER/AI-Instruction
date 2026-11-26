@@ -3,9 +3,23 @@
 const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 export const arabicDigits = value => String(value).replace(/[0-9]/g, d => AR_DIGITS[d]);
 
+const UNITS = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع'];
+const TENS = ['', 'العاشر', 'العشرون', 'الثلاثون', 'الأربعون', 'الخمسون', 'الستون', 'السبعون', 'الثمانون', 'التسعون'];
+// Arabic ordinal for a storey: الأول، الثاني … العاشر، الحادي عشر … العشرون، الحادي والعشرون …
+export function arabicOrdinal(n) {
+  if (!Number.isInteger(n) || n < 1 || n > 99) return null;
+  if (n < 10) return UNITS[n];
+  if (n === 10) return TENS[1];
+  if (n < 20) return (n === 11 ? 'الحادي' : UNITS[n - 10]) + ' عشر';
+  const unit = n % 10, tens = TENS[Math.floor(n / 10)];
+  return unit ? (unit === 1 ? 'الحادي' : UNITS[unit]) + ' و' + tens : tens;
+}
+// «الدور الأرضي»، «الدور الأول»، «الدور الثاني»…؛ basements «القبو»، «القبو الثاني».
 export function floorLabel(index) {
-  if (index < 0) return 'القبو ' + Math.abs(index);
-  return index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور ' + index;
+  if (index === 0) return 'الدور الأرضي';
+  const ordinal = arabicOrdinal(Math.abs(index));
+  if (index < 0) return index === -1 ? 'القبو' : ordinal ? 'القبو ' + ordinal : 'القبو ' + Math.abs(index);
+  return ordinal ? 'الدور ' + ordinal : 'الدور ' + index;
 }
 
 const ROLE_WORDS = {

@@ -46,7 +46,9 @@ export function createBriefEditor(root,{storageKey,onError}) {
   replace.id='cwReplaceBrief';keep.id='cwKeepBrief';
   root.querySelector('label[for="cwBrief"]').before(starterGroup);
 
-  const starterFieldIds=[...Object.values(fields),'cwUnits','cwUnitsScope'];
+  const starterFieldIds=[...Object.values(fields),'cwUnits','cwUnitsScope','cwCity'];
+  // A starter that names its city fills «المدينة» too, while that field is blank or starter-filled.
+  const CITY=/(?:^|[\s،.])(?:في|بمدينة|مدينة)\s+(الرياض|جدة|الدمام|مكة المكرمة|مكة|المدينة المنورة|الخبر|الطائف|تبوك|أبها|بريدة|حائل|جازان|نجران|الأحساء|الجبيل|ينبع)(?![\p{L}])/u;
   let linkedFields=new Set(), pendingStarter=null;
   function closeStarterPreview(){
     replacement.hidden=true;pendingStarter=null;
@@ -59,6 +61,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
     if($('cwType').value==='residential'&&!$('cwUnits').value){
       linkedFields.add('cwUnits');linkedFields.add('cwUnitsScope');
     }
+    if($('cwCity')&&!$('cwCity').value)linkedFields.add('cwCity');
     brief.value=starter.text;
     brief.dispatchEvent(new Event('input',{bubbles:true}));
     brief.focus();
@@ -96,6 +99,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
       const parsed=readResidential(brief.value);
       if(linkedFields.has('cwUnits'))$('cwUnits').value=parsed.units??'';
       if(linkedFields.has('cwUnitsScope'))$('cwUnitsScope').value=parsed.scope||'total';
+      if(linkedFields.has('cwCity')&&$('cwCity'))$('cwCity').value=CITY.exec(brief.value)?.[1]||'';
       // The residential editor owns its draft and the live unit-count summary.
       $('cwUnits').dispatchEvent(new Event('change',{bubbles:true}));
     }
@@ -140,7 +144,10 @@ export function createBriefEditor(root,{storageKey,onError}) {
     const items=[...(analysis?.questions||[])];
     const residential=$('cwType').value==='residential';
     $('cwBuildingFields').hidden=!residential;
+    // An empty new project shows no questions until the owner starts describing it.
+    const started=!!$('cwBrief').value.trim()||Object.values(fields).some(id=>$(id).value!=='');
     for(const [metric,id] of Object.entries(fields)){
+      if(!started)break;
       if($(id).value!=='')continue;
       if(!optional.has(metric))items.push('ما '+metricLabels[metric]+'؟ القيمة غير محددة.');
       else if(residential&&metric==='building_width_m')items.push('ما عرض المبنى وعمقه بعد الارتدادات؟ إن تركتهما فارغين فسيُرسم المبنى بحجم الأرض كاملة.');
