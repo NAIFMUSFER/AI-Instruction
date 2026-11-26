@@ -22,6 +22,10 @@ def wall(room,side):
     value=room.get('walls')
     return False if value=='none' else side in value if isinstance(value,list) else True
 
+def enclosed(room):
+    """A space with no wall on any side (an open porch or canopy) is outdoors."""
+    return any(wall(room,side) for side in OPPOSITE)
+
 def portals(room,side):
     _,origin,_=edge(room,side);out=[]
     for o in room.get('doors',[]) or []:
@@ -78,10 +82,13 @@ def issues(building,doors=True):
         roots={r['id'] for r in rooms if r['id'] in common and r.get('role') in ({'entrance','lobby'} if at_ground else {'stairs','stair'})}
         if doors and at_ground:
             # A declared entrance needs an opening onto unoccupied exterior.
+            # A wall-less space (open porch, canopy) is exterior: shared()
+            # already treats a missing wall as fully open, and no compiler
+            # builds a wall there, so a door into it opens to the outside.
             roots={rid for rid in roots if any(
                 not any(abs(edge(by_id[rid],side)[0]-edge(other,OPPOSITE[side])[0])<=EPS
                         and min(hi,edge(other,OPPOSITE[side])[2])-max(lo,edge(other,OPPOSITE[side])[1])>EPS
-                        for other in rooms if other['id']!=rid)
+                        for other in rooms if other['id']!=rid and enclosed(other))
                 for side in OPPOSITE for lo,hi in portals(by_id[rid],side))}
         access=reachable(roots,common,graph)
         for rid in sorted(common-access):issue(rid,'اربط المدخل والممر المشترك والدرج والمصعد بمسار متصل'+(' وأبواب متقابلة متطابقة.' if doors else ' وحواف متلامسة.'))

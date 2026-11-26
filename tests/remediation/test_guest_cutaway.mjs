@@ -8,6 +8,9 @@ const build=src.slice(src.indexOf('function buildRoom('),src.indexOf('/* ===',sr
 const sides=[];
 const context={acsRoomRect:r=>r.rect,acsList:(r,k)=>r[k]||[],normHex:s=>s,ROLE_COLOR:{},acsCapList:a=>a,SCENE_LIMITS:{},
   edgeGeom:()=>['x',0,0,5],wallOpenings:(...args)=>sides.push(args[11]),dockOpenings:()=>({N:[],S:[],E:[],W:[]})};
+// Generated rooms declare ceiling lights, so buildRoom reaches the shipped point table.
+const pointKinds=src.slice(src.indexOf('const POINT_KINDS = '),src.indexOf('};',src.indexOf('const POINT_KINDS = '))+2);
+context.POINT_KINDS=vm.runInNewContext(pointKinds+'\nPOINT_KINDS');
 const room=vm.runInNewContext(build+'\nbuildRoom',context);
 for(const [walls,expected] of [[[],[]],[['N','W'],['wN','wW']],['full',['wN','wS','wE','wW']]]){
   sides.length=0;room({}, {id:'roof',rect:[0,0,5,5],walls},'F3',9,{wall_h:.8,wall_t:.2});

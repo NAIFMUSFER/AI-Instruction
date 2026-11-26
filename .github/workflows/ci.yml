@@ -797,6 +797,7 @@ jobs:
             tests/remediation/test_plan_pdf_export.py \
             tests/remediation/test_geometry_delivery.py \
             tests/remediation/test_geometry_independent_readers.py \
+            tests/remediation/test_guest_apartment_approval.py \
             tests/remediation/test_requirement_vocabulary.py \
             tests/remediation/test_roof_level.py \
             tests/remediation/test_guest_roof_parity.py \

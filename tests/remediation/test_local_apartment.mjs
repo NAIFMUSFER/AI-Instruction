@@ -13,7 +13,36 @@ const sample=apartmentSample();
 const original=JSON.stringify(sample);
 const exact=apartmentFromBrief(fixture,{width:30,depth:25,levels:4});
 const near=(a,b)=>Math.abs(a-b)<0.003;
-assert.equal(createHash('sha256').update(original).digest('hex'),'25713fbe1e4ac8b93a14123b5097b18a8980b82452d400fd2d2fa00c4eb1a46e',
+{
+  // Rooms declare the ceiling light the approval gate requires, and the
+  // largest supported design still fits the context-details resource bound.
+  const largest=apartmentFromBrief('عمارة سكنية عرض المبنى ٣٢ متر وعمقه ٣٦ متر، ستة أدوار شاملة الأرضي، شقتين في كل دور');
+  for(const level of largest.levels)for(const room of largest.floors[level.template].rooms)
+    assert.ok((room.points||[]).some(point=>point.type==='light'&&point.id==='ceiling_light'),'every generated room declares its ceiling light: '+room.id);
+  assert.equal(withContextDetails(withDefaultRoof(largest)[0])[2],null,'the largest supported design keeps its context details');
+}
+{
+  // A guest project saved before these conventions still accepts an entrance
+  // or courtyard revision: no lights, role 'entry', no object repeat fields,
+  // and paired door leaves up to 1 mm apart are not manual edits.
+  const legacy=structuredClone(apartmentFromBrief(fixture));
+  let shifted=0;
+  for(const floor of Object.values(legacy.floors))for(const room of floor.rooms){
+    room.points=(room.points||[]).filter(point=>point.id!=='ceiling_light');
+    if(!room.points.length)delete room.points;
+    if(room.role==='entrance'&&room.unit_id)room.role='entry';
+    for(const obj of room.objects||[])if(obj.count===1){delete obj.count;delete obj.pitch;delete obj.dir;}
+    for(const door of room.doors||[])if(door.acs_door_pair&&shifted<5){door.offset=Math.round((door.offset+0.001)*1000)/1000;shifted++;}
+  }
+  const revised=apartmentFromRevision('خل المدخل من الشرق',legacy);
+  assert.equal(revised.meta.acs_apartment.street_edge,'E');
+  assert.ok(revised.levels.every(level=>revised.floors[level.template].rooms.every(room=>room.points?.some(point=>point.id==='ceiling_light'))));
+}
+// Re-pinned when the sample became approvable: rooms gained one ceiling light,
+// objects state count/pitch/dir, the foyer role is 'entrance' and paired door
+// offsets share one rounded centre (each moved <= 1 mm). No room rectangle moved;
+// the prebuilt USDZ was refreshed and the schematic drawings are unchanged.
+assert.equal(createHash('sha256').update(original).digest('hex'),'b1c1bf1bb2aedc5628da929888b2ebeb4505c13bec1e70a7b641ffa542eeed58',
   'the shipped sample and its prebuilt drawings/USDZ must retain their original source geometry');
 
 function outside(room,opening,step) {

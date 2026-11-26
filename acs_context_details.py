@@ -51,7 +51,9 @@ def _bounded(model):
         elif value is None or isinstance(value,bool):size+=5
         elif _num(value):size+=32
         else:return False
-        if size>600000:return False
+        # Same 1.2 MB estimate as context-details.mjs; 600 kB refused supported
+        # local apartments (32 x 36 m, six floors) before lights were declared.
+        if size>1200000:return False
     return True
 
 

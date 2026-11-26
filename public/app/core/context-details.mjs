@@ -34,7 +34,9 @@ function cdBounded(model){
   else if(typeof value==='string')size+=cdUtf8(value).length*6+2;
   else if(value===null||typeof value==='boolean')size+=5;
   else if(cdNum(value))size+=32;else return false;
-  if(size>600000)return false;
+  // 1.2 MB estimate: the 600 kB bound refused supported local apartments
+  // (32 x 36 m, six floors) even before rooms declared their ceiling lights.
+  if(size>1200000)return false;
  }return true;
 }
 function cdError(code){const error=new Error(code);error.code=code;throw error;}

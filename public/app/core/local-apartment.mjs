@@ -37,7 +37,9 @@ function connect(a,b,desired = 0.95, material = 'wood') {
   const [edge,start,end,fromA,fromB] = sharedWall(a,b);
   const width = round(Math.min(desired, end-start-0.24));
   if (width < 0.75) throw new Error('LOCAL_APARTMENT_DOOR_TOO_NARROW');
-  const center = (start+end)/2;
+  // Round the shared centre once: rounding each room's offset separately left
+  // the two leaves of one door up to 1 mm apart, which the access check rejects.
+  const center = round((start+end)/2);
   const door = (room, other, side, origin) => ({
     id: room.id+'_to_'+other.id, edge: side, offset: round(center-origin), width, height: 2.18, material,
     acs_door_pair:{id:'door|'+[room.id,other.id].sort().join('|'),peer_room_id:other.id}
@@ -55,7 +57,10 @@ function windowAt(room,edge,fraction,width,sill=0.76,height=1.78) {
 
 function object(room,kind,name,x,z,w,d,h,rot=0,y=0) {
   (room.objects ||= []).push({id:room.id+'_'+kind+'_'+room.objects.length,
-    kind,name,x:round(x),z:round(z),w:round(w),d:round(d),h:round(h),rot,y:round(y)});
+    kind,name,x:round(x),z:round(z),w:round(w),d:round(d),h:round(h),rot,y:round(y),
+    // A single instance, stated explicitly with the compiler's repeat defaults
+    // so approved 3D does not have to assume them.
+    count:1,pitch:1.2,dir:'x'});
 }
 
 function furnish(r) {
@@ -146,7 +151,7 @@ function floorPlan(width,depth,index,storeyHeight) {
     }
     add('living','صالة عائلية','living',0,balconyDepth,4.4,7.2-balconyDepth);
     add('majlis','مجلس الضيوف','majlis',4.4,0,3.6,5);
-    add('foyer','مدخل الشقة','entry',4.4,5,3.6,2.2);
+    add('foyer','مدخل الشقة','entrance',4.4,5,3.6,2.2);
     add('dining','صالة الطعام','dining',0,7.2,4.4,3.6);
     add('kitchen','مطبخ','kitchen',0,10.8,4.4,4);
     add('hall','ممر النوم','corridor',4.4,7.2,1.8,12.8);
@@ -242,7 +247,7 @@ function courtyardPlan(width,depth,index,storeyHeight,courtyard) {
     }
     add('living','صالة عائلية','living',left,balconyEnd,hallX,foyerEnd);
     add('majlis','مجلس الضيوف','majlis',hallX,top,vx,foyerStart);
-    add('foyer','مدخل الشقة','entry',hallX,foyerStart,vx,foyerEnd);
+    add('foyer','مدخل الشقة','entrance',hallX,foyerStart,vx,foyerEnd);
     add('hall','ممر النوم','corridor',hallX,foyerEnd,galleryX,coreBack);
     add('guest_wc','دورة مياه الضيوف','bathroom',galleryX,foyerEnd,vx,galleryZ);
     add('dining','صالة الطعام','dining',left,foyerEnd,hallX,diningEnd);
@@ -280,6 +285,40 @@ function orientedRect([x,z,w,d],turns,width,depth) {
   const p=orientedPoint(x,z,turns,width,depth), q=orientedPoint(x+w,z+d,turns,width,depth);
   return [Math.min(p[0],q[0]),Math.min(p[1],q[1]),round(Math.abs(q[0]-p[0])),round(Math.abs(q[1]-p[1]))];
 }
+// Every room declares the ceiling light the approval gate requires; the
+// fixture sits at the room centre and is a conceptual default, not a design.
+function withCeilingLights(floor) {
+  for(const room of floor.rooms)
+    (room.points ||= []).push({id:'ceiling_light',type:'light',x:round(room.rect[2]/2),z:round(room.rect[3]/2)});
+  return floor;
+}
+
+// Projects saved before generated lights, the 'entrance' role and exact
+// paired-door centres differ from today's baseline only by those conventions.
+function withLegacyConventions(current,baseline) {
+  const copy=structuredClone(current);
+  for(const [key,floor] of Object.entries(copy.floors||{})) {
+    const reference=new Map((baseline.floors?.[key]?.rooms||[]).map(room=>[room.id,room]));
+    for(const room of floor.rooms||[]) {
+      const ref=reference.get(room.id);
+      if(!ref) continue;
+      if(room.role==='entry'&&ref.role==='entrance') room.role='entrance';
+      const light=(ref.points||[]).find(point=>point.id==='ceiling_light');
+      if(light&&!(room.points||[]).some(point=>point.type==='light')) room.points=[...(room.points||[]),light];
+      for(const door of room.doors||[]) {
+        const twin=(ref.doors||[]).find(item=>item.id===door.id);
+        if(twin&&Math.abs(twin.offset-door.offset)<=0.0015) door.offset=twin.offset;
+      }
+      for(const obj of room.objects||[]) {
+        const twin=(ref.objects||[]).find(item=>item.id===obj.id);
+        if(twin&&twin.count===1&&!('count' in obj)&&!('pitch' in obj)&&!('dir' in obj))
+          Object.assign(obj,{count:twin.count,pitch:twin.pitch,dir:twin.dir});
+      }
+    }
+  }
+  return copy;
+}
+
 function orientFloor(floor,turns,width,depth) {
   if(!turns) return floor;
   const edge=e=>cardinalEdges[(cardinalEdges.indexOf(e)+turns)%4];
@@ -353,7 +392,7 @@ function design(width,depth,levels,height,source,{entrance='N',courtyard=null}={
     const template='level_'+i;
     model.levels.push({index:i,name:levelsAr[i],elevation:round(i*height),template});
     const floor=planCourtyard?courtyardPlan(planWidth,planDepth,i,height,planCourtyard):floorPlan(planWidth,planDepth,i,height);
-    model.floors[template]=orientFloor(floor,turns,planWidth,planDepth);
+    model.floors[template]=withCeilingLights(orientFloor(floor,turns,planWidth,planDepth));
   }
   if(levels===1) return model;
   const [result,report,reason]=withDefaultStairs(model);
@@ -638,10 +677,14 @@ export function apartmentFromRevision(text,currentModel) {
     baseline=withContextDetails(baseline)[0];
     model=withContextDetails(model)[0];
   }
-  const matches=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-  const sourceKeys=new Set([...Object.keys(currentModel),...Object.keys(baseline)]);
+  // Key order is not authored content; compare canonically ordered JSON.
+  const ordered=value=>JSON.stringify(value,(key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?
+    Object.fromEntries(Object.entries(item).sort(([a],[b])=>a<b?-1:a>b?1:0)):item);
+  const matches=(a,b)=>ordered(a)===ordered(b);
+  const current=withLegacyConventions(currentModel,baseline);
+  const sourceKeys=new Set([...Object.keys(current),...Object.keys(baseline)]);
   if([...sourceKeys].some(key=>key!=='meta' &&
-    (Object.hasOwn(currentModel,key)!==Object.hasOwn(baseline,key) || !matches(currentModel[key],baseline[key]))))
+    (Object.hasOwn(current,key)!==Object.hasOwn(baseline,key) || !matches(current[key],baseline[key]))))
     unsupported('يتضمن مشروعك تعديلات يدوية على الهندسة أو السطح أو بيانات هندسية إضافية. احتفظ بها في المشروع الحالي، أو نزّل نسخته ثم ابدأ وصفاً جديداً للتوزيع المطلوب.');
   model.meta={...currentModel.meta,...model.meta};
   // The UI reapplies the actual roof preference to this newly built shell.
