@@ -1,0 +1,207 @@
+[
+ {
+  "id": "brief-0",
+  "metric": "site_width_m",
+  "source": "requested",
+  "evidence": "عرض الأرض ٢٠ متر",
+  "expected": 20,
+  "confirmed": true,
+  "source_id": "brief:text",
+  "source_span": {
+   "end": 44,
+   "start": 28
+  }
+ },
+ {
+  "id": "brief-1",
+  "metric": "site_depth_m",
+  "source": "requested",
+  "evidence": "عمق الأرض ٢٥ متر",
+  "expected": 25,
+  "confirmed": true,
+  "source_id": "brief:text",
+  "source_span": {
+   "end": 62,
+   "start": 46
+  }
+ },
+ {
+  "id": "brief-2",
+  "metric": "level_count",
+  "source": "requested",
+  "evidence": "عدد الأدوار ٣",
+  "expected": 3,
+  "confirmed": true,
+  "source_id": "brief:text",
+  "source_span": {
+   "end": 77,
+   "start": 64
+  }
+ },
+ {
+  "id": "option-C-unit_count-all",
+  "metric": "unit_count",
+  "source": "inferred",
+  "evidence": "إجمالي الشقق: 6",
+  "expected": 6,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 235,
+   "start": 220
+  }
+ },
+ {
+  "id": "option-C-unit_count_per_level-all",
+  "metric": "unit_count_per_level",
+  "source": "inferred",
+  "evidence": "عدد الشقق في كل دور: 2",
+  "expected": 2,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 258,
+   "start": 236
+  }
+ },
+ {
+  "id": "option-C-room_count-bedroom",
+  "metric": "room_count",
+  "source": "inferred",
+  "evidence": "إجمالي غرف النوم: 12",
+  "expected": 12,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 279,
+   "start": 259
+  },
+  "role": "bedroom"
+ },
+ {
+  "id": "option-C-room_count_per_unit-bedroom",
+  "metric": "room_count_per_unit",
+  "source": "inferred",
+  "evidence": "غرف النوم في كل شقة: 2",
+  "expected": 2,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 302,
+   "start": 280
+  },
+  "role": "bedroom"
+ },
+ {
+  "id": "option-C-room_count-living",
+  "metric": "room_count",
+  "source": "inferred",
+  "evidence": "إجمالي الصالات: 6",
+  "expected": 6,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 320,
+   "start": 303
+  },
+  "role": "living"
+ },
+ {
+  "id": "option-C-room_count_per_unit-living",
+  "metric": "room_count_per_unit",
+  "source": "inferred",
+  "evidence": "الصالات في كل شقة: 1",
+  "expected": 1,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 341,
+   "start": 321
+  },
+  "role": "living"
+ },
+ {
+  "id": "option-C-room_count-kitchen",
+  "metric": "room_count",
+  "source": "inferred",
+  "evidence": "إجمالي المطابخ: 6",
+  "expected": 6,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 359,
+   "start": 342
+  },
+  "role": "kitchen"
+ },
+ {
+  "id": "option-C-room_count_per_unit-kitchen",
+  "metric": "room_count_per_unit",
+  "source": "inferred",
+  "evidence": "المطابخ في كل شقة: 1",
+  "expected": 1,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 380,
+   "start": 360
+  },
+  "role": "kitchen"
+ },
+ {
+  "id": "option-C-room_count-bathroom",
+  "metric": "room_count",
+  "source": "inferred",
+  "evidence": "إجمالي دورات المياه: 12",
+  "expected": 12,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 404,
+   "start": 381
+  },
+  "role": "bathroom"
+ },
+ {
+  "id": "option-C-room_count_per_unit-bathroom",
+  "metric": "room_count_per_unit",
+  "source": "inferred",
+  "evidence": "دورات المياه في كل شقة: 2",
+  "expected": 2,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 430,
+   "start": 405
+  },
+  "role": "bathroom"
+ },
+ {
+  "id": "option-C-room_count-majlis",
+  "metric": "room_count",
+  "source": "inferred",
+  "evidence": "إجمالي المجالس: 6",
+  "expected": 6,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 448,
+   "start": 431
+  },
+  "role": "majlis"
+ },
+ {
+  "id": "option-C-room_count_per_unit-majlis",
+  "metric": "room_count_per_unit",
+  "source": "inferred",
+  "evidence": "المجالس في كل شقة: 1",
+  "expected": 1,
+  "confirmed": true,
+  "source_id": "brief:selected-option",
+  "source_span": {
+   "end": 469,
+   "start": 449
+  },
+  "role": "majlis"
+ }
+]

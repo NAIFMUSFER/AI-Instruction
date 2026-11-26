@@ -30,7 +30,7 @@ from acs_plan_store_port import SQLitePlanStoreAdapter
 from test_connected_workspace import PROJECT, ACTOR, model
 
 
-def fixture_building(brief, requirements):
+def fixture_building(brief, requirements, plot=None, option='A'):
     kind='warehouse' if 'مستودع' in brief else 'residential'
     if kind!='residential' or not any(r.get('metric')=='unit_count' for r in requirements):
         return model(kind)
@@ -41,13 +41,20 @@ def fixture_building(brief, requirements):
     # A deterministic, explicitly synthetic two-apartment case. The fixture's
     # east-facing entrance makes B wider than 6 m, so the later width edit keeps
     # valid reciprocal openings and access. It is not evidence of live AI output.
-    from acs_residential_layout import propose
-    building=propose(brief+'\nجهة الشارع: شرق',requirements)
+    if plot is not None:
+        # The page now sends plot rules: the synthetic plan sits inside the
+        # same buildable envelope the server derives and stamps for review.
+        import acs_plot_rules
+        from acs_plot_layout import propose as propose_in_envelope
+        building=propose_in_envelope(brief,requirements,acs_plot_rules.resolve(plot,brief,requirements,option))
+    else:
+        from acs_residential_layout import propose
+        building=propose(brief+'\nجهة الشارع: شرق',requirements)
     if building is None:
         raise AssertionError('Synthetic two-unit fixture cannot satisfy this program')
     template=building['levels'][0]['template']
     rooms=building['floors'].pop(template)['rooms']
-    a=next(room for room in rooms if not room.get('unit_id') and room['role']=='corridor')
+    a=next(room for room in rooms if not room.get('unit_id') and room['role'] in ('corridor','entrance'))
     b=next(room for room in rooms if room.get('unit_id')=='apartment_1' and room['role']=='living')
     for room,identity in ((a,'a'),(b,'b')):
         room['id']=identity;room['name']=identity.upper();room['points'][0]['id']='light-'+identity
@@ -57,7 +64,7 @@ def fixture_building(brief, requirements):
                             acs_layout_method='ci_two_unit_geometry_fixture_v1')
     building['meta']['assumptions']=[
         'نموذج اصطناعي لاختبار برنامج شقتين؛ ليس ناتجًا عن استدعاء مزود حي.',
-        'المدخل الشرقي اختيار ثابت لهذا الاختبار، وليس جهة شارع أكدها المستخدم.',
+        *(['المدخل الشرقي اختيار ثابت لهذا الاختبار، وليس جهة شارع أكدها المستخدم.'] if plot is None else []),
         *[item for item in building['meta']['assumptions'] if not item.startswith('توزيع بديل محسوب بعد تعذر')]]
     return building
 
@@ -69,11 +76,15 @@ class FixtureRunner:
     def run(self,target,kwargs,**controls):
         if target.endswith('generate_plan_candidate') or target=='acs_plan_sources:candidate':
             self.counts['generation']+=1;time.sleep(self.delay_seconds)
-            return {'building':fixture_building(kwargs['brief'],kwargs['requirements']),'provider_calls':1}
+            return {'building':fixture_building(kwargs['brief'],kwargs['requirements'],kwargs.get('plot'),kwargs.get('option','A')),'provider_calls':1}
         if target.endswith('budgeted_chat_candidate'):
             self.counts['chat']+=1
             candidate=copy.deepcopy(kwargs['building'])
-            next(room for room in candidate['floors']['ground']['rooms'] if room['id']=='b')['rect'][2]=6
+            b=next(room for room in candidate['floors']['ground']['rooms'] if room['id']=='b')
+            # Inside a plot envelope B has no free side to widen into; the
+            # edit then only renames it, which still appends one revision.
+            if 'acs_plot_rules' in (candidate.get('meta') or {}):b['name']='B'
+            else:b['rect'][2]=6
             return candidate
         if target.endswith('artifact_from_snapshot'):return S.artifact_from_snapshot(**kwargs)
         raise AssertionError(target)
