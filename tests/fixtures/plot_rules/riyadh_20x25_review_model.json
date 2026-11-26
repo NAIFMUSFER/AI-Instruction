@@ -1,0 +1,3672 @@
+{
+ "meta": {
+  "acs_roof": {
+   "form": "flat",
+   "schema": "acs.roof/1",
+   "source": "system_default",
+   "occupied_floor": false,
+   "parapet_height_m": 0.9
+  },
+  "acs_stairs": {
+   "schema": "acs.stairs/1",
+   "source": "system_default",
+   "unsupported": [],
+   "not_verified": [
+    "structure",
+    "guards",
+    "headroom",
+    "accessibility",
+    "fire escape",
+    "code compliance"
+   ],
+   "physical_traversal": "NOT_VERIFIED",
+   "generated_connections": 2
+  },
+  "assumptions": [
+   "ارتفاع الدور 3.2 م، وارتفاع الجدار 3 م وسماكته 0.2 م قيم أولية للمراجعة.",
+   "توزيع متماثل للشقق ذات برنامج الغرف نفسه، مع ممر داخلي لكل شقة ومدخل وممر مشتركين."
+  ],
+  "acs_plan_report": {
+   "capped": false,
+   "contract": "acs.plan-chunks/1.0.0",
+   "strategy": null,
+   "chunk_size": 60,
+   "size_class": null,
+   "issue_codes": {},
+   "capped_zones": 0,
+   "chunk_budget": 32000,
+   "failed_chunks": [],
+   "outline_zones": 19,
+   "chunks_executed": 1,
+   "chunk_count_planned": 1,
+   "measured_zone_tokens": 156,
+   "estimated_zone_tokens": 156
+  },
+  "acs_plan_contract": "acs.plan-chunks/1.0.0",
+  "acs_manifest_source": "confirmed_apartment_program"
+ },
+ "site": {
+  "d": 25,
+  "w": 20
+ },
+ "floors": {
+  "roof": {
+   "rooms": [
+    {
+     "id": "roof_residential_2_apartment_1_bedroom_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      0.0,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "W"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_bedroom_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_bedroom_2",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      0.0,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "S",
+      "W"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_bedroom_2"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_living_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      0.0,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "W"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_living_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_kitchen_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      0.0,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "W"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_kitchen_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_bathroom_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      6.7,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "S"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_bathroom_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_bathroom_2",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      6.7,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "N"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_bathroom_2"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_majlis_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      0.0,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "N",
+      "W"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_majlis_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_1_corridor_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      6.7,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_1_corridor_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_bedroom_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      13.3,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "E"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_bedroom_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_bedroom_2",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      13.3,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "S",
+      "E"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_bedroom_2"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_living_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      13.3,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "E"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_living_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_kitchen_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      13.3,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "E"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_kitchen_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_bathroom_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      11.5,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "S"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_bathroom_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_bathroom_2",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      11.5,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "N"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_bathroom_2"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_majlis_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      13.3,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "N",
+      "E"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_majlis_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_apartment_2_corridor_1",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      11.5,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_apartment_2_corridor_1"
+     }
+    },
+    {
+     "id": "roof_residential_2_lobby",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      8.5,
+      0.0,
+      3.0,
+      4.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "N"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_lobby"
+     }
+    },
+    {
+     "id": "roof_residential_2_shared_corridor",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      8.5,
+      4.0,
+      3.0,
+      15.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_shared_corridor"
+     }
+    },
+    {
+     "id": "roof_residential_2_stairs",
+     "auto": true,
+     "name": "سطح",
+     "rect": [
+      8.5,
+      19.0,
+      3.0,
+      6.0
+     ],
+     "role": "roof_deck",
+     "doors": [],
+     "walls": [
+      "S"
+     ],
+     "points": [],
+     "wall_h": 0.9,
+     "windows": [],
+     "roof_provenance": {
+      "source": "system_default",
+      "parapet_gaps": [],
+      "source_room_id": "residential_2_stairs"
+     }
+    }
+   ]
+  },
+  "residential_2": {
+   "rooms": [
+    {
+     "id": "residential_2_apartment_1_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      0.0,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a1_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed1_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      0.0,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed2_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_living_1",
+     "name": "الصالة",
+     "rect": [
+      0.0,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 1",
+     "doors": [
+      {
+       "id": "a1_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_living_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      0.0,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 1",
+     "doors": [
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a1_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_kitchen_win_w",
+       "edge": "W",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      6.7,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 1، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      6.7,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 1، قرب المجلس",
+     "doors": [
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      0.0,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 1 قرب المدخل",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_majlis_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a1_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      6.7,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 1 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a1_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a1_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": []
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      13.3,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a2_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed1_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      13.3,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed2_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_living_1",
+     "name": "الصالة",
+     "rect": [
+      13.3,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 2",
+     "doors": [
+      {
+       "id": "a2_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_living_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      13.3,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 2",
+     "doors": [
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a2_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_kitchen_win_e",
+       "edge": "E",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      11.5,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 2، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      11.5,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 2، قرب المجلس",
+     "doors": [
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      13.3,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 2 قرب المدخل",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_majlis_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a2_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      11.5,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 2 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a2_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a2_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": []
+    },
+    {
+     "id": "residential_2_lobby",
+     "name": "مدخل العمارة",
+     "rect": [
+      8.5,
+      0.0,
+      3.0,
+      4.0
+     ],
+     "role": "entrance",
+     "brief": "مدخل مشترك للعمارة يتصل بالممر المشترك والدرج",
+     "doors": [
+      {
+       "id": "bldg_entrance_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.4,
+       "offset": 1.5,
+       "material": "metal_glass"
+      },
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 2.0,
+       "id": "lobby_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_shared_corridor",
+     "name": "الممر المشترك",
+     "rect": [
+      8.5,
+      4.0,
+      3.0,
+      15.0
+     ],
+     "role": "corridor",
+     "brief": "ممر مشترك يربط المدخل والدرج ومدخلي الشقتين",
+     "doors": [
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 4.0,
+       "id": "shared_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 1.5,
+       "z": 11.0,
+       "id": "shared_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_stairs",
+     "name": "الدرج المشترك",
+     "rect": [
+      8.5,
+      19.0,
+      3.0,
+      6.0
+     ],
+     "role": "stairs",
+     "brief": "درج مشترك لثلاثة أدوار، والوصول إلى الشقتين من بسطته",
+     "doors": [
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 3.0,
+       "id": "stairs_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core",
+     "windows": [
+      {
+       "id": "stairs_win_s",
+       "edge": "S",
+       "sill": 1.0,
+       "width": 1.2,
+       "height": 1.2,
+       "offset": 1.5
+      }
+     ],
+     "objects": [
+      {
+       "d": 3.8,
+       "h": 3.2,
+       "w": 1.9,
+       "x": 1.5,
+       "y": 0,
+       "z": 2.0,
+       "id": "stairs_stairs_core_0_1",
+       "dir": "x",
+       "rot": 0,
+       "form": "u_return",
+       "kind": "stairs",
+       "count": 1,
+       "pitch": 1,
+       "stair": {
+        "gap_m": 0.1,
+        "schema": "acs.stair/1",
+        "tread_m": 0.25,
+        "mid_landing_m": 0.9,
+        "flight_width_m": 0.9,
+        "entry_landing_m": 0.9,
+        "risers_per_flight": 9,
+        "source_elevation_m": 0.0,
+        "source_level_index": 0,
+        "target_elevation_m": 3.2,
+        "target_level_index": 1,
+        "landing_thickness_m": 0.15
+       },
+       "stair_provenance": {
+        "source": "system_default",
+        "core_id": "stairs_core",
+        "source_room_id": "residential_2_stairs"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "residential_2__stairs_1": {
+   "rooms": [
+    {
+     "id": "residential_2_apartment_1_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      0.0,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a1_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed1_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      0.0,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed2_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_living_1",
+     "name": "الصالة",
+     "rect": [
+      0.0,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 1",
+     "doors": [
+      {
+       "id": "a1_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_living_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      0.0,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 1",
+     "doors": [
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a1_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_kitchen_win_w",
+       "edge": "W",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      6.7,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 1، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      6.7,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 1، قرب المجلس",
+     "doors": [
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      0.0,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 1 قرب المدخل",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_majlis_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a1_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      6.7,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 1 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a1_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a1_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": []
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      13.3,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a2_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed1_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      13.3,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed2_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_living_1",
+     "name": "الصالة",
+     "rect": [
+      13.3,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 2",
+     "doors": [
+      {
+       "id": "a2_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_living_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      13.3,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 2",
+     "doors": [
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a2_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_kitchen_win_e",
+       "edge": "E",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      11.5,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 2، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      11.5,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 2، قرب المجلس",
+     "doors": [
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      13.3,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 2 قرب المدخل",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_majlis_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a2_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      11.5,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 2 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a2_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a2_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": []
+    },
+    {
+     "id": "residential_2_lobby",
+     "name": "مدخل العمارة",
+     "rect": [
+      8.5,
+      0.0,
+      3.0,
+      4.0
+     ],
+     "role": "entrance",
+     "brief": "مدخل مشترك للعمارة يتصل بالممر المشترك والدرج",
+     "doors": [
+      {
+       "id": "bldg_entrance_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.4,
+       "offset": 1.5,
+       "material": "metal_glass"
+      },
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 2.0,
+       "id": "lobby_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_shared_corridor",
+     "name": "الممر المشترك",
+     "rect": [
+      8.5,
+      4.0,
+      3.0,
+      15.0
+     ],
+     "role": "corridor",
+     "brief": "ممر مشترك يربط المدخل والدرج ومدخلي الشقتين",
+     "doors": [
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 4.0,
+       "id": "shared_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 1.5,
+       "z": 11.0,
+       "id": "shared_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_stairs",
+     "name": "الدرج المشترك",
+     "rect": [
+      8.5,
+      19.0,
+      3.0,
+      6.0
+     ],
+     "role": "stairs",
+     "brief": "درج مشترك لثلاثة أدوار، والوصول إلى الشقتين من بسطته",
+     "doors": [
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 3.0,
+       "id": "stairs_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core",
+     "windows": [
+      {
+       "id": "stairs_win_s",
+       "edge": "S",
+       "sill": 1.0,
+       "width": 1.2,
+       "height": 1.2,
+       "offset": 1.5
+      }
+     ],
+     "objects": [
+      {
+       "d": 3.8,
+       "h": 3.2,
+       "w": 1.9,
+       "x": 1.5,
+       "y": 0,
+       "z": 2.0,
+       "id": "stairs_stairs_core_1_2",
+       "dir": "x",
+       "rot": 0,
+       "form": "u_return",
+       "kind": "stairs",
+       "count": 1,
+       "pitch": 1,
+       "stair": {
+        "gap_m": 0.1,
+        "schema": "acs.stair/1",
+        "tread_m": 0.25,
+        "mid_landing_m": 0.9,
+        "flight_width_m": 0.9,
+        "entry_landing_m": 0.9,
+        "risers_per_flight": 9,
+        "source_elevation_m": 3.2,
+        "source_level_index": 1,
+        "target_elevation_m": 6.4,
+        "target_level_index": 2,
+        "landing_thickness_m": 0.15
+       },
+       "stair_provenance": {
+        "source": "system_default",
+        "core_id": "stairs_core",
+        "source_room_id": "residential_2_stairs"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "residential_2__stairs_2": {
+   "rooms": [
+    {
+     "id": "residential_2_apartment_1_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      0.0,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a1_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed1_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      0.0,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 1، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bed2_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_living_1",
+     "name": "الصالة",
+     "rect": [
+      0.0,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 1",
+     "doors": [
+      {
+       "id": "a1_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_living_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      0.0,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 1",
+     "doors": [
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a1_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_kitchen_win_w",
+       "edge": "W",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      6.7,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 1، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      6.7,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 1، قرب المجلس",
+     "doors": [
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a1_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      0.0,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 1 قرب المدخل",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a1_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": [
+      {
+       "id": "a1_majlis_win_w",
+       "edge": "W",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a1_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_1_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      6.7,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 1 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a1_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a1_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a1_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a1_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "windows": []
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_1",
+     "name": "غرفة النوم 1",
+     "rect": [
+      13.3,
+      15.0,
+      6.7,
+      4.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 1 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.25,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.25,
+       "id": "a2_bed1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed1_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.25
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bedroom_2",
+     "name": "غرفة النوم 2",
+     "rect": [
+      13.3,
+      19.5,
+      6.7,
+      5.5
+     ],
+     "role": "bedroom",
+     "brief": "غرفة نوم 2 من 2 للشقة 2، بعيدة عن مدخل الضيوف",
+     "doors": [
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_bed2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bed2_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_living_1",
+     "name": "الصالة",
+     "rect": [
+      13.3,
+      9.5,
+      6.7,
+      5.5
+     ],
+     "role": "living",
+     "brief": "صالة عائلية واحدة للشقة 2",
+     "doors": [
+      {
+       "id": "a2_living_corr_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 2.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_living_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_living_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.8,
+       "height": 1.4,
+       "offset": 2.75
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      13.3,
+      5.5,
+      6.7,
+      4.0
+     ],
+     "role": "kitchen",
+     "brief": "مطبخ واحد للشقة 2",
+     "doors": [
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 2.0,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.0,
+       "id": "a2_kitchen_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_kitchen_win_e",
+       "edge": "E",
+       "sill": 1.1,
+       "width": 1.2,
+       "height": 1.0,
+       "offset": 2.0
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_1",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      11.5,
+      21.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 1 من 2 للشقة 2، قرب غرف النوم",
+     "doors": [
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath1_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath1_win_s",
+       "edge": "S",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_bathroom_2",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      11.5,
+      0.0,
+      1.8,
+      4.0
+     ],
+     "role": "bathroom",
+     "brief": "دورة مياه 2 من 2 للشقة 2، قرب المجلس",
+     "doors": [
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 2.0,
+       "id": "a2_bath2_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_bath2_win_n",
+       "edge": "N",
+       "sill": 1.6,
+       "width": 0.6,
+       "height": 0.6,
+       "offset": 0.9
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_majlis_1",
+     "name": "المجلس",
+     "rect": [
+      13.3,
+      0.0,
+      6.7,
+      5.5
+     ],
+     "role": "majlis",
+     "brief": "مجلس ضيوف مستقل للشقة 2 قرب المدخل",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "W",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 4.75,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 3.35,
+       "z": 2.75,
+       "id": "a2_majlis_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": [
+      {
+       "id": "a2_majlis_win_e",
+       "edge": "E",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 2.75
+      },
+      {
+       "id": "a2_majlis_win_n",
+       "edge": "N",
+       "sill": 0.9,
+       "width": 1.5,
+       "height": 1.4,
+       "offset": 3.35
+      }
+     ]
+    },
+    {
+     "id": "residential_2_apartment_2_corridor_1",
+     "name": "ممر الشقة",
+     "rect": [
+      11.5,
+      4.0,
+      1.8,
+      17.0
+     ],
+     "role": "corridor",
+     "brief": "ممر داخلي للشقة 2 يتصل بالممر المشترك وبسطة الدرج",
+     "doors": [
+      {
+       "id": "a2_majlis_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 0.75,
+       "material": "wood"
+      },
+      {
+       "id": "a2_kitchen_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 3.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_living_corr_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 8.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed1_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 13.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bed2_corr_door",
+       "edge": "E",
+       "width": 0.9,
+       "height": 2.1,
+       "offset": 16.25,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath1_corr_door",
+       "edge": "S",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_bath2_corr_door",
+       "edge": "N",
+       "width": 0.8,
+       "height": 2.1,
+       "offset": 0.9,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 0.9,
+       "z": 4.25,
+       "id": "a2_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 0.9,
+       "z": 12.75,
+       "id": "a2_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_2",
+     "windows": []
+    },
+    {
+     "id": "residential_2_lobby",
+     "name": "مدخل العمارة",
+     "rect": [
+      8.5,
+      0.0,
+      3.0,
+      4.0
+     ],
+     "role": "entrance",
+     "brief": "مدخل مشترك للعمارة يتصل بالممر المشترك والدرج",
+     "doors": [
+      {
+       "id": "bldg_entrance_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.4,
+       "offset": 1.5,
+       "material": "metal_glass"
+      },
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 2.0,
+       "id": "lobby_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_shared_corridor",
+     "name": "الممر المشترك",
+     "rect": [
+      8.5,
+      4.0,
+      3.0,
+      15.0
+     ],
+     "role": "corridor",
+     "brief": "ممر مشترك يربط المدخل والدرج ومدخلي الشقتين",
+     "doors": [
+      {
+       "id": "lobby_shared_corr_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "S",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      },
+      {
+       "id": "a1_entry_door",
+       "edge": "W",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      },
+      {
+       "id": "a2_entry_door",
+       "edge": "E",
+       "width": 1.0,
+       "height": 2.1,
+       "offset": 13.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 4.0,
+       "id": "shared_corr_light_1",
+       "type": "light"
+      },
+      {
+       "x": 1.5,
+       "z": 11.0,
+       "id": "shared_corr_light_2",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "windows": []
+    },
+    {
+     "id": "residential_2_stairs",
+     "name": "الدرج المشترك",
+     "rect": [
+      8.5,
+      19.0,
+      3.0,
+      6.0
+     ],
+     "role": "stairs",
+     "brief": "درج مشترك لثلاثة أدوار، والوصول إلى الشقتين من بسطته",
+     "doors": [
+      {
+       "id": "shared_corr_stairs_door",
+       "edge": "N",
+       "width": 1.2,
+       "height": 2.1,
+       "offset": 1.5,
+       "material": "wood"
+      }
+     ],
+     "walls": "all",
+     "points": [
+      {
+       "x": 1.5,
+       "z": 3.0,
+       "id": "stairs_light",
+       "type": "light"
+      }
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core",
+     "windows": [
+      {
+       "id": "stairs_win_s",
+       "edge": "S",
+       "sill": 1.0,
+       "width": 1.2,
+       "height": 1.2,
+       "offset": 1.5
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "levels": [
+  {
+   "id": "L0",
+   "name": "L0",
+   "index": 0,
+   "template": "residential_2"
+  },
+  {
+   "id": "L1",
+   "name": "L1",
+   "index": 1,
+   "template": "residential_2__stairs_1",
+   "stair_source_template": "residential_2",
+   "stair_template_instance": {
+    "schema": "acs.stair-template-instance/1",
+    "template": "residential_2__stairs_1",
+    "level_index": 1,
+    "room_mapping": [
+     {
+      "id": "residential_2_apartment_1_bedroom_1",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_1_bedroom_2",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_1_living_1",
+      "role": "living"
+     },
+     {
+      "id": "residential_2_apartment_1_kitchen_1",
+      "role": "kitchen"
+     },
+     {
+      "id": "residential_2_apartment_1_bathroom_1",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_1_bathroom_2",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_1_majlis_1",
+      "role": "majlis"
+     },
+     {
+      "id": "residential_2_apartment_1_corridor_1",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_apartment_2_bedroom_1",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_2_bedroom_2",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_2_living_1",
+      "role": "living"
+     },
+     {
+      "id": "residential_2_apartment_2_kitchen_1",
+      "role": "kitchen"
+     },
+     {
+      "id": "residential_2_apartment_2_bathroom_1",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_2_bathroom_2",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_2_majlis_1",
+      "role": "majlis"
+     },
+     {
+      "id": "residential_2_apartment_2_corridor_1",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_lobby",
+      "role": "entrance"
+     },
+     {
+      "id": "residential_2_shared_corridor",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_stairs",
+      "role": "stairs"
+     }
+    ],
+    "source_template": "residential_2"
+   }
+  },
+  {
+   "id": "L2",
+   "name": "L2",
+   "index": 2,
+   "template": "residential_2__stairs_2",
+   "stair_source_template": "residential_2",
+   "stair_template_instance": {
+    "schema": "acs.stair-template-instance/1",
+    "template": "residential_2__stairs_2",
+    "level_index": 2,
+    "room_mapping": [
+     {
+      "id": "residential_2_apartment_1_bedroom_1",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_1_bedroom_2",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_1_living_1",
+      "role": "living"
+     },
+     {
+      "id": "residential_2_apartment_1_kitchen_1",
+      "role": "kitchen"
+     },
+     {
+      "id": "residential_2_apartment_1_bathroom_1",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_1_bathroom_2",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_1_majlis_1",
+      "role": "majlis"
+     },
+     {
+      "id": "residential_2_apartment_1_corridor_1",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_apartment_2_bedroom_1",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_2_bedroom_2",
+      "role": "bedroom"
+     },
+     {
+      "id": "residential_2_apartment_2_living_1",
+      "role": "living"
+     },
+     {
+      "id": "residential_2_apartment_2_kitchen_1",
+      "role": "kitchen"
+     },
+     {
+      "id": "residential_2_apartment_2_bathroom_1",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_2_bathroom_2",
+      "role": "bathroom"
+     },
+     {
+      "id": "residential_2_apartment_2_majlis_1",
+      "role": "majlis"
+     },
+     {
+      "id": "residential_2_apartment_2_corridor_1",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_lobby",
+      "role": "entrance"
+     },
+     {
+      "id": "residential_2_shared_corridor",
+      "role": "corridor"
+     },
+     {
+      "id": "residential_2_stairs",
+      "role": "stairs"
+     }
+    ],
+    "source_template": "residential_2"
+   }
+  },
+  {
+   "auto": true,
+   "kind": "roof",
+   "name": "السطح",
+   "index": 3,
+   "template": "roof",
+   "elevation": 9.6
+  }
+ ],
+ "wall_h": 3.0,
+ "wall_t": 0.2,
+ "floor_height": 3.2,
+ "_opening_identity": {
+  "next": 0,
+  "schema": "acs.opening-identity/1"
+ }
+}

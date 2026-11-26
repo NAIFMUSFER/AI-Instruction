@@ -343,6 +343,35 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
     return issues, metrics
 
 
+def _pilotis_parking(model: dict) -> bool:
+    """Only a server-stamped plot-rules block declares a pilotis parking floor."""
+    meta = model.get("meta")
+    rules = meta.get("acs_plot_rules") if isinstance(meta, dict) else None
+    parking = rules.get("parking") if isinstance(rules, dict) else None
+    return isinstance(parking, dict) and parking.get("placement") == "pilotis"
+
+
+def _plot_footprint(model: dict) -> bool:
+    meta = model.get("meta")
+    rules = meta.get("acs_plot_rules") if isinstance(meta, dict) else None
+    return isinstance(rules, dict) and isinstance(rules.get("building_footprint"), list)
+
+
+def _room_extent(model: dict, axis: int):
+    """Largest occupied-storey extent of the room rectangles along x (2) or z (3)."""
+    out = None
+    for level in model.get("levels") or []:
+        if not isinstance(level, dict) or level.get("kind") == "roof":
+            continue
+        rects = [r.get("rect") for r in (model["floors"].get(level.get("template")) or {}).get("rooms", [])]
+        rects = [r for r in rects if isinstance(r, list) and len(r) == 4 and all(_number(v) for v in r)]
+        if rects:
+            lo = min(r[axis - 2] for r in rects)
+            hi = max(r[axis - 2] + r[axis] for r in rects)
+            out = hi - lo if out is None else max(out, hi - lo)
+    return out
+
+
 def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     issues = []
     def issue(code, rid):
@@ -429,6 +458,11 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             site = model.get("site") or {}
             actual = site.get("w" if kind == "building_width_m" else "d") if isinstance(site, dict) else None
             valid_expected = _number(expected) and expected > 0
+            if _plot_footprint(model):
+                # Plot rules make the site the land; the confirmed building size
+                # is then the footprint the rooms must fit inside.
+                actual = _room_extent(model, 2 if kind == "building_width_m" else 3)
+                maximum = True
         elif kind == "building_target_area_m2":
             # Explicit total canonical room-rectangle area across physical levels;
             # this is not gross floor area or a buildable footprint claim.
@@ -440,6 +474,10 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         elif kind in {"unit_count", "unit_count_per_level"}:
             per_level = [len({room.get("unit_id") for room in model["floors"][level["template"]]["rooms"]
                               if _id(room.get("unit_id"))}) for level in levels]
+            if kind == "unit_count_per_level" and _pilotis_parking(model) and per_level and per_level[0] == 0:
+                # The plot rules put parking under the building: the ground
+                # storey holds no flats and "per level" means the floors above.
+                per_level = per_level[1:]
             actual = sum(per_level) if kind == "unit_count" else (per_level[0] if per_level and len(set(per_level)) == 1 else None)
             valid_expected = type(expected) is int and expected > 0
         elif kind == "room_count_per_unit":
@@ -823,15 +861,31 @@ class PlanWorkspace:
             except Exception:
                 scopes["topology"] = scopes["vertical_circulation"] = "NOT_VERIFIED"
                 issues.append({"code": "VERIFICATION_UNAVAILABLE", "severity": "error"})
+        # Plot rules (setbacks, parking, Saudi residential basics) exist only on
+        # revisions generated with them; older revisions review as before.
+        meta = model.get("meta")
+        plot = meta.get("acs_plot_rules") if isinstance(meta, dict) else None
+        advisories = []
+        if plot is not None:
+            if geometry_issues:
+                scopes["plot_rules"] = "NOT_VERIFIED"
+            else:
+                from acs_plot_rules import check as plot_check
+                blocking, advisories = plot_check(model, plot)
+                issues.extend(blocking)
+                scopes["plot_rules"] = "FAIL" if blocking else "PASS"
         ready = not issues and all(scopes[k] == "PASS" for k in
                                     ("rectangular_geometry", "program", "topology", "vertical_circulation"))
         # لا ننقل ادعاء مشي من المقترح أو المدقّق؛ هذه التغطية مشتقة من النموذج.
         coverage = {'vertical_circulation': vertical_geometry_coverage(
             rev.model, scopes['vertical_circulation'])}
-        return {"schema": SCHEMA, "revision_id": rev.id, "content_hash": rev.content_hash,
-                "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
-                "metrics": metrics, "issues": issues, "construction_approved": False,
-                "coverage": coverage}
+        result = {"schema": SCHEMA, "revision_id": rev.id, "content_hash": rev.content_hash,
+                  "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
+                  "metrics": metrics, "issues": issues, "construction_approved": False,
+                  "coverage": coverage}
+        if plot is not None:
+            result["advisories"] = advisories  # never block approval
+        return result
 
     def approve(self, revision_id: str, *, expected_head: str, actor_label: str,
                 confirmed: bool, acknowledge_concept_only: bool) -> Approval:

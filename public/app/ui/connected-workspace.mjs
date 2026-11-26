@@ -1,6 +1,7 @@
 import {parseReviewFile} from '../core/plan-review-packet.mjs';
 import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
+import {createPlotRules} from './plot-rules.mjs';
 import {createPlanUpload} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
 import {floorLabel,planRoomName} from '../core/plan-labels.mjs';
@@ -101,6 +102,7 @@ let root, briefEditor, planUpload, residentialOptions, projectId, state = null, 
 let progressState=null,progressTimer=null,starting=false,objectSelection=null,failedJob=null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
+let plotRules=null;
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
 function status(text, bad=false) { $('cwStatus').textContent=text;$('cwStatus').classList.toggle('bad',bad);$('cwStatus').setAttribute('role',bad?'alert':'status'); }
 function progressTick(){
@@ -179,7 +181,7 @@ function step(n,{record=false}={}) {
   if(n!==4)clearViewer();
 }
 function briefProgram() { return briefEditor.program(); }
-function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();projectCopy(); }
+function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();plotRules?.fill();projectCopy(); }
 // A selected option is not authoritative until its matching revision is loaded.
 function loadedRevisionSelected() { return !!state?.revision_id&&$('cwRevision')?.value===state.revision_id; }
 function headRevisionSelected() { return loadedRevisionSelected()&&state.revision_id===state.head; }
@@ -348,6 +350,7 @@ function draw() {
   const pad=Math.max(p.site.w,p.site.d)*.035;$('cwPlan').setAttribute('viewBox',[-pad,-pad,p.site.w+2*pad,p.site.d+2*pad].join(' '));
   svg('title',{},$('cwPlan'),'مخطط '+levelLabel(p));
   svg('rect',{x:0,y:0,width:p.site.w,height:p.site.d,fill:'#f7f9fb',stroke:'#668194','stroke-width':.06},$('cwPlan'));
+  plotRules?.draw(p,state?.plot_rules,(tag,attrs)=>svg(tag,attrs,$('cwPlan')));
   for(const item of p.primitives){
     const [x,z,w,d]=item.rect_xz_m;
     const label=roomLabel(item.label);
@@ -387,12 +390,14 @@ async function generation(option) {
   if(pendingJob)throw new Error('توجد مهمة معلّقة. استعد حالتها أولًا.');
   if(!$('cwConfirmed').checked)throw new Error('راجع برنامج المشروع وأكد المتطلبات أولًا.');
   const source=planUpload.command();
+  const plot=source.source_id?{}:plotRules.command(); // validated before any paid call
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
   const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
   // A generation is a paid, multi-minute run: the owner confirms it first.
   const name=source.source_id?'قراءة المخطط المرفوع':'«'+(root.querySelector('[data-option="'+option+'"]')?.closest('article')?.querySelector('h2')?.textContent.replace(/\s*·\s*مقترح لك$/,'')||'البديل '+option)+'»';
   if(!await confirmPaid('سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.','ابدأ التوليد')){status('لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
   beginJob(body.job_id);
+  Object.assign(body,plot);
   setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
@@ -583,6 +588,7 @@ function mount(){
     }
   }));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
+  plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));

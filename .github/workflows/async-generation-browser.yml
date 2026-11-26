@@ -46,6 +46,8 @@ jobs:
           node tests/remediation/test_residential_program.mjs 2>&1 | tee logs/residential-program.log
           python3 tests/remediation/test_plan_source_upload.py 2>&1 | tee logs/plan-source-upload.log
           node tests/remediation/test_brief_program.mjs 2>&1 | tee logs/brief-program.log
+          python3 tests/remediation/test_plot_rules.py 2>&1 | tee logs/plot-rules.log
+          node tests/remediation/test_plot_rules_ui.mjs 2>&1 | tee logs/plot-rules-ui.log
       - name: Short-request recovery in Chromium and WebKit
         run: |
           set -euo pipefail

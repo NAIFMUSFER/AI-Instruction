@@ -41,6 +41,8 @@ COPY acs_workspace_progress.py acs_residential_generation.py acs_design_research
 COPY acs_warehouse_generation.py acs_pdf_text.py acs_roof.py acs_stairs.py acs_context_details.py ./
 COPY assets/fonts/ assets/fonts/
 COPY acs_residential_manifest.py acs_residential_access.py acs_residential_layout.py ./
+# Plot rules (envelope, parking, residential basics) and their envelope fallback.
+COPY acs_plot_rules.py acs_plot_layout.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.
 COPY acs_compiler.py acs_pbr.py acs_pbr.json acs_bim.py acs_bim.json ./
 COPY tools/acs_plan_handoff.py tools/acs_plan_cad_export.py tools/acs_plan_pdf_export.py tools/acs_plan_ifc_export.py tools/
