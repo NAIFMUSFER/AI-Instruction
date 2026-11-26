@@ -220,6 +220,23 @@ section('R3.2 — plot or building',()=>{
   const none=genError('مستودع فيه استلام وتخزين بالتات وشحن',60,40,{form:{}});
   ok('no size anywhere asks for it',none&&none.question===true&&(none.missing||[]).includes('building_or_plot_size'));
 });
+// R4 — receiving and shipping stated on the same wall, plain and colon forms.
+section('R4 — receiving and shipping on one wall',()=>{
+  const plain='مستودع توزيع في الرياض على أرض 80×45 م، الاستلام والشحن من الجهة الجنوبية، فيها خمسة أرصفة استلام وثلاثة أرصفة شحن، وتخزين بالتات وتغليف ومكتب.';
+  const colon='مستودع توزيع في الرياض على أرض 80×45 م، الاستلام والشحن من الجهة الجنوبية: خمسة أرصفة استلام وثلاثة أرصفة شحن، وتخزين بالتات وتغليف ومكتب.';
+  for(const [label,text] of [['plain',plain],['colon',colon]]){
+    const e=genError(text,80,45);
+    ok(label+': accepted',!e,e&&e.message);
+    if(e) continue;
+    const b=gen(text,80,45),env=envelope(b).rect,wh=b.meta.acs_warehouse,r=docks(b,'receiving'),sh=docks(b,'shipping');
+    ok(label+': receiving and shipping docks both on the south wall',r.length&&sh.length&&r.concat(sh).every(x=>x.dock.edge==='S'&&onEdge(x.room.rect,'S',env)));
+    ok(label+': 5 receiving and 3 shipping docks',r.reduce((n,x)=>n+x.dock.count,0)===5&&sh.reduce((n,x)=>n+x.dock.count,0)===3);
+    ok(label+': stated sides are recorded as the brief, not assumptions',wh.receiving.side_source==='brief'&&wh.shipping.side_source==='brief'
+       &&!b.meta.added.some(a=>/جهة الاستلام.*لم تُذكر|الشحن من الجهة.*لم تُذكر/.test(a)));
+    ok(label+': one 12 m yard on the south keeps the building 33 m deep',Math.abs(env[3]-33)<1e-6&&env[1]===0&&b.site.d-env[1]-env[3]>=12-1e-6,JSON.stringify(env));
+    ok(label+': the size line names the one dock wall and the reason',/أصغر من الأرض 80×45/.test(wh.size_note)&&/الجنوبية لتقف/.test(wh.size_note),wh.size_note);
+  }
+});
 // The shipped sample keeps its site and stays a warehouse.
 section('The shipped sample keeps its site and stays a warehouse.',()=>{
 {

@@ -1865,7 +1865,23 @@ function whClauses(t){ return whSegments(t).map(x=>x.s); }
 function whSegments(t){
   const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
   const split=new RegExp('\\s(?=و\\s*(?:\\d|(?:'+words+')(?!['+WH_L+'])|(?:ال|لل|ل)?(?:شحن|استلام|تحميل|صادر|وارد|تفريغ|ارسال|إرسال|نستلم|نشحن)|(?:ال)?(?:أرصفة|ارصفة|أرصفه|ارصفه|رصيف)))');
-  return t.split(/[.\n؟?!؛;،,]+/).flatMap((c,g)=>c.split(split).map(s=>({s:s.trim(),g}))).filter(x=>x.s);
+  // «الاستلام والشحن من الجهة الجنوبية»: جزءٌ فيه دورٌ وحده بلا جهة ولا عدد ولا أرصفة
+  // يشارك ما بعده جهته، فلا يُفصل عنه.
+  const bare=x=>!/\d/.test(x)&&!WH_DOCK_RE.test(x)&&!whSides(x).size&&!new RegExp('(?:'+words+')(?!['+WH_L+'])').test(x);
+  return t.split(/[.\n؟?!؛;،,]+/).flatMap((c,g)=>{
+    const parts=c.split(split), out=[];
+    for(let i=0;i<parts.length;i++){ if(i+1<parts.length&&bare(parts[i])){parts[i+1]=parts[i]+' '+parts[i+1];continue;} out.push({s:parts[i].trim(),g}); }
+    return out;
+  }).filter(x=>x.s);
+}
+/* الدور الملاصق لاسم الأرصفة: «خمسة أرصفة استلام» «أرصفة للشحن» — يحسم العدد في
+   جملة ذُكر فيها الاستلام والشحن معاً («الاستلام والشحن من الجنوب: خمسة أرصفة استلام»). */
+function whDockRole(seg){
+  const m=WH_DOCK_RE.exec(seg); if(!m) return null;
+  const after=seg.slice(m.index+m[0].length);
+  if(/^\s*(?:لل|ل|ال)?(?:استلام|وارد|تفريغ)/.test(after)) return 'receiving';
+  if(/^\s*(?:لل|ل|ال)?(?:شحن|صادر|تحميل)/.test(after)) return 'shipping';
+  return null;
 }
 function whRoleCount(seg){
   const words=Object.keys(AR_NUM).sort((a,b)=>b.length-a.length).join('|');
@@ -1895,11 +1911,12 @@ function warehouseBriefFacts(txt){
     if(!roles.length){ if(dock&&count!=null) f.generic=count; continue; }
     if(sides.size>1) warehouseUnsupported('ذكرت أكثر من جهة في: «'+c.slice(0,120)+'». حدّد جهة واحدة لكل من الاستلام والشحن.');
     const side=sides.size?[...sides][0]:null;
-    if(dock&&count!=null&&roles.length>1) warehouseUnsupported('حدّد عدد أرصفة الاستلام وعدد أرصفة الشحن كلاً على حدة في: «'+c.slice(0,120)+'».');
+    const bound=dock&&count!=null&&roles.length>1?whDockRole(c):null;
+    if(dock&&count!=null&&roles.length>1&&!bound) warehouseUnsupported('حدّد عدد أرصفة الاستلام وعدد أرصفة الشحن كلاً على حدة في: «'+c.slice(0,120)+'».');
     for(const r of roles){
       const label=r==='receiving'?'الاستلام':'الشحن';
       if(side){ if(f[r].side&&f[r].side!==side) warehouseUnsupported('ذكرت جهتين مختلفتين لـ'+label+'. حدّد جهة واحدة.'); f[r].side=side; }
-      if(dock){ f[r].dockMentioned=true;
+      if(dock&&(!bound||bound===r)){ f[r].dockMentioned=true;
         if(count!=null){ if(f[r].count!=null&&f[r].count!==count) warehouseUnsupported('ذكرت عددين مختلفين لأرصفة '+label+'. حدّد عدداً واحداً.'); f[r].count=count; } }
     }
   }
