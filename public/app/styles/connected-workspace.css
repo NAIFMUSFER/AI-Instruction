@@ -73,6 +73,25 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:400px; overflow:auto; direction:ltr; text-align:left; }
 #designWorkspace #cwViewer { position:relative; height:520px; background:#101d2c; border-radius:12px; overflow:hidden; margin-top:20px; }
 #designWorkspace #cwViewer canvas { display:block; width:100%; height:100%; }
+#designWorkspace .cw-loading-note { display:none; margin:24px 0; color:#bfe9fb; font-size:18px; }
+#designWorkspace.cw-loading .cw-loading-note { display:block; }
+#designWorkspace.cw-loading > :not(.cw-top):not(.cw-loading-note) { visibility:hidden; }
+#designWorkspace .cw-dialog { width:min(460px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; margin:auto; padding:22px; border:1px solid #3a6377; border-radius:16px; background:#102136; color:#edf3fe; box-shadow:0 18px 48px rgba(0,0,0,.5); }
+#designWorkspace .cw-dialog::backdrop { background:rgba(3,9,17,.76); }
+#designWorkspace .cw-dialog .cw-actions { margin-top:12px; }
+#designWorkspace .cw-advanced { margin:18px 0 0; }
+#designWorkspace .cw-advanced summary { font-weight:600; }
+/* Requirements: a card per row on a phone, so selects keep readable widths. */
+@media(max-width:600px){
+ #designWorkspace .cw-req-table thead{display:none}
+ #designWorkspace .cw-req-table,#designWorkspace .cw-req-table tbody{display:block}
+ #designWorkspace .cw-req-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px;margin-bottom:10px;padding:12px;border:1px solid #2e5067;border-radius:12px;background:#0b1b2c}
+ #designWorkspace .cw-req-table td{display:block;padding:0;border:0;min-width:0}
+ #designWorkspace .cw-req-table td:first-child{grid-column:1/-1}
+ #designWorkspace .cw-req-table td:last-child{grid-column:1/-1}
+ #designWorkspace .cw-req-table td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;margin-bottom:4px;color:#a8bbcd;font-size:13px}
+ #designWorkspace .cw-req-table td button{white-space:nowrap}
+}
 #designWorkspace footer { border-top:1px solid #233d53; padding-top:18px; margin-top:32px; font-size:13px; color:#9db6ca; }
 @media(max-width:820px) {
  #designWorkspace { padding:16px; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
@@ -113,7 +132,12 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace .av-badge{position:absolute;inset-block-start:12px;inset-inline-start:12px;max-width:calc(100% - 24px);padding:8px 12px;background:#f9fcf5e8;color:#18374a;border:1px solid #fff;border-radius:9px;pointer-events:none;font-size:12px;box-shadow:0 2px 10px #132c3e16}
 #designWorkspace .av-badge strong{display:block;font-size:13px}
 #designWorkspace .av-badge bdi{display:block;max-width:36ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#designWorkspace .av-inspector{position:absolute;inset-block-end:12px;inset-inline-start:12px;max-width:min(340px,calc(100% - 24px));padding:10px 12px;background:#102a3de8;color:#f6fcff;border-radius:9px;pointer-events:none;font-size:12px;overflow-wrap:anywhere}
+#designWorkspace .av-inspector{position:absolute;inset-block-end:12px;inset-inline-start:12px;max-width:min(340px,calc(100% - 24px));padding:8px 10px;background:#102a3de8;color:#f6fcff;border-radius:9px;pointer-events:none;font-size:12px;overflow-wrap:anywhere}
+#designWorkspace .av-inspector button,#designWorkspace .av-inspector details{pointer-events:auto}
+#designWorkspace .av-info-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#designWorkspace .av-inspector .av-info-close{flex:none;min-height:36px;min-width:36px;padding:0 8px;background:transparent;border-color:#6d8ea3;color:#f6fcff;font-size:14px;line-height:1}
+#designWorkspace .av-info-ids{margin:6px 0 0}
+#designWorkspace .av-info-ids summary{min-height:28px;color:#bfe9fb}
 #designWorkspace .av-inspector strong,#designWorkspace .av-inspector span,#designWorkspace .av-inspector bdi,#designWorkspace .av-inspector small{display:block}
 #designWorkspace .av-help{margin:0;padding:9px 12px;font-size:12px;background:#edf3f4;color:#365362}
 #designWorkspace .av-evidence{margin:0;padding:8px 12px;background:#edf3f4;color:#365362;font-size:12px}
@@ -133,6 +157,9 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
  #designWorkspace .av-toolbar{gap:5px;padding:8px}
  #designWorkspace .av-toolbar button{flex:1 0 28%;font-size:12px;padding:7px 4px}
  #designWorkspace .av-inspector{font-size:11px;max-width:calc(100% - 24px)}
+ #designWorkspace .av-badge{padding:4px 9px;font-size:11px}
+ #designWorkspace .av-badge strong{font-size:12px}
+ #designWorkspace .av-badge span:not(.av-roof-note){display:none}
  #designWorkspace .cw-card:has(>#cwViewer){padding:10px}
  #designWorkspace #cwPlan{height:360px}
 }

@@ -1,4 +1,4 @@
-import {analyzeBrief,buildBriefProgram,metricLabels,requirementKey,requirementLabel} from '../core/brief-program.mjs';
+import {analyzeBrief,asciiNumberText,buildBriefProgram,metricLabels,normalizeNumberText,requirementKey,requirementLabel} from '../core/brief-program.mjs';
 import {readResidential} from '../core/residential-program.mjs';
 
 const briefStarters = {
@@ -26,7 +26,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
   for(const [id,label] of [['cwBldWidth','عرض المبنى (م)'],['cwBldDepth','عمق المبنى (م)']]){
     const cell=document.createElement('div'),caption=document.createElement('label'),field=document.createElement('input');
     caption.htmlFor=id;caption.textContent=label;
-    Object.assign(field,{id,type:'number',min:'0.1',step:'any',placeholder:'بحجم الأرض'});
+    Object.assign(field,{id,type:'text',inputMode:'decimal',autocomplete:'off',placeholder:'بحجم الأرض'});
     cell.append(caption,field);buildingRow.append(cell);
   }
   $('cwLevels').closest('.cw-fields').after(buildingRow);
@@ -46,7 +46,9 @@ export function createBriefEditor(root,{storageKey,onError}) {
   replace.id='cwReplaceBrief';keep.id='cwKeepBrief';
   root.querySelector('label[for="cwBrief"]').before(starterGroup);
 
-  const starterFieldIds=[...Object.values(fields),'cwUnits','cwUnitsScope'];
+  const starterFieldIds=[...Object.values(fields),'cwUnits','cwUnitsScope','cwCity'];
+  // A starter that names its city fills «المدينة» too, while that field is blank or starter-filled.
+  const CITY=/(?:^|[\s،.])(?:في|بمدينة|مدينة)\s+(الرياض|جدة|الدمام|مكة المكرمة|مكة|المدينة المنورة|الخبر|الطائف|تبوك|أبها|بريدة|حائل|جازان|نجران|الأحساء|الجبيل|ينبع)(?![\p{L}])/u;
   let linkedFields=new Set(), pendingStarter=null;
   function closeStarterPreview(){
     replacement.hidden=true;pendingStarter=null;
@@ -59,6 +61,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
     if($('cwType').value==='residential'&&!$('cwUnits').value){
       linkedFields.add('cwUnits');linkedFields.add('cwUnitsScope');
     }
+    if($('cwCity')&&!$('cwCity').value)linkedFields.add('cwCity');
     brief.value=starter.text;
     brief.dispatchEvent(new Event('input',{bubbles:true}));
     brief.focus();
@@ -96,6 +99,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
       const parsed=readResidential(brief.value);
       if(linkedFields.has('cwUnits'))$('cwUnits').value=parsed.units??'';
       if(linkedFields.has('cwUnitsScope'))$('cwUnitsScope').value=parsed.scope||'total';
+      if(linkedFields.has('cwCity')&&$('cwCity'))$('cwCity').value=CITY.exec(brief.value)?.[1]||'';
       // The residential editor owns its draft and the live unit-count summary.
       $('cwUnits').dispatchEvent(new Event('change',{bubbles:true}));
     }
@@ -122,16 +126,17 @@ export function createBriefEditor(root,{storageKey,onError}) {
   }
   function add(data={}){
     const row=el('tr',null,$('cwRequirements'));
-    const select=el('select',null,el('td',null,row));select.setAttribute('aria-label','نوع المتطلب');
+    const cell=label=>{const td=el('td',null,row);td.dataset.label=label;return td;};
+    const select=el('select',null,cell('المتطلب'));select.setAttribute('aria-label','نوع المتطلب');
     for(const [key,label] of Object.entries(metricLabels)){if(fields[key])continue;const o=el('option',label,select);o.value=key;}
     if(data.metric&&!Object.hasOwn(metricLabels,data.metric)){const o=el('option',data.metric+' · متطلب محفوظ',select);o.value=data.metric;}
     select.value=data.metric||'room_count';
-    const role=el('select',null,el('td',null,row));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
+    const role=el('select',null,cell('الاستخدام'));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
     const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
     if(data.role&&!Object.hasOwn(uses,data.role))uses[data.role]=data.role;
     for(const [id,label] of Object.entries(uses)){const o=el('option',label,role);o.value=id;}role.value=data.role||'bedroom';
-    const expected=el('input',null,el('td',null,row));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
-    const remove=el('button','حذف',el('td',null,row));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
+    const expected=el('input',null,cell('القيمة'));expected.dataset.value='';expected.type='text';expected.inputMode='decimal';expected.autocomplete='off';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
+    const remove=el('button','حذف',cell(''));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
     remove.addEventListener('click',()=>{row.remove();draft();showQuestions();});
     return row;
   }
@@ -139,7 +144,10 @@ export function createBriefEditor(root,{storageKey,onError}) {
     const items=[...(analysis?.questions||[])];
     const residential=$('cwType').value==='residential';
     $('cwBuildingFields').hidden=!residential;
+    // An empty new project shows no questions until the owner starts describing it.
+    const started=!!$('cwBrief').value.trim()||Object.values(fields).some(id=>$(id).value!=='');
     for(const [metric,id] of Object.entries(fields)){
+      if(!started)break;
       if($(id).value!=='')continue;
       if(!optional.has(metric))items.push('ما '+metricLabels[metric]+'؟ القيمة غير محددة.');
       else if(residential&&metric==='building_width_m')items.push('ما عرض المبنى وعمقه بعد الارتدادات؟ إن تركتهما فارغين فسيُرسم المبنى بحجم الأرض كاملة.');
@@ -181,6 +189,15 @@ export function createBriefEditor(root,{storageKey,onError}) {
     }catch(e){onError(e);}
   }
   read.addEventListener('click',readBrief);
+  // Number fields are text fields with a numeric keyboard, so Arabic digits and
+  // «٫» are accepted: typed digits become ASCII at once (caret kept), and the
+  // value is tidied when the field is left. Capture phase: before other readers.
+  const numeric=target=>target?.matches?.('input[inputmode="decimal"],input[inputmode="numeric"]');
+  $('cwBriefForm').addEventListener('input',e=>{
+    if(!numeric(e.target))return;const before=e.target.value,after=asciiNumberText(before);if(after===before)return;
+    const start=e.target.selectionStart,end=e.target.selectionEnd;e.target.value=after;try{e.target.setSelectionRange(start,end);}catch(err){}
+  },true);
+  $('cwBriefForm').addEventListener('change',e=>{if(numeric(e.target)){const tidy=normalizeNumberText(e.target.value);if(tidy!==e.target.value)e.target.value=tidy;}},true);
   $('cwAddRequirement').addEventListener('click',()=>{add();draft();showQuestions();});
   $('cwBriefForm').addEventListener('input',e=>{
     if(e.target.id==='cwConfirmed')return;

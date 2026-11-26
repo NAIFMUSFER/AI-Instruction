@@ -816,9 +816,13 @@ class PlanWorkspace:
                 locks.discard(room_ref)
             canonical({"model": old.model, "requirements": json.loads(old.requirements_json),
                        "brief": old.brief, "locks": [list(x) for x in sorted(locks)]})
+            # The note is shown to the owner in the version list: name the room,
+            # not its (template, id) tuple.
+            room = _room_index(old.model)[room_ref]
+            name = room.get("name") if isinstance(room.get("name"), str) and room["name"].strip() else room_ref[1]
             rev = self.propose(old.model, brief=old.brief,
                                requirements=json.loads(old.requirements_json), expected_head=expected_head,
-                               note=("LOCK " if locked else "UNLOCK ") + repr(room_ref))
+                               note=("قفل الفراغ: " if locked else "إلغاء قفل الفراغ: ") + name.strip()[:120])
             # No published revision is mutated; replace this just-created value.
             from dataclasses import replace
             rev = replace(rev, locked_rooms=tuple(sorted(locks)))

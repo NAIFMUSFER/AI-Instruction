@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {analyzeBrief, buildBriefProgram, warehouseRequirementsPreflight} from '../../public/app/core/brief-program.mjs';
+import {analyzeBrief, buildBriefProgram, normalizeNumberText, warehouseRequirementsPreflight} from '../../public/app/core/brief-program.mjs';
 
 const form = (brief, extra={}) => ({brief, type:'residential', width:'20', depth:'25', levels:'3', rows:[], ...extra});
 const evidence = program => {
@@ -183,6 +183,17 @@ const cases = [
     for(const [text,n,quote] of [['عمارة سكنية. أرضي + ٣ أدوار.',4,'أرضي + ٣ أدوار'],['عمارة سكنية. دورين فوق الأرضي.',3,'دورين فوق الأرضي'],
       ['عمارة. عدد الأدوار ٣ شاملة الأرضي.',3,'عدد الأدوار ٣']])
       assert.deepEqual(analyzeBrief(text).candidates.filter(r=>r.metric==='level_count').map(r=>[r.expected,r.evidence]),[[n,quote]],text);
+  }],
+  ['Arabic-keyboard digits are accepted and absurd sizes are refused in Arabic before any paid request', () => {
+    assert.equal(normalizeNumberText('٢٠٫٥'),'20.5');assert.equal(normalizeNumberText('۲۵'),'25');
+    assert.equal(normalizeNumberText('20,5'),'20.5');assert.equal(normalizeNumberText('١٬٢٠٠'),'1200');
+    const p=buildBriefProgram(form('عمارة سكنية',{width:'٢٠٫٥',depth:'٢٥',levels:'٣'}));
+    assert.deepEqual(p.requirements.map(r=>[r.metric,r.expected]),[['site_width_m',20.5],['site_depth_m',25],['level_count',3]]);
+    assert.throws(()=>buildBriefProgram(form('عمارة سكنية',{width:'99999'})),/الحد المدعوم للمشاريع السكنية \(200 م\)/);
+    assert.throws(()=>buildBriefProgram(form('عمارة سكنية',{levels:'100'})),/الحد المدعوم للمشاريع السكنية \(30 دورًا\)/);
+    assert.throws(()=>buildBriefProgram(form('عمارة سكنية',{buildingWidth:'201'})),/200 م/);
+    assert.equal(buildBriefProgram(form('مستودع',{type:'warehouse',width:'400',depth:'300',levels:'1'})).requirements[0].expected,400,'warehouses keep a wider limit');
+    assert.throws(()=>buildBriefProgram(form('مستودع',{type:'warehouse',width:'4000',levels:'1'})),/للمستودعات \(1000 م\)/);
   }],
 ];
 for(const [name,test] of cases){test();console.log('PASS '+name);}

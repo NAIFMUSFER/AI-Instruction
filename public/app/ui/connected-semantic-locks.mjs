@@ -1,4 +1,5 @@
 import {parseReviewFile} from '../core/plan-review-packet.mjs';
+import {planRoomName} from '../core/plan-labels.mjs';
 
 const COLLECTIONS = new Set([
   'racks', 'docks', 'lanes', 'stations', 'doors', 'windows',
@@ -277,9 +278,21 @@ function nativeBusy() {
   return root?.getAttribute('aria-busy') === 'true' || Boolean(recover && !recover.hidden);
 }
 
+// «باب ٢ – غرفة نوم ١ - الشقة ١ – الدور الأول». Element and room ids are shown
+// only in the engineer view (#cwEngineerIds).
+const OWNER_COLLECTION_LABELS = {...COLLECTION_LABELS, points: 'نقطة خدمات', objects: 'عنصر'};
+const POINT_LABELS = {light: 'نقطة إنارة', spot: 'نقطة إنارة', outlet: 'مأخذ كهرباء', switch: 'مفتاح كهرباء', smoke: 'كاشف دخان',
+  sprinkler: 'رشاش حريق', camera: 'كاميرا', exit: 'لوحة مخرج', extinguisher: 'طفاية حريق'};
 function labelFor(selector) {
-  const label = COLLECTION_LABELS[selector.collection] || selector.collection;
-  return `${label} · ${selector.element_id} · ${selector.room_id}`;
+  const point = selector.collection === 'points' && /^(light|spot|outlet|switch|smoke|sprinkler|camera|exit|extinguisher)/.exec(selector.element_id);
+  const kind = point ? POINT_LABELS[point[1]] : OWNER_COLLECTION_LABELS[selector.collection] || 'عنصر';
+  const siblings = targets.filter(row => row.template === selector.template && row.room_id === selector.room_id
+    && row.collection === selector.collection);
+  const ordinal = siblings.length > 1 ? ' ' + String(siblings.findIndex(row => row.element_id === selector.element_id) + 1)
+    .replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : '';
+  const room = planRoomName(selectedPacket?.projections, selector.template, selector.room_id);
+  const engineer = globalThis.document?.getElementById('cwEngineerIds')?.checked === true;
+  return `${kind}${ordinal} – ${room}` + (engineer ? ` · ${selector.element_id} · ${selector.room_id}` : '');
 }
 
 function render() {
@@ -444,6 +457,7 @@ function install() {
   scheduleSync(0);
   document.addEventListener('acs:authenticated', () => scheduleSync(0));
   document.addEventListener('change', event => {
+    if (event.target?.id === 'cwEngineerIds') render();
     if (['cwRevision', 'cwLevel'].includes(event.target?.id)) scheduleSync(50);
   });
   document.addEventListener('click', event => {
