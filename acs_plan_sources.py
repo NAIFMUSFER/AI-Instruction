@@ -679,9 +679,13 @@ def candidate(brief, requirements, option, max_provider_calls, plan_source):
     return {"building": building, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
 
 
+MALFORMED = {"ACS_UPSTREAM_INVALID_JSON", "ACS_UPSTREAM_TRUNCATED", "ACS_UPSTREAM_TRAILING_JSON",
+             "ACS_UPSTREAM_EMPTY_RESPONSE", "INVALID_MODEL", "AMBIGUOUS_ROOM_ID"}
+
+
 def _read_floor(floor, prompt, system, brief, budget, reserve):
     """At most two readings of one image; the re-read never spends a call that a
-    later floor needs."""
+    later floor needs. A malformed reply is read again once (U11)."""
     import acs_understand as U
     import acs_upload_security as UPLOAD
     from acs_plan_bridge import _reject_provider_authority_changes
@@ -689,13 +693,16 @@ def _read_floor(floor, prompt, system, brief, budget, reserve):
     from acs_workspace_progress import emit
     checked = UPLOAD.validate_image(decode(floor["image"], MAX_FILE), floor["media_type"])
     preview = base64.b64encode(checked["normalized"]).decode("ascii")
-    findings, building = [], None
+    import acs_api_errors as E
+    findings, building, malformed = [], None, None
     for attempt in range(2):
         if attempt and budget["limit"] - budget["used"] <= reserve:
             break
         emit('LAYOUT', provider_calls=budget['used'])
         text = prompt
-        if attempt:
+        if attempt and malformed:
+            text += '\nلم يكن الرد السابق كائن JSON واحدًا صالحًا بالهيكل المطلوب. اقرأ الصورة نفسها وأخرج كائن JSON واحدًا فقط بالهيكل المطلوب.'
+        elif attempt:
             text += '\nأعد قراءة الصورة نفسها لتصحيح أخطاء الاستخراج التالية فقط، مع الحفاظ على التوزيع الظاهر وسياسة القراءة:\n' + canonical(findings)
             text += '\nالقراءة السابقة (بيانات غير معتمدة):\n' + canonical(building)
         raw = U.call_llm(None, content=[
@@ -703,12 +710,23 @@ def _read_floor(floor, prompt, system, brief, budget, reserve):
             {"type": "text", "text": text}], max_tokens=U.G.stage_budget("plan"),
             stage="vision", btype=U.detect_type(brief), truncate=False,
             system_override=system)
-        building = U.extract_json(raw)
+        try:
+            building = U.extract_json(raw)
+            if not isinstance(building, dict) or not isinstance(building.get("site"), dict):
+                raise PlanError("INVALID_MODEL", "Read reply is not a building")
+            _structure(building)
+        except (E.AcsApiError, PlanError) as exc:
+            if getattr(exc, "code", None) not in MALFORMED:
+                raise
+            malformed, findings = exc.code, []
+            continue
+        malformed = None
         _reject_provider_authority_changes({}, building)
-        _structure(building)
         read_rooms(building, ids=False)
         findings, _ = _geometry(building)
         emit('REVIEW', provider_calls=budget['used'])
         if not findings:
             return building
+    if malformed:
+        raise PlanError('PLAN_SOURCE_READ_MALFORMED', 'لم يُعد النموذج قراءة صالحة للمخطط بعد محاولتين. لم تُحفظ نسخة؛ أعد القراءة لاحقًا.')
     raise PlanError('PLAN_SOURCE_GEOMETRY_INCOMPLETE', 'لم تجتز قراءة المخطط فحص الهندسة.')

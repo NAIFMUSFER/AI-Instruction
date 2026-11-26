@@ -410,6 +410,7 @@ async function generation(option) {
 async function handleJob(job) {
   if(!job||job.id!==pendingJob)throw new Error('لم تصل حالة المهمة المطلوبة.');
   if(job.state==='SUCCEEDED'){
+    const used=Number.isInteger(job.provider_calls)&&job.provider_calls>0?(progressState?.read?' القراءات المستخدمة: ':' طلبات الذكاء الاصطناعي المستخدمة: ')+job.provider_calls+'.':'';
     stopProgress();
     const referenceRevision=typeof job.reference_revision_id==='string'&&job.reference_revision_id?job.reference_revision_id:null;
     clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
@@ -423,7 +424,7 @@ async function handleJob(job) {
         comparisonShown=true;
       }catch(e){}
     }
-    status(comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.');setBusy(false);return;
+    status((comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.')+used);setBusy(false);return;
   }
   if(job.choice&&job.choice.kind==='generated_version'){
     // A newer revision landed while this paid job ran. Its result is kept apart:
