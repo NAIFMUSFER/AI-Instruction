@@ -831,6 +831,7 @@ jobs:
             tests/remediation/test_context_object_selection.mjs \
             tests/remediation/test_context_details_browser_geometry.cjs \
             tests/remediation/test_context_local_integration.cjs \
+            tests/remediation/test_warehouse_local_brief.cjs \
             tests/remediation/test_context_object_controls.mjs \
             tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_guest_recovery_writes.cjs \

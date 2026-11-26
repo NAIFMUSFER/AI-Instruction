@@ -8,7 +8,7 @@ import { __ACS_LATE } from '../late-bindings.js';
 import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestFocus, guestFrameScheduler, guestPaving, keepGuestAboveGrade, visibleInGuestCut, warehouseDockFinish } from '../render/guest-presentation.mjs';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
-import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseClearHeight, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } from '../core/stairs.mjs';
 import { apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../core/local-apartment.mjs';
 import { listContextDetails, withContextDetails } from '../core/context-details.mjs';
@@ -359,7 +359,7 @@ function changeLocalRoof(action){
   return next;
 }
 function localGenerationError(error){
-  if(error.code==='LOCAL_APARTMENT_UNSUPPORTED')return error.message;
+  if(error.code==='LOCAL_APARTMENT_UNSUPPORTED'||error.code==='LOCAL_WAREHOUSE_UNSUPPORTED')return error.message;
   if(error.message==='ROOF_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: الحد المدعوم 64 مستوى شاملاً السطح؛ قلّل عدد الأدوار. بقي النموذج السابق كما هو.';
   if(error.message==='LOCAL_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: أدخل عدداً صحيحاً غير سالب؛ الحد المدعوم 64 مستوى شاملاً الأرضي والسطح. بقي النموذج السابق كما هو.';
   if(error.message==='LOCK_CONTEXT_CHANGED')return 'لا يمكن تعديل النموذج المحلي مع وجود نطاق مقفول.';
@@ -1609,9 +1609,8 @@ function buildLocal(txt,W,D,nF,form=localFormValues()){
   if(isIndustrialProgram(t)){            // مسار البرنامج الصناعي (مستودع/مصنع/…) — واحد من عدّة برامج
     const T=normDigits(txt||'');
     const m=T.match(/(\d{2,4})\s*[×xX*]\s*(\d{2,4})/);            // «120x80» في النص يغلب الحقول
-    const num=(re)=>{const g=T.match(re); const v=g?parseInt(g[1]||g[2]):NaN; return isNaN(v)?null:v;};
     const w=m?+m[1]:W, d=m?+m[2]:D;
-    const clear=num(/ارتفاع\s*(?:صاف[يٍ]?)?\s*(\d{1,2})|clear\s*height\s*(\d{1,2})/);
+    const clear=warehouseClearHeight(T);       // «الارتفاع الصافي 11 متر» ارتفاعٌ لا عدد مستويات
     const strict=!!(document.getElementById('strictMode')||{}).checked;
     /* الأولوية المطلقة لوصف العميل: نبني ما ذكره هو فقط، بأعداده ومقاساته */
     const ft=warehouseFromText(txt,w,d,{clear:clear,strict:strict});

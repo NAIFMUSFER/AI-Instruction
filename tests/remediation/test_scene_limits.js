@@ -795,8 +795,11 @@ const slabsOf = (R) => R.names.filter(n => n.indexOf('|slab|') >= 0).length;
   chk('تظهر فتحات أرصفة المستودع التسع عشرة كاملة ولا يسدّ الغلاف أي باب',
       docks.length===19&&docks.every(d=>shell.every(w=>!overlaps(d,w))));
   // Each of the 19 hosted doors splits one former solid into two jambs and a lintel.
-  chk('ومستودع ١٢٠×٨٠ المشحون: ٣٨٣٩ شبكة غير البلاطات + ٢٢ قطعة بلاطة بلا تدهور',
-      R.err === null && R.meshes - slabsOf(R) === 3839 && slabsOf(R) === 22
+  // Round 2 (agent 07): the sample sits inside a 12 m truck yard north and south,
+  // its rack runs stop at 3.4 m forklift end aisles, and real personnel/exit doors
+  // cut the shell — so the measured count is 3157, not the former 3839.
+  chk('ومستودع ١٢٠×٨٠ المشحون: ٣١٥٧ شبكة غير البلاطات + ٢٢ قطعة بلاطة بلا تدهور',
+      R.err === null && R.meshes - slabsOf(R) === 3157 && slabsOf(R) === 22
       && R.summary.degraded === false,
       R.meshes + ' slabs=' + slabsOf(R) + ' degraded=' + (R.summary || {}).degraded);
 })();
