@@ -12,10 +12,37 @@ Object.assign(metricNames,{building_target_area_m2:'مساحة المبنى ال
 const value = v => v == null ? 'غير متحقق' : typeof v === 'object'
   ? (Array.isArray(v) ? v.map(value) : Object.entries(v).map(([k,n])=>(metricNames[k]||roomLabel(k))+': '+value(n))).join('\n') || 'لا توجد بيانات'
   : typeof v === 'number' && Number.isFinite(v) ? String(Number(v.toPrecision(12))) : String(v);
+const unavailableReasons={
+  gross_floor_area_m2:'لا توجد طريقة معتمدة لحساب إجمالي مساحة الأرضيات من غلاف المبنى.',
+  net_floor_area_m2:'لا يوجد تصنيف معتمد لصافي المساحة.',
+  efficiency:'لا تُحسب كفاءة المساحة لأن إجمالي وصافي مساحة الأرضيات غير محسوبين.',
+  storage_capacity_positions:'عدد خلايا ومستويات الرفوف الهندسية ليس سعة تخزين قابلة للاستخدام أو محسوبة الأحمال؛ لا توجد بيانات وحدة التحميل والخلوص وتصنيف الأحمال.',
+  throughput_per_hour:'لا يوجد في النموذج نموذج مقاس للتدفق والزمن.',
+  travel_distance_m:'لا يوجد نموذج حركة واحد محدد؛ أطوال المسارات المعلنة معروضة منفصلة.',
+  pedestrian_vehicle_separation_compliance:'قياس تداخل الممرات وحده لا يثبت الامتثال لاشتراطات السلامة.',
+  fire_life_safety_compliance:'لا يُجرى هنا تقييم معتمد لاشتراطات الجهة المختصة.',
+  rack_declared_height_max_m:'يحتاج أقصى ارتفاع للرفوف إلى ارتفاع صريح لكل مجموعة رفوف معلنة.',
+  expansion_reserve_area_m2:'تحتاج مساحة التوسع المعلنة إلى حدود غرف صريحة قابلة للقياس.',
+  expansion_reserve_zone_overlap_area_m2:'يحتاج قياس تداخل مناطق التشغيل مع مساحة التوسع إلى حدود غرف صريحة.',
+  expansion_reserve_rack_overlap_area_m2:'يحتاج قياس تداخل الرفوف مع مساحة التوسع إلى أبعاد ومواضع صريحة للرفوف.',
+  expansion_reserve_lane_overlap_area_by_kind_m2:'يحتاج قياس تداخل الممرات مع مساحة التوسع إلى أبعاد ومواضع صريحة للممرات.',
+  configured_route_length_by_id_m:'تعذّر قياس المسارات المعلنة؛ راجع تعريف المسارات في النموذج.',
+  configured_route_length_by_flow_m:'تعذّر قياس المسارات المعلنة؛ راجع تعريف المسارات في النموذج.',
+  dock_count_by_zone_role:'يحتاج توزيع الأرصفة على المناطق إلى أعداد صريحة ومنطقة مالكة لكل رصيف.',
+  dock_site_x_by_slot_m:'تحتاج مواضع الأرصفة إلى حافة وإزاحة وتباعد وعدد صريح لكل مجموعة أرصفة.',
+  dock_site_z_by_slot_m:'تحتاج مواضع الأرصفة إلى حافة وإزاحة وتباعد وعدد صريح لكل مجموعة أرصفة.',
+  zone_area_ratio_by_role:'تحتاج نسب مناطق التشغيل إلى مساحات غرف مقاسة كاملة.',
+  rack_geometric_bay_count:'تحتاج خلايا الرفوف إلى أبعاد واتجاه وعدد صفوف ومستويات صريح لكل مجموعة رفوف.',
+  rack_geometric_bay_level_positions:'تحتاج خلايا الرفوف إلى أبعاد واتجاه وعدد صفوف ومستويات صريح لكل مجموعة رفوف.',
+  rack_overlap_area_m2:'يحتاج قياس تداخل الرفوف إلى أبعاد ومواضع صريحة لكل مجموعة رفوف.',
+  rack_lane_overlap_area_by_lane_kind_m2:'يحتاج قياس تداخل الرفوف والممرات إلى أبعاد صريحة للرفوف والممرات.',
+};
 const metricValue = (key, v) => {
   if(v != null)return value(v);
   const reason=packet?.scorecard?.unavailable?.[key];
-  return typeof reason==='string'&&reason.trim() ? 'غير متاح / غير قابل للقياس — '+reason : value(v);
+  if(typeof reason!=='string'||!reason.trim())return value(v);
+  const arabic=hasArabic(reason)?reason:key==='rack_declared_height_max_m'&&/^No declared rack groups/.test(reason)?'لا توجد مجموعات رفوف معلنة، فلا يوجد أقصى ارتفاع.':unavailableReasons[key]||'لا توجد طريقة قياس معتمدة لهذا المقياس في النموذج الحالي.';
+  return 'غير متاح / غير قابل للقياس — '+arabic;
 };
 const floorLabel = index => index < 0 ? 'القبو '+Math.abs(index) : index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
 // Canonical level kind is explicit; room names never determine roof authority.
@@ -36,7 +63,7 @@ function autoRoofFinding(issue){
   return /^roof(?:_\d+)?$/.test(ref[0])||ref[1].startsWith('roof_');
 }
 function roomLabel(label) {
-  const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس'};
+  const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس',lobby:'البهو',porch:'الرواق',balcony:'الشرفة',courtyard:'الفناء',dining:'غرفة الطعام',laundry:'الغسيل',office:'المكتب',storage:'التخزين',staging:'التجهيز',receiving:'الاستلام',shipping:'الشحن',expansion:'مساحة التوسع',roof_deck:'السطح',circulation:'الحركة',service:'الخدمات'};
   return names[label] || (/^flat_\d+$/.test(label) ? 'شقة '+label.slice(5) : label);
 }
 function projectCopy() {
@@ -80,7 +107,20 @@ function beginJob(id,saved=null){
 function stopProgress(){clearInterval(progressTimer);progressTimer=null;progressState=null;if($('cwJobProgress'))$('cwJobProgress').hidden=true;}
 function safeError(e) {
   const friendly={APPROVAL_REQUIRED:'اعتمد النسخة المختارة قبل التحويل والتصدير.',DOWNSTREAM_GEOMETRY_NOT_SPECIFIED:'تحتاج عناصر النسخة إلى أبعاد إضافية قبل عرض 3D. اطلب استكمالها في المحادثة ثم راجع النسخة الجديدة.',DOWNSTREAM_GEOMETRY_INVALID:'توجد أبعاد غير صالحة للتحويل إلى 3D. راجع العناصر وعدّلها في نسخة جديدة.',STALE_REVISION:'وصل تعديل أحدث لهذا المشروع. افتح آخر نسخة ثم أعد العملية.',LOCK_VIOLATION:'هذا التعديل يمس عنصرًا مقفلًا. عدّل الطلب أو ألغِ قفله أولًا.'};
-  status(friendly[e?.code]||e?.message||'تعذّر إكمال العملية. حاول مجددًا.',true);
+  status(friendly[e?.code]||ownerMessage(e?.code,e?.message,'تعذّر إكمال العملية. حاول مجددًا.'),true);
+}
+// Server messages without Arabic text (engine diagnostics) never reach the owner raw.
+const hasArabic=text=>/[\u0600-\u06FF]/.test(text);
+const englishServerMessages={
+  INVALID_GEOMETRY:'لم يُحفظ التعديل: الأبعاد الجديدة تُحدث تداخلًا أو خللًا يمنع رسم المخطط. نسختك كما هي؛ جرّب أبعادًا أخرى.',
+  OPTION_TYPOLOGY_UNKNOWN:'مقارنة مؤشرات النسخ غير متاحة لهذا المشروع لأن نوع المبنى غير مسجّل في نسخه المحفوظة.',
+  OPTION_TYPOLOGY_MISMATCH:'لا يمكن مقارنة نسختين لنوعي مبنى مختلفين.',
+  ROOM_NOT_FOUND:'الفراغ المحدد غير موجود في هذه النسخة. افتح آخر نسخة ثم أعد الاختيار.',
+  LOCK_CONTEXT_CHANGED:'هذا التعديل يغيّر سياق فراغ مقفل. فكّ القفل أولًا ثم أعد المحاولة.',
+};
+function ownerMessage(code,message,fallback){
+  if(typeof message==='string'&&message.trim()&&hasArabic(message))return message;
+  return englishServerMessages[code]||fallback;
 }
 function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));$('cwRevision').disabled=on;root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob||b.dataset.unavailable==='true';});syncApproval(); }
 async function api(body, commands=false) {
@@ -218,7 +258,10 @@ async function renderState(data, {keepStep=false}={}) {
   const position=(data.history||[]).findIndex(v=>v.revision_id===data.revision_id);
   const reference=data.history?.[Math.max(0,position-1)];
   $('cwCompareRevision').value=(reference?.revision_id!==data.revision_id?reference:data.history?.find(v=>v.revision_id!==data.revision_id))?.revision_id||'';
-  $('cwCompareControls').hidden=(data.history||[]).length<2;
+  // The measured comparison needs the building type recorded in the version.
+  const comparable=!!packet&&packet.scorecard?.typology!=='unknown';
+  $('cwCompareControls').hidden=(data.history||[]).length<2||!comparable;
+  $('cwCompareUnavailable').hidden=(data.history||[]).length<2||comparable;
   $('cwComparison').hidden=true;
   $('cwVersionBadge').textContent=data.revision_id?'V'+packet.revision.version+' · '+(data.history.find(v=>v.revision_id===data.revision_id)?.state==='APPROVED'?'نسخة معتمدة':'مسودة محفوظة سحابيًا'):'مشروع جديد';
   $('cwReviewEmpty').hidden=!!packet;$('cwReviewContent').hidden=!packet;
@@ -329,7 +372,7 @@ async function generation(option) {
   beginJob(body.job_id);
   setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
-  catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+e.message,true);}
+  catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
   finally{setBusy(false);}
 }
 async function handleJob(job) {
@@ -366,7 +409,7 @@ async function handleJob(job) {
     stopProgress();clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
     failedJob=job.can_resume===true?job.id:null;
     $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;$('cwResumeJob').hidden=!failedJob;
-    const reason=typeof job.error_message==='string'&&job.error_message.length<=500?job.error_message:'تعذّر إكمال التوليد.';
+    const reason=typeof job.error_message==='string'&&job.error_message.length<=500&&/[\u0600-\u06FF]/.test(job.error_message)?job.error_message:'تعذّر إكمال التوليد.';
     const next=failedJob?' يمكنك استئناف المراحل المحفوظة (استدعاء مدفوع) أو تعديل طلبك.':'';
     status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. راجع قائمة النسخ؛ يمكنك إرسال الطلب مرة أخرى إن لم تظهر نسخة جديدة.':reason+' لم تُحفظ نسخة جديدة، ونسخك السابقة كما هي.'+next,true);setBusy(false);return;
   }
@@ -416,7 +459,7 @@ async function exportFile(format, display=false){
       if(!current()){dispose?.();return;}
       viewerDispose=dispose;host.dataset.revision=revisionId;
       status('يعرض 3D النسخة المعتمدة نفسها. الإضاءة والقص وخامات العرض لا تغيّر المخطط.');
-    }catch(error){if(current()){showViewerFallback(host,error.message);throw error;}}
+    }catch(error){if(current()){showViewerFallback(host,ownerMessage(error?.code,error?.message,'تعذّر عرض النموذج ثلاثي الأبعاد على هذا الجهاز.'));throw error;}}
   }else{
     download(bytes,data.filename,data.mime);
     if(data.receipt)download(JSON.stringify(data.receipt,null,2),'acs-'+format+'-manifest.json','application/json');
@@ -482,6 +525,7 @@ function mount(){
   const compareSelect=el('select',null);compareSelect.id='cwCompareRevision';
   const compareControls=el('div',null,null,'cw-toolbar');compareControls.id='cwCompareControls';
   $('cwCompare').before(compareControls);compareControls.append(compareLabel,compareSelect,$('cwCompare'));
+  const compareUnavailable=el('p',englishServerMessages.OPTION_TYPOLOGY_UNKNOWN+' فرق كل تعديل محفوظ في سجل النسخ.',null,'cw-muted');compareUnavailable.id='cwCompareUnavailable';compareUnavailable.hidden=true;compareControls.after(compareUnavailable);
   compareSelect.addEventListener('change',syncApproval);
   const resumeReview=el('button','العودة إلى مراجعة النواقص');resumeReview.id='cwResumeReview';resumeReview.type='button';resumeReview.hidden=true;
   $('cwExportNote').after(resumeReview);
@@ -503,7 +547,7 @@ function mount(){
     catch(e){
       // The service answered with a refusal: no job started, so nothing stays open.
       if(e?.status>0){stopProgress();pendingJob=null;try{localStorage.removeItem(jobKey());}catch(err){}$('cwRecoverJob').hidden=true;failedJob=oldId;resumeButton.hidden=false;throw e;}
-      progressPhase('UNKNOWN');status('لم يصل تأكيد طلب الاستئناف. اضغط «متابعة المهمة» للتحقق قبل أي طلب جديد. '+e.message,true);
+      progressPhase('UNKNOWN');status('لم يصل تأكيد طلب الاستئناف. اضغط «متابعة المهمة» للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);
     }
   }));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
@@ -531,7 +575,7 @@ function mount(){
     const body={action:'chat_edit',job_id:crypto.randomUUID(),expected_head:state.head,notes:[{text}],confirmed:true,max_provider_calls:3};
     beginJob(body.job_id);
     $('cwRecoverJob').hidden=false;setBusy(true);status('جارٍ إرسال طلب التعديل…');
-    try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+err.message,true);}
+    try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+ownerMessage(err?.code,err?.message,''),true);}
   });});
   $('cwSelection').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const data=await api({action:'edit_geometry',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],rect:['cwX','cwZ','cwW','cwD'].map(id=>Number($(id).value))});await renderState(data);status('حُفظ التعديل كنسخة جديدة.');});});
   {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.setAttribute('data-mutate','');roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';
