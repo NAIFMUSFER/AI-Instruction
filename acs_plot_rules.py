@@ -29,6 +29,9 @@ SIDES = ('N', 'E', 'S', 'W')
 OPPOSITE = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
 SIDE_AR = {'N': 'الشمال', 'E': 'الشرق', 'S': 'الجنوب', 'W': 'الغرب'}
 PLACEMENTS = ('front_setback', 'pilotis', 'none')
+POSITIONS = ('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'center')
+POSITION_AR = {'N': 'شمال', 'NE': 'الشمال الشرقي من', 'E': 'شرق', 'SE': 'الجنوب الشرقي من', 'S': 'جنوب',
+               'SW': 'الجنوب الغربي من', 'W': 'غرب', 'NW': 'الشمال الغربي من', 'center': 'وسط'}
 APARTMENTS, VILLA = 'apartments', 'villa'
 EPS = 0.01  # metres: drawing tolerance, not a regulatory allowance
 
@@ -196,13 +199,58 @@ def unit_area_estimate(option, requirements, brief):
 
 
 # ── resolution ───────────────────────────────────────────────────────────────
-def resolve(plot, brief, requirements, option=None):
+def _from_program(p, program):
+    """Fill what the plot block leaves empty from a confirmed brief program.
+
+    The plot block's own values win (the owner set them in step 01); the
+    program's stated street sides, street width, setbacks and parking count are
+    the owner's words too, so they are inputs, not assumptions."""
+    if not isinstance(program, dict):
+        return p
+    site, parking = program.get('site') or {}, program.get('parking') or {}
+    out = dict(p, setbacks_m=dict(p['setbacks_m']), parking=dict(p['parking']))
+    if not out['streets'] and site.get('street_sides'):
+        out['streets'] = [s for s in site['street_sides'] if s in SIDES][:2]
+    if out['street_width_m'] is None and _num(site.get('street_width_m')):
+        out['street_width_m'] = site['street_width_m']
+    for side in SIDES:
+        given = (site.get('setbacks_m') or {}).get(side)
+        if out['setbacks_m'][side] is None and _num(given):
+            out['setbacks_m'][side] = given
+    if out['parking']['count'] is None and type(parking.get('count')) is int:
+        out['parking']['count'] = parking['count']
+    return out
+
+
+def _program_stall(program):
+    parking = (program or {}).get('parking') if isinstance(program, dict) else None
+    w, d = (parking or {}).get('stall_width_m'), (parking or {}).get('stall_depth_m')
+    if _num(w) and _num(d) and 1.8 <= w <= 8 and 1.8 <= d <= 8:
+        return float(w), float(d), 'user'
+    return STALL_W, STALL_D, 'default'
+
+
+def _parking_floor(program):
+    """True when the confirmed program's ground floor holds parking and no flats."""
+    levels = (program or {}).get('levels') if isinstance(program, dict) else None
+    if not levels:
+        return False
+    ground = levels[0]
+    return not ground.get('units') and (ground.get('use') == 'parking'
+                                        or (program.get('parking') or {}).get('placement') == 'pilotis')
+
+
+def resolve(plot, brief, requirements, option=None, program=None):
     """Deterministic plot rules (the stamped ``meta.acs_plot_rules``).
 
+    ``program`` is a validated confirmed brief program (acs_brief_reader) or
+    None: it fills inputs the plot block leaves empty (street, setbacks,
+    parking count), sets the stall size, places the building footprint at its
+    stated position and makes a parking-only ground floor pilotis parking.
     Raises PlanError before any paid call when the land is unknown, the
     setbacks leave no envelope, or the requested program/parking cannot fit.
     """
-    p = validate_input(plot)
+    p = _from_program(validate_input(plot), program)
     W, D = _confirmed(requirements, 'site_width_m'), _confirmed(requirements, 'site_depth_m')
     if not (_num(W) and _num(D) and W > 0 and D > 0):
         raise _plan_error('PLOT_SITE_REQUIRED', 'أدخل عرض الأرض وعمقها حتى تُحسب المساحة القابلة للبناء بعد الارتدادات.')
@@ -258,6 +306,10 @@ def resolve(plot, brief, requirements, option=None):
                + '. طُبّقت على كل الأدوار احتياطًا؛ عدّلها حسب اشتراطات أمانة منطقتك.')
 
     placement = p['parking']['placement']
+    if placement == 'front_setback' and _parking_floor(program):
+        placement = 'pilotis'
+        assume('الدور الأرضي مواقف تحت المبنى ومدخل ودرج فقط كما في برنامج الأدوار المؤكد، والشقق في الأدوار فوقه.')
+    stall_w, stall_d, stall_source = _program_stall(program)
     if kind == VILLA:
         regulatory = 1 if W * D <= 400 + 1e-9 else 2
     else:
@@ -282,15 +334,16 @@ def resolve(plot, brief, requirements, option=None):
     x0, x1, z0, z1 = setbacks['W'], W - setbacks['E'], setbacks['N'], D - setbacks['S']
     parking_depth = 0.0
     if placement == 'front_setback' and required > 0:
-        parking_depth = STALL_D
-        if setbacks[primary] < STALL_D:
-            if primary == 'N': z0 = STALL_D
-            elif primary == 'S': z1 = D - STALL_D
-            elif primary == 'W': x0 = STALL_D
-            else: x1 = W - STALL_D
+        parking_depth = stall_d
+        if setbacks[primary] < stall_d:
+            if primary == 'N': z0 = stall_d
+            elif primary == 'S': z1 = D - stall_d
+            elif primary == 'W': x0 = stall_d
+            else: x1 = W - stall_d
         assume('المواقف في الارتداد الأمامي على شارع ' + SIDE_AR[primary] + ' بصف عمودي عمقه '
-               + _fmt(STALL_D) + ' م (موقف ' + _fmt(STALL_W) + ' × ' + _fmt(STALL_D)
-               + ' م مقاس شائع غير متحقق من المصدر) — ' + FRONT_PARKING_REF + '.')
+               + _fmt(stall_d) + ' م (موقف ' + _fmt(stall_w) + ' × ' + _fmt(stall_d)
+               + (' م من وصفك' if stall_source == 'user' else ' م مقاس شائع غير متحقق من المصدر') + ') — '
+               + FRONT_PARKING_REF + '.')
     elif placement == 'pilotis':
         assume('المواقف تحت المبنى في الدور الأرضي (بيلوتي) والشقق في الأدوار فوقه — ' + PILOTIS_REF
                + '. السعة تقدير ' + _fmt(PILOTIS_M2_PER_STALL) + ' م² للموقف مع الممر (غير متحقق).')
@@ -312,6 +365,11 @@ def resolve(plot, brief, requirements, option=None):
     envelope = [round(x0, 2), round(z0, 2), round(x1 - x0, 2), round(z1 - z0, 2)]
     footprint = None
     bw, bd = _confirmed(requirements, 'building_width_m'), _confirmed(requirements, 'building_depth_m')
+    footprint_stated = ((program or {}).get('site') or {}).get('footprint') if isinstance(program, dict) else None
+    footprint_stated = footprint_stated if isinstance(footprint_stated, dict) else {}
+    if not (_num(bw) and _num(bd)) and _num(footprint_stated.get('width_m')) and _num(footprint_stated.get('depth_m')):
+        bw, bd = footprint_stated['width_m'], footprint_stated['depth_m']
+    position = footprint_stated.get('position')
     if _num(bw) and _num(bd):
         if bw > envelope[2] + EPS or bd > envelope[3] + EPS:
             raise _plan_error('PLOT_BUILDING_EXCEEDS_ENVELOPE', 'أبعاد المبنى المؤكدة ' + _fmt(bw) + ' × ' + _fmt(bd)
@@ -320,13 +378,26 @@ def resolve(plot, brief, requirements, option=None):
         ex, ez, ew, ed = envelope
         fx = ex + (ew - bw) / 2 if primary in ('N', 'S') else (ex if primary == 'W' else ex + ew - bw)
         fz = ez + (ed - bd) / 2 if primary in ('E', 'W') else (ez if primary == 'N' else ez + ed - bd)
+        # A stated position («ضع المبنى أقرب إلى الجهة الغربية») wins on its axis.
+        if isinstance(position, str) and position in POSITIONS:
+            if 'W' in position: fx = ex
+            elif 'E' in position: fx = ex + ew - bw
+            elif position == 'center': fx = ex + (ew - bw) / 2
+            if 'N' in position: fz = ez
+            elif 'S' in position: fz = ez + ed - bd
+            elif position == 'center': fz = ez + (ed - bd) / 2
         footprint = envelope = [round(fx, 2), round(fz, 2), float(bw), float(bd)]
-        assumptions.append('وُضع المبنى المؤكد ' + _fmt(bw) + ' × ' + _fmt(bd) + ' م داخل المساحة القابلة للبناء ملاصقًا لخط الارتداد على الشارع.')
+        if isinstance(position, str) and position in POSITIONS:
+            lanes = [(SIDE_AR[side], gap) for side, gap in (('W', fx), ('E', W - fx - bw), ('N', fz), ('S', D - fz - bd))]
+            assumptions.append('وُضع المبنى ' + _fmt(bw) + ' × ' + _fmt(bd) + ' م في ' + POSITION_AR[position]
+                               + ' الأرض كما في وصفك؛ المسافة إلى حد الأرض: ' + '، '.join(name + ' ' + _fmt(gap) + ' م' for name, gap in lanes) + '.')
+        else:
+            assumptions.append('وُضع المبنى المؤكد ' + _fmt(bw) + ' × ' + _fmt(bd) + ' م داخل المساحة القابلة للبناء ملاصقًا لخط الارتداد على الشارع.')
     env_area = envelope[2] * envelope[3]
 
     frontage = W if primary in ('N', 'S') else D
     if placement == 'front_setback' and required > 0:
-        capacity = max(0, int(math.floor((frontage - PATH_W) / STALL_W + 1e-9)) - 1)
+        capacity = max(0, int(math.floor((frontage - PATH_W) / stall_w + 1e-9)) - 1)
         if capacity < required:
             raise _plan_error('PLOT_PARKING_DOES_NOT_FIT', 'المواقف المطلوبة ' + str(required)
                               + ' ولا يتسع الارتداد الأمامي بطول ' + _fmt(frontage) + ' م إلا لنحو ' + str(capacity)
@@ -375,7 +446,7 @@ def resolve(plot, brief, requirements, option=None):
         'envelope': envelope, 'building_footprint': footprint,
         'parking': {'placement': placement, 'required': required, 'required_source': required_source,
                     'regulatory_default': regulatory, 'depth_m': parking_depth,
-                    'stall_m': [STALL_W, STALL_D], 'capacity_estimate': capacity},
+                    'stall_m': [stall_w, stall_d], 'capacity_estimate': capacity},
         'landing_entries': landing, 'zoning_requested': zoning,
         'unit_area_target_m2': target, 'unit_area_tolerance': UNIT_AREA_TOLERANCE,
         'source': dict(SOURCE), 'assumptions': assumptions,
@@ -786,8 +857,9 @@ def stalls(building, rules):
     W, D = rules['land']['w'], rules['land']['d']
     primary = rules['streets'][0]
     rooms = _rooms(building, levels[0]['template'])
+    stall_w, stall_d = _stall(rules)
     depth = min([_plot_distance(rules, r, primary) for r in rooms] or [0.0])
-    if depth < STALL_D - EPS:
+    if depth < stall_d - EPS:
         return []
     along = W if primary in ('N', 'S') else D
     gap = along / 2
@@ -804,12 +876,20 @@ def stalls(building, rules):
         break
     out = []
     for lo, hi in ((0.0, gap - PATH_W / 2), (gap + PATH_W / 2, along)):
-        n = int(math.floor((hi - lo) / STALL_W + 1e-9)) if hi > lo else 0
+        n = int(math.floor((hi - lo) / stall_w + 1e-9)) if hi > lo else 0
         for i in range(n):
-            s = round(lo + i * STALL_W, 3)
-            out.append({'N': [s, 0.0, STALL_W, STALL_D], 'S': [s, D - STALL_D, STALL_W, STALL_D],
-                        'W': [0.0, s, STALL_D, STALL_W], 'E': [W - STALL_D, s, STALL_D, STALL_W]}[primary])
+            s = round(lo + i * stall_w, 3)
+            out.append({'N': [s, 0.0, stall_w, stall_d], 'S': [s, D - stall_d, stall_w, stall_d],
+                        'W': [0.0, s, stall_d, stall_w], 'E': [W - stall_d, s, stall_d, stall_w]}[primary])
     return out
+
+
+def _stall(rules):
+    """The stall the rules were resolved with ([w, d]); revisions before phase 2 carry the default."""
+    stall = (rules.get('parking') or {}).get('stall_m')
+    if isinstance(stall, list) and len(stall) == 2 and all(_num(v) and 1.8 <= v <= 8 for v in stall):
+        return float(stall[0]), float(stall[1])
+    return STALL_W, STALL_D
 
 
 def parking_capacity(building, rules):
@@ -983,7 +1063,7 @@ def check(building, rules):
             where = 'الارتداد الأمامي' if park['placement'] == 'front_setback' else 'مواقف الدور الأرضي'
             blocking.append({'code': 'PLOT_PARKING_SHORTFALL', 'severity': 'error',
                              'message': 'المواقف المطلوبة ' + str(park['required']) + ' ويتسع ' + where + ' في هذا المخطط لـ '
-                             + str(capacity) + ' فقط' + (' (عمق الارتداد أمام المبنى أقل من ' + _fmt(STALL_D) + ' م أو الواجهة لا تكفي)'
+                             + str(capacity) + ' فقط' + (' (عمق الارتداد أمام المبنى أقل من ' + _fmt(_stall(rules)[1]) + ' م أو الواجهة لا تكفي)'
                                                          if park['placement'] == 'front_setback' else '') + '.'})
     _upper_doors(building, blocking, advisory)
     if levels and rules.get('dwelling') == APARTMENTS:
