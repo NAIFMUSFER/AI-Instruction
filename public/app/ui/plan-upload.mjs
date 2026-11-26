@@ -30,7 +30,7 @@ export function planLikeness(source){
   const ortho=straight/Math.max(1,edges),colour=sat/(w*h),density=edges/(w*h);
   return {plan:ortho>=.62&&colour<=.3&&density>=.015,ortho,colour,density};
 }
-export function createPlanUpload(root,{storageKey,onError}) {
+export function createPlanUpload(root,{storageKey,onError,onOk=()=>{}}) {
   const $=id=>root.querySelector('#'+id),MAX=LIMITS.file;
   let floorMap=[],file=null,pdf=null,preview64=null,rows=[],selected=null,epoch=0,ready=false,uploadId=null,objectUrl=null,uploading=false,opening=false;
   function node(tag,text,parent){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;}
@@ -119,7 +119,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
         releasePreview();objectUrl=URL.createObjectURL(file);img.src=objectUrl;await img.decode();if(current!==epoch)return;
         img.dataset.media=file.type;
       }
-      img.hidden=false;ready=true;uploadId=crypto.randomUUID();flag(img);
+      img.hidden=false;ready=true;uploadId=crypto.randomUUID();flag(img);onOk();
       notice((file.size&&before[0]!==img.naturalWidth?'صغّرنا الصورة من '+before.join('×')+' إلى '+img.naturalWidth+'×'+img.naturalHeight+' بكسل على جهازك (حد قراءة المخطط). ':'')+'المعاينة جاهزة. احفظ المخطط ثم راجع المتطلبات.');sync();
     }
   }
@@ -197,7 +197,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   $('cwSaveSource').addEventListener('click',async()=>{
     if(!file||!ready||$('cwSaveSource').disabled)return;ready=false;uploading=true;sync();
     try{
-      await saveCurrent();notice('حُفظ الأصل في المشروع. راجع المتطلبات ثم تابع لاستخدام المخطط.');
+      await saveCurrent();notice('حُفظ الأصل في المشروع. راجع المتطلبات ثم تابع لاستخدام المخطط.');onOk();
     }catch(e){
       // A refused file stays refused: say why and that it cannot be used, not "retry".
       const refused=e?.status>=400&&e?.status<500&&['INVALID_PLAN_SOURCE','INPUT_LIMIT'].includes(e?.code);
@@ -209,15 +209,54 @@ export function createPlanUpload(root,{storageKey,onError}) {
   $('cwDeleteSource').addEventListener('click',async()=>{
     if(!selected)return;if($('cwDeleteSource').dataset.armed!=='true'){armDelete(true);notice('سيُحذف الملف وصفحاته المحفوظة من المشروع. النسخ المقروءة منه تبقى، ولن يمكن تنزيل الأصل بعدها.');return;}
     const id=selected;uploading=true;sync();
-    try{await api({action:'delete',source_id:id});rows=rows.filter(r=>r.id!==id);selected=null;renderRows();persist();notice('حُذف الملف من المشروع. النسخ المقروءة منه محفوظة كما هي.');}
+    try{await api({action:'delete',source_id:id});rows=rows.filter(r=>r.id!==id);selected=null;renderRows();persist();notice('حُذف الملف من المشروع. النسخ المقروءة منه محفوظة كما هي.');onOk();}
     catch(e){notice(e?.code==='PLAN_SOURCE_NOT_OWNER'?e.message:'لم يُحذف الملف. '+(e?.message||''));}
     finally{uploading=false;armDelete(false);sync();}
   });
   $('cwDownloadSource').addEventListener('click',async()=>{
     if(!selected)return;try{const data=await api({action:'download',source_id:selected});const raw=Uint8Array.from(atob(data.data_base64),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([raw],{type:data.media_type}));const a=node('a',null,document.body);a.href=url;a.download=data.name;a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}catch(e){onError(e);}
   });
+  // U13: upload-specific wording for step 2, the paid confirmation, and the review.
+  const STEP2={title:'قراءة مخططك',lead:'سنقرأ مخططك المحفوظ ونحوّله إلى مسودة تراجعها مقابل الأصل. لا يُختار هنا برنامج أو بديل.',note:'القراءة مدفوعة وتبدأ بعد تأكيدك: قراءة واحدة لكل دور، نحو 20 إلى 30 ثانية لكل قراءة.'};
+  let step2Saved=null;
+  function step2(uploaded){
+    const card=root.querySelector('[data-step-panel="2"] .cw-card');if(!card)return;
+    const h=card.querySelector('h2'),p=[...card.querySelectorAll('p')];
+    step2Saved??={title:h?.textContent,lines:p.map(n=>n.textContent)};
+    if(h)h.textContent=uploaded?STEP2.title:step2Saved.title;
+    p.forEach((n,i)=>{n.textContent=uploaded?(i===0?STEP2.lead:i===1?STEP2.note:n.textContent):step2Saved.lines[i];});
+    const go=$('cwGenerateSource');if(go)go.textContent={revise:'قراءة المخطط واقتراح التعديلات',complete:'قراءة المخطط وإكمال الأبواب'}[$('cwSourceMode').value]||'قراءة المخطط وحفظ مسودة';
+  }
+  function confirm(){
+    const n=levels(),max=Math.min(12,2*n);
+    return {title:'قراءة مخططك بالذكاء الاصطناعي؟',go:'ابدأ القراءة',sent:'جارٍ إرسال طلب قراءة المخطط وحفظ رقم المهمة…',
+      text:(n>1?'سيُقرأ '+n+' أدوار: قراءة واحدة لكل دور ('+n+' قراءات). ':'ستُقرأ صفحة المخطط المختارة: قراءة واحدة. ')
+        +'تستغرق كل قراءة عادةً من 20 إلى 30 ثانية، وتكلف نحو 5 إلى 7 سنتات من رصيد الذكاء الاصطناعي. إن لم تكتمل قراءة دور تُعاد مرة واحدة فقط، بحد أقصى '+max+' قراءات. يمكنك مغادرة الصفحة والعودة لمتابعتها.'};
+  }
+  // Step 3: the original beside the draft, the owner's answers, suggested changes.
+  let reviewEpoch=0;const previews=new Map();
+  async function review(data,level=0){
+    const host=root.querySelector('.cw-drawing');if(!host)return;const current=++reviewEpoch;
+    let box=$('cwSourceOriginal');const info=data?.plan_source;
+    if(!info){box?.remove();$('cwSuggested')?.remove();return;}
+    if(!box){box=node('figure');box.id='cwSourceOriginal';box.className='cw-original';(host.querySelector('#cwPlan')||host.firstChild).after(box);}
+    const floor=info.floors.find(f=>f.level===level)||info.floors[0];
+    box.replaceChildren();node('figcaption','الأصل من ملفك'+(floor?.page?' · الصفحة '+floor.page:'')+(info.north?' · الشمال: '+({up:'أعلى',down:'أسفل',left:'يسار',right:'يمين',arrow:'من سهم الرسم'}[info.north]||'')+(info.north==='arrow'&&info.north_read?' ('+({up:'أعلى',down:'أسفل',left:'يسار',right:'يمين',unknown:'لم يُقرأ'}[info.north_read]||'')+')':''):''),box);
+    try{
+      if(!previews.has(floor.source_id))previews.set(floor.source_id,api({action:'preview',source_id:floor.source_id}));
+      const p=await previews.get(floor.source_id);if(current!==reviewEpoch)return;
+      const img=node('img',null,box);img.alt='الأصل المرفوع لهذا الدور';img.src='data:'+p.media_type+';base64,'+p.data_base64;
+    }catch(e){previews.delete(floor?.source_id);node('p','تعذّر عرض الأصل (ربما حُذف الملف). المسودة محفوظة كما هي.',box).className='cw-muted';}
+    let list=$('cwSuggested');
+    if(info.suggested_changes?.length){
+      if(!list){list=node('section');list.id='cwSuggested';list.className='cw-card';host.closest('.cw-review')?.after(list);}
+      list.replaceChildren();node('h2','التعديلات المقترحة على مخططك',list);const ul=node('ul',null,list);
+      for(const item of info.suggested_changes)node('li',item,ul);
+    }else list?.remove();
+  }
   return {
-    sync,
+    sync,step2,confirm,review,
+    isRead(){return $('cwStartMode').value==='upload';},
     command(){
       if($('cwStartMode').value!=='upload')return {};
       const n=levels(),mode=$('cwSourceMode').value,read=axes();

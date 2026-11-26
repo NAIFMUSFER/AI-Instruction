@@ -163,6 +163,9 @@ def view(store, project_id, actor_id, revision_id=None):
     if plot is not None:
         from acs_plot_rules import summary
         result["plot_rules"] = summary(revision.model, plot)
+    if isinstance(meta, dict) and isinstance(meta.get("acs_plan_source"), dict):
+        from acs_plan_sources import review_view
+        result["plan_source"] = review_view(meta)  # original beside the draft, suggested changes
     return result
 
 
@@ -461,7 +464,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     try:
         return _admit_generated(store, project_id, actor_id, command, result["building"], ws,
                                 source_receipt=source_receipt, on_progress=on_progress,
-                                note="البديل " + command["option"] + " · " + adoption_marker(command["job_id"]))
+                                note=("مقروء من ملفك" if command.get("source_id") else "البديل " + command["option"])
+                                + " · " + adoption_marker(command["job_id"]))
     except PlanError as exc:
         if exc.code != "STALE_REVISION":
             raise

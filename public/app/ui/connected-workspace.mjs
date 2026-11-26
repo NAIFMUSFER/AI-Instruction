@@ -116,7 +116,7 @@ function progressTick(){
 }
 function progressPhase(phase,confirmed=false){
   if(!progressState)return;
-  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
+  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:progressState.read?'قراءة المخطط':'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
   const text=labels[phase]||labels.CHECKING;
   if($('cwJobPhase').textContent!==text)$('cwJobPhase').textContent=text;
   $('cwJobProgress').dataset.phase=phase;
@@ -124,11 +124,11 @@ function progressPhase(phase,confirmed=false){
   if(confirmed)progressState.lastSeenAt=Date.now();
   progressTick();
 }
-function beginJob(id,saved=null){
+function beginJob(id,saved=null,read=!!saved?.read){
   clearInterval(progressTimer);pendingJob=id;failedJob=null;if($('cwResumeJob'))$('cwResumeJob').hidden=true;
   const valid=typeof saved?.startedAt==='number'&&Number.isFinite(saved.startedAt)&&saved.startedAt>0&&saved.startedAt<=Date.now();
-  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0};
-  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission}));}catch(e){}
+  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0,read};
+  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission,read}));}catch(e){}
   $('cwJobProgress').hidden=false;$('cwJobProgress').dataset.startedAt=String(progressState.startedAt);
   progressPhase(saved?'CHECKING':'SUBMITTING');progressTimer=setInterval(progressTick,1000);
 }
@@ -175,7 +175,7 @@ function step(n,{record=false}={}) {
   activeStep=n;
   if(n===2&&$('cwGenerateSource')){
     const uploaded=$('cwStartMode').value==='upload';root.querySelector('.cw-options').hidden=uploaded;$('cwGenerateSource').hidden=!uploaded;
-    $('cwGenerateSource').textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';
+    planUpload.step2(uploaded);
   }
   root.querySelectorAll('[data-step-panel]').forEach(p=>{p.hidden=Number(p.dataset.stepPanel)!==n;});
   root.querySelectorAll('[data-step]').forEach(b=>{if(Number(b.dataset.step)===n)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
@@ -300,6 +300,7 @@ async function renderState(data, {keepStep=false}={}) {
   $('cwAssumptions').replaceChildren();
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
+  planUpload?.review(data);
   const details=contextDefaultsText(data.object_actions,packet?.revision);
   if(details){el('li',details,$('cwAssumptions'));$('cwAssumptionsCard').hidden=false;}
   if(packet){
@@ -383,8 +384,8 @@ async function refresh(rid, keepStep=false) {
   if(epoch!==revisionEpoch)return;
   await renderState(next,{keepStep});
 }
-function confirmPaid(text,go){
-  const dialog=$('cwPaidConfirm');$('cwPaidConfirmText').textContent=text;$('cwConfirmGenerate').textContent=go;
+function confirmPaid(text,go,title='بدء توليد بالذكاء الاصطناعي؟'){
+  const dialog=$('cwPaidConfirm');$('cwPaidConfirmText').textContent=text;$('cwConfirmGenerate').textContent=go;$('cwPaidConfirmTitle').textContent=title;
   if(typeof dialog.showModal!=='function')return Promise.resolve(window.confirm(text));
   return new Promise(resolve=>{dialog.returnValue='';dialog.addEventListener('close',()=>resolve(dialog.returnValue==='go'),{once:true});dialog.showModal();$('cwCancelGenerate').focus();});
 }
@@ -397,10 +398,11 @@ async function generation(option) {
   const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:(source.source_id&&planUpload.calls())||Number($('cwBudget').value)};
   // A generation is a paid, multi-minute run: the owner confirms it first.
   const name=source.source_id?'قراءة المخطط المرفوع':'«'+(root.querySelector('[data-option="'+option+'"]')?.closest('article')?.querySelector('h2')?.textContent.replace(/\s*·\s*مقترح لك$/,'')||'البديل '+option)+'»';
-  if(!await confirmPaid('سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.','ابدأ التوليد')){status('لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
-  beginJob(body.job_id);
+  const read=source.source_id?planUpload.confirm():null;
+  if(!await confirmPaid(read?read.text:'سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.',read?read.go:'ابدأ التوليد',read?.title)){status(read?'لم تبدأ القراءة، ولم يُستهلك أي رصيد.':'لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
+  beginJob(body.job_id,null,!!read);
   Object.assign(body,plot);
-  setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
+  setBusy(true);$('cwRecoverJob').hidden=false;status(read?read.sent:'جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
   finally{setBusy(false);}
@@ -589,19 +591,19 @@ function mount(){
       progressPhase('UNKNOWN');status('لم يصل تأكيد طلب الاستئناف. اضغط «متابعة المهمة» للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);
     }
   }));
-  planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
+  planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError,onOk:()=>{if($('cwStatus').classList.contains('bad'))status('');}});
   plotRules=createPlotRules(root,{storageKey:()=>draftKey()+':plot',issueNames,scopeNames});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));
-  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded){residentialOptions.validate();residentialOptions.prepare(confirmedProgram);}root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;sourceGenerate.textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2,{record:true});}catch(err){safeError(err);}});
+  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded){residentialOptions.validate();residentialOptions.prepare(confirmedProgram);}root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;planUpload.step2(uploaded);status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2,{record:true});}catch(err){safeError(err);}});
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwKeepEdit').addEventListener('click',()=>run(keepEdit));
   $('cwUseGenerated').addEventListener('click',()=>run(()=>useGenerated($('cwChoice').dataset.job)));
   $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;failedJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
-  $('cwLevel').addEventListener('change',draw);
+  $('cwLevel').addEventListener('change',()=>{draw();planUpload.review(state,packet?.projections?.[Number($('cwLevel').value)]?.level_index??0);});
   try{$('cwEngineerIds').checked=localStorage.getItem('acs_engineer_ids')==='1';}catch(e){}
   $('cwEngineerIds').addEventListener('change',()=>{
     try{localStorage.setItem('acs_engineer_ids',$('cwEngineerIds').checked?'1':'0');}catch(e){}

@@ -303,6 +303,10 @@ class WorkspaceMiddleware:
                     SERVICE.checked_command(command, {"source_id"})
                     row, raw = await asyncio.to_thread(SOURCES.read_source, store, project_id, command.get("source_id"))
                     result = {"ok": True, "name": row["name"], "media_type": row["media_type"], "data_base64": base64.b64encode(raw).decode("ascii")}
+                elif action == "preview":
+                    SERVICE.checked_command(command, {"source_id"})
+                    result = dict(await asyncio.to_thread(SOURCES.preview_of, store, project_id,
+                                                          command.get("source_id")), ok=True)
                 elif action == "delete":
                     SERVICE.checked_command(command, {"source_id"})
                     result = dict(await asyncio.to_thread(SOURCES.delete_source, store, project_id, actor_id,

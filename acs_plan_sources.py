@@ -485,6 +485,24 @@ def read_inputs(store, project_id, command):
     return source, receipt(rows, command)
 
 
+def review_view(meta):
+    """What the review shows of a read: which saved source each floor came from
+    (to show the original beside the draft), the owner's scale and north, and
+    the changes a «revise» read suggested (meta.added)."""
+    receipt = meta["acs_plan_source"]
+    floors = receipt.get("floors") or [{"id": receipt.get("id"), "page": receipt.get("page"), "level": 0}]
+    added = meta.get("added") if isinstance(meta.get("added"), list) else []
+    return {"mode": receipt.get("mode"), "scale": receipt.get("scale"), "north": receipt.get("north"),
+            "north_read": meta.get("north_read"),
+            "floors": [{"source_id": f.get("id"), "page": f.get("page"), "level": f.get("level")} for f in floors][:MAX_FLOORS],
+            "suggested_changes": [v[:500] for v in added if isinstance(v, str)][:32]}
+
+
+def preview_of(store, project_id, source_id):
+    row, raw = read_source(store, project_id, source_id, "preview")
+    return {"media_type": row["preview_media_type"], "data_base64": base64.b64encode(raw).decode("ascii")}
+
+
 def page_text(data, page, limit=PAGE_TEXT_CHARS):
     """Text of one PDF page (dimensions, room names), bounded, as data for the read."""
     import io
