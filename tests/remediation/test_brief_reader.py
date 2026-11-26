@@ -184,14 +184,78 @@ class ReplyAndWorker(unittest.TestCase):
         self.assertEqual(calls, 1)
         self.assertEqual(worker.calls[0][0], B.TARGET)
         self.assertEqual(worker.calls[0][1], {'brief': BRIEF, 'max_provider_calls': 1})
-        bad = owner_program(); bad['site']['width_m'] = 9999
-        with self.assertRaises(PlanError) as caught:
-            B.read_and_check(read_command(), runner=Worker({'program': bad, 'provider_calls': 1}))
-        self.assertEqual(caught.exception.code, 'BRIEF_PROGRAM_INVALID')
+        # A reply that is not a program at all is still refused.
+        for bad in ({'schema': B.SCHEMA, 'site': {}, 'levels': []}, ['not', 'a', 'program']):
+            with self.assertRaises(PlanError) as caught:
+                B.read_and_check(read_command(), runner=Worker({'program': bad, 'provider_calls': 1}))
+            self.assertIn(caught.exception.code, ('BRIEF_PROGRAM_INVALID',))
+        # An out-of-range plot width is left for the owner to fill, and disclosed.
+        odd = owner_program(); odd['site']['width_m'] = 9999
+        program, _ = B.read_and_check(read_command(), runner=Worker({'program': odd, 'provider_calls': 1}))
+        self.assertIsNone(program['site']['width_m'])
+        self.assertIn('READ_ADJUSTED', [c['code'] for c in program['checks']])
         unconfirmed = Worker({'program': owner_program()})
         with self.assertRaises(PlanError):
             B.read_and_check(read_command(confirmed=False), runner=unconfirmed)
         self.assertEqual(unconfirmed.calls, [], 'no provider work before confirmation')
+
+
+class TolerantReply(unittest.TestCase):
+    """A provider reply is fitted to the schema, never refused over one odd value.
+
+    The live read of the owner's brief (job a0e6ff2b, 6770 output tokens) was
+    refused whole as BRIEF_PROGRAM_INVALID; the brief gives several strips by one
+    side only («ممر مظلل بعرض ١٫٥ م», «ممشى ١٫٥ م»).
+    """
+    def reply(self):
+        p = owner_program()
+        p['site']['note'] = 'extra key the schema does not have'
+        p['outputs']['dimensions'] = True
+        p['checks'] = [{'code': 'MODEL', 'message': 'ignored'}]
+        p['outdoor'].append({'kind': 'walkway', 'name': 'ممر مظلل', 'width_m': 1.5, 'depth_m': None,
+                             'location': 'N', 'note': 'إلى بهو الدرج'})
+        p['outdoor'].append({'kind': 'pump_room', 'name': 'حجرة المضخة', 'width_m': None, 'depth_m': None,
+                             'location': 'southeast', 'note': None})
+        rooms = p['levels'][0]['units'][0]['rooms']
+        rooms.append({'role': 'pool_bathroom', 'name': 'حمام خارجي للمسبح', 'count': 1, 'width_m': 1.6, 'depth_m': 2.2,
+                      'approx': True, 'ensuite': False, 'note': 'بابه من الحوش', 'level': 0})
+        rooms.append({'role': 'storage', 'name': 'مخزن', 'count': 0, 'width_m': None, 'depth_m': None,
+                      'approx': False, 'ensuite': False, 'note': None})
+        p['other_requests'] = ['طلب ' + str(i) for i in range(14)]
+        return p
+
+    def test_odd_values_are_fitted_and_disclosed(self):
+        raw, changes = B.normalize_reply(self.reply())
+        self.assertTrue(changes)
+        program = B.validate_program(raw)
+        walk = next(o for o in program['outdoor'] if o['name'] == 'ممر مظلل')
+        self.assertEqual((walk['width_m'], walk['depth_m']), (None, None))
+        self.assertIn('1.5', walk['note'], 'the lone side stays visible in the note')
+        pump = next(o for o in program['outdoor'] if o['name'] == 'حجرة المضخة')
+        self.assertEqual((pump['kind'], pump['location']), ('other', None))
+        names = [r['name'] for r in program['levels'][0]['units'][0]['rooms']]
+        self.assertIn('حمام خارجي للمسبح', names)
+        self.assertNotIn('مخزن', names, 'a room counted zero is not planned')
+        self.assertEqual(next(r for r in program['levels'][0]['units'][0]['rooms'] if r['name'] == 'حمام خارجي للمسبح')['role'], 'other')
+        self.assertEqual(len(program['other_requests']), 10)
+        self.assertNotIn('dimensions', program['outputs'])
+
+    def test_read_and_check_adds_one_owner_check(self):
+        class Worker:
+            def __init__(self, result): self.result = result
+            def run(self, target, kwargs, **controls): return self.result
+        program, _ = B.read_and_check(read_command(), runner=Worker({'program': self.reply(), 'provider_calls': 1}))
+        codes = [c['code'] for c in program['checks']]
+        self.assertEqual(codes.count('READ_ADJUSTED'), 1)
+        self.assertNotIn('MODEL', codes, 'model-supplied checks never reach the card')
+        # A clean reply gets no adjustment note.
+        clean, _ = B.read_and_check(read_command(), runner=Worker({'program': owner_program(), 'provider_calls': 1}))
+        self.assertNotIn('READ_ADJUSTED', [c['code'] for c in clean['checks']])
+
+    def test_owner_edits_stay_strict(self):
+        p = owner_program(); p['outdoor'][0]['depth_m'] = None
+        with self.assertRaises(PlanError):
+            B.validate_program(p)
 
 
 class JobStore:

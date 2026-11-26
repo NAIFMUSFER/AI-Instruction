@@ -503,6 +503,179 @@ def read_program(brief, max_provider_calls):
         return {"program": parse_reply(text), "provider_calls": budget["used"]}
 
 
+# ── tolerant reading of a provider reply ─────────────────────────────────────
+def _num_or_none(value, lo, hi):
+    return value if type(value) in (int, float) and math.isfinite(value) and lo <= value <= hi else None
+
+
+_TEXT_KEYS = ("name", "note")
+
+
+def _keep(value, keys):
+    """Known keys only; a name or note that is not text becomes null."""
+    kept = {k: value[k] for k in keys if k in value} if isinstance(value, dict) else {}
+    for key in _TEXT_KEYS:
+        if key in kept and kept[key] is not None and not isinstance(kept[key], str):
+            kept[key] = None
+    return kept
+
+
+def _lone_size(item, lo, hi, changes):
+    """Both sides in range, or neither: a lone side moves into the note."""
+    w, d = item.get("width_m"), item.get("depth_m")
+    fw, fd = _num_or_none(w, lo, hi), _num_or_none(d, lo, hi)
+    if (fw is None) != (fd is None) or (fw is None and (w is not None or d is not None)):
+        stated = [_fmt(v) for v in (w, d) if type(v) in (int, float) and math.isfinite(v)]
+        if stated:
+            note = item.get("note") if isinstance(item.get("note"), str) else ""
+            item["note"] = (note + " — " if note else "") + "مقاس مذكور: " + " × ".join(stated) + " م"
+        item["width_m"] = item["depth_m"] = None
+        changes.append("size")
+    else:
+        item["width_m"], item["depth_m"] = fw, fd
+
+
+def normalize_reply(raw):
+    """Fit a provider reply to the schema before strict validation: (object, changes).
+
+    A reply is rejected only when it is not a program at all. Otherwise
+    unknown keys are dropped, an unknown role or outdoor kind becomes "other",
+    other unknown choices and out-of-range optional numbers become null, a lone
+    width or depth moves into the note, and display lists are cut to their
+    limits. Nothing is invented; the owner reviews the card before it is used.
+    """
+    if not isinstance(raw, dict):
+        return raw, []
+    changes = []
+    top = _keep(raw, ("schema", "building_type", "city", "site", "levels", "core", "parking", "outdoor",
+                      "facade", "outputs", "other_requests"))
+    if len(top) != len([k for k in raw if k not in ("checks", "cannot_do")]):
+        changes.append("keys")
+    top["schema"] = SCHEMA
+    if top.get("building_type") not in BUILDING_TYPES:
+        top["building_type"] = "other"
+    if not isinstance(top.get("city"), str):
+        top["city"] = None
+
+    site = _keep(top.get("site"), ("width_m", "depth_m", "area_m2", "street_sides", "street_width_m",
+                                   "setbacks_m", "footprint"))
+    for key, lo, hi in (("width_m", 2, 200), ("depth_m", 2, 200), ("area_m2", 4, 40000), ("street_width_m", 4, 120)):
+        value = _num_or_none(site.get(key), lo, hi)
+        if value is None and site.get(key) is not None:
+            changes.append("site." + key)
+        site[key] = value
+    sides = site.get("street_sides") if isinstance(site.get("street_sides"), list) else []
+    kept_sides = [v for i, v in enumerate(sides) if v in SIDES and v not in sides[:i]][:2]
+    if kept_sides != sides:
+        changes.append("site.street_sides")
+    site["street_sides"] = kept_sides
+    setbacks = site.get("setbacks_m") if isinstance(site.get("setbacks_m"), dict) else {}
+    site["setbacks_m"] = {side: _num_or_none(setbacks.get(side), 0, 30) for side in SIDES}
+    footprint = _keep(site.get("footprint"), ("width_m", "depth_m", "position"))
+    _lone_size(footprint, 2, 200, changes)
+    footprint.pop("note", None)
+    if footprint.get("position") not in POSITIONS:
+        footprint["position"] = None
+    site["footprint"] = footprint
+    top["site"] = site
+
+    levels = top.get("levels") if isinstance(top.get("levels"), list) else []
+    top["levels"] = []
+    for level in levels:
+        if not isinstance(level, dict):
+            changes.append("level")
+            continue
+        level = _keep(level, ("name", "use", "units", "note"))
+        if level.get("use") not in LEVEL_USES:
+            level["use"] = "other" if level.get("use") else "residential"
+        units = []
+        for unit in level.get("units") if isinstance(level.get("units"), list) else []:
+            if not isinstance(unit, dict):
+                continue
+            unit = _keep(unit, ("name", "bedrooms", "bathrooms", "rooms"))
+            for key in ("bedrooms", "bathrooms"):
+                if not (type(unit.get(key)) is int and 0 <= unit[key] <= 20):
+                    unit[key] = None
+            rooms = []
+            for room in unit.get("rooms") if isinstance(unit.get("rooms"), list) else []:
+                if not isinstance(room, dict):
+                    continue
+                room = _keep(room, ("role", "name", "count", "width_m", "depth_m", "approx", "ensuite", "note"))
+                if room.get("role") not in ROLES:
+                    room["role"] = "other"
+                    changes.append("role")
+                count = room.get("count", 1)
+                if type(count) is float and count == int(count):
+                    count = int(count)
+                if type(count) is int and count == 0:
+                    changes.append("count")
+                    continue
+                room["count"] = count if type(count) is int and 1 <= count <= 12 else 1
+                if not (isinstance(room.get("name"), str) and room["name"].strip()):
+                    room["name"] = "فراغ"
+                for key in ("approx", "ensuite"):
+                    room[key] = room.get(key) is True
+                _lone_size(room, 0.5, 40, changes)
+                rooms.append(room)
+            unit["rooms"] = rooms
+            units.append(unit)
+        level["units"] = units
+        top["levels"].append(level)
+
+    core = _keep(top.get("core"), ("stair", "elevator", "landing_entries", "position", "note"))
+    if core.get("stair") not in STAIRS:
+        core["stair"] = None
+    if core.get("position") not in POSITIONS:
+        core["position"] = None
+    for key in ("elevator", "landing_entries"):
+        if type(core.get(key)) is not bool:
+            core[key] = None
+    top["core"] = core
+    parking = _keep(top.get("parking"), ("count", "stall_width_m", "stall_depth_m", "placement", "note"))
+    if not (type(parking.get("count")) is int and 0 <= parking["count"] <= 100):
+        parking["count"] = None
+    stall = {"width_m": parking.get("stall_width_m"), "depth_m": parking.get("stall_depth_m")}
+    _lone_size(stall, 1.8, 8, changes)
+    parking["stall_width_m"], parking["stall_depth_m"] = stall["width_m"], stall["depth_m"]
+    if parking.get("placement") not in PLACEMENTS:
+        parking["placement"] = None
+    top["parking"] = parking
+
+    outdoor = []
+    for item in top.get("outdoor") if isinstance(top.get("outdoor"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        item = _keep(item, ("kind", "name", "width_m", "depth_m", "location", "note"))
+        if item.get("kind") not in OUTDOOR_KINDS:
+            item["kind"] = "other"
+            changes.append("kind")
+        if not (isinstance(item.get("name"), str) and item["name"].strip()):
+            item["name"] = "عنصر خارجي"
+        if item.get("location") not in POSITIONS:
+            item["location"] = None
+        _lone_size(item, 0.3, 200, changes)
+        outdoor.append(item)
+    if len(outdoor) > 20:
+        changes.append("outdoor")
+    top["outdoor"] = outdoor[:20]
+    facade = _keep(top.get("facade"), ("materials", "notes"))
+    for key, limit in (("materials", 8), ("notes", 6)):
+        values = [v for v in facade.get(key) or [] if isinstance(v, str)] if isinstance(facade.get(key), list) else []
+        facade[key] = values[:limit]
+    top["facade"] = facade
+    outputs = top.get("outputs") if isinstance(top.get("outputs"), dict) else {}
+    top["outputs"] = {key: outputs.get(key) is True for key in OUTPUTS}
+    requests = [v for v in top.get("other_requests") or [] if isinstance(v, str)] if isinstance(top.get("other_requests"), list) else []
+    if len(requests) > 10:
+        changes.append("other_requests")
+    top["other_requests"] = requests[:10]
+    return top, changes
+
+
+ADJUSTED_CHECK = ("عدّلنا قيمًا لم تطابق الحدود المدعومة (مقاس بضلع واحد نُقل إلى الملاحظة، أو نوع غير معروف "
+                  "صار «أخرى»، أو قائمة طويلة اختُصرت). راجع البطاقة قبل التأكيد.")
+
+
 def read_and_check(command, *, runner=None, on_progress=None):
     """Parent side: run the worker, then validate. Returns (program, provider_calls)."""
     command = read_command(command)
@@ -515,7 +688,17 @@ def read_and_check(command, *, runner=None, on_progress=None):
     if not isinstance(result, dict):
         raise PlanError("BRIEF_READ_INVALID_JSON", FAILURE_MESSAGES["BRIEF_READ_INVALID_JSON"])
     calls = result.get("provider_calls")
-    return validate_program(result.get("program")), calls if type(calls) is int and 0 <= calls <= 1 else 1
+    raw, changes = normalize_reply(result.get("program"))
+    try:
+        program = validate_program(raw)
+    except PlanError as exc:
+        # The schema path (never model text) shows which field was refused.
+        from acs_logging import LOG
+        LOG.info("brief_read_refused", request_id=command["job_id"], code=exc.code, path=str(exc)[:200])
+        raise
+    if changes:
+        program["checks"] = (program["checks"] + [{"code": "READ_ADJUSTED", "message": ADJUSTED_CHECK}])[:24]
+    return program, calls if type(calls) is int and 0 <= calls <= 1 else 1
 
 
 def failure_message(code):

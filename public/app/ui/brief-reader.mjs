@@ -178,6 +178,9 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
     checksBox.replaceChildren();
     let notes;
     try {notes = programChecks(program);} catch (e) {notes = [];}
+    // The server's note that it fitted odd values of the read (READ_ADJUSTED) stays until the card is confirmed.
+    const adjusted = (Array.isArray(program?.checks) ? program.checks : []).find(c => c?.code === 'READ_ADJUSTED' && typeof c.message === 'string');
+    if (adjusted && !confirmed) notes = [adjusted, ...notes];
     if (!notes.length) return;
     el('h4', 'تحقق من الأرقام', checksBox);
     const list = el('ul', null, checksBox); for (const n of notes) el('li', n.message, list);
