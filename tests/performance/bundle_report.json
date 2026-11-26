@@ -906,7 +906,7 @@
       {
         "bytes": 1322,
         "group": "(root)",
-        "gzip_bytes": 625,
+        "gzip_bytes": 624,
         "loaded": "eager",
         "path": "public/app/main.js",
         "pct_of_first_party_js": 0.05
