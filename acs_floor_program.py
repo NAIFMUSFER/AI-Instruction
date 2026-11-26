@@ -131,11 +131,6 @@ def count_signature(level):
     return json.dumps(sorted(level_counts(level).items()))
 
 
-def distinct_levels(program):
-    """True when at least two floors have different programs."""
-    return len({signature(lv) for lv in program['levels']}) > 1
-
-
 def targets(level):
     """Rooms with a stated size, one entry per copy: [{role, name, w, d, approx}]."""
     out = []

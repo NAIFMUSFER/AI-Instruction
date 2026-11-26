@@ -78,10 +78,6 @@ def review(model, requirements=None, prog=None, plot_rules=None):
     return ws.review(rev.id)
 
 
-def codes(items):
-    return sorted(i['code'] for i in items)
-
-
 def room(model, template, rid):
     return next(r for r in model['floors'][template]['rooms'] if r['id'] == rid)
 
