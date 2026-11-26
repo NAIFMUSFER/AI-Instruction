@@ -17,6 +17,8 @@ import './core/plot-rules.mjs';
 import './ui/residential-options.mjs';
 import './ui/plot-rules.mjs';
 import './ui/brief-review.mjs';
+import './core/brief-reader.mjs';
+import './ui/brief-reader.mjs';
 import './ui/plan-upload.mjs';
 import './ui/connected-workspace.mjs';
 /* Expose server-held stable nested locks (racks/docks/lanes/cores/etc.) through

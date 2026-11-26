@@ -43,6 +43,8 @@ COPY assets/fonts/ assets/fonts/
 COPY acs_residential_manifest.py acs_residential_access.py acs_residential_layout.py ./
 # Plot rules (envelope, parking, residential basics) and their envelope fallback.
 COPY acs_plot_rules.py acs_plot_layout.py ./
+# Smart brief reading: one bounded provider call, strictly validated program.
+COPY acs_brief_reader.py ./
 # One villa or house: its confirmed program and livability checks (review and layout repair).
 COPY acs_villa_program.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.

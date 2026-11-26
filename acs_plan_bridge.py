@@ -103,6 +103,8 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     candidate = carry_roof_for_admission(before.model, candidate)
     import acs_plot_rules
     candidate = acs_plot_rules.carry(before.model, candidate)
+    import acs_brief_reader
+    candidate = acs_brief_reader.carry(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -158,6 +160,8 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
     # taken from the provider's reply.
     import acs_plot_rules
     detached_candidate = acs_plot_rules.carry(before.model, detached_candidate)
+    import acs_brief_reader
+    detached_candidate = acs_brief_reader.carry(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,

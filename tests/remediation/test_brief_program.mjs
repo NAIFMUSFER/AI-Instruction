@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {analyzeBrief, buildBriefProgram, normalizeNumberText, warehouseRequirementsPreflight} from '../../public/app/core/brief-program.mjs';
 
 const form = (brief, extra={}) => ({brief, type:'residential', width:'20', depth:'25', levels:'3', rows:[], ...extra});
@@ -194,6 +195,21 @@ const cases = [
     assert.throws(()=>buildBriefProgram(form('عمارة سكنية',{buildingWidth:'201'})),/200 م/);
     assert.equal(buildBriefProgram(form('مستودع',{type:'warehouse',width:'400',depth:'300',levels:'1'})).requirements[0].expected,400,'warehouses keep a wider limit');
     assert.throws(()=>buildBriefProgram(form('مستودع',{type:'warehouse',width:'4000',levels:'1'})),/للمستودعات \(1000 م\)/);
+  }],
+  ['The owner\'s detailed brief (live QA): plot width from the street frontage, depth, listed floors and the plot area check', () => {
+    const owner=readFileSync(new URL('./fixtures/brief_reader/owner_brief.txt',import.meta.url),'utf8');
+    const a=analyzeBrief(owner);
+    assert.deepEqual(a.candidates.map(r=>[r.metric,r.expected,r.evidence]),
+      [['level_count',3,'أرضي وأول وثانٍ'],['site_width_m',20,'عرض الواجهة الشمالية ٢٠ م'],['site_depth_m',25,'عمق الأرض ٢٥ م']]);
+    assert.equal(a.site_area_m2.value,500);assert.equal(a.site_area_m2.matches,true);
+    assert.equal(a.questions.length,2,'only the approximate building block and a per-floor count are questioned');
+    evidence(buildBriefProgram(form(owner)));
+    // One clean sentence is still read when another sentence on the same line is qualified.
+    assert.deepEqual(analyzeBrief('عرض الأرض ٢٠ م. في كل دور ٣ غرف نوم.').candidates.map(r=>[r.metric,r.expected]),[['site_width_m',20]]);
+    assert.equal(analyzeBrief('عرض الأرض ٢٠ م. في كل دور ٣ غرف نوم.').questions.length,1);
+    for(const [text,n] of [['أرضي + ٢',3],['أرضي+3',4],['دور أرضي ودور أول',2],['من أرضي وأول وثاني وثالث',4]])
+      assert.deepEqual(analyzeBrief(text).candidates.map(r=>[r.metric,r.expected]),[['level_count',n]],text);
+    for(const text of ['في الأرضي والأول','أرضي وأول أو ثاني','الأرضي والأول والثالث','لا أريد أرضي وأول'])assert.equal(analyzeBrief(text).candidates.length,0,text);
   }],
 ];
 for(const [name,test] of cases){test();console.log('PASS '+name);}

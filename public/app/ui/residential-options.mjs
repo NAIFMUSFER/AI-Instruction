@@ -41,6 +41,8 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
  }
  section.addEventListener('input',save);section.addEventListener('change',save);$('cwLevels').addEventListener('input',summary);$('cwType').addEventListener('change',summary);$('cwBrief').addEventListener('input',summary);
  $('cwReadBrief').addEventListener('click',()=>{const text=$('cwBrief').value;
+  // The street side helps a villa and a building alike (plot rules, entrance).
+  const street=readResidential(text).street;if(street&&$('cwStreet').value==='unknown'){$('cwStreet').value=street;$('cwStreet').dispatchEvent(new Event('change',{bubbles:true}));}
   if(villa()){const found=readVilla(text);if(found.bedrooms)$('cwVillaBedrooms').value=found.bedrooms;if(found.maid)$('cwVillaMaid').value=found.maid;if(found.driver)$('cwVillaDriver').value=found.driver;save();return;}
   const found=readResidential(text);if(found.units){$('cwUnits').value=found.units;$('cwUnitsScope').value=found.scope;}if(found.bedrooms)$('cwBedrooms').value=found.bedrooms;if(found.guests)$('cwGuests').value=found.guests;save();});
  async function sources(){
