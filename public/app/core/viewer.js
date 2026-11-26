@@ -1899,7 +1899,7 @@ function warehouseBriefFacts(txt){
   const role=()=>({side:null,count:null,mentioned:false,dockMentioned:false});
   const f={receiving:role(),shipping:role(),generic:null,clear:warehouseClearHeight(t),city:whCity(t),
            equipment:whEquipment(t),aisle:whStatedAisle(t),apron:whStatedApron(t)};
-  let dockGroup=-1;
+  let dockGroup=-1; const leadSide={};
   for(const {s:c,g} of whSegments(t)){
     const at=t.indexOf(c);
     if(at>=0&&negatedAt(cmap,at)) continue;
@@ -1908,7 +1908,18 @@ function warehouseBriefFacts(txt){
     const sides=whSides(c), dock=own||inherited, count=own?whNounCount(c,WH_DOCK_RE):inherited?whRoleCount(c):null;
     if(own) dockGroup=g;
     for(const r of roles) f[r].mentioned=true;
-    if(!roles.length){ if(dock&&count!=null) f.generic=count; continue; }
+    // «…، كلها من الجهة الجنوبية» و«الأرصفة كلها في الجنوب»: جهةٌ واحدة لكل الأرصفة المذكورة
+    if(!roles.length){
+      if(sides.size===1&&(/(?:^|\s|و)(?:كل(?:ّ)?(?:ها|هم)|جميع(?:ها|هم)|الكل|كلاهما|all|both)(?![ء-ي])/i.test(c)||(own&&count==null))){
+        const sd=[...sides][0];
+        if(f.sharedSide&&f.sharedSide!==sd) warehouseUnsupported('ذكرت جهتين مختلفتين للأرصفة كلها. حدّد جهة واحدة.');
+        f.sharedSide=sd;
+      }
+      if(dock&&count!=null) f.generic=count; continue; }
+    // جهةٌ تسبق الأدوار والأرصفة في جملتها («من الجهة الجنوبية خمسة أرصفة للاستلام وثلاثة للشحن») تعمّ الجملة
+    const sideAt=c.search(/شمال|جنوب|شرق|غرب|north|south|east|west/i), roleAt=Math.min(...[WH_IN_RE,WH_OUT_RE,WH_DOCK_RE].map(re=>{const i=c.search(re);return i<0?Infinity:i;}));
+    if(sides.size===1&&sideAt>=0&&sideAt<roleAt&&leadSide[g]===undefined) leadSide[g]=[...sides][0];
+    if(!sides.size&&leadSide[g]) sides.add(leadSide[g]);
     if(sides.size>1) warehouseUnsupported('ذكرت أكثر من جهة في: «'+c.slice(0,120)+'». حدّد جهة واحدة لكل من الاستلام والشحن.');
     const side=sides.size?[...sides][0]:null;
     const bound=dock&&count!=null&&roles.length>1?whDockRole(c):null;
@@ -1919,6 +1930,11 @@ function warehouseBriefFacts(txt){
       if(dock&&(!bound||bound===r)){ f[r].dockMentioned=true;
         if(count!=null){ if(f[r].count!=null&&f[r].count!==count) warehouseUnsupported('ذكرت عددين مختلفين لأرصفة '+label+'. حدّد عدداً واحداً.'); f[r].count=count; } }
     }
+  }
+  if(f.sharedSide) for(const [r,label] of [['receiving','الاستلام'],['shipping','الشحن']]){
+    if(!(f[r].mentioned||f[r].dockMentioned)) continue;
+    if(f[r].side&&f[r].side!==f.sharedSide) warehouseUnsupported('جهة '+label+' في وصفك تخالف الجهة المذكورة للأرصفة كلها. حدّد جهة واحدة.');
+    f[r].side=f.sharedSide;
   }
   if(f.generic!=null&&f.receiving.count==null&&!f.shipping.dockMentioned){ f.receiving.count=f.generic; f.receiving.mentioned=true; f.receiving.dockMentioned=true; }
   return f;

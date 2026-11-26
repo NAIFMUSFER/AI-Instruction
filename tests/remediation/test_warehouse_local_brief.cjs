@@ -237,6 +237,28 @@ section('R4 — receiving and shipping on one wall',()=>{
     ok(label+': the size line names the one dock wall and the reason',/أصغر من الأرض 80×45/.test(wh.size_note)&&/الجنوبية لتقف/.test(wh.size_note),wh.size_note);
   }
 });
+// R5 — one side shared by all docks: after the counts («كلها»، «جميعها») or before them.
+section('R5 — a side shared by all docks',()=>{
+  const plot='مستودع توزيع في الرياض على أرض 80×45 م، ';
+  const tail='، وتخزين بالتات وتغليف ومكتب.';
+  for(const [label,docksText] of [
+    ['«كلها من الجهة الجنوبية»','خمسة أرصفة للاستلام وثلاثة أرصفة للشحن، كلها من الجهة الجنوبية'],
+    ['«جميعها»','خمسة أرصفة للاستلام وثلاثة أرصفة للشحن، جميعها من الجهة الجنوبية'],
+    ['«كلها جنوب»','خمسة أرصفة للاستلام وثلاثة أرصفة للشحن، كلها جنوب'],
+    ['«الأرصفة كلها في الجنوب»','خمسة أرصفة للاستلام وثلاثة أرصفة للشحن، الأرصفة كلها في الجنوب'],
+    ['side before the counts','من الجهة الجنوبية خمسة أرصفة للاستلام وثلاثة أرصفة للشحن']]){
+    const text=plot+docksText+tail, e=genError(text,80,45);
+    ok(label+': accepted',!e,e&&e.message);
+    if(e) continue;
+    const b=gen(text,80,45),env=envelope(b).rect,wh=b.meta.acs_warehouse,r=docks(b,'receiving'),sh=docks(b,'shipping');
+    ok(label+': all docks on the south wall',r.length&&sh.length&&r.concat(sh).every(x=>x.dock.edge==='S'&&onEdge(x.room.rect,'S',env)));
+    ok(label+': 5 receiving and 3 shipping docks',r.reduce((n,x)=>n+x.dock.count,0)===5&&sh.reduce((n,x)=>n+x.dock.count,0)===3);
+    ok(label+': sides recorded from the brief',wh.receiving.side_source==='brief'&&wh.shipping.side_source==='brief'&&!b.meta.added.some(a=>/لم تُذكر/.test(a)&&/جهة|الجهة/.test(a)));
+    ok(label+': one yard, building 33 m deep',Math.abs(env[3]-33)<1e-6,JSON.stringify(env));
+  }
+  const clash=genError(plot+'الاستلام من الجهة الشمالية فيه خمسة أرصفة وثلاثة أرصفة للشحن، كلها من الجهة الجنوبية'+tail,80,45);
+  ok('a shared side that contradicts a stated side is refused with the reason',clash&&clash.code==='LOCAL_WAREHOUSE_UNSUPPORTED'&&/جهة/.test(clash.message),clash&&clash.message);
+});
 // The shipped sample keeps its site and stays a warehouse.
 section('The shipped sample keeps its site and stays a warehouse.',()=>{
 {
