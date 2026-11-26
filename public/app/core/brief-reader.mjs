@@ -5,7 +5,7 @@
 export const SCHEMA = 'acs.brief-program/1';
 export const SIDE_AR = {N:'الشمال',E:'الشرق',S:'الجنوب',W:'الغرب'};
 export const POSITION_AR = {N:'الشمال',NE:'الشمال الشرقي',E:'الشرق',SE:'الجنوب الشرقي',S:'الجنوب',SW:'الجنوب الغربي',W:'الغرب',NW:'الشمال الغربي',center:'الوسط'};
-export const ROLE_AR = {bedroom:'غرفة نوم',bathroom:'حمام / دورة مياه',living:'صالة',majlis:'مجلس',dining:'سفرة',kitchen:'مطبخ',pantry:'مؤن',laundry:'غسيل',storage:'تخزين',office:'مكتب',dressing:'غرفة ملابس',maid:'غرفة خادمة',driver:'غرفة سائق',corridor:'ممر',entrance:'مدخل / ردهة',terrace:'تراس',balcony:'شرفة',other:'فراغ آخر'};
+export const ROLE_AR = {bedroom:'غرفة نوم',bathroom:'حمام',living:'صالة',majlis:'مجلس',dining:'سفرة',kitchen:'مطبخ',pantry:'مؤن',laundry:'غسيل',storage:'تخزين',office:'مكتب',dressing:'ملابس',maid:'خادمة',driver:'سائق',corridor:'ممر',entrance:'مدخل',terrace:'تراس',balcony:'شرفة',other:'آخر'};
 export const OUTDOOR_AR = {pool:'مسبح',garden:'حديقة',seating:'جلسة',courtyard:'فناء',yard:'حوش',service_yard:'حوش خدمة',walkway:'ممر خارجي',outdoor_dining:'طعام خارجي',equipment:'غرفة معدات',other:'عنصر خارجي'};
 export const STAIR_AR = {u_two_flights:'درج على شكل U بقلبتين وبسطة وسطية',straight:'درج مستقيم',l_shape:'درج على شكل L',spiral:'درج حلزوني'};
 export const OUTPUT_AR = {furnished_plans:'مخططات أدوار مؤثثة',site_plan:'مخطط موقع بالأبعاد',outdoor_plan:'مخطط الأحواش والحديقة',section:'قطاع رأسي',views_3d:'مجسّم ثلاثي الأبعاد',floor_isolation:'عزل كل دور في المجسّم'};

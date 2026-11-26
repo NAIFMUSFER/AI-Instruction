@@ -110,7 +110,7 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
     field(size, 'العدد', room.count, v => {room.count = v; refreshSummaries();}, {kind:'numeric'});
     field(size, 'العرض (م)', room.width_m, v => {room.width_m = v;});
     field(size, 'العمق (م)', room.depth_m, v => {room.depth_m = v;});
-    const remove = el('button', 'حذف', size); remove.type = 'button'; remove.setAttribute('aria-label', 'حذف ' + room.name);
+    const remove = el('button', '✕', size); remove.type = 'button'; remove.setAttribute('aria-label', 'حذف ' + room.name); remove.title = 'حذف الفراغ';
     remove.addEventListener('click', () => {unit.rooms.splice(index, 1); render();});
     const extra = [room.approx ? 'مقاس تقريبي' : null, room.ensuite ? 'بحمام خاص' : null, room.note].filter(Boolean);
     if (extra.length) el('small', extra.join(' · '), row);
