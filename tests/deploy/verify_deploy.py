@@ -1110,7 +1110,10 @@ chk('the shipped compiler derives its rack block from the contract',
 # ونصّ اللوح على مقاس الموقع مُزال من المصرِّف نصّاً لا اصطلاحاً.
 chk('the level plate is derived from the room footprint through the single '
     'shared extent contract, and the site-wide plate is gone from the compiler',
-    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in app
+    'pqPlateRect(plateRects(fdef.rooms||[]),[0,0,site.w,site.d])' in app
+    and 'const plateRects=rooms=>rooms.map(r=>{' in app
+    and 'const rc=r.rect;if(!plateOutset' in app
+    and 'const plateOutset=apartmentPlate?Number(def.wall_t)/2:0;' in app
     and '(_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes))' in app
     and 'slabStrips(0,0,site.w,site.d,holes)' not in app
     and 'PHASE10_FOOTPRINT_PLATE' in app
