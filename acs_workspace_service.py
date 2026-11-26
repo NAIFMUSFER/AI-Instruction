@@ -143,20 +143,31 @@ def view(store, project_id, actor_id, revision_id=None):
                     else:
                         line = [x+(w if edge=="E" else 0),z+offset-width/2,x+(w if edge=="E" else 0),z+offset+width/2]
                     openings.append({"level_index":level["index"],"template":level["template"],"room_id":room["id"],"kind":kind,"line":line})
+    report = ws.review(rid)
+    findings = [{"code": issue.get("code"),
+                 "message": str(issue.get("message") or "")[:1000],
+                 "requirement_id": issue.get("requirement_id"),
+                 "room_ref": issue.get("room_ref") or issue.get("room")}
+                for issue in report.get("issues", [])[:512]]
+    # Advisory plot findings are shown with the others but never block approval.
+    findings += [{"code": item.get("code"), "severity": "advisory",
+                  "message": ("ملاحظة استشارية لا تمنع الاعتماد: " + str(item.get("message") or ""))[:1000],
+                  "requirement_id": None, "room_ref": item.get("room_ref")}
+                 for item in (report.get("advisories") or [])[:128]]
     result.update({"schema": SCHEMA, "ok": True, "brief": revision.brief,
                    "openings":openings,
                    "planning_assumptions":assumptions,
                    "requirements": json.loads(revision.requirements_json),
-                   "review_findings": [{"code": issue.get("code"),
-                       "message": str(issue.get("message") or "")[:1000],
-                       "requirement_id": issue.get("requirement_id"),
-                       "room_ref": issue.get("room_ref") or issue.get("room")}
-                       for issue in ws.review(rid).get("issues", [])[:512]]})
+                   "review_findings": findings})
+    plot = meta.get("acs_plot_rules") if isinstance(meta, dict) else None
+    if plot is not None:
+        from acs_plot_rules import summary
+        result["plot_rules"] = summary(revision.model, plot)
     return result
 
 
 def generation_command(command):
-    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id"})
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id", "plot"})
     if "source_id" in out:
         from acs_plan_sources import identity
         identity(out["source_id"])
@@ -184,7 +195,26 @@ def generation_command(command):
     from acs_plan_projection import _requirements
     from types import SimpleNamespace
     _requirements(SimpleNamespace(requirements_json=canonical(requirements), brief=brief))
+    if "plot" in out:
+        plot_rules(out)  # preflight: an impossible plot fails before any paid call
     return out
+
+
+def plot_rules(command):
+    """Resolved plot rules for a described residential generation, or None.
+
+    Deterministic: the worker (prompt) and the parent (stamped revision) derive
+    the same block from the same command, so the provider never authors it."""
+    if "plot" not in command:
+        return None
+    import acs_plot_rules as P
+    plot = P.validate_input(command["plot"])
+    if command.get("source_id"):
+        raise PlanError("INVALID_PLOT_RULES", "بيانات الأرض تُستخدم مع توليد مخطط من الوصف، لا مع قراءة ملف مخطط.")
+    import acs_understand as U
+    if not U._is_residential(U.detect_type(command["brief"])):
+        raise PlanError("INVALID_PLOT_RULES", "بيانات الأرض والمواقف مدعومة حاليًا للمشاريع السكنية فقط.")
+    return P.resolve(plot, command["brief"], command["requirements"], command.get("option"))
 
 
 def chat_command(command):
@@ -379,7 +409,7 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         from acs_workspace_http import _read_job, _id
         prior = _read_job(store, project_id, _id(command["resume_job_id"]))
         original = prior.get("resume_command") if prior else None
-        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode")
+        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode", "plot")
         if not original or any(canonical(original.get(k)) != canonical(command.get(k)) for k in bound_keys):
             raise PlanError("INVALID_RESUME", "تغيّر وصف المهمة أو مرجعها. ابدأ طلبًا جديدًا.")
         kwargs.update(resume=prior.get("checkpoint"), used_calls=prior.get("provider_calls",0))
@@ -412,6 +442,10 @@ def _admit_generated(store, project_id, actor_id, command, building, ws, *, sour
     """Admit one provider building on top of ``ws.head`` and append it (no provider call)."""
     expected = ws.head
     result = {"building": building}
+    # The parent re-derives the plot rules from the validated command: the
+    # stamped block never comes from the worker or the provider.
+    import acs_plot_rules as P
+    P.stamp(result["building"], plot_rules(command))
     if source_receipt:
         result["building"].setdefault("meta", {})["acs_plan_source"] = source_receipt
     if on_progress:

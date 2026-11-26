@@ -101,6 +101,8 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     # The automatic roof is rebuilt over the edited top storey before locks and
     # admission see the candidate; the provider is never trusted to maintain it.
     candidate = carry_roof_for_admission(before.model, candidate)
+    import acs_plot_rules
+    candidate = acs_plot_rules.carry(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -152,6 +154,10 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
     detached_candidate = json.loads(canonical(candidate))
     _reject_provider_authority_changes(before.model, detached_candidate)
     detached_candidate = carry_roof_for_admission(before.model, detached_candidate)
+    # The revision's plot rules are server-derived: kept as they were, never
+    # taken from the provider's reply.
+    import acs_plot_rules
+    detached_candidate = acs_plot_rules.carry(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,
