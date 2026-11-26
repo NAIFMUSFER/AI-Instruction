@@ -289,8 +289,14 @@ def validate_building(b):
                 stats["docks"] += sum(int(dk.get("count", 1) or 1) for dk in (r.get("docks") or []))
 
             # تفتيت الأحياز الكبيرة العامة (apt_a ...) — سكني فقط
+            # A roof-only template holds the unoccupied roof slab: its decks are
+            # derived from the storey below and named after it
+            # ("roof_<apartment room id>"), so the id matches "apartment" but
+            # there is nothing to split into rooms, and an edit cannot change
+            # it (carry_auto_roof rebuilds an automatic roof after every edit).
             if (not industrial) and not strict and area > SPLIT_AREA \
-                    and r.get('role') not in {'bedroom','living','kitchen','bathroom','majlis','corridor','entrance','lobby','stairs','elevator'} \
+                    and tmpl not in roof_only_templates \
+                    and r.get('role') not in {'bedroom','living','kitchen','bathroom','majlis','corridor','entrance','lobby','stairs','elevator','roof_deck'} \
                     and any(g in low for g in GENERIC_IDS):
                 issues.append(
                     "[%s/%s] حيّز عام مساحته %.0f م² — قسّمه إلى غرف مسمّاة منفصلة "
