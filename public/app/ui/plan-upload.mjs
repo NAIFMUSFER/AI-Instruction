@@ -18,7 +18,7 @@ export function createPlanUpload(root,{storageKey,onError}) {
   function node(tag,text,parent){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(parent)parent.append(n);return n;}
   const section=node('section');section.className='cw-source';section.id='cwSource';
   section.innerHTML=`<label for="cwStartMode">كيف تريد بدء المخطط؟</label><select id="cwStartMode"><option value="describe">وصف مشروع جديد</option><option value="upload">رفع مخطط جاهز</option></select>
-  <div id="cwUploadPanel" hidden><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف بيانات الكاميرا والموقع من كل صورة قبل حفظها، ويُحفظ الملف المتطابق مرة واحدة. في PDF اختر الصفحة التي تريد قراءتها.</p>
+  <div id="cwUploadPanel" hidden><p id="cwPlotNote" class="cw-muted">في وضع رفع المخطط يُنقل مخططك كما رسمته، فأخفينا قسم الأرض والارتدادات والمواقف: لا تُطبَّق قواعد الأرض على القراءة. عرض الموقع وعمقه أعلاه يبقيان للمقياس.</p><p class="cw-muted">ارفع صورة PNG أو JPEG أو WebP، أو ملف PDF حتى 5 ميجابايت. الصور الأكبر من 2576 بكسل تُصغَّر على جهازك قبل الرفع، وتُحذف بيانات الكاميرا والموقع من كل صورة قبل حفظها، ويُحفظ الملف المتطابق مرة واحدة. في PDF اختر الصفحة التي تريد قراءتها.</p>
   <label for="cwPlanFile">ملف المخطط</label><input id="cwPlanFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" data-mutate>
   <div id="cwPdfPagePanel" hidden><label for="cwPdfPage">الصفحة المطلوب استخدامها</label><select id="cwPdfPage" data-mutate></select></div>
   <img id="cwSourcePreview" alt="معاينة صفحة المخطط المختارة" hidden><p id="cwSourceStatus" role="status" aria-live="polite"></p>
@@ -208,6 +208,6 @@ export function createPlanUpload(root,{storageKey,onError}) {
       return {source_id:floors[0],source_mode:mode,source_read:{...read,floors:floors.map((source_id,level)=>({source_id,level}))}};
     },
     calls(){const n=$('cwStartMode').value==='upload'?levels():0;return n?Math.min(12,2*n):null;},
-    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;floorMap=Array.isArray(saved?.floors)?saved.floors:[];renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwUploadPanel').hidden=false;}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;if(saved?.scale)$('cwSourceScale').value=saved.scale;$('cwScaleKnown').hidden=$('cwSourceScale').value!=='known';if(saved?.north)$('cwSourceNorth').value=saved.north;sync();},
+    async restore(){const data=await api({action:'list'});rows=data.sources;let saved;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}selected=saved?.id;floorMap=Array.isArray(saved?.floors)?saved.floors:[];renderRows();if(saved?.mode==='upload'){$('cwStartMode').value='upload';$('cwStartMode').dispatchEvent(new Event('change'));}if(['revise','complete'].includes(saved?.policy))$('cwSourceMode').value=saved.policy;if(saved?.scale)$('cwSourceScale').value=saved.scale;$('cwScaleKnown').hidden=$('cwSourceScale').value!=='known';if(saved?.north)$('cwSourceNorth').value=saved.north;sync();},
   };
 }

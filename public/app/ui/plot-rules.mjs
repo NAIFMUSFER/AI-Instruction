@@ -51,7 +51,8 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     return {p, parsed};
   }
   function refresh() {
-    section.hidden = value('cwType') !== 'residential';
+    // A plan read from the owner's file is transcribed as drawn: no plot rules (U8).
+    section.hidden = value('cwType') !== 'residential' || value('cwStartMode') === 'upload';
     let p;
     try {
       const now = current(); p = now.p;
@@ -69,7 +70,7 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     refresh();
   }
   section.addEventListener('input', save); section.addEventListener('change', save);
-  for (const id of ['cwWidth','cwDepth','cwLevels','cwUnits','cwUnitsScope','cwType','cwStreet','cwBrief'])
+  for (const id of ['cwWidth','cwDepth','cwLevels','cwUnits','cwUnitsScope','cwType','cwStreet','cwBrief','cwStartMode'])
     for (const kind of ['input','change']) $(id)?.addEventListener(kind, refresh);
   refresh();
   return {
