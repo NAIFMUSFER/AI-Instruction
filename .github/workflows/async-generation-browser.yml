@@ -53,6 +53,7 @@ jobs:
           node tests/remediation/test_villa_program_ui.mjs 2>&1 | tee logs/villa-program-ui.log
           python3 tests/remediation/test_floor_program.py 2>&1 | tee logs/floor-program.log
           node tests/remediation/test_floor_program_ui.mjs 2>&1 | tee logs/floor-program-ui.log
+          python3 tests/remediation/test_truncated_resume.py 2>&1 | tee logs/truncated-resume.log
       - name: Short-request recovery in Chromium and WebKit
         run: |
           set -euo pipefail

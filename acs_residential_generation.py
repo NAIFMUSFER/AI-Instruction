@@ -6,6 +6,13 @@ import re
 from acs_plan_review import PlanError, canonical, _structure, _geometry, _program
 from acs_workspace_progress import emit
 
+# Output caps for the repair and openings calls. The model thinks before it
+# answers and the thinking counts against the cap: the live owner brief's
+# openings call (job 71b2cf13) spent its 7000 tokens and was cut after 3378
+# characters. The cap only bounds a reply; a call is billed for what it uses.
+DETAIL_MAX_TOKENS = 16000
+REPAIR_MAX_TOKENS = 16000
+
 ROOM_PROGRAM = '''
 للمشروع السكني: الشقة ليست غرفة. أخرج كل غرفة نوم وصالة ومجلس ومطبخ وحمام
 وممر كغرفة مستقلة بمعرف ثابت واسم عربي وrole دقيق وunit_id للشقة التي تنتمي
@@ -508,7 +515,7 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
             context['program'] = F.floor_programs(floors, building)
             system += F.REPAIR_ADDENDUM
         response=U.extract_json(U.call_llm(canonical(context),btype='residential',user_msg='',
-                         system_override=system,max_tokens=9000,stage='repair'))
+                         system_override=system,max_tokens=REPAIR_MAX_TOKENS,stage='repair'))
         if not isinstance(response,dict) or set(response)!={'floors'} or not isinstance(response['floors'],dict) or set(response['floors'])!=set(building['floors']):
             return keep('PLAN_LAYOUT_INCOMPLETE','لم يكتمل تصحيح توزيع الغرف.')
         candidate=json.loads(canonical(building))
@@ -569,7 +576,7 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
         if findings:
             context['findings_to_correct']=findings
         raw=U.call_llm(canonical(context),btype='residential',user_msg='',
-                      system_override=system,max_tokens=7000,stage='detail')
+                      system_override=system,max_tokens=DETAIL_MAX_TOKENS,stage='detail')
         value=U.extract_json(raw)
         items=value.get('rooms') if isinstance(value,dict) else None
         if not isinstance(items,list) or len(items)!=len(rooms) or any(not isinstance(r,dict) for r in items):

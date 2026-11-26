@@ -27,7 +27,15 @@ RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE"
                               "ACS_PROVIDER_BUDGET_EXHAUSTED"})
 
 
-def _resumable_failure(code):
+# A reply cut at the output cap after a saved stage: resuming re-runs only that
+# stage from the checkpoint. Without a checkpoint it is not offered, because a
+# restart would pay for every stage again and meet the same cap.
+RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED"})
+
+
+def _resumable_failure(code, checkpoint=None):
+    if isinstance(code, str) and code in RESUMABLE_WITH_CHECKPOINT:
+        return bool(checkpoint)
     return isinstance(code, str) and (code in RESUMABLE_ERRORS or code.startswith("PLAN_GEOMETRY_"))
 
 
@@ -113,7 +121,7 @@ def _job_view(row):
                           or SERVICE.geometry_failure_message(row.get("error_code"))) if failed else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
-        "can_resume": not reading and bool(row.get("checkpoint") or can_restart) and state == "FAILED" and _resumable_failure(row.get("error_code")) and not row.get("resumed_by"),
+        "can_resume": not reading and bool(row.get("checkpoint") or can_restart) and state == "FAILED" and _resumable_failure(row.get("error_code"), row.get("checkpoint")) and not row.get("resumed_by"),
         "choice": None if reading else _choice(row),
         "storage": "supabase", "automatic_resubmission": False}}
     if reading:
