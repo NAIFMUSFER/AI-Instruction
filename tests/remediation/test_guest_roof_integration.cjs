@@ -4,9 +4,9 @@ const APP=require('../lib/app_source.js'),SEG=require('../lib/js_segment.js');
 const source=APP.stripModuleSyntax(fs.readFileSync('public/app/ui/workspace-ui-wiring.js','utf8'),'wiring');
 const statements=SEG.topLevelStatements(source).map(s=>source.slice(s.start,s.end));
 function fn(name){const found=statements.find(s=>new RegExp('^function '+name+'\\(').test(SEG.head(s)));assert.ok(found,'shipped function '+name+' exists');return found;}
-const context={structuredClone,TextEncoder,window:{ACS:{guest:true}},lastBuilding:null,floorsFound:new Set(),setModel:b=>{context.lastBuilding=b;return b;}};
+const context={structuredClone,TextEncoder,window:{ACS:{guest:true}},roofViewHidden:false,updateVis(){},statusEl:{},lastBuilding:null,floorsFound:new Set(),setModel:b=>{context.lastBuilding=b;return b;}};
 vm.createContext(context);
-vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/context-details.mjs','core/viewer.js','core/standards.js','core/roof.mjs'])+'\n'+['localGeneratedModel','localModelCounts','floorLabel','assertLocalRoofMutable','applyLocalEdit','localGenerationError','localRoofState','buildLocalRoofControl'].map(fn).join('\n')+'\nObject.assign(globalThis,{localGeneratedModel,localModelCounts,floorLabel,applyLocalEdit,localGenerationError,removeAutoRoof,roofRemovedByUser,withDefaultRoof,parseDescription,localRoofState,buildLocalRoofControl});',context);
+vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/context-details.mjs','core/viewer.js','core/standards.js','core/roof.mjs'])+'\n'+['localGeneratedModel','localModelCounts','floorLabel','assertLocalRoofMutable','applyLocalEdit','localGenerationError','localRoofState','syncRoofViewButton','buildLocalRoofControl'].map(fn).join('\n')+'\nObject.assign(globalThis,{localGeneratedModel,localModelCounts,floorLabel,applyLocalEdit,localGenerationError,removeAutoRoof,roofRemovedByUser,withDefaultRoof,parseDescription,localRoofState,buildLocalRoofControl});',context);
 const bare={wall_h:3,floor_height:3.2,levels:[{index:0,template:'g'},{index:1,template:'g'}],floors:{g:{rooms:[{id:'r',rect:[0,0,4,5]}]}}};
 const before=JSON.stringify(bare),fresh=context.localGeneratedModel(bare,{freshSample:true});
 assert.equal(fresh.levels.filter(l=>l.kind==='roof').length,1);assert.equal(JSON.stringify(bare),before);
@@ -30,6 +30,20 @@ for(const levels of [null,7,{},[null,{}, {template:'g',kind:'roof'}]]){
   assert.doesNotThrow(()=>context.localRoofState(),'legacy levels do not break roof controls');
   assert.doesNotThrow(()=>context.buildLocalRoofControl({appendChild(){}}),'actual contextual control tolerates the imported levels');
   assert.equal(JSON.stringify(legacy),saved,'display normalization must not modify imported data');
+}
+// A guest hides the roof from view only: the control never edits the design.
+{
+  context.document={createElement:()=>({setAttribute(name,value){this[name]=value;}})};
+  const roofed=context.localGeneratedModel(bare,{freshSample:true}),saved=JSON.stringify(roofed),appended=[];
+  context.lastBuilding=roofed;context.buildLocalRoofControl({appendChild:node=>appended.push(node)});
+  const toggle=appended.find(node=>node.id==='localRoofToggle');
+  assert.ok(toggle&&!appended.some(node=>node.id==='localRoofRestore'),'a roofed guest design offers only the view toggle');
+  assert.equal(toggle.textContent,'إخفاء السطح');toggle.onclick();
+  assert.equal(toggle.textContent,'إظهار السطح');assert.equal(toggle['aria-pressed'],'true');
+  assert.equal(context.lastBuilding,roofed,'hiding the roof replaces no model');assert.equal(JSON.stringify(roofed),saved,'and edits none');
+  toggle.onclick();assert.equal(toggle['aria-pressed'],'false');
+  context.lastBuilding=context.removeAutoRoof(roofed);appended.length=0;context.buildLocalRoofControl({appendChild:node=>appended.push(node)});
+  assert.ok(appended.some(node=>node.id==='localRoofRestore'),'a draft saved without its roof can restore it');
 }
 context.lastBuilding={...structuredClone(bare),levels:[null,{template:'g',kind:'roof'}]};
 assert.equal(context.floorLabel('F1'),'السطح','explicit roof uses the compiler-derived display index');

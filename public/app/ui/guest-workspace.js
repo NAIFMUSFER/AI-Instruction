@@ -170,7 +170,10 @@ async function openGuestWorkspace() {
     facts();
     nativeSample.hidden = !matchesNativeSample();
   });
-  installGuestRoomCard(A);
+  // The room card is optional presentation. Its failure must never stop the
+  // draft recovery below, which gates every local write; taps then fall back
+  // to the inspector.
+  try { installGuestRoomCard(A); } catch { A.guestRoomCard = null; }
   $('guestProjects').addEventListener('click', () => {
     closeOptions();
     openGuestProjectsDialog(A, A_AUTH_SCOPE()).catch(() => feedbackMessage('تعذّر عرض المشاريع المحفوظة على هذا الجهاز.'));
