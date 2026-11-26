@@ -1,0 +1,1587 @@
+{
+ "about": "Synthetic livable villa on the plot of live job bc82d27f (18 x 28 m, street W, parking in the front setback), with the default step-01 villa program: 4 bedrooms with a master en-suite, 5 bathrooms including the guest WC. Admitted like a generation: default stairs, roof and plot rules.",
+ "brief": "أبغى فيلا عائلية في جدة. عرض الأرض ١٨ متر وعمق الأرض ٢٨ متر. عدد الأدوار ٢ شاملة الأرضي.\nأبغى مجلس الضيوف قريب من المدخل، وصالة الأسرة تطل على الحديقة. خلّ غرف النوم في الدور العلوي والمطبخ قريب من غرفة الطعام.\n\nنوع المشروع: سكني / عمارة / فيلا\nبرنامج الفيلا: 4 غرف نوم، منها غرفة نوم رئيسية بحمام خاص؛ 5 حمامات ودورات مياه منها دورة مياه للضيوف والحمام الخاص (تلقائي)؛ بدون غرفة خادمة؛ بدون غرفة سائق.\nغرف النوم في الفيلا: 4\nغرف نوم بحمام خاص: 1\nالحمامات ودورات المياه في الفيلا: 5\nتصور الفيلا المختار: فصل الضيوف عن العائلة — يدخل الضيوف إلى المجلس دون المرور بمنطقة الأسرة.\nالمدينة: جدة؛ جهة الشارع: غرب.",
+ "model": {
+  "floor_height": 3.2,
+  "floors": {
+   "ground": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "majlis_d0",
+        "material": "wood",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "majlis",
+      "name": "مجلس الضيوف",
+      "points": [
+       {
+        "id": "majlis_light",
+        "type": "light",
+        "x": 3.0,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       5.5,
+       1.5,
+       6.0,
+       5.5
+      ],
+      "role": "majlis",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "majlis_w0",
+        "offset": 2.75,
+        "sill": 0.9,
+        "width": 1.5
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "kitchen_d0",
+        "material": "wood",
+        "offset": 3.5,
+        "width": 0.9
+       }
+      ],
+      "id": "kitchen",
+      "name": "المطبخ",
+      "points": [
+       {
+        "id": "kitchen_light",
+        "type": "light",
+        "x": 2.5,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       11.5,
+       1.5,
+       5.0,
+       5.5
+      ],
+      "role": "kitchen",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "E",
+        "height": 1.2,
+        "id": "kitchen_w0",
+        "offset": 2.75,
+        "sill": 0.9,
+        "width": 1.2
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.4,
+        "id": "entry_lobby_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 1.2
+       },
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "entry_lobby_d1",
+        "material": "wood",
+        "offset": 2.5,
+        "width": 0.9
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "entry_lobby_d2",
+        "material": "wood",
+        "offset": 1.0,
+        "width": 0.8
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "entry_lobby_d3",
+        "material": "wood",
+        "offset": 3.5,
+        "width": 0.9
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "entry_lobby_d4",
+        "material": "wood",
+        "offset": 0.75,
+        "width": 0.8
+       }
+      ],
+      "id": "entry_lobby",
+      "name": "بهو المدخل",
+      "points": [
+       {
+        "id": "entry_lobby_light",
+        "type": "light",
+        "x": 2.5,
+        "z": 1.5
+       }
+      ],
+      "rect": [
+       5.5,
+       7.0,
+       5.0,
+       3.0
+      ],
+      "role": "entrance",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "coat_store_d0",
+        "material": "wood",
+        "offset": 0.75,
+        "width": 0.8
+       }
+      ],
+      "id": "coat_store",
+      "name": "مخزن المدخل",
+      "points": [
+       {
+        "id": "coat_store_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 0.75
+       }
+      ],
+      "rect": [
+       10.5,
+       7.0,
+       3.0,
+       1.5
+      ],
+      "role": "storage",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "guest_wc_d0",
+        "material": "wood",
+        "offset": 1.0,
+        "width": 0.8
+       }
+      ],
+      "id": "guest_wc",
+      "name": "دورة مياه الضيوف",
+      "points": [
+       {
+        "id": "guest_wc_light",
+        "type": "light",
+        "x": 1.0,
+        "z": 1.75
+       }
+      ],
+      "rect": [
+       5.5,
+       10.0,
+       2.0,
+       3.5
+      ],
+      "role": "bathroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "guest_wc_w0",
+        "offset": 2.0,
+        "sill": 0.9,
+        "width": 0.6
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "hall_g_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.9
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "hall_g_d1",
+        "material": "wood",
+        "offset": 2.0,
+        "width": 0.9
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "hall_g_d2",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.9
+       }
+      ],
+      "id": "hall_g",
+      "name": "ممر الأرضي",
+      "points": [
+       {
+        "id": "hall_g_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 1.75
+       }
+      ],
+      "rect": [
+       7.5,
+       10.0,
+       3.0,
+       3.5
+      ],
+      "role": "corridor",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "core_id": "core_stairs",
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "stairs_g_d0",
+        "material": "wood",
+        "offset": 3.5,
+        "width": 0.9
+       }
+      ],
+      "id": "stairs_g",
+      "name": "الدرج",
+      "points": [
+       {
+        "id": "stairs_g_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 2.5
+       }
+      ],
+      "rect": [
+       10.5,
+       8.5,
+       3.0,
+       5.0
+      ],
+      "role": "stairs",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "dining_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.9
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "dining_d1",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.9
+       }
+      ],
+      "id": "dining",
+      "name": "غرفة الطعام",
+      "points": [
+       {
+        "id": "dining_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 3.25
+       }
+      ],
+      "rect": [
+       13.5,
+       7.0,
+       3.0,
+       6.5
+      ],
+      "role": "dining",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "E",
+        "height": 1.2,
+        "id": "dining_w0",
+        "offset": 3.25,
+        "sill": 0.9,
+        "width": 1.5
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "family_living_d0",
+        "material": "wood",
+        "offset": 3.5,
+        "width": 0.9
+       },
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "family_living_d1",
+        "material": "wood",
+        "offset": 9.5,
+        "width": 0.9
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "family_living_d2",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "family_living",
+      "name": "صالة الأسرة",
+      "points": [
+       {
+        "id": "family_living_light",
+        "type": "light",
+        "x": 5.5,
+        "z": 3.25
+       }
+      ],
+      "rect": [
+       5.5,
+       13.5,
+       11.0,
+       6.5
+      ],
+      "role": "living",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "S",
+        "height": 1.2,
+        "id": "family_living_w0",
+        "offset": 5.5,
+        "sill": 0.9,
+        "width": 2.0
+       },
+       {
+        "edge": "S",
+        "height": 1.2,
+        "id": "family_living_w1",
+        "offset": 9.0,
+        "sill": 0.9,
+        "width": 2.0
+       },
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "family_living_w2",
+        "offset": 3.25,
+        "sill": 0.9,
+        "width": 1.5
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "family_bath_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "family_bath",
+      "name": "حمام الأرضي",
+      "points": [
+       {
+        "id": "family_bath_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 1.25
+       }
+      ],
+      "rect": [
+       5.5,
+       20.0,
+       3.0,
+       2.5
+      ],
+      "role": "bathroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "family_bath_w0",
+        "offset": 1.25,
+        "sill": 0.9,
+        "width": 0.6
+       }
+      ]
+     }
+    ]
+   },
+   "roof": {
+    "rooms": [
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_master_bedroom",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       5.5,
+       1.5,
+       5.0,
+       5.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "master_bedroom"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "N",
+       "W"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_master_bath",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       10.5,
+       1.5,
+       2.5,
+       5.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "master_bath"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "N"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_bedroom_2",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       13.0,
+       1.5,
+       3.5,
+       5.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "bedroom_2"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "N",
+       "E"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_spine",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       9.0,
+       7.0,
+       1.5,
+       12.0
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "spine"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "S"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_corridor_n",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       10.5,
+       7.0,
+       6.0,
+       1.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "corridor_n"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "E"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_stairs_u",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       10.5,
+       8.5,
+       3.0,
+       5.0
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "stairs_u"
+      },
+      "wall_h": 0.9,
+      "walls": [],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_bath_1",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       13.5,
+       8.5,
+       3.0,
+       2.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "bath_1"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "E"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_linen_store",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       13.5,
+       11.0,
+       3.0,
+       2.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "linen_store"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "E"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_upper_living",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       10.5,
+       13.5,
+       6.0,
+       5.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "upper_living"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "S",
+       "E"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_bath_2",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       5.5,
+       7.0,
+       3.5,
+       2.5
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "bath_2"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "W"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_bedroom_3",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       5.5,
+       9.5,
+       3.5,
+       4.75
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "bedroom_3"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "W"
+      ],
+      "windows": []
+     },
+     {
+      "auto": true,
+      "doors": [],
+      "id": "roof_bedroom_4",
+      "name": "سطح",
+      "points": [],
+      "rect": [
+       5.5,
+       14.25,
+       3.5,
+       4.75
+      ],
+      "role": "roof_deck",
+      "roof_provenance": {
+       "parapet_gaps": [],
+       "source": "system_default",
+       "source_room_id": "bedroom_4"
+      },
+      "wall_h": 0.9,
+      "walls": [
+       "S",
+       "W"
+      ],
+      "windows": []
+     }
+    ]
+   },
+   "upper": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "master_bedroom_d0",
+        "material": "wood",
+        "offset": 4.25,
+        "width": 0.9
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "master_bedroom_d1",
+        "material": "wood",
+        "offset": 2.75,
+        "width": 0.8
+       }
+      ],
+      "id": "master_bedroom",
+      "name": "غرفة النوم الرئيسية",
+      "points": [
+       {
+        "id": "master_bedroom_light",
+        "type": "light",
+        "x": 2.5,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       5.5,
+       1.5,
+       5.0,
+       5.5
+      ],
+      "role": "bedroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "master_bedroom_w0",
+        "offset": 2.75,
+        "sill": 0.9,
+        "width": 1.5
+       },
+       {
+        "edge": "N",
+        "height": 1.2,
+        "id": "master_bedroom_w1",
+        "offset": 2.0,
+        "sill": 0.9,
+        "width": 1.2
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "master_bath_d0",
+        "material": "wood",
+        "offset": 2.75,
+        "width": 0.8
+       }
+      ],
+      "id": "master_bath",
+      "name": "حمام غرفة النوم الرئيسية",
+      "points": [
+       {
+        "id": "master_bath_light",
+        "type": "light",
+        "x": 1.25,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       10.5,
+       1.5,
+       2.5,
+       5.5
+      ],
+      "role": "bathroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "N",
+        "height": 1.2,
+        "id": "master_bath_w0",
+        "offset": 1.25,
+        "sill": 0.9,
+        "width": 0.6
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "bedroom_2_d0",
+        "material": "wood",
+        "offset": 1.75,
+        "width": 0.9
+       }
+      ],
+      "id": "bedroom_2",
+      "name": "غرفة نوم ٢",
+      "points": [
+       {
+        "id": "bedroom_2_light",
+        "type": "light",
+        "x": 1.75,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       13.0,
+       1.5,
+       3.5,
+       5.5
+      ],
+      "role": "bedroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "E",
+        "height": 1.2,
+        "id": "bedroom_2_w0",
+        "offset": 2.75,
+        "sill": 0.9,
+        "width": 1.2
+       },
+       {
+        "edge": "N",
+        "height": 1.2,
+        "id": "bedroom_2_w1",
+        "offset": 1.75,
+        "sill": 0.9,
+        "width": 1.2
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "spine_d0",
+        "material": "wood",
+        "offset": 0.75,
+        "width": 0.9
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "spine_d1",
+        "material": "wood",
+        "offset": 0.75,
+        "width": 0.8
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "spine_d2",
+        "material": "wood",
+        "offset": 4.0,
+        "width": 0.9
+       },
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "spine_d3",
+        "material": "wood",
+        "offset": 9.25,
+        "width": 0.9
+       },
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "spine_d4",
+        "material": "wood",
+        "offset": 1.25,
+        "width": 0.8
+       },
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "spine_d5",
+        "material": "wood",
+        "offset": 4.875,
+        "width": 0.9
+       },
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "spine_d6",
+        "material": "wood",
+        "offset": 9.625,
+        "width": 0.9
+       }
+      ],
+      "id": "spine",
+      "name": "ممر الدور الأول",
+      "points": [
+       {
+        "id": "spine_light",
+        "type": "light",
+        "x": 0.75,
+        "z": 6.0
+       }
+      ],
+      "rect": [
+       9.0,
+       7.0,
+       1.5,
+       12.0
+      ],
+      "role": "corridor",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "corridor_n_d0",
+        "material": "wood",
+        "offset": 0.75,
+        "width": 0.8
+       },
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "corridor_n_d1",
+        "material": "wood",
+        "offset": 4.25,
+        "width": 0.9
+       },
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "corridor_n_d2",
+        "material": "wood",
+        "offset": 4.5,
+        "width": 0.8
+       }
+      ],
+      "id": "corridor_n",
+      "name": "ممر الغرف الشرقي",
+      "points": [
+       {
+        "id": "corridor_n_light",
+        "type": "light",
+        "x": 3.0,
+        "z": 0.75
+       }
+      ],
+      "rect": [
+       10.5,
+       7.0,
+       6.0,
+       1.5
+      ],
+      "role": "corridor",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "core_id": "core_stairs",
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "stairs_u_d0",
+        "material": "wood",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "stairs_u",
+      "name": "الدرج - الدور الأول",
+      "points": [
+       {
+        "id": "stairs_u_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 2.5
+       }
+      ],
+      "rect": [
+       10.5,
+       8.5,
+       3.0,
+       5.0
+      ],
+      "role": "stairs",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "bath_1_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "bath_1",
+      "name": "حمام ١",
+      "points": [
+       {
+        "id": "bath_1_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 1.25
+       }
+      ],
+      "rect": [
+       13.5,
+       8.5,
+       3.0,
+       2.5
+      ],
+      "role": "bathroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "E",
+        "height": 1.2,
+        "id": "bath_1_w0",
+        "offset": 1.25,
+        "sill": 0.9,
+        "width": 0.6
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "height": 2.1,
+        "id": "linen_store_d0",
+        "material": "wood",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "linen_store",
+      "name": "مخزن الدور الأول",
+      "points": [
+       {
+        "id": "linen_store_light",
+        "type": "light",
+        "x": 1.5,
+        "z": 1.25
+       }
+      ],
+      "rect": [
+       13.5,
+       11.0,
+       3.0,
+       2.5
+      ],
+      "role": "storage",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": []
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "height": 2.1,
+        "id": "upper_living_d0",
+        "material": "wood",
+        "offset": 2.75,
+        "width": 0.9
+       },
+       {
+        "edge": "N",
+        "height": 2.1,
+        "id": "upper_living_d1",
+        "material": "wood",
+        "offset": 4.5,
+        "width": 0.8
+       }
+      ],
+      "id": "upper_living",
+      "name": "الصالة العلوية",
+      "points": [
+       {
+        "id": "upper_living_light",
+        "type": "light",
+        "x": 3.0,
+        "z": 2.75
+       }
+      ],
+      "rect": [
+       10.5,
+       13.5,
+       6.0,
+       5.5
+      ],
+      "role": "living",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "E",
+        "height": 1.2,
+        "id": "upper_living_w0",
+        "offset": 2.75,
+        "sill": 0.9,
+        "width": 1.5
+       },
+       {
+        "edge": "S",
+        "height": 1.2,
+        "id": "upper_living_w1",
+        "offset": 3.0,
+        "sill": 0.9,
+        "width": 1.5
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "bath_2_d0",
+        "material": "wood",
+        "offset": 1.25,
+        "width": 0.8
+       }
+      ],
+      "id": "bath_2",
+      "name": "حمام ٢",
+      "points": [
+       {
+        "id": "bath_2_light",
+        "type": "light",
+        "x": 1.75,
+        "z": 1.25
+       }
+      ],
+      "rect": [
+       5.5,
+       7.0,
+       3.5,
+       2.5
+      ],
+      "role": "bathroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "bath_2_w0",
+        "offset": 1.25,
+        "sill": 0.9,
+        "width": 0.6
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "bedroom_3_d0",
+        "material": "wood",
+        "offset": 2.375,
+        "width": 0.9
+       }
+      ],
+      "id": "bedroom_3",
+      "name": "غرفة نوم ٣",
+      "points": [
+       {
+        "id": "bedroom_3_light",
+        "type": "light",
+        "x": 1.75,
+        "z": 2.375
+       }
+      ],
+      "rect": [
+       5.5,
+       9.5,
+       3.5,
+       4.75
+      ],
+      "role": "bedroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "bedroom_3_w0",
+        "offset": 2.375,
+        "sill": 0.9,
+        "width": 1.2
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "height": 2.1,
+        "id": "bedroom_4_d0",
+        "material": "wood",
+        "offset": 2.375,
+        "width": 0.9
+       }
+      ],
+      "id": "bedroom_4",
+      "name": "غرفة نوم ٤",
+      "points": [
+       {
+        "id": "bedroom_4_light",
+        "type": "light",
+        "x": 1.75,
+        "z": 2.375
+       }
+      ],
+      "rect": [
+       5.5,
+       14.25,
+       3.5,
+       4.75
+      ],
+      "role": "bedroom",
+      "unit_id": "villa",
+      "wall_h": 3.0,
+      "walls": "all",
+      "windows": [
+       {
+        "edge": "W",
+        "height": 1.2,
+        "id": "bedroom_4_w0",
+        "offset": 2.375,
+        "sill": 0.9,
+        "width": 1.2
+       },
+       {
+        "edge": "S",
+        "height": 1.2,
+        "id": "bedroom_4_w1",
+        "offset": 1.75,
+        "sill": 0.9,
+        "width": 1.2
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "id": "L0",
+    "index": 0,
+    "name": "الدور الأرضي",
+    "template": "ground"
+   },
+   {
+    "id": "L1",
+    "index": 1,
+    "name": "الدور الأول",
+    "template": "upper"
+   },
+   {
+    "auto": true,
+    "elevation": 6.4,
+    "index": 2,
+    "kind": "roof",
+    "name": "السطح",
+    "template": "roof"
+   }
+  ],
+  "meta": {
+   "acs_plot_rules": {
+    "assumptions": [
+     "افتراض: عرض الشارع 15 م لأنه غير محدد (قيمة تقديرية غير متحقق منها)؛ الارتداد الأمامي يتبع عرض الشارع.",
+     "افتراض: ارتداد جانبي (الشمال) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+     "افتراض: ارتداد جانبي (الشرق) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+     "افتراض: ارتداد جانبي (الجنوب) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+     "افتراض: ارتداد أمامي (الغرب) 3 م — §4-1-4 (4، 5): خمس عرض الشارع ولا يقل عن 3 م، و6 م للشوارع 30 م فأكثر؛ عدّله حسب اشتراطات أمانة منطقتك.",
+     "افتراض: نسبة البناء القصوى 75٪ — §4-1-4 (1): الدور الأرضي حتى 75٪ من مساحة الأرض. طُبّقت على كل الأدوار احتياطًا؛ عدّلها حسب اشتراطات أمانة منطقتك.",
+     "افتراض: 2 مواقف (لفيلا على أرض 504 م²) — §4-1-4 (14): موقف لكل فيلا حتى 400 م² وموقفان لما زاد.",
+     "افتراض: المواقف في الارتداد الأمامي على شارع الغرب بصف عمودي عمقه 5.5 م (موقف 2.5 × 5.5 م مقاس شائع غير متحقق من المصدر) — §4-4 (8) و§4-1-4 (11): يسمح بإلغاء السور الأمامي لتكون مساحة الارتداد مواقف.",
+     "المساحة القابلة للبناء: x من 5.5 إلى 16.5 م وz من 1.5 إلى 26.5 م (11 × 25 م = 275 م²، 54.56٪ من الأرض)."
+    ],
+    "building_footprint": null,
+    "coverage_source": "default",
+    "dwelling": "villa",
+    "envelope": [
+     5.5,
+     1.5,
+     11.0,
+     25.0
+    ],
+    "land": {
+     "d": 28.0,
+     "w": 18.0
+    },
+    "landing_entries": false,
+    "levels": 2,
+    "max_coverage": 0.75,
+    "parking": {
+     "capacity_estimate": 9,
+     "depth_m": 5.5,
+     "placement": "front_setback",
+     "regulatory_default": 2,
+     "required": 2,
+     "required_source": "default",
+     "stall_m": [
+      2.5,
+      5.5
+     ]
+    },
+    "schema": "acs.plot-rules/1",
+    "setback_sources": {
+     "E": "default",
+     "N": "default",
+     "S": "default",
+     "W": "default"
+    },
+    "setbacks_m": {
+     "E": 1.5,
+     "N": 1.5,
+     "S": 1.5,
+     "W": 3.0
+    },
+    "source": {
+     "id": "momah_residential_2024",
+     "retrieved": "2026-11-26",
+     "title": "اشتراطات إنشاء المباني السكنية — وزارة البلديات والإسكان (يوليو 2024)",
+     "url": "https://momah.gov.sa/sites/default/files/2024-07/ashtratat%20a%27nsha%20almbany%20alsknyt%20almnshwrt%20%60ly%20mwq%60%20alwzart%20.pdf"
+    },
+    "street_source": "user",
+    "street_width_m": 15.0,
+    "street_width_source": "assumed",
+    "streets": [
+     "W"
+    ],
+    "unit_area_target_m2": null,
+    "unit_area_tolerance": 0.25,
+    "units": 1,
+    "window_min_m": 1.5,
+    "zoning_requested": true
+   },
+   "acs_roof": {
+    "form": "flat",
+    "occupied_floor": false,
+    "parapet_height_m": 0.9,
+    "schema": "acs.roof/1",
+    "source": "system_default"
+   },
+   "acs_stairs": {
+    "generated_connections": 0,
+    "not_verified": [
+     "structure",
+     "guards",
+     "headroom",
+     "accessibility",
+     "fire escape",
+     "code compliance"
+    ],
+    "physical_traversal": "NOT_VERIFIED",
+    "schema": "acs.stairs/1",
+    "source": "system_default",
+    "unsupported": [
+     {
+      "code": "STAIR_CORE_TOO_SMALL",
+      "core_id": "core_stairs",
+      "room_id": "stairs_g"
+     }
+    ]
+   },
+   "assumptions": [
+    "افتراض: عرض الشارع 15 م لأنه غير محدد (قيمة تقديرية غير متحقق منها)؛ الارتداد الأمامي يتبع عرض الشارع.",
+    "افتراض: ارتداد جانبي (الشمال) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+    "افتراض: ارتداد جانبي (الشرق) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+    "افتراض: ارتداد جانبي (الجنوب) 1.5 م — §4-1-4 (4): جهة المجاورين لا يقل عن 1.5 م؛ عدّله حسب اشتراطات أمانة منطقتك.",
+    "افتراض: ارتداد أمامي (الغرب) 3 م — §4-1-4 (4، 5): خمس عرض الشارع ولا يقل عن 3 م، و6 م للشوارع 30 م فأكثر؛ عدّله حسب اشتراطات أمانة منطقتك.",
+    "افتراض: نسبة البناء القصوى 75٪ — §4-1-4 (1): الدور الأرضي حتى 75٪ من مساحة الأرض. طُبّقت على كل الأدوار احتياطًا؛ عدّلها حسب اشتراطات أمانة منطقتك.",
+    "افتراض: 2 مواقف (لفيلا على أرض 504 م²) — §4-1-4 (14): موقف لكل فيلا حتى 400 م² وموقفان لما زاد.",
+    "افتراض: المواقف في الارتداد الأمامي على شارع الغرب بصف عمودي عمقه 5.5 م (موقف 2.5 × 5.5 م مقاس شائع غير متحقق من المصدر) — §4-4 (8) و§4-1-4 (11): يسمح بإلغاء السور الأمامي لتكون مساحة الارتداد مواقف.",
+    "المساحة القابلة للبناء: x من 5.5 إلى 16.5 م وz من 1.5 إلى 26.5 م (11 × 25 م = 275 م²، 54.56٪ من الأرض)."
+   ]
+  },
+  "site": {
+   "d": 28.0,
+   "w": 18.0
+  },
+  "wall_h": 3.0,
+  "wall_t": 0.2
+ },
+ "requirements": [
+  {
+   "confirmed": true,
+   "evidence": "عرض الأرض ١٨ متر",
+   "expected": 18,
+   "id": "brief-0",
+   "metric": "site_width_m",
+   "source": "requested",
+   "source_id": "brief:text",
+   "source_span": {
+    "end": 41,
+    "start": 25
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عمق الأرض ٢٨ متر",
+   "expected": 28,
+   "id": "brief-1",
+   "metric": "site_depth_m",
+   "source": "requested",
+   "source_id": "brief:text",
+   "source_span": {
+    "end": 59,
+    "start": 43
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "عدد الأدوار ٢",
+   "expected": 2,
+   "id": "brief-2",
+   "metric": "level_count",
+   "source": "requested",
+   "source_id": "brief:text",
+   "source_span": {
+    "end": 74,
+    "start": 61
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "غرف النوم في الفيلا: 4",
+   "expected": 4,
+   "id": "villa-room_count-bedroom",
+   "metric": "room_count",
+   "role": "bedroom",
+   "source": "inferred",
+   "source_id": "brief:villa-program",
+   "source_span": {
+    "end": 425,
+    "start": 403
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "غرف نوم بحمام خاص: 1",
+   "expected": 1,
+   "id": "villa-ensuite_bedroom_count-all",
+   "metric": "ensuite_bedroom_count",
+   "source": "inferred",
+   "source_id": "brief:villa-program",
+   "source_span": {
+    "end": 446,
+    "start": 426
+   }
+  },
+  {
+   "confirmed": true,
+   "evidence": "الحمامات ودورات المياه في الفيلا: 5",
+   "expected": 5,
+   "id": "villa-room_count-bathroom",
+   "metric": "room_count",
+   "role": "bathroom",
+   "source": "inferred",
+   "source_id": "brief:villa-program",
+   "source_span": {
+    "end": 482,
+    "start": 447
+   }
+  }
+ ]
+}
