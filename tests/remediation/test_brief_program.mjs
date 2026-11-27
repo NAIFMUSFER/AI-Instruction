@@ -211,6 +211,28 @@ const cases = [
       assert.deepEqual(analyzeBrief(text).candidates.map(r=>[r.metric,r.expected]),[['level_count',n]],text);
     for(const text of ['في الأرضي والأول','أرضي وأول أو ثاني','الأرضي والأول والثالث','لا أريد أرضي وأول'])assert.equal(analyzeBrief(text).candidates.length,0,text);
   }],
+  ['A floor list that names one dwelling, and a floor heading\'s room count, are not building totals (owner corner brief, live)', () => {
+    const corner=readFileSync(new URL('./fixtures/brief_reader/corner_duplex_brief.txt',import.meta.url),'utf8');
+    const a=analyzeBrief(corner);
+    // «اجعل الأرضي والأول مسكنًا واحدًا … وخصص الدور الثاني لشقة»: three floors, not two.
+    assert.equal(a.candidates.filter(r=>r.metric==='level_count').length,0);
+    // «٣. الدور الأول — أربع غرف نوم»: the first floor's bedrooms, not the building's.
+    assert.equal(a.candidates.filter(r=>r.metric==='room_count').length,0);
+    assert.ok(a.questions.some(q=>q.includes('الدور الأول — أربع غرف نوم')&&q.includes('لا للمبنى كله')),JSON.stringify(a.questions));
+    // The confirmed card (24 × 30 m, three floors) passes with the brief unchanged.
+    const p=buildBriefProgram(form(corner,{width:'24',depth:'30',levels:'3',buildingWidth:'16',buildingDepth:'18'}));
+    assert.equal(p.requirements.find(r=>r.metric==='level_count').expected,3);
+    for(const text of ['اجعل الأرضي والأول مسكنًا واحدًا، وخصص الدور الثاني لشقة','الأرضي والأول دوبلكس، والطابق الثالث سطح'])
+      assert.equal(analyzeBrief(text).candidates.length,0,text);
+    // A full list stays exact even when a listed floor is named again.
+    for(const [text,n] of [['تتكون العمارة من أرضي وأول وثانٍ. الدور الثاني شقة مستقلة',3],['أرضي وأول. الدور الأول لغرف النوم',2]])
+      assert.deepEqual(analyzeBrief(text).candidates.map(r=>[r.metric,r.expected]),[['level_count',n]],text);
+    for(const text of ['الدور الأول: ٤ غرف نوم','الدور الأرضي — ثلاث غرف نوم','4 غرف نوم في الطابق الثاني']){
+      const b=analyzeBrief(text);assert.equal(b.candidates.length,0,text);assert.equal(b.questions.length,1,text);
+    }
+    // A building total is still read.
+    assert.deepEqual(analyzeBrief('أربع غرف نوم').candidates.map(r=>[r.metric,r.expected]),[['room_count',4]]);
+  }],
 ];
 for(const [name,test] of cases){test();console.log('PASS '+name);}
 console.log('BRIEF PROGRAM: '+cases.length+' passed');
