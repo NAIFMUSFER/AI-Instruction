@@ -28,7 +28,7 @@ COPY acs_request_admission.py acs_ingress.py acs_geometry_contract.py acs_requir
 # trusted-parent composition: it reloads the durable head before candidate admission
 # and never serializes request/session authority into the worker.
 # acs_plan_semantic_diff is deterministic canonical-model comparison only.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_supabase_plan_store.py acs_plan_session.py acs_plan_http.py acs_plan_chat_job.py acs_plan_chat_orchestration.py ./
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_drafting.py acs_drafting_standards.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_supabase_plan_store.py acs_plan_session.py acs_plan_http.py acs_plan_chat_job.py acs_plan_chat_orchestration.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer and connected project workspace.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py

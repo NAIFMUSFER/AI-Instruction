@@ -18,8 +18,8 @@
     "additional_css_bytes": 37137,
     "assets": [
       {
-        "bytes": 89229,
-        "gzip_bytes": 26711,
+        "bytes": 89429,
+        "gzip_bytes": 26789,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -42,7 +42,7 @@
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 159508,
+    "initial_javascript_bytes": 159708,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 403849,
+    "core_initial_bytes": 404049,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The declared boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 45,
@@ -327,7 +327,7 @@
     ],
     "first_party_dynamic_import_count": 37,
     "first_party_module_count": 64,
-    "first_party_total_bytes": 2747910,
+    "first_party_total_bytes": 2748110,
     "guest_route_additional_bytes": 1797665,
     "guest_route_modules": [
       "public/app/core/stairs.mjs",
@@ -362,7 +362,7 @@
       "public/app/render/guest-software-view.mjs",
       "public/app/ui/guest-software-studio.mjs"
     ],
-    "initial_javascript_bytes": 476805,
+    "initial_javascript_bytes": 477005,
     "largest_module": {
       "bytes": 243660,
       "group": "core",
@@ -528,9 +528,9 @@
         "pct_of_first_party_js": 3.63
       },
       {
-        "bytes": 89229,
+        "bytes": 89429,
         "group": "ui",
-        "gzip_bytes": 26711,
+        "gzip_bytes": 26789,
         "loaded": "eager",
         "path": "public/app/ui/connected-workspace.mjs",
         "pct_of_first_party_js": 3.25
@@ -1063,7 +1063,7 @@
     "sha256": "02c5fe101256de0a89d2c88a56b9e01ed2dd8a01a100313cdbe9bb6493b9a7d5",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 54303 byte shell and the application JavaScript (2747910 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 54303 byte shell and the application JavaScript (2748110 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

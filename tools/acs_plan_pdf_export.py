@@ -5,10 +5,15 @@ that has already crossed :class:`acs_plan_lock_binding.PlanLockWorkspace`'s
 approval boundary. It does not call an LLM, CAD engine, BIM compiler, regulator,
 or geometry repair/replanning path. One page is emitted per canonical level.
 
-Only schematic space boundaries are drawn because those are the exact geometric
-primitives currently admitted by ``acs_plan_projection.project``. Room labels use
-an embedded Unicode font with Arabic shaping, bidirectional ordering and logical
-ActualText. Numbered callouts and the hash-bound UTF-8 sidecar preserve identity.
+Each page is a plan sheet (ISO A-series, standard scale such as 1:100) drawn by
+:mod:`acs_plan_drafting` from the exact canonical facts that the projection and
+the 3D compiler use: walls at the canonical thickness, doors, windows, stairs,
+dimension chains, room tags with net area, north arrow, scale bar and a title
+block with an area schedule. Door swing side/hand are disclosed drafting
+defaults; no structural grid, column or MEP is invented. All text uses an
+embedded Unicode font with Arabic shaping, bidirectional ordering and logical
+ActualText. Room numbers (S1, S2, ...) and the hash-bound UTF-8 sidecar
+preserve identity.
 
 The sidecar preserves revision/model hashes, semantic-lock binding and
 requirement/source provenance. It is traceability evidence, not construction,
@@ -123,9 +128,135 @@ def _arabic_level_title(projection: dict) -> str:
     return "مخطط الدور %d" % index
 
 
+MM = 72.0 / 25.4  # PDF points per millimetre
+
+
+def _hex_rgb(value: str) -> tuple[float, float, float]:
+    value = value.lstrip("#")
+    return tuple(round(int(value[i:i + 2], 16) / 255.0, 4) for i in (0, 2, 4))
+
+
+class _PdfSheet:
+    """Content-stream writer for one sheet; input is paper millimetres (y down)."""
+
+    def __init__(self, height_mm: float, font):
+        import acs_drafting_standards as STD
+        self.std = STD
+        self.h = height_mm
+        self.font = font
+        self.out: list[str] = []
+        self.stroke_state = None
+
+    def xy(self, pt) -> str:
+        return "%s %s" % (_num(pt[0] * MM), _num((self.h - pt[1]) * MM))
+
+    def stroke_style(self, layer: str, weight: float | None = None) -> None:
+        spec = self.std.LAYERS[layer]
+        dash = self.std.LINETYPE_MM[spec["lt"]]
+        state = (spec["svg"], weight or spec["lw"], dash)
+        if state == self.stroke_state:
+            return
+        self.stroke_state = state
+        r, g, b = _hex_rgb(spec["svg"])
+        pattern = " ".join(_num((v if v else 0.2) * MM) for v in dash)
+        self.out.append("%s %s %s RG %s w [%s] 0 d" % (_num(r), _num(g), _num(b), _num(state[1] * MM), pattern))
+
+    def lines(self, layer: str, segments: list) -> None:
+        if not segments:
+            return
+        self.stroke_style(layer)
+        self.out.append(" ".join("%s m %s l" % (self.xy(a), self.xy(b)) for a, b in segments) + " S")
+
+    def arc(self, layer: str, c, start, end) -> None:
+        self.stroke_style(layer)
+        a0 = math.atan2(start[1] - c[1], start[0] - c[0])
+        a1 = math.atan2(end[1] - c[1], end[0] - c[0])
+        delta = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+        r = math.hypot(start[0] - c[0], start[1] - c[1])
+        self.out.append(self._arc_path(c, r, a0, delta, move=True) + " S")
+
+    def _arc_path(self, c, r, a0, delta, move) -> str:
+        parts = []
+        steps = max(1, int(math.ceil(abs(delta) / (math.pi / 2) - 1e-9)))
+        step = delta / steps
+        kappa = 4.0 / 3.0 * math.tan(step / 4.0)
+        angle = a0
+        if move:
+            parts.append("%s m" % self.xy((c[0] + r * math.cos(angle), c[1] + r * math.sin(angle))))
+        for _ in range(steps):
+            b0 = (c[0] + r * math.cos(angle), c[1] + r * math.sin(angle))
+            b3 = (c[0] + r * math.cos(angle + step), c[1] + r * math.sin(angle + step))
+            b1 = (b0[0] - kappa * r * math.sin(angle), b0[1] + kappa * r * math.cos(angle))
+            b2 = (b3[0] + kappa * r * math.sin(angle + step), b3[1] - kappa * r * math.cos(angle + step))
+            parts.append("%s %s %s c" % (self.xy(b1), self.xy(b2), self.xy(b3)))
+            angle += step
+        return " ".join(parts)
+
+    def fill_loops(self, color: str, loops: list) -> None:
+        r, g, b = _hex_rgb(color)
+        path = " ".join(" ".join(("%s m" if i == 0 else "%s l") % self.xy(pt) for i, pt in enumerate(loop)) + " h"
+                        for loop in loops)
+        self.out.append("%s %s %s rg %s f*" % (_num(r), _num(g), _num(b), path))
+
+    def circle(self, layer: str, c, r, fill: bool) -> None:
+        self.stroke_style(layer)
+        path = self._arc_path(c, r, 0.0, 2 * math.pi - 1e-9, move=True) + " h"
+        self.out.append(("0.067 g %s f" if fill else "%s S") % path)
+
+    def poly(self, layer: str, pts: list, fill: bool, weight: float | None = None) -> None:
+        self.stroke_style(layer, weight)
+        path = " ".join(("%s m" if i == 0 else "%s l") % self.xy(pt) for i, pt in enumerate(pts)) + " h"
+        if fill:
+            self.out.append("0.067 g %s f" % path)
+        elif layer == "A-ANNO-SYMB":
+            self.out.append("1 g %s B" % path)
+        else:
+            self.out.append("%s S" % path)
+
+    def text(self, text: str, at, size_mm: float, anchor: str = "start", rotate: float = 0.0,
+             halo: bool = False) -> None:
+        from acs_pdf_text import PdfTextError  # noqa: F401  (raised by shape)
+        logical, visual, width_em = self.font.shape(text)
+        size_mm = self.std.font_size_mm(size_mm)  # lettering (cap) height -> em size
+        width = width_em * size_mm
+        theta = math.radians(rotate or 0.0)
+        dx, dy = math.cos(theta), -math.sin(theta)        # baseline direction on paper (y down)
+        nx, ny = -math.sin(theta), -math.cos(theta)       # "up" direction on paper
+        shift = {"start": 0.0, "middle": -width / 2, "end": -width}[anchor]
+        sx, sy = at[0] + shift * dx, at[1] + shift * dy
+        if halo:
+            corners = []
+            for u, v in ((-0.4, -0.28 * size_mm), (width + 0.4, -0.28 * size_mm),
+                         (width + 0.4, 0.9 * size_mm), (-0.4, 0.9 * size_mm)):
+                corners.append((sx + u * dx + v * nx, sy + u * dy + v * ny))
+            self.out.append("1 g " + " ".join(("%s m" if i == 0 else "%s l") % self.xy(pt)
+                                              for i, pt in enumerate(corners)) + " h f")
+        glyphs = "".join("%04X" % self.font.codes[ch] for ch in visual)
+        actual = ("﻿" + logical).encode("utf-16-be").hex().upper()
+        cos, sin = math.cos(theta), math.sin(theta)
+        self.out.append("/Span << /ActualText <%s> >> BDC\nBT 0 g /F2 %s Tf %s %s %s %s %s Tm <%s> Tj ET\nEMC" % (
+            actual, _num(size_mm * MM), _num(cos), _num(sin), _num(-sin), _num(cos),
+            self.xy((sx, sy)), glyphs))
+
+    def stream(self) -> bytes:
+        return ("q\n" + "\n".join(self.out) + "\nQ\n").encode("ascii")
+
+
+def _draw_text(sheet: _PdfSheet, op: dict, at) -> None:
+    from acs_pdf_text import PdfTextError
+    try:
+        sheet.text(op["text"], at, op["size"], op["anchor"], op.get("rotate") or 0.0, op.get("halo", False))
+    except PdfTextError as exc:
+        if op.get("optional"):
+            return
+        raise PlanError('PDF_TEXT_UNSUPPORTED',
+            'يحتوي اسم فراغ على محارف لا يدعمها خط PDF. استخدم أسماء عربية أو لاتينية؛ تبقى الأسماء الأصلية في ملف المراجعة.') from exc
+
+
 def _page_stream(projection: dict, page_number: int, total_pages: int,
                  *, revision_id: str, model_hash: str, provenance_hash: str,
-                 unicode_font=None) -> tuple[bytes, dict]:
+                 unicode_font, model: dict, sheet: dict) -> tuple[bytes, dict]:
+    import acs_plan_drafting as D
     site = projection.get("site")
     if not isinstance(site, dict):
         raise PlanError("INVALID_PDF_GEOMETRY", "Projected plan has no site geometry")
@@ -134,106 +265,106 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
             or not math.isfinite(width) or not math.isfinite(depth)
             or width <= 0 or depth <= 0):
         raise PlanError("INVALID_PDF_GEOMETRY", "PDF requires positive measured site width/depth")
-
-    draw_w = PAGE_W - 2 * MARGIN
-    draw_h = PAGE_H - 2 * MARGIN - HEADER_H - FOOTER_H
-    scale = min(draw_w / width, draw_h / depth)
-    origin_x = MARGIN + (draw_w - width * scale) / 2
-    origin_y = MARGIN + FOOTER_H + (draw_h - depth * scale) / 2
     level_index = projection.get("level_index")
-
-    commands = [
-        "q",
-        "0 G 0 g",
-        "0.8 w",
-        "BT /F1 12 Tf",
-        f"{_num(MARGIN)} {_num(PAGE_H - MARGIN + 8)} Td",
-        f"(ACS Frozen Baseline - {_level_title(projection)} - Page {page_number}/{total_pages}) Tj",
-        "ET",
-        "BT /F1 7 Tf",
-        f"{_num(MARGIN)} {_num(PAGE_H - MARGIN - 7)} Td",
-        f"(Revision {_pdf_escape(revision_id)} | Model {_pdf_escape(model_hash[:20])} | Provenance {_pdf_escape(provenance_hash[:20])}) Tj",
-        "ET",
-        f"{_num(origin_x)} {_num(origin_y)} {_num(width * scale)} {_num(depth * scale)} re S",
-    ]
-
-    spaces = []
     primitives = projection.get("primitives")
     if not isinstance(primitives, list):
         raise PlanError("INVALID_PDF_GEOMETRY", "Projected plan has no primitive list")
-    for ordinal, item in enumerate(primitives, 1):
+    for item in primitives:
         if not isinstance(item, dict):
             raise PlanError("INVALID_PDF_GEOMETRY", "Projected space primitive is malformed")
         rect = item.get("rect_xz_m")
         if (not isinstance(rect, list) or len(rect) != 4
                 or any(type(v) not in (int, float) or not math.isfinite(v) for v in rect)):
             raise PlanError("INVALID_PDF_GEOMETRY", "Projected space rectangle is malformed")
-        x, z, w, d = rect
-        if w <= 0 or d <= 0:
+        if rect[2] <= 0 or rect[3] <= 0:
             raise PlanError("INVALID_PDF_GEOMETRY", "Projected space rectangle must be positive")
-        px = origin_x + x * scale
-        py = origin_y + (depth - (z + d)) * scale
-        pw, ph = w * scale, d * scale
-        commands.append(f"{_num(px)} {_num(py)} {_num(pw)} {_num(ph)} re S")
-        label_x = px + pw / 2
-        label_y = py + ph / 2
-        font_size = max(5.5, min(9.0, min(pw, ph) * 0.12))
-        area = item.get("space_rect_area_m2")
-        area_text = f"{float(area):.2f} m2" if type(area) in (int, float) and math.isfinite(area) else "area ?"
-        commands.extend([
-            f"BT /F1 {_num(font_size)} Tf {_num(label_x - 13)} {_num(label_y)} Td (S{ordinal}) Tj ET",
-            f"BT /F1 5.5 Tf {_num(label_x - 18)} {_num(label_y - 8)} Td ({_pdf_escape(area_text)}) Tj ET",
-        ])
-        if unicode_font is not None and item.get('label'):
-            from acs_pdf_text import PdfTextError
-            try:
-                commands.append(unicode_font.command(item['label'], label_x,
-                    label_y + font_size + 3, font_size, center=True, max_width=max(1, pw - 5)))
-            except PdfTextError as exc:
-                raise PlanError('PDF_TEXT_UNSUPPORTED',
-                    'يحتوي اسم فراغ على محارف لا يدعمها خط PDF. استخدم أسماء عربية أو لاتينية؛ تبقى الأسماء الأصلية في ملف المراجعة.') from exc
-        source_id = item.get("source_id")
-        source = item.get("source") if isinstance(item.get("source"), dict) else {}
-        if not isinstance(source_id, str) or not source_id:
+        if not isinstance(item.get("source_id"), str) or not item.get("source_id"):
             raise PlanError("PROVENANCE_MISMATCH", "PDF primitive is missing a source_id")
+
+    paper = D.Paper(sheet)
+    draft = D.level_drafting(model, level_index, primitives, projection.get("source_map") or [])
+    ops = D.plan_ops(draft, paper)
+    title_en = _level_title(projection) if projection.get("level_kind") == "roof" else _level_title(projection) + " floor plan"
+    pdf = _PdfSheet(sheet["paper_mm"][1], unicode_font)
+    to_paper = paper.to_paper
+
+    x0, y0 = to_paper((0.0, 0.0))
+    x1, y1 = to_paper((width, depth))
+    pdf.poly("C-PROP", [(x0, y0), (x1, y0), (x1, y1), (x0, y1)], False)
+    pdf.lines("A-AREA-BNDY", [(to_paper(op["a"]), to_paper(op["b"])) for op in ops["areas"]])
+    for op in ops["fills"]:
+        pdf.fill_loops(pdf.std.LAYERS[op["layer"]]["svg"], [[to_paper(pt) for pt in loop] for loop in op["loops"]])
+    batches: dict = {}
+    for op in ops["lines"]:
+        if op["op"] == "line":
+            batches.setdefault(op["layer"], []).append((to_paper(op["a"]), to_paper(op["b"])))
+        elif op["op"] == "loops":
+            for loop in op["loops"]:
+                pts = [to_paper(pt) for pt in loop]
+                batches.setdefault(op["layer"], []).extend(zip(pts, pts[1:] + pts[:1]))
+    for layer, segments in batches.items():
+        pdf.lines(layer, segments)
+    for op in ops["lines"]:
+        if op["op"] == "arc":
+            pdf.arc(op["layer"], to_paper(op["c"]), to_paper(op["from"]), to_paper(op["to"]))
+    dim_lines, dim_texts = [], []
+    for op in ops["dims"]:
+        for part in D.expand_dim(op, paper):
+            if part["op"] == "line":
+                dim_lines.append((to_paper(part["a"]), to_paper(part["b"])))
+            else:
+                dim_texts.append(part)
+    pdf.lines("A-ANNO-DIMS", dim_lines)
+    for op in ops["symbols"]:
+        if op["op"] == "circle":
+            pdf.circle(op["layer"], to_paper(op["c"]), op["r"] * paper.k, op.get("fill", False))
+        else:
+            pdf.poly(op["layer"], [to_paper(pt) for pt in op["pts"]], op.get("fill", False))
+    for op in dim_texts + ops["texts"]:
+        _draw_text(pdf, op, to_paper(op["at"]))
+    for room in ops["rooms"]:
+        for op in room["texts"]:
+            _draw_text(pdf, op, to_paper(op["at"]))
+    sheet_ops = D.sheet_ops(draft, sheet, paper, model=model, page_number=page_number, page_count=total_pages,
+                            title_en=title_en, revision_id=revision_id, model_hash=model_hash,
+                            provenance_hash=provenance_hash, schedule=True)
+    pdf.lines("A-ANNO-TTLB", [(op["a"], op["b"]) for op in sheet_ops if op["op"] == "line" and op["layer"] == "A-ANNO-TTLB"])
+    pdf.lines("A-ANNO-TEXT", [(op["a"], op["b"]) for op in sheet_ops if op["op"] == "line" and op["layer"] == "A-ANNO-TEXT"])
+    for op in sheet_ops:
+        if op["op"] == "poly":
+            pdf.poly(op["layer"], op["pts"], op.get("fill", False), op.get("weight"))
+        elif op["op"] == "circle":
+            pdf.circle(op["layer"], op["c"], op["r"], op.get("fill", False))
+    for op in sheet_ops:
+        if op["op"] == "text":
+            _draw_text(pdf, op, op["at"])
+
+    tags = {tag["source_id"]: tag for tag in draft["tags"]}
+    spaces = []
+    for ordinal, item in enumerate(primitives, 1):
+        tag = tags[item["source_id"]]
         spaces.append({
             "ordinal": ordinal,
-            "source_id": source_id,
-            "source": source,
+            "number": tag["number"],
+            "source_id": item["source_id"],
+            "source": item.get("source") if isinstance(item.get("source"), dict) else {},
             "label": item.get("label"),
-            "space_rect_area_m2": area,
-            "rect_xz_m": rect,
+            "space_rect_area_m2": item.get("space_rect_area_m2"),
+            "rect_xz_m": item["rect_xz_m"],
+            "net_area_m2": tag["net_area_m2"],
+            "clear_size_m": [tag["clear_w_m"], tag["clear_d_m"]],
         })
-
-    commands.extend([
-        "BT /F1 6.5 Tf",
-        f"{_num(MARGIN)} {_num(MARGIN - 2)} Td",
-        "(SCHEMATIC SPACE BOUNDARIES ONLY - NOT FOR CONSTRUCTION - REGULATORY COMPLIANCE NOT VERIFIED) Tj",
-        "ET",
-    ])
-    if unicode_font is not None:
-        # The owner reads Arabic: the same title and limits, right-aligned above
-        # and below the drawing. The English lines stay for engineers and readers.
-        from acs_pdf_text import PdfTextError
-        try:
-            for text, size, y in ((_arabic_level_title(projection) + " · صفحة %d من %d" % (page_number, total_pages),
-                                   11, PAGE_H - MARGIN + 8),
-                                  ("حدود فراغات تخطيطية فقط · ليست للتنفيذ · الامتثال النظامي غير متحقق",
-                                   7, MARGIN - 13)):
-                width = unicode_font.shape(text)[2]
-                commands.append(unicode_font.command(text, PAGE_W - MARGIN - width * size, y, size))
-        except PdfTextError as exc:
-            raise PlanError('PDF_TEXT_UNSUPPORTED', 'تعذّر كتابة عنوان PDF العربي بالخط المضمّن.') from exc
-    commands.append("Q")
-    stream = ("\n".join(commands) + "\n").encode("ascii")
     manifest = {
         "page_number": page_number,
         "level_index": level_index,
         "site_w_m": width,
         "site_d_m": depth,
-        "scale_points_per_m": round(scale, 8),
+        "scale_points_per_m": round(paper.k * MM, 8),
         "space_count": len(spaces),
         "spaces": spaces,
+        "sheet": {"paper": sheet["paper"], "paper_mm": sheet["paper_mm"], "scale": sheet["scale"],
+                  "standard_scale": sheet["standard_scale"], "sheet_number": "A-%d" % (100 + page_number)},
+        "drafting": D.summary(draft, sheet),
     }
     manifest["projection_hash"] = digest({
         "scope": projection.get("scope"),
@@ -245,15 +376,17 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
         "provenance_hash": projection.get("provenance_hash"),
         "requirements_hash": projection.get("requirements_hash"),
     })
-    return stream, manifest
+    return pdf.stream(), manifest
 
 
 def _build_pdf(page_streams: list[bytes], *, revision_id: str, model_hash: str,
                requirements_hash: str, provenance_hash: str, page_manifest_hash: str,
-               unicode_font=None) -> bytes:
+               unicode_font=None, page_sizes_mm: list | None = None) -> bytes:
     """Build a small deterministic PDF 1.4 document using only the standard library."""
+    import zlib
     if not page_streams:
         raise PlanError("INVALID_PDF_GEOMETRY", "PDF requires at least one canonical level")
+    sizes = page_sizes_mm or [(PAGE_W / MM, PAGE_H / MM)] * len(page_streams)
 
     objects: list[bytes | None] = [None, None]  # catalog, pages tree
     font_id = len(objects) + 1
@@ -261,13 +394,15 @@ def _build_pdf(page_streams: list[bytes], *, revision_id: str, model_hash: str,
     unicode_id = unicode_font.append_objects(objects) if unicode_font is not None else None
     unicode_resource = f' /F2 {unicode_id} 0 R' if unicode_id is not None else ''
     page_ids: list[int] = []
-    for stream in page_streams:
+    for stream, (w_mm, h_mm) in zip(page_streams, sizes):
+        packed = zlib.compress(stream, 9)
         content_id = len(objects) + 1
-        objects.append(b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"endstream")
+        objects.append(b"<< /Length " + str(len(packed)).encode("ascii") + b" /Filter /FlateDecode >>\nstream\n"
+                       + packed + b"\nendstream")
         page_id = len(objects) + 1
         page_ids.append(page_id)
         objects.append(
-            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {PAGE_W:.2f} {PAGE_H:.2f}] "
+            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {w_mm * MM:.2f} {h_mm * MM:.2f}] "
             f"/Resources << /Font << /F1 {font_id} 0 R{unicode_resource} >> >> /Contents {content_id} 0 R >>".encode("ascii")
         )
 
@@ -364,6 +499,8 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
     pages: list[dict] = []
     from acs_pdf_text import PdfUnicodeFont
     unicode_font = PdfUnicodeFont()
+    import acs_plan_drafting
+    sheet = acs_plan_drafting.sheet_for(bound.revision.model)  # one paper and scale for the whole set
     for page_number, level_index in enumerate(level_indices, 1):
         projected = project(bound.revision, level_index)
         if (projected.get("revision_id") != revision_id
@@ -373,7 +510,7 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
         stream, manifest = _page_stream(
             projected, page_number, len(level_indices), revision_id=revision_id,
             model_hash=before_hash, provenance_hash=provenance["provenance_hash"],
-            unicode_font=unicode_font)
+            unicode_font=unicode_font, model=bound.revision.model, sheet=sheet)
         streams.append(stream)
         pages.append(manifest)
 
@@ -384,7 +521,8 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
         streams, revision_id=revision_id, model_hash=before_hash,
         requirements_hash=provenance["requirements_hash"],
         provenance_hash=provenance["provenance_hash"],
-        page_manifest_hash=page_manifest_hash, unicode_font=unicode_font)
+        page_manifest_hash=page_manifest_hash, unicode_font=unicode_font,
+        page_sizes_mm=[tuple(sheet["paper_mm"])] * len(streams))
     if not pdf.startswith(b"%PDF-1.4") or not pdf.rstrip().endswith(b"%%EOF"):
         raise PlanError("PDF_EXPORT_FAILED", "Generated PDF envelope is invalid")
 
@@ -393,6 +531,10 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
         "mode": MODE,
         "pdf_scope": PDF_SCOPE,
         "text_profile": "EMBEDDED_UNICODE_ARABIC_RTL_ACTUALTEXT",
+        "drawing_content": acs_plan_drafting.SCOPE,
+        "drafting_schema": acs_plan_drafting.SCHEMA,
+        "sheet": {"paper": sheet["paper"], "paper_mm": sheet["paper_mm"], "scale": sheet["scale"],
+                  "standard_scale": sheet["standard_scale"]},
         "revision_id": revision_id,
         "model_hash": before_hash,
         "content_hash": baseline.get("content_hash"),

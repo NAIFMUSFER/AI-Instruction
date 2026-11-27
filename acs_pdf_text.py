@@ -29,6 +29,8 @@ class PdfUnicodeFont:
         self.cmap = self.font.getBestCmap()
         self.codes = {}
         self.units = self.font['head'].unitsPerEm
+        self._reshaper = None
+        self._shaped = {}  # logical text -> (visual, width); shaping is deterministic
 
     def shape(self, value):
         import arabic_reshaper
@@ -36,11 +38,16 @@ class PdfUnicodeFont:
         text = str(value)
         if len(text) > 4096 or any(unicodedata.category(c) == 'Cc' for c in text):
             raise PdfTextError('PDF_TEXT_TOO_LONG_OR_CONTROL_CHARACTER')
+        cached = self._shaped.get(text)
+        if cached is not None:
+            return (text,) + cached
         # Retain vowel marks and correct their position before visual reordering.
-        reshaper = arabic_reshaper.ArabicReshaper(configuration={
-            'delete_harakat': False, 'shift_harakat_position': True})
+        # One reshaper per font: building it parses its configuration each time.
+        if self._reshaper is None:
+            self._reshaper = arabic_reshaper.ArabicReshaper(configuration={
+                'delete_harakat': False, 'shift_harakat_position': True})
         try:
-            visual = get_display(reshaper.reshape(text))
+            visual = get_display(self._reshaper.reshape(text))
         except (AssertionError, ValueError) as exc:
             raise PdfTextError('PDF_TEXT_DIRECTION_UNSUPPORTED') from exc
         if any(ord(ch) not in self.cmap for ch in visual):
@@ -49,6 +56,7 @@ class PdfUnicodeFont:
             if ch not in self.codes:
                 self.codes[ch] = len(self.codes) + 1
         width = sum(self.font['hmtx'][self.cmap[ord(ch)]][0] for ch in visual) / self.units
+        self._shaped[text] = (visual, width)
         return text, visual, width
 
     def command(self, value, x, y, size, *, center=False, max_width=None):
