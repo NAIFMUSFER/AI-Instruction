@@ -23,6 +23,23 @@
   }else callbackHash=null;
   function byId(id){return document.getElementById(id);}
   function localHost(){return ["127.0.0.1","localhost","::1","[::1]"].indexOf(location.hostname)>=0;}
+  function officialEntry(){
+    // Account services accept only the official site's origin (backend CORS).
+    // A Netlify preview or branch copy sends sign-in to that site instead of
+    // calling the backend and reporting a misleading network failure. Only
+    // harmless parameters travel: never a code, error, token or fragment.
+    var a=window.ACS_API, site=a&&typeof a.officialOrigin==="string"?a.officialOrigin.replace(/\/+$/,""):"";
+    if(!site||localHost()||location.origin===site)return "";
+    try{
+      var target=new URL(site), from=new URLSearchParams(location.search||""), keep=new URLSearchParams();
+      if(target.protocol!=="https:"||target.origin!==site)return "";
+      keep.set("signin","1");
+      ["example","debug"].forEach(function(k){from.getAll(k).forEach(function(v){keep.append(k,v);});});
+      target.pathname=location.pathname||"/";target.search=keep.toString();
+      return target.origin===site?target.href:"";
+    }catch(e){return "";}
+  }
+  var officialSignin=officialEntry();
   function hasStoredKey(key){
     // Decide entry using key names only; an explicit guest never reads account credentials.
     try{for(var i=0;i<localStorage.length;i++)if(localStorage.key(i)===key)return true;}catch(e){}
@@ -92,6 +109,8 @@
   }
   async function acsFetchJSON(path,body,token,timeoutMs){
     if(guestEntry)throw error("سجّل الدخول لاستخدام الذكاء والحفظ السحابي. التجربة الحالية محلية على جهازك.","GUEST_SIGNIN_REQUIRED",401);
+    // The backend refuses this origin; fail here, without a request, and say where sign-in works.
+    if(officialSignin)throw error("تسجيل الدخول متاح على الموقع الرسمي فقط.","AUTH_OFFICIAL_SITE_REQUIRED",421);
     var url=api(path);if(!url)throw error("تعذّر الاتصال بخدمة الدخول.","AUTH_NOT_CONFIGURED",503);
     var headers={"content-type":"application/json","accept":"application/json"};
     if(token)headers.authorization="Bearer "+token;
@@ -186,8 +205,22 @@
   function clearPassword(){var pw=byId("lgPassword");if(pw){pw.value="";pw.type="password";}var t=byId("acsPasswordToggle");if(t){t.textContent="إظهار";t.setAttribute("aria-label","إظهار كلمة المرور");t.setAttribute("aria-pressed","false");}}
   function forgetGoogle(){try{sessionStorage.removeItem(GOOGLE_KEY);}catch(e){}}
   function pendingGoogle(){try{return JSON.parse(sessionStorage.getItem(GOOGLE_KEY)||"null");}catch(e){return null;}}
+  function openOfficialSite(){
+    // Nothing typed here travels: the password is cleared before navigating.
+    clearPassword();forgetGoogle();
+    setStatus("جارٍ فتح الموقع الرسمي لتسجيل الدخول…",false);
+    location.assign(officialSignin);
+  }
+  function showOfficialSite(){
+    // A copy the backend refuses uses no callback, stored session or Google proof.
+    googleCallback=null;callbackHash=null;forgetGoogle();
+    var link=byId("acsAuthOfficialLink"),notice=byId("acsAuthOfficial");
+    if(link)link.setAttribute("href",officialSignin);
+    if(notice)notice.hidden=false;
+  }
   async function startGoogle(){
     if(busy||(mode!=="signin"&&mode!=="signup"))return;
+    if(officialSignin){openOfficialSite();return;}
     clearPassword();setBusy(true);setStatus("جارٍ فتح تسجيل الدخول باستخدام Google…",false);
     var epoch=++sessionEpoch;
     try{
@@ -284,6 +317,7 @@
   }
   async function submit(){
     if(busy)return;
+    if(officialSignin){openOfficialSite();return;}
     if(mode==="resume"){await restore();return;}
     var v=values();
     if(mode==="recover"||mode==="confirm"||mode==="update"){await accountAction(v);return;}
@@ -377,6 +411,7 @@
     var google=byId("acsAuthGoogle");if(google)google.addEventListener("click",startGoogle);
     window.addEventListener("pageshow",function(e){
       if(e.persisted&&googleNavigation){googleNavigation=false;forgetGoogle();setBusy(false);setStatus("يمكنك المحاولة باستخدام Google مرة أخرى.",false);}
+      if(e.persisted&&officialSignin)setStatus("",false);
     });
     byId("lgSignup").addEventListener("click",function(){if(busy)return;if(mode==="project"||mode==="resume"||mode==="update"){clearSession();clearPassword();}setStatus("",false);setMode(mode==="signin"?"signup":"signin");});
     [["acsAuthRecover","recover"],["acsAuthResend","confirm"]].forEach(function(pair){var b=byId(pair[0]);if(b)b.addEventListener("click",function(){if(busy)return;clearPassword();setMode(pair[1]);setStatus("استخدم البريد نفسه الذي أنشأت به حسابك.",false);byId("lgEmail").focus();});});
@@ -390,7 +425,8 @@
         location.reload();
       }
     });
-    acceptEmailCallback();
+    if(officialSignin)showOfficialSite();
+    else acceptEmailCallback();
   }
   function storageScope(){
     if(guestEntry){

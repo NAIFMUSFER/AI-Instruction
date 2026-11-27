@@ -6,12 +6,18 @@
 (function(){
   "use strict";
   var CONFIGURED_BASE = "https://acs-engine.onrender.com";   // ← الإعداد الوحيد
+  /* أصل الموقع الرسمي: الأصل الوحيد الذي يقبله CORS في الخادم
+     (acs_understand_api._DEFAULT_ORIGIN / ACS_ALLOWED_ORIGINS). نسخ المعاينة
+     في Netlify (*--…netlify.app) تُحجب عن خدمة الحسابات، فتحيل
+     boot/engine-guard.js تسجيل الدخول منها إلى هذا الأصل. */
+  var OFFICIAL_ORIGIN = "https://sprightly-selkie-d906c3.netlify.app";
 
   function norm(u){ return String(u||"").trim().replace(/\/+$/,""); }
 
   var ACSAPI = {
     contract: "acs-api-base/1.0.0",
     configured: norm(CONFIGURED_BASE),
+    officialOrigin: norm(OFFICIAL_ORIGIN),
     override: "",                     // من حقل الإعدادات المتقدّمة، إن مُلئ
     /* المصدر الفعّال: التجاوز اليدوي إن وُجد، وإلا الإعداد. لا قيمة ثالثة. */
     base: function(){ return norm(this.override) || this.configured; },

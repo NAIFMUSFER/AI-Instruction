@@ -5,6 +5,8 @@ const {spawn}=require('node:child_process'),PW=require('../../tools/pw_chromium.
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const output=path.resolve(process.env.ACS_CONTEXT_OUTPUT||path.join(os.tmpdir(),'acs-context-objects'));fs.mkdirSync(output,{recursive:true});
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
+// Sign-in works only on the official site's origin (any other is a preview copy).
+const ORIGIN=/OFFICIAL_ORIGIN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(PUB,'app','boot','api-base.js'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function bounded(promise,label,ms=15000){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label+' timed out after '+ms+'ms')),ms);})]);}finally{clearTimeout(timer);}}
@@ -49,13 +51,13 @@ async function pick(page,record){
     }
     return route.fulfill({response});
    }
-   if(url.hostname!=='acs-ui.test'){foreign.push(url.origin);return route.abort();}
+   if(url.origin!==ORIGIN){foreign.push(url.origin);return route.abort();}
    let file=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
    if(url.pathname.startsWith('/vendor/three@0.160.0/'))file=path.join(ROOT,'node_modules','three',url.pathname.slice('/vendor/three@0.160.0/'.length));
    if(!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
    return route.fulfill({headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP},body:fs.readFileSync(file)});
   });
-  await page.goto('https://acs-ui.test/?signin=1');await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
+  await page.goto(ORIGIN+'/?signin=1');await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
   await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
   const first=await state(page),r1=first.head;assert.ok(approved(first,r1));
   const column=first.object_actions.items.find(row=>row.kind==='column'&&row.supported);assert.ok(column);assert.ok(column.context_detail_provenance);
