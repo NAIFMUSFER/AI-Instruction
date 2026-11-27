@@ -5,7 +5,7 @@ import {createPlotRules} from './plot-rules.mjs';
 import {createPlanUpload,TRANSCRIPTION} from './plan-upload.mjs';
 import {createResidentialOptions} from './residential-options.mjs';
 import {createBriefReader} from './brief-reader.mjs';
-import {floorLabel,planRoomName} from '../core/plan-labels.mjs';
+import {floorLabel,planRoomName,roomLabelLayout} from '../core/plan-labels.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'محاذاة النوى بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
@@ -354,14 +354,34 @@ function draw() {
   svg('title',{},$('cwPlan'),'مخطط '+levelLabel(p));
   svg('rect',{x:0,y:0,width:p.site.w,height:p.site.d,fill:'#f7f9fb',stroke:'#668194','stroke-width':.06},$('cwPlan'));
   plotRules?.draw(p,state?.plot_rules,(tag,attrs)=>svg(tag,attrs,$('cwPlan')));
+  // Label sizes follow the drawing's scale; a room's name and size stay inside it.
+  const extent=Math.max(p.site.w,p.site.d)+2*pad,texts=[];
   for(const item of p.primitives){
     const [x,z,w,d]=item.rect_xz_m;
     const label=roomLabel(item.label);
     const g=svg('g',{class:'cw-room',role:'button',tabindex:0,'aria-label':label,'aria-pressed':false,'data-room':item.source_id},$('cwPlan'));
     svg('rect',{x,y:z,width:w,height:d},g);
-    const size=Math.max(.16,Math.min(w,d)*.105);svg('text',{x:x+w/2,y:z+d/2,'font-size':size},g,label.slice(0,40));svg('text',{x:x+w/2,y:z+d/2+size*1.6,'font-size':size*.8},g,w+' × '+d+' م');
+    const layout=roomLabelLayout(label,w,d,{min:extent*.009,max:extent*.026}),cx=x+w/2,cy=z+d/2;
+    for(const line of layout?.items||[]){
+      // The thin halo is proportional to the text, so names stay crisp over lines at any size.
+      const attrs={x:cx,y:cy+line.offset,'font-size':line.size,'stroke-width':Math.round(line.size*140)/1000,class:line.kind==='name'?'cw-room-name':'cw-room-size'};
+      if(layout.vertical)attrs.transform='rotate(-90 '+cx+' '+cy+')';
+      texts.push({text:svg('text',attrs,g,line.text),along:layout.along,size:line.size,offset:line.offset,cy,room:g});
+    }
     g.addEventListener('click',()=>selectRoom(item));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectRoom(item);}});
     const b=el('button',label+' · '+value(item.space_rect_area_m2)+' م²',$('cwSpaces'));b.type='button';b.addEventListener('click',()=>selectRoom(item));
+  }
+  // The layout estimates glyph widths; where the page measures a wider line, the
+  // room's whole label shrinks to fit (all reads first, then the writes).
+  const scale=new Map();
+  for(const line of texts){
+    let length=0;try{length=line.text.getComputedTextLength?.()||0;}catch(error){}
+    if(length>line.along)scale.set(line.room,Math.min(scale.get(line.room)??1,line.along/length));
+  }
+  for(const line of texts){
+    const ratio=scale.get(line.room);if(!ratio)continue;
+    const size=Math.round(line.size*ratio*1000)/1000;
+    line.text.setAttribute('font-size',size);line.text.setAttribute('stroke-width',Math.round(size*140)/1000);line.text.setAttribute('y',line.cy+line.offset*ratio);
   }
   for(const opening of state?.openings||[]){
     if(opening.level_index!==p.level_index||!Array.isArray(opening.line)||opening.line.length!==4||!opening.line.every(Number.isFinite))continue;

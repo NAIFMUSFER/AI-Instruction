@@ -72,7 +72,11 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace #cwPlan { display:block; width:100%; height:460px; touch-action:manipulation; }
 #designWorkspace #cwPlan .cw-room { fill:#b4d9e5; fill-opacity:.72; stroke:#446a7e; stroke-width:.08; cursor:pointer; }
 #designWorkspace #cwPlan .cw-room[aria-pressed=true] { fill:#78d3eb; stroke:#096e97; stroke-width:.16; }
-#designWorkspace #cwPlan text { fill:#183247; text-anchor:middle; pointer-events:none; }
+/* Room names: the room group's fill-opacity and outline must not reach the text (that
+   painted it doubled and smeared). A thin light halo, proportional to the text, sits
+   under the glyphs (paint-order) so names stay crisp over door lines and the plot. */
+#designWorkspace :is(#cwPlan,.cw-viewer-fallback) text { fill:#14283a; fill-opacity:1; stroke:#eef5f8; stroke-opacity:.9; stroke-linejoin:round; paint-order:stroke fill; font-weight:400; text-anchor:middle; dominant-baseline:central; pointer-events:none; }
+#designWorkspace :is(#cwPlan,.cw-viewer-fallback) .cw-room-size { fill:#3b5a70; }
 #designWorkspace .cw-space-list { display:flex; flex-direction:column; max-height:240px; overflow:auto; gap:6px; margin-top:16px; }
 #designWorkspace .cw-space-list button { text-align:start; }
 #designWorkspace .cw-results { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
@@ -175,7 +179,6 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 }
 @media(prefers-reduced-motion:reduce){#designWorkspace *{scroll-behavior:auto!important}}
 #designWorkspace .cw-viewer-fallback .cw-room{fill:#b4d9e5;stroke:#446a7e;stroke-width:.08}
-#designWorkspace .cw-viewer-fallback text{fill:#183247;text-anchor:middle}
 #designWorkspace #cwEditApprovalNotice{margin-block:12px}
 .av-labels{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .av-label{position:absolute;inset-block-start:0;left:0;max-width:16ch;padding:2px 7px;border-radius:999px;background:#0f2a3dd9;color:#f4fbff;font-size:11px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px #0b1f2c40;will-change:transform}

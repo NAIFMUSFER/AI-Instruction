@@ -263,6 +263,11 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.ok(program.every(r=>r.source_span&&r.confirmed));
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
+   // Room names are crisp: the room outline and fill-opacity do not reach the text, a thin halo sits under the
+   // glyphs, and each line stays inside its room along its reading direction.
+   const planText=await page.evaluate(()=>[...document.querySelectorAll('#cwPlan g.cw-room')].flatMap(g=>{const room=g.querySelector('rect').getBoundingClientRect();return [...g.querySelectorAll('text')].map(text=>{const box=text.getBoundingClientRect(),style=getComputedStyle(text),vertical=/rotate/.test(text.getAttribute('transform')||'');return{text:text.textContent,fillOpacity:style.fillOpacity,paintOrder:style.paintOrder,stroke:style.stroke,halo:parseFloat(style.strokeWidth)/parseFloat(style.fontSize),inside:vertical?box.top>=room.top-1&&box.bottom<=room.bottom+1:box.left>=room.left-1&&box.right<=room.right+1};});}));
+   assert.ok(planText.length>0,'rooms are named on the plan');
+   for(const row of planText){assert.equal(row.fillOpacity,'1',row.text);assert.match(row.paintOrder,/^stroke/,row.text);assert.notEqual(row.stroke,'rgb(68, 106, 126)','no room outline on '+row.text);assert.ok(row.halo>0&&row.halo<=.2,'thin halo on '+row.text+': '+row.halo);assert.ok(row.inside,'«'+row.text+'» stays inside its room');}
    assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
    // Actual cwRoof journey: an approved automatic roof is removed as a new
    // draft, survives reload and another controlled generation, then is restored.
