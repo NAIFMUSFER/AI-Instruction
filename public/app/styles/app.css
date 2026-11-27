@@ -2,10 +2,43 @@
    public/app/styles/app.css — مُستخرَج من public/index.html.
    وجود التنسيق داخل الصفحة كان يفرض style-src 'unsafe-inline'.
    ============================================================ */
-  :root{--bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc}
+/* ===== ACS DESIGN TOKENS (hand-written) =====
+   One colour system for the entry, the app shell and its dialogs, in light
+   and dark. Components read --ui-*; the older names below (--bg --panel --txt
+   --acc --acc2 --line --muted) stay defined for every rule that still reads
+   them. Arabic type: the platform UI face (SF Arabic on iPhone, Segoe UI on
+   Windows, Noto on Android). font-src 'self' rules out a hosted web font and
+   none is shipped, so nothing extra downloads before the first screen. */
+  :root{
+    color-scheme:light dark;
+    --ui-font:system-ui,-apple-system,"SF Arabic","Segoe UI","Noto Sans Arabic","Noto Naskh Arabic",Tahoma,sans-serif;
+    --ui-bg:#f4f3ee;--ui-surface:#ffffff;--ui-surface-2:#efede6;--ui-field:#ffffff;
+    --ui-text:#1b2420;--ui-text-2:#57635d;--ui-border:#dbd7cd;--ui-border-strong:#aaa497;
+    --ui-primary:#1f5c4a;--ui-primary-hover:#174a3b;--ui-on-primary:#ffffff;--ui-primary-soft:#e2eee8;
+    --ui-link:#17654e;--ui-focus:#1a6fa3;
+    --ui-info-bg:#eaf2ee;--ui-info-text:#1f362d;--ui-info-border:#c8dcd2;
+    --ui-warn-bg:#fbf3e2;--ui-warn-text:#5c420e;--ui-warn-border:#e9d5a6;
+    --ui-scrim:rgb(16 24 21/55%);
+    --ui-shadow:0 1px 2px rgb(20 30 25/6%),0 10px 30px rgb(20 30 25/10%);
+    --ui-radius:12px;--ui-radius-lg:20px;--ui-tap:48px;
+    --ui-space-1:4px;--ui-space-2:8px;--ui-space-3:12px;--ui-space-4:16px;--ui-space-5:24px;--ui-space-6:32px;
+    --bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ui-bg:#0f1513;--ui-surface:#171e1b;--ui-surface-2:#1f2824;--ui-field:#121815;
+      --ui-text:#e8edea;--ui-text-2:#a3afa9;--ui-border:#2b3531;--ui-border-strong:#46534d;
+      --ui-primary:#62c5a3;--ui-primary-hover:#7ed3b6;--ui-on-primary:#05211a;--ui-primary-soft:#1b3029;
+      --ui-link:#7fd3b5;--ui-focus:#82c9f0;
+      --ui-info-bg:#18241f;--ui-info-text:#d5e5dd;--ui-info-border:#2b3d35;
+      --ui-warn-bg:#2a2315;--ui-warn-text:#f0d7a2;--ui-warn-border:#4b3d21;
+      --ui-scrim:rgb(0 0 0/62%);
+      --ui-shadow:0 1px 2px rgb(0 0 0/30%),0 12px 32px rgb(0 0 0/38%);
+    }
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
-    font-family:system-ui,"Segoe UI",Tahoma,sans-serif}
+    font-family:var(--ui-font);-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #app{position:fixed;inset:0}
   /* ---- شاشة الدخول ---- */
   #login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
