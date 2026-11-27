@@ -309,8 +309,12 @@ READ_SYSTEM = (
     "ولكل غرفة doors: الأبواب المرسومة في الصورة فقط (فتحة باب أو قوس فتح ظاهر)، كل باب "
     '{"edge":"N|S|E|W","offset":0.0,"width":0.9} بالمتر؛ N حافة الغرفة العليا في الصورة وS السفلى '
     "وW اليسرى وE اليمنى، وoffset بُعد منتصف الباب عن بداية الحافة (من يسارها للحافتين N وS، ومن أعلاها للحافتين W وE). "
-    "الغرفة التي لا يظهر لها باب تأخذ doors=[]. ")
-NO_INVENTION = "لا تختلق أبوابًا غير مرسومة، ولا أثاثًا أو تجهيزات أو نوافذ. "
+    "الغرفة التي لا يظهر لها باب تأخذ doors=[]. "
+    "ولكل غرفة windows: النوافذ المرسومة في الصورة فقط (رمز نافذة ظاهر في جدار الغرفة الخارجي)، كل نافذة "
+    '{"edge":"N|S|E|W","offset":0.0,"width":1.2} بالمتر وبالاصطلاح نفسه للحافة وoffset كما في الأبواب. '
+    "لا تختلق نوافذ غير مرسومة، ولا تضع نافذة على جدار يفصل الغرفة عن غرفة أخرى. "
+    "الغرفة التي لا تظهر لها نافذة تأخذ windows=[]. ")
+NO_INVENTION = "لا تختلق أبوابًا غير مرسومة، ولا أثاثًا أو تجهيزات. "
 SHAPE = ('الهيكل: {"site":{"w":20,"d":25},"floor_height":3.2,"wall_h":3,"wall_t":0.2,'
          '"levels":[{"index":0,"template":"ground"}],"floors":{"ground":{"rooms":[]}},"meta":{"added":[]}}. '
          "الأرقام في المثال شكل للبيانات وليست أبعادًا افتراضية للمستخدم.")
@@ -323,55 +327,144 @@ POLICY = {
 ROOM_KEYS = ("id", "name", "role", "rect", "doors")
 DOOR_MATERIAL = "wood"
 DOOR_DEFAULTS_NOTE = "الأبواب المقروءة من ملفك بارتفاع 2.1 م ومادة خشبية افتراضيًا؛ الرسم لا يبيّن ارتفاعها ولا مادتها."
+WINDOW_SILL, WINDOW_HEIGHT = 0.9, 1.4
+WINDOW_DEFAULTS_NOTE = "النوافذ المقروءة من ملفك بجلسة 0.9 م وارتفاع 1.4 م افتراضيًا؛ الرسم لا يبيّن جلستها ولا ارتفاعها."
+MAX_OPENINGS = 8          # of each kind per room
+OPENING_TOL = 0.05        # a reading may run this far past the wall's end (as the review allows)
 
 
 def _finite(value):
     return type(value) in (int, float) and value == value and value not in (float("inf"), float("-inf"))
 
 
+def _rect(room):
+    rect = room.get("rect") if isinstance(room, dict) else None
+    return rect if isinstance(rect, list) and len(rect) == 4 and all(_finite(v) for v in rect) else None
+
+
+def _on_wall(item, rect, low, high, default=None):
+    """(edge, offset, width) of an opening read on its room's own wall, else None."""
+    if not isinstance(item, dict):
+        return None
+    edge, offset, width = item.get("edge"), item.get("offset"), item.get("width", default)
+    if edge not in SIDES or not _finite(offset) or not _finite(width) or not low <= width <= high:
+        return None
+    span = rect[2] if edge in ("N", "S") else rect[3]
+    if offset - width / 2 < -OPENING_TOL or offset + width / 2 > span + OPENING_TOL:
+        return None
+    return edge, round(float(offset), 3), round(float(width), 3)
+
+
 def visible_doors(room):
     """Keep only door openings that lie on the room's own wall; nothing is invented."""
-    rect = room.get("rect")
-    if not isinstance(rect, list) or len(rect) != 4 or not all(_finite(v) for v in rect):
+    rect = _rect(room)
+    if rect is None:
         return [], 0
     kept, dropped = [], 0
     for door in room.get("doors") or []:
-        edge = door.get("edge") if isinstance(door, dict) else None
-        offset = door.get("offset") if isinstance(door, dict) else None
-        width = door.get("width", 0.9) if isinstance(door, dict) else None
-        span = rect[2] if edge in ("N", "S") else rect[3]
-        if (edge not in SIDES or not _finite(offset) or not _finite(width) or not 0.5 <= width <= 3.0
-                or offset - width / 2 < -0.05 or offset + width / 2 > span + 0.05):
+        opening = _on_wall(door, rect, 0.5, 3.0, 0.9)
+        if opening is None:
             dropped += 1
             continue
         # A drawing shows where a door is, not what it is made of: the height
         # and material are the stated defaults (disclosed once in read_rooms),
         # so the approved model carries every field the 3D compiler requires.
-        kept.append({"edge": edge, "offset": round(float(offset), 3), "width": round(float(width), 3), "height": 2.1,
-                     "material": DOOR_MATERIAL})
-    return kept[:8], dropped + max(0, len(kept) - 8)
+        edge, offset, width = opening
+        kept.append({"edge": edge, "offset": offset, "width": width, "height": 2.1, "material": DOOR_MATERIAL})
+    return kept[:MAX_OPENINGS], dropped + max(0, len(kept) - MAX_OPENINGS)
+
+
+def visible_windows(room, doors=(), interior=None):
+    """Keep only windows drawn on the room's own outer wall; nothing is invented.
+
+    A drawing shows where a window is and how wide, not its sill or height:
+    those are the stated defaults (disclosed once in read_rooms). A window over
+    one of the room's ``doors`` or over another window, or on a stretch of wall
+    that ``interior(edge, lo, hi)`` says is shared with an enclosed room, is left
+    out and counted, so a read never brings a window the review would refuse."""
+    rect = _rect(room)
+    if rect is None:
+        return [], 0
+    kept, dropped = [], 0
+    taken = [(d["edge"], d["offset"] - d["width"] / 2, d["offset"] + d["width"] / 2) for d in doors]
+    for window in room.get("windows") if isinstance(room.get("windows"), list) else []:
+        opening = _on_wall(window, rect, 0.4, 4.0)
+        if opening is None:
+            dropped += 1
+            continue
+        edge, offset, width = opening
+        lo, hi = offset - width / 2, offset + width / 2
+        if (len(kept) >= MAX_OPENINGS or any(e == edge and min(hi, h) - max(lo, l) > 1e-4 for e, l, h in taken)
+                or (interior is not None and interior(edge, lo, hi))):
+            dropped += 1
+            continue
+        taken.append((edge, lo, hi))
+        kept.append({"edge": edge, "offset": offset, "width": width, "sill": WINDOW_SILL, "height": WINDOW_HEIGHT})
+    return kept, dropped
+
+
+def _interior_walls(room, rooms, site):
+    """interior(edge, lo, hi) for one transcribed room: that stretch of its wall
+    is shared with an enclosed room, read exactly as the review reads it
+    (acs_validate: an open terrace or balcony is open air, the plot edge is a
+    facade, an envelope or outdoor space has no interior wall)."""
+    import acs_validate as V
+    if _rect(room) is None or V._is_envelope(room.get("id")) or V._is_outdoor(room.get("id")):
+        return None
+    rect = [float(v) for v in room["rect"]]
+    others = [(i, [float(v) for v in r["rect"]]) for i, r in enumerate(rooms)
+              if r is not room and _rect(r) is not None and V._enclosed(r) and not V._open_air(r)]
+    w, d = (site.get("w"), site.get("d")) if isinstance(site, dict) else (None, None)
+    facade = V._on_site_boundary(rect, float(w), float(d)) if _finite(w) and _finite(d) else set()
+    return lambda edge, lo, hi: edge not in facade and bool(V._edge_neighbours(rect, edge, others, (lo, hi)))
 
 
 def read_rooms(building, ids=True):
-    """Transcribed rooms keep identity, use, rectangle and the doors drawn; no
-    provider furniture, fixtures, windows or points enter the model."""
+    """Transcribed rooms keep identity, use, rectangle and the doors and windows
+    drawn; no provider furniture, fixtures or points enter the model."""
     if not isinstance(building.get("meta"), dict):
         building["meta"] = {}
-    dropped = kept = 0
+    # The stated window top must fit under the wall the read gives (the review
+    # refuses an opening above its wall); else the windows are left out.
+    wall_h = building.get("wall_h")
+    low_wall = _finite(wall_h) and WINDOW_SILL + WINDOW_HEIGHT > wall_h + OPENING_TOL
+    kept = {"doors": 0, "windows": 0}
+    dropped = dict(kept)
     for floor in (building.get("floors") or {}).values():
         rooms = floor.get("rooms") if isinstance(floor, dict) else None
-        for index, room in enumerate(rooms if isinstance(rooms, list) else []):
+        if not isinstance(rooms, list):
+            continue
+        read = {}
+        for index, room in enumerate(rooms):
             if not isinstance(room, dict):
                 continue
             doors, lost = visible_doors(room)
-            dropped += lost
-            kept += len(doors)
+            dropped["doors"] += lost
+            kept["doors"] += len(doors)
+            read[index] = room
             rooms[index] = dict({k: room[k] for k in ROOM_KEYS if k in room}, doors=doors, windows=[])
-    if kept:
-        building.setdefault("meta", {}).setdefault("assumptions", []).append(DOOR_DEFAULTS_NOTE)
-    if dropped:
-        building.setdefault("meta", {}).setdefault("assumptions", []).append(
-            "تُركت %d فتحة باب لم تقع قراءتها على جدار غرفتها؛ أضفها بالتعديل إن كانت في ملفك." % dropped)
+        # Whether a wall is interior depends on the neighbours, so windows are
+        # kept once every room of the floor is known, as the review sees them.
+        for index, room in read.items():
+            windows, lost = visible_windows(room, rooms[index]["doors"],
+                                            _interior_walls(rooms[index], rooms, building.get("site")))
+            if low_wall:
+                windows, lost = [], lost + len(windows)
+            dropped["windows"] += lost
+            kept["windows"] += len(windows)
+            rooms[index]["windows"] = windows
+
+    def disclose(text):
+        building["meta"].setdefault("assumptions", []).append(text)
+    if kept["doors"]:
+        disclose(DOOR_DEFAULTS_NOTE)
+    if dropped["doors"]:
+        disclose("تُركت %d فتحة باب لم تقع قراءتها على جدار غرفتها؛ أضفها بالتعديل إن كانت في ملفك." % dropped["doors"])
+    if kept["windows"]:
+        disclose(WINDOW_DEFAULTS_NOTE)
+    if dropped["windows"]:
+        disclose("تُركت %d من النوافذ المقروءة لأنها لم تقع على جدار خارجي لغرفتها أو تداخلت مع فتحة أخرى؛ "
+                 "أضفها بالتعديل إن كانت في ملفك." % dropped["windows"])
     building.pop("_opening_identity", None)
     if ids:
         from acs_opening_identity import stabilise_opening_ids
@@ -614,7 +707,9 @@ def merge_floors(reads):
         out["levels"].append({"index": level, "template": template})
         meta = building.get("meta") if isinstance(building.get("meta"), dict) else {}
         for key in ("added", "assumptions"):
-            out["meta"][key] += [v for v in meta.get(key, []) if isinstance(v, str)]
+            # The stated opening defaults are said once for the whole plan.
+            out["meta"][key] += [v for v in meta.get(key, []) if isinstance(v, str) and not (
+                v in (DOOR_DEFAULTS_NOTE, WINDOW_DEFAULTS_NOTE) and v in out["meta"][key])]
     if not out["meta"]["assumptions"]:
         out["meta"].pop("assumptions")
     share_stair_core(out)
