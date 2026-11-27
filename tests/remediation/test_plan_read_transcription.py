@@ -3,9 +3,11 @@
 Replays the 2026-11-26 live paid reads (fixtures/plan_reads: a CAD ground
 floor, a hand sketch, the upper floor of a two-page PDF). Before this fix every
 room got «بلا باب» and «بلا إنارة» and none of them could be approved or
-exported. The read now keeps the doors it can see; lighting never blocks a
+exported. The read now keeps the doors and windows it can see on each room's
+own wall (a window on an interior wall or over a door is left out and counted,
+never a blocking finding); lighting never blocks a
 concept; on a transcription, unseen doors and paths are advisory notes with
-the disclosure «المخطط مقروء من ملفك؛ الأبواب المرئية فقط مرسومة», and the
+the disclosure «المخطط مقروء من ملفك؛ الأبواب والنوافذ المرئية فقط مرسومة», and the
 approval states that it approves a transcription. No provider is called.
 """
 import base64
@@ -152,6 +154,62 @@ class TranscribedReadsAreApprovedAndExported(Store):
         out = S.artifact(self.store, PROJECT, ACTOR, {'action': 'artifact', 'revision_id': rid, 'format': 'gltf'})
         self.assertTrue(base64.b64decode(out['data_base64']))
 
+    def test_a_read_with_doors_and_windows_approves_and_compiles_to_3d(self):
+        # A read used to drop every window, so the plan compiled to 3D with
+        # blank exterior walls. The windows drawn on a room's own outer wall
+        # are kept with the stated sill and height; the rest are left out and
+        # counted, never turned into a finding that blocks the transcription.
+        case = fixture('a_cad_ground')
+        building = copy.deepcopy(case['read'])
+        rooms = {r['id']: r for r in building['floors']['ground']['rooms']}
+        rooms['r1']['doors'] = [{'edge': 'S', 'offset': 3, 'width': 0.9}]
+        rooms['r1']['windows'] = [
+            {'edge': 'N', 'offset': 3, 'width': 1.5, 'sill': 0.2, 'height': 2.6, 'id': 'provider-w'},
+            {'edge': 'W', 'offset': 2.75, 'width': 1.2},
+            {'edge': 'E', 'offset': 2, 'width': 1.2},       # interior wall shared with the kitchen
+            {'edge': 'N', 'offset': 7, 'width': 1.2}]       # beyond the 6 m wall
+        rooms['r2']['windows'] = [{'edge': 'E', 'offset': 2.75, 'width': 1.2},
+                                  {'edge': 'N', 'offset': 2.5, 'width': 0.2}]   # not a window width
+        rooms['r6']['doors'] = [{'edge': 'S', 'offset': 5.5, 'width': 1.0}]
+        rooms['r6']['windows'] = [{'edge': 'S', 'offset': 5.8, 'width': 1.6},   # over the door
+                                  {'edge': 'S', 'offset': 9, 'width': 2},
+                                  {'edge': 'E', 'offset': 3.5, 'width': 1.5}]
+        rid = self.save(case, building=building)
+        revision = S.workspace(self.store, PROJECT, ACTOR).get(rid)
+        saved = {r['id']: r for f in revision.model['floors'].values() for r in f['rooms']}
+        def drawn(rid):
+            return [{k: w[k] for k in ('edge', 'offset', 'width', 'sill', 'height')} for w in saved[rid]['windows']]
+        self.assertEqual(drawn('r1'), [{'edge': 'N', 'offset': 3, 'width': 1.5, 'sill': 0.9, 'height': 1.4},
+                                       {'edge': 'W', 'offset': 2.75, 'width': 1.2, 'sill': 0.9, 'height': 1.4}])
+        self.assertEqual(drawn('r2'), [{'edge': 'E', 'offset': 2.75, 'width': 1.2, 'sill': 0.9, 'height': 1.4}])
+        self.assertEqual(drawn('r6'), [{'edge': 'S', 'offset': 9, 'width': 2, 'sill': 0.9, 'height': 1.4},
+                                       {'edge': 'E', 'offset': 3.5, 'width': 1.5, 'sill': 0.9, 'height': 1.4}])
+        self.assertEqual([w for r in ('r3', 'r4', 'r5') for w in saved[r]['windows']], [])
+        ids = [w['id'] for r in saved.values() for w in r['windows']]
+        self.assertNotIn('provider-w', ids)
+        self.assertEqual(len(set(ids)), 5, 'every kept window has its own stable id')
+        assumptions = revision.model['meta']['assumptions']
+        self.assertEqual(assumptions.count(SRC.WINDOW_DEFAULTS_NOTE), 1, 'the defaults are disclosed once')
+        self.assertIn(SRC.DOOR_DEFAULTS_NOTE, assumptions)
+        self.assertTrue(any('تُركت 4 من النوافذ المقروءة' in a for a in assumptions), assumptions)
+        view = S.view(self.store, PROJECT, ACTOR)
+        self.assertEqual([f for f in view['review_findings'] if f.get('severity') != 'advisory'], [])
+        self.assertFalse([f for f in view['review_findings'] if 'نافذة' in f['message']])
+        self.assertTrue(view['authority']['can_approve_concept'])
+        self.assertEqual(sum(1 for o in view['openings'] if o['kind'] == 'windows'), 5)
+        self.approve(rid, acknowledge_transcription=True)
+        out = S.artifact(self.store, PROJECT, ACTOR, {'action': 'artifact', 'revision_id': rid, 'format': 'gltf'})
+        glazing = [n['name'] for n in json.loads(base64.b64decode(out['data_base64']))['nodes']
+                   if str(n.get('name', '')).startswith('WINDOW|')]
+        self.assertEqual(sorted(glazing), ['WINDOW|F0|r1|0', 'WINDOW|F0|r1|1', 'WINDOW|F0|r2|0',
+                                           'WINDOW|F0|r6|0', 'WINDOW|F0|r6|1'], 'the 3D walls carry the windows')
+        self.assertEqual(sorted(m['source']['element_id'] for m in out['receipt']['source_map']
+                                if m['source'].get('collection') == 'windows'), sorted(ids))
+        for fmt, extra in (('svg', {'level_index': 0}), ('dxf', {'level_index': 0}), ('pdf', {}), ('ifc', {})):
+            out = S.artifact(self.store, PROJECT, ACTOR, dict({'action': 'artifact', 'revision_id': rid,
+                                                               'format': fmt}, **extra))
+            self.assertTrue(base64.b64decode(out['data_base64']), fmt)
+
     def test_the_upper_floor_alone_is_blocked_only_by_the_confirmed_floor_count(self):
         # Two floors confirmed, one page mapped: refused before the paid read
         # (it used to be read, paid, and then fail the floor-count check).
@@ -199,6 +257,17 @@ class VisibleDoors(unittest.TestCase):
         self.assertNotIn('لا تختلق أبوابًا', sent[0]['system_override'])
         self.assertIn('meta.added', sent[0]['system_override'])
 
+    def test_instruction_asks_for_drawn_windows_in_every_mode_and_invents_none(self):
+        case = fixture('a_cad_ground')
+        for mode in ('preserve', 'revise', 'complete'):
+            with self.subTest(mode=mode):
+                _, sent = read(case, mode)
+                system = sent[0]['system_override']
+                self.assertIn('النوافذ المرسومة في الصورة فقط', system)
+                self.assertIn('لا تختلق نوافذ غير مرسومة', system)
+                self.assertIn('windows=[]', system)
+                self.assertNotIn('أو نوافذ', system, 'windows are no longer forbidden outright')
+
     def test_read_doors_use_the_generator_contract_and_off_wall_doors_are_dropped(self):
         case = fixture('a_cad_ground')
         building = copy.deepcopy(case['read'])
@@ -213,12 +282,27 @@ class VisibleDoors(unittest.TestCase):
                          [{'edge': 'S', 'offset': 3, 'width': 1.0, 'height': 2.1, 'material': 'wood'}])
         self.assertNotEqual(out[0]['doors'][0]['id'], 'provider-id')
         self.assertNotIn('points', out[0])
-        self.assertEqual(out[1]['windows'], [], 'no window is invented or kept from the provider')
+        # The window drawn on the kitchen's outer wall is kept as drawn, with
+        # the stated sill and height; nothing else is added.
+        self.assertEqual([{k: w[k] for k in ('edge', 'offset', 'width', 'sill', 'height')} for w in out[1]['windows']],
+                         [{'edge': 'N', 'offset': 1, 'width': 1, 'sill': 0.9, 'height': 1.4}])
+        self.assertEqual([w for r in out if r is not out[1] for w in r['windows']], [], 'no window is invented')
         self.assertTrue(any('تُركت 1 فتحة باب' in a for a in result['building']['meta']['assumptions']))
         self.assertEqual(result['building']['_opening_identity']['schema'], 'acs.opening-identity/1')
         # Every room has an explicit opening list, so topology is evaluated.
         review = existing_geometry_verifier(json.loads(json.dumps(result['building'])))
         self.assertIn(review['scopes']['topology'], ('PASS', 'NOT_VERIFIED', 'FAIL'))
+
+    def test_the_stated_defaults_are_disclosed_once_across_floors(self):
+        reads = []
+        for level in (0, 1):
+            building = copy.deepcopy(fixture('a_cad_ground')['read'])
+            building['floors']['ground']['rooms'][0]['doors'] = [{'edge': 'S', 'offset': 3, 'width': 0.9}]
+            building['floors']['ground']['rooms'][1]['windows'] = [{'edge': 'N', 'offset': 1, 'width': 1}]
+            reads.append((level, SRC.read_rooms(building, ids=False)))
+        assumptions = SRC.merge_floors(reads)['meta']['assumptions']
+        self.assertEqual(assumptions.count(SRC.DOOR_DEFAULTS_NOTE), 1)
+        self.assertEqual(assumptions.count(SRC.WINDOW_DEFAULTS_NOTE), 1)
 
 
 class LightingNeverBlocks(unittest.TestCase):
