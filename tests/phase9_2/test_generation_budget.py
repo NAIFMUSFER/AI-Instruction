@@ -283,7 +283,11 @@ chk('the attempt ladder no longer retries with a SMALLER budget — retrying a '
     'truncation with less room truncates sooner, not later',
     '(16000, OFF)' not in _src and '(8000, None)' not in _src)
 chk('the ladder that remains exists only for an empty reply, and is bounded',
-    _src.count('attempts = [') == 1 and _src.count('(max_tokens,') == 2)
+    _src.count('attempts = [') == 1 and _src.count('(max_tokens,') == 3
+    # two declared rungs, plus the one low-effort rung that only a
+    # thinking-only reply (no text) can reach on adaptive-thinking models
+    and _src.count('attempts.append((max_tokens, None, "low"))') == 1
+    and 'if effort is not None and not thought_out:' in _src)
 
 def _single_then_staged():
     """المرحلة الواحدة تنقطع، فتُصعَّد إلى الخطة + التفصيل بلا تدخّل."""
