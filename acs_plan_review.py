@@ -942,6 +942,14 @@ class PlanWorkspace:
                 issues.extend(blocking)
                 advisories = advisories + advice
                 scopes["brief_program"] = "FAIL" if blocking else "PASS"
+        # Warehouse planning dimensions (dock frontage and spacing, staging, truck
+        # court, clear height, an egress-travel lower bound, rack aisles): cited
+        # review notes measured from the plan. They never block approval.
+        warehouse_notes = []
+        if not geometry_issues:
+            from warehouse_planning import check as warehouse_check
+            warehouse_notes = warehouse_check(model, json.loads(rev.requirements_json))
+            advisories = advisories + warehouse_notes
         ready = not issues and all(
             scopes[k] == "PASS" or (transcription and k in ("topology", "vertical_circulation")
                                     and scopes[k] == "NOT_VERIFIED")
@@ -953,7 +961,7 @@ class PlanWorkspace:
                   "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
                   "metrics": metrics, "issues": issues, "construction_approved": False,
                   "coverage": coverage}
-        if plot is not None or single or brief_program is not None or notes:
+        if plot is not None or single or brief_program is not None or notes or warehouse_notes:
             result["advisories"] = notes + advisories  # never block approval
         if transcription:
             result["transcription"] = True

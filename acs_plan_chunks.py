@@ -505,6 +505,20 @@ def _num(v):
     return f
 
 
+DOCK_INTENT_ROLES = frozenset({"receiving", "shipping", "crossdock", "dock", "dispatch",
+                               "inbound", "outbound", "loading", "staging"})
+
+
+def _dock_intents(value):
+    """At most four ``{edge, count}`` dock intents; anything else is dropped."""
+    out = []
+    for item in value if isinstance(value, list) else []:
+        if (isinstance(item, dict) and item.get("edge") in ("N", "S", "E", "W")
+                and type(item.get("count")) is int and 1 <= item["count"] <= 24):
+            out.append({"edge": item["edge"], "count": item["count"]})
+    return out[:4]
+
+
 def validate_chunk(chunk, payload):
     """يتحقّق من مخرج شريحة واحدة **وحدها**، بلا معرفة ببقيّة الشرائح.
 
@@ -563,6 +577,11 @@ def validate_chunk(chunk, payload):
                                "chunk": chunk.get("index"), "id": rid})
         if isinstance(brief, str) and brief:
             out["brief"] = brief
+        # A warehouse dock zone may name its dock walls and door counts; the
+        # server lays the doors out (warehouse_planning). Only {edge, count}.
+        docks = _dock_intents(r.get("docks")) if out["role"].lower() in DOCK_INTENT_ROLES else []
+        if docks:
+            out["docks"] = docks
         got[rid] = out
     for zid in want:
         if zid not in got:

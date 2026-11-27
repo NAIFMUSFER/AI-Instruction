@@ -37,6 +37,8 @@ COPY acs_workspace_http.py acs_workspace_service.py acs_provider_budget.py acs_p
 COPY warehouse_vertical_stage_gate.py ./
 COPY warehouse_program_feasibility.py ./
 COPY warehouse_soft_area_fit.py ./
+# Deterministic dock layout, truck-court placement and cited, non-blocking review notes.
+COPY warehouse_planning.py ./
 COPY acs_workspace_progress.py acs_residential_generation.py acs_design_research.py ./
 COPY acs_warehouse_generation.py acs_pdf_text.py acs_roof.py acs_stairs.py acs_context_details.py ./
 COPY assets/fonts/ assets/fonts/

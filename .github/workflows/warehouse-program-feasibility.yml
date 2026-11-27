@@ -9,6 +9,10 @@ on:
       - public/app/core/brief-program.mjs
       - tests/remediation/test_warehouse_program_feasibility.py
       - tests/remediation/test_warehouse_building_target.mjs
+      - tests/remediation/test_warehouse_brief_docks.mjs
+      - warehouse_planning.py
+      - acs_warehouse_generation.py
+      - tests/remediation/test_warehouse_planning.py
 jobs:
   regression:
     runs-on: ubuntu-24.04
@@ -22,3 +26,5 @@ jobs:
           node-version: '22'
       - run: PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py
       - run: node tests/remediation/test_warehouse_building_target.mjs
+      - run: node tests/remediation/test_warehouse_brief_docks.mjs
+      - run: PYTHONPATH=. python tests/remediation/test_warehouse_planning.py
