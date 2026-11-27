@@ -14,7 +14,7 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
   section.className = 'cw-brief-review'; section.id = 'cwPlot';
   const own = !$('cwStreet');   // reuse the residential street select when it exists
   section.innerHTML = '<h3>الأرض والارتدادات والمواقف</h3>'
-    + '<p class="cw-muted">اترك الحقل فارغًا لاستخدام افتراض معلن من <a id="cwPlotSource" target="_blank" rel="noopener"></a>؛ يظهر كل افتراض في المراجعة لتعدّله حسب اشتراطات أمانة منطقتك. تقبل الحقول الأرقام العربية.</p>'
+    + '<p class="cw-muted">اترك الحقل فارغًا ونفترض قيمة من <a id="cwPlotSource" target="_blank" rel="noopener"></a>، وتظهر في المراجعة لتعدّلها.</p>'
     + '<div class="cw-fields">'
     + (own ? '<label>جهة الشارع<select id="cwPlotStreet">'+sideOptions('<option value="">لا أعرف الآن (نفترض الشمال)</option>')+'</select></label>' : '')
     + '<label>شارع ثانٍ (أرض على زاويتين)<select id="cwPlotStreet2">'+sideOptions('<option value="">لا يوجد</option>')+'</select></label>'

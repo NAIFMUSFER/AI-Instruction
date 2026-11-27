@@ -504,7 +504,9 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const shell=element('div',null,null,'av-shell'),stage=element('div',null,shell,'av-stage');
   const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('aria-label','عرض تفاعلي للنسخة المعتمدة. الأسهم لتدوير العرض، زائد وناقص للتقريب، Home لإعادة الضبط.');stage.append(canvas);
   const toolbar=element('div',null,shell,'av-toolbar');toolbar.setAttribute('role','toolbar');toolbar.setAttribute('aria-label','زوايا عرض المخطط');
-  const buttons={};for(const [name,label]of Object.entries(VIEW_LABELS)){const button=element('button',label,toolbar);button.type='button';button.dataset.view=name;buttons[name]=button;}
+  // Presets are one row of chips (it scrolls sideways on a phone) so the model keeps the screen.
+  const presets=element('div',null,toolbar,'av-presets');presets.setAttribute('role','group');presets.setAttribute('aria-label','زاوية العرض');
+  const buttons={};for(const [name,label]of Object.entries(VIEW_LABELS)){const button=element('button',label,presets);button.type='button';button.dataset.view=name;buttons[name]=button;}
   const floorLabel=element('label','الدور المعروض',toolbar);const floors=element('select',null,floorLabel);floors.setAttribute('aria-label','الدور المعروض في 3D');
   const all=element('option','جميع الأدوار',floors);all.value='all';
   [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':storeyName(index),floors);option.value=String(index);});
@@ -527,7 +529,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const detailButton=element('button','تفاصيل الفتحات',moreBody);detailButton.type='button';detailButton.setAttribute('aria-pressed','true');
   const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
   const sunLabel=element('label','الشمس',moreBody),sunRange=element('input',null,sunLabel);sunRange.type='range';sunRange.min='6';sunRange.max='18';sunRange.step='0.5';sunRange.value=String(sunHour);sunRange.setAttribute('aria-label','موضع الشمس للعرض، من الصباح إلى المساء');
-  const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);badge.title='النسخة '+revisionId+' · بصمة النموذج: '+marker.model_hash;
+  const badge=element('div',null,stage,'av-badge');element('strong','النسخة المعتمدة',badge);
   const finishNote=element('span',walls.available?'تشطيب جدران افتراضي':'ألوان الملف المصدر',badge);
   const roofNote=element('span','السقف غير موجود في الملف المعتمد',badge,'av-roof-note');
   roofNote.hidden=Boolean(roofLevels.size||kinds.has('ROOF'));
@@ -541,15 +543,13 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     const close=element('button','✕',head,'av-info-close');close.type='button';close.setAttribute('aria-label','إغلاق البطاقة');close.addEventListener('click',()=>select(null));
     if(detail)element('span',detail,inspector);inspector.hidden=false;return inspector;
   }
-  const hint=element('p','اسحب للدوران · إصبعان للتحريك والتقريب · الأسهم للدوران · +/− للتقريب. مربع الشبكة = '+gridCell+' م. الكاميرا حرة وليست إثباتًا لقابلية المشي.',shell,'av-help');
-  const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
-  element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
-  element('p','إطارات النوافذ والأبواب ومقابضها مشتقة من فتحات موجودة في النسخة لتوضيحها فقط. شخصا المقياس بجانب المدخل ومصباح المشهد الداخلي وموضع الشمس عرض فقط؛ الملف لا يحدد اتجاه الشمال، فالظلال ليست دراسة شمسية.',disclosure);
-  if(walls.available)element('p','«تشطيب معماري افتراضي» يطبّق لياسة أو كسوة صناعية على الجدران التي لم تُحدّد خامتها. تبقى ألوان الجدران المطلوبة وعلامات الحركة كما هي. اختر «ألوان الملف المصدر» لمراجعة ترميز المناطق الأصلي.',disclosure);
-  if(roofLevels.size)element('p','دور السطح جزء من النسخة المعتمدة: غير مشغول ولا يدخل في قياس الأدوار أو مساحة الفراغات المشغولة. الحواجز الظاهرة هي الموجودة في الملف فقط. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
-  else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إظهارها من خيارات العرض، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
-  element('p','على الأجهزة البطيئة تنخفض دقة الصورة مؤقتًا وتُخفّف الظلال والتشطيبات أثناء تحريك الكاميرا. يعود العرض التفصيلي بعد التوقف.',disclosure);
-  const evidence=element('output','',disclosure);evidence.dir='ltr';
+  const hint=element('p','اسحب للتدوير · إصبعان للتقريب والتحريك · مربع الشبكة = '+gridCell+' م',shell,'av-help');
+  const disclosure=element('details',null,shell,'av-evidence');element('summary','حدود العرض',disclosure);
+  element('p','الأبعاد من الملف المعتمد. الخامات والإضاءة والسماء وأسماء الغرف وشخصا المقياس للعرض فقط ولا تدخل في التصدير. الملف لا يحدد الشمال، فالظلال ليست دراسة شمسية.',disclosure);
+  if(walls.available)element('p','«تشطيب معماري افتراضي» يُطبَّق على الجدران التي لم تُحدَّد خامتها؛ اختر «ألوان الملف المصدر» لرؤية الألوان الأصلية.',disclosure);
+  if(roofLevels.size)element('p','السطح جزء من النسخة المعتمدة وغير مشغول؛ الحواجز الظاهرة هي الموجودة في الملف فقط.',disclosure);
+  else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة للعرض فقط ولا تدخل في النسخة أو التصدير.',disclosure);
+  const evidence=element('output','',disclosure);evidence.dir='ltr';evidence.hidden=globalThis.document?.getElementById('cwEngineerIds')?.checked!==true; // engineer view only
   // Short room names anchored to the approved rooms. Names come from the review
   // packet when supplied, otherwise from the artifact's own room identifiers.
   const labelLayer=element('div',null,stage,'av-labels');labelLayer.setAttribute('aria-hidden','true');

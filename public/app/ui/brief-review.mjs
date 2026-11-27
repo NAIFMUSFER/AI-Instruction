@@ -35,7 +35,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
   const brief=$('cwBrief');
   const starterGroup=el('fieldset',null,null,'cw-brief-starters');
   starterGroup.id='cwBriefStarters';
-  el('legend','اختر وصفًا وعدّله',starterGroup);
+  el('legend','ابدأ بمثال وعدّله',starterGroup);
   const starterButtons=el('div',null,starterGroup,'cw-starter-buttons');
   const replacement=el('div',null,starterGroup,'cw-starter-preview');
   replacement.hidden=true;
@@ -104,15 +104,15 @@ export function createBriefEditor(root,{storageKey,onError}) {
       $('cwUnits').dispatchEvent(new Event('change',{bubbles:true}));
     }
   }
-  const read=el('button','قراءة المتطلبات من الوصف');read.type='button';read.id='cwReadBrief';
+  const read=el('button','اقرأ الأرقام من وصفي');read.type='button';read.id='cwReadBrief';
   const panel=el('section',null,null,'cw-brief-review');panel.id='cwBriefReview';
-  el('h3','مراجعة الوصف',panel);
-  const notice=el('p','استخرج الأبعاد والأعداد المكتوبة، ثم راجعها قبل إضافتها. بقية وصفك يبقى محفوظًا ويحتاج مراجعتك.',panel,'cw-muted');
+  el('h3','ما قرأناه من وصفك',panel);
+  const notice=el('p','',panel,'cw-muted');
   notice.id='cwBriefNotice';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
   const cards=el('div',null,panel,'cw-brief-candidates');cards.id='cwBriefCandidates';
-  const questionTitle=el('h3','أسئلة قبل التوليد',panel);
+  const questionTitle=el('h3','أسئلة قبل التصميم',panel);
   const questions=el('ul',null,panel);questions.id='cwBriefQuestions';
-  const preview=el('details',null,panel);el('summary','القيم التي سيستخدمها المقترح ومصادرها',preview);
+  const preview=el('details',null,panel);el('summary','القيم التي سنستخدمها ومصادرها',preview);
   const sources=el('div',null,preview);sources.id='cwBriefSources';
   $('cwBrief').after(read,panel);
 
@@ -163,7 +163,9 @@ export function createBriefEditor(root,{storageKey,onError}) {
     }catch(e){if($('cwBrief').value.trim())items.push(e.message);}
     questions.replaceChildren();for(const item of new Set(items))el('li',item,questions);
     questionTitle.hidden=questions.hidden=!items.length;
+    syncPanel();
   }
+  function syncPanel(){panel.hidden=!cards.children.length&&questions.hidden&&!notice.textContent;}
   function apply(candidate){
     const id=fields[candidate.metric];
     if(id)$(id).value=candidate.expected;
@@ -171,7 +173,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
       let row=[...$('cwRequirements').children].find(node=>requirementKey({metric:node.querySelector('select').value,role:node.querySelector('[data-role]').value})===requirementKey(candidate));
       if(!row)row=add(candidate);else row.querySelector('[data-value]').value=candidate.expected;
     }
-    draft();showQuestions();notice.textContent='أضيفت القيمة إلى البرنامج. راجع بقية القيم ثم أكد المتطلبات.';
+    draft();showQuestions();notice.textContent='أضفنا القيمة. راجع البقية ثم أكّد.';
   }
   function readBrief(){
     try{
@@ -185,11 +187,11 @@ export function createBriefEditor(root,{storageKey,onError}) {
         use.setAttribute('aria-label','استخدام '+requirementLabel(c)+' '+c.expected);use.addEventListener('click',()=>apply(c));
       }
       if(analysis.candidates.length>1){
-        const all=el('button','استخدام كل القيم ('+analysis.candidates.length+')',cards,'cw-use-all');all.type='button';all.id='cwUseAllBrief';
-        all.addEventListener('click',()=>{for(const c of analysis.candidates)apply(c);notice.textContent='أضيفت كل القيم المقروءة إلى البرنامج. راجعها ثم أكد المتطلبات.';});
+        const all=el('button','استخدام كل القيم ('+analysis.candidates.length+')',cards,'cw-use-all cw-primary');all.type='button';all.id='cwUseAllBrief';
+        all.addEventListener('click',()=>{for(const c of analysis.candidates)apply(c);notice.textContent='أضفنا كل القيم المقروءة. راجعها ثم أكّد.';});
       }
       const area=analysis.site_area_m2;
-      notice.textContent=(analysis.candidates.length?'اختر القيم التي تريد إضافتها، ثم راجع البرنامج. تغيير الوصف أو القيم يلغي التأكيد السابق.':'لم أجد أبعادًا أو أعدادًا صريحة بهذه الصياغة. أدخلها في الحقول، أو جرّب القراءة الذكية؛ وصفك سيبقى محفوظًا كاملًا.')
+      notice.textContent=(analysis.candidates.length?'اضغط القيم التي تريد استخدامها.':'لم نجد أبعادًا أو أعدادًا صريحة. أدخلها في الحقول، أو جرّب القراءة الذكية.')
         +(area?' مساحة الأرض في الوصف '+area.value+' م²'+(area.matches?' وتطابق العرض × العمق.':'.'):'');
       $('cwConfirmed').checked=false;showQuestions();
     }catch(e){onError(e);}
@@ -210,8 +212,8 @@ export function createBriefEditor(root,{storageKey,onError}) {
     if(e.target.id==='cwBrief'){
       closeStarterPreview();syncStarterFields();
       analysis=null;savedRequirements=[];cards.replaceChildren();sources.replaceChildren();questions.replaceChildren();
-      notice.textContent='تغيّر الوصف. اقرأ المتطلبات مجددًا أو راجع الأبعاد والأعداد في الحقول.';
-      questionTitle.hidden=questions.hidden=true;
+      notice.textContent='';
+      questionTitle.hidden=questions.hidden=true;syncPanel();
     }else{
       linkedFields.delete(e.target.id);
       showQuestions();
