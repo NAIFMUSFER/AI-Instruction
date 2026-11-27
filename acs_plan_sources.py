@@ -321,6 +321,8 @@ POLICY = {
                  "أضف بابًا واحدًا على حافة مشتركة مع ممر أو فراغ موصول، واذكر كل باب أضفته في meta.added."),
 }
 ROOM_KEYS = ("id", "name", "role", "rect", "doors")
+DOOR_MATERIAL = "wood"
+DOOR_DEFAULTS_NOTE = "الأبواب المقروءة من ملفك بارتفاع 2.1 م ومادة خشبية افتراضيًا؛ الرسم لا يبيّن ارتفاعها ولا مادتها."
 
 
 def _finite(value):
@@ -342,7 +344,11 @@ def visible_doors(room):
                 or offset - width / 2 < -0.05 or offset + width / 2 > span + 0.05):
             dropped += 1
             continue
-        kept.append({"edge": edge, "offset": round(float(offset), 3), "width": round(float(width), 3), "height": 2.1})
+        # A drawing shows where a door is, not what it is made of: the height
+        # and material are the stated defaults (disclosed once in read_rooms),
+        # so the approved model carries every field the 3D compiler requires.
+        kept.append({"edge": edge, "offset": round(float(offset), 3), "width": round(float(width), 3), "height": 2.1,
+                     "material": DOOR_MATERIAL})
     return kept[:8], dropped + max(0, len(kept) - 8)
 
 
@@ -351,7 +357,7 @@ def read_rooms(building, ids=True):
     provider furniture, fixtures, windows or points enter the model."""
     if not isinstance(building.get("meta"), dict):
         building["meta"] = {}
-    dropped = 0
+    dropped = kept = 0
     for floor in (building.get("floors") or {}).values():
         rooms = floor.get("rooms") if isinstance(floor, dict) else None
         for index, room in enumerate(rooms if isinstance(rooms, list) else []):
@@ -359,7 +365,10 @@ def read_rooms(building, ids=True):
                 continue
             doors, lost = visible_doors(room)
             dropped += lost
+            kept += len(doors)
             rooms[index] = dict({k: room[k] for k in ROOM_KEYS if k in room}, doors=doors, windows=[])
+    if kept:
+        building.setdefault("meta", {}).setdefault("assumptions", []).append(DOOR_DEFAULTS_NOTE)
     if dropped:
         building.setdefault("meta", {}).setdefault("assumptions", []).append(
             "تُركت %d فتحة باب لم تقع قراءتها على جدار غرفتها؛ أضفها بالتعديل إن كانت في ملفك." % dropped)
