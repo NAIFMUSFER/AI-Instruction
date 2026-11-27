@@ -196,5 +196,56 @@ class AfterCorrectiveCall(unittest.TestCase):
         self.assertIn('level_2', calls, 'the corrective call covers level_2')
         self.assertEqual(A.issues(out, doors=True), [], 'the lobby door and the terrace door are restored')
 
+
+ROWS4 = json.loads((ROOT / 'tests/remediation/fixtures/floor_program/corner_duplex_live4_openings.rows').read_text())
+
+
+def model4():
+    global ROWS
+    saved, ROWS = ROWS, ROWS4
+    try:
+        return model()
+    finally:
+        ROWS = saved
+
+
+class MajlisAtLayout(unittest.TestCase):
+    """Live (job 1b0eb00e): the second-floor flat's majlis was drawn 5.8 m from
+    the flat's door, found only after openings. It is now a layout finding the
+    layout repair already pays for."""
+
+    def test_the_far_majlis_is_found_before_openings(self):
+        found = G._majlis_far_findings(model4(), PLOT)
+        self.assertEqual([(f['code'], f['room_ref']) for f in found],
+                         [('LAYOUT_MAJLIS_FAR', ['level_2', 'level_2_majlis_1'])])
+        self.assertGreater(found[0]['nearest_m'], 5.0)
+
+    def test_a_majlis_beside_the_landing_is_not(self):
+        self.assertEqual(G._majlis_far_findings(model(), PLOT), [])
+
+    def test_only_when_zoning_is_asked_and_never_for_a_villa(self):
+        self.assertEqual(G._majlis_far_findings(model4(), dict(PLOT, zoning_requested=False)), [])
+        self.assertEqual(G._majlis_far_findings(model4(), dict(PLOT, dwelling='villa')), [])
+        self.assertEqual(G._majlis_far_findings(model4(), None), [])
+
+    def test_the_lift_is_not_the_flats_door(self):
+        m = model4()
+        lift = room(m, 'level_2', 'level_2_elevator')
+        self.assertTrue(lift['rect'][0] + lift['rect'][2] == room(m, 'level_2', 'level_2_entrance_1')['rect'][0])
+        self.assertTrue(G._majlis_far_findings(m, PLOT), 'the lift touching the lobby does not count as the entry')
+
+    def test_the_layout_repair_receives_it(self):
+        from unittest.mock import patch
+        from acs_provider_budget import limited
+        m = model4()
+        for f in m['floors'].values():
+            for r in f['rooms']:
+                r.pop('doors', None); r.pop('windows', None); r.pop('points', None)
+        with limited(12, used=0) as budget, patch('acs_understand.call_llm', return_value='{}') as provider:
+            G.prepare_layout(m, 'brief', [], budget, plot=PLOT)
+        self.assertTrue(provider.called, 'a repair call is made')
+        context = json.loads(provider.call_args.args[0])
+        self.assertIn('LAYOUT_MAJLIS_FAR', [f.get('code') for f in context['findings']])
+
 if __name__ == '__main__':
     unittest.main()
