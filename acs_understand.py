@@ -1609,12 +1609,14 @@ def _outline(description, model=None, btype="residential", telemetry=None,
     return zones, envelope, issues
 
 
-def _plan_spatial_context(envelope, zones_by_id, results, template):
+def _plan_spatial_context(envelope, zones_by_id, results, template, support=False):
     """Read-only context: only accepted rooms, never failed-chunk placeholders.
 
     Rebuilt before each call, including recursive split halves, so later calls
     see earlier accepted geometry. Template identity distinguishes stacked floors.
-    No room is moved, resized, or invented here.
+    No room is moved, resized, or invented here. With ``support`` (residential)
+    an upper storey also gets ``below``: the storey under it, its extent and
+    the open rectangles inside that extent, so its rooms stand on built space.
     """
     context = {k: envelope[k] for k in
                ("site", "levels", "floor_height", "wall_h", "wall_t")
@@ -1635,7 +1637,32 @@ def _plan_spatial_context(envelope, zones_by_id, results, template):
                 "template", chunk.get("template"))
             planned.append(item)
     context["planned_rooms"] = planned
+    if support:
+        below = _storey_below(envelope, template)
+        rects = [r["rect"] for r in planned if r.get("template") == below]
+        # Only a storey planned in full is a support to plan over: with its
+        # zones still pending (or a failed chunk) the extent would mislead.
+        wanted = {z for z, item in zones_by_id.items() if item.get("template") == below}
+        done = {r["id"] for r in planned if r.get("template") == below}
+        from acs_residential_generation import support_context
+        found = support_context(rects) if below is not None and wanted <= done else None
+        if found is not None:
+            context["below"] = dict(found, template=below)
     return context
+
+
+def _storey_below(envelope, template):
+    """The template of the storey directly under ``template``'s lowest storey."""
+    levels = [l for l in (envelope or {}).get("levels") or [] if isinstance(l, dict)
+              and type(l.get("index")) is int and isinstance(l.get("template"), str)]
+    own = [l["index"] for l in levels if l["template"] == template]
+    if not own:
+        return None
+    under = [l for l in levels if l["index"] < min(own)]
+    if not under:
+        return None
+    below = max(under, key=lambda l: l["index"])["template"]
+    return below if below != template else None
 
 
 def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
@@ -1696,7 +1723,8 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
                                  btype=btype, telemetry=ctel,
                                  request_id=request_id,
                                  spatial_context=_plan_spatial_context(
-                                     envelope, zones_by_id, results, chunk.get("template")))
+                                     envelope, zones_by_id, results, chunk.get("template"),
+                                     support=_is_residential(btype)))
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"]))
         results.append((chunk, rooms, iss))

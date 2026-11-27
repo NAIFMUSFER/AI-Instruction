@@ -207,6 +207,9 @@ def existing_geometry_verifier(building: dict) -> dict:
     """
     import acs_validate as V
     findings, _, notes = V.review_building(building)
+    from acs_residential_access import narrow_rooms, scoped
+    if scoped(building):
+        notes = notes + narrow_rooms(building)  # advisory: a width floor by role, never blocking
     # A plan transcribed from the owner's file draws only the doors visible in
     # it: missing doors and paths there are disclosed notes, not errors.
     transcription = V.transcribed(building)

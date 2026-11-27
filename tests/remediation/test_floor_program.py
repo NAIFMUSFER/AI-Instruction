@@ -224,8 +224,13 @@ class Generation(unittest.TestCase):
         context = json.loads(text)
         self.assertEqual(set(context['program']), {'level_0', 'level_1', 'level_2'})
         self.assertEqual(context['program']['level_1']['floor'], 'الدور الأول')
-        self.assertEqual([f['code'] for f in context['findings']], ['PROGRAM_ROOM_SIZE_OFF'])
+        # The stubbed plan chunks leave the fixture's corridor fill out, so one
+        # second-floor bedroom stands over a void of the first floor (the first-
+        # floor one over the ground got a free porch): the same repair carries it.
+        self.assertEqual([f['code'] for f in context['findings']], ['PROGRAM_ROOM_SIZE_OFF', 'UNSUPPORTED_UPPER_ROOM'])
         self.assertEqual(context['findings'][0]['room_ref'], ['level_0', 'level_0_majlis_1'])
+        self.assertEqual(context['findings'][1]['room_ref'], ['level_2', 'level_2_bedroom_2'])
+        self.assertIn('UNSUPPORTED_UPPER_ROOM: that upper room', system)
         self.assertIn('context.program holds each floor template', system)
         for _, text, system in self.provider.stage('detail'):
             context = json.loads(text)
