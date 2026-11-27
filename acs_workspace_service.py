@@ -425,6 +425,18 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 emit('ROOM_DETAILS',{'kind':'details','building':fallback,'done':done},
                      completed=len(done),total=len(done),provider_calls=budget['used'])
         else:
+            dock_intents = []
+            if warehouse:
+                import warehouse_planning as WP
+                # The typology is server-derived (detect_type), never left to the
+                # provider: it switches on the warehouse scorecard, dock/rack
+                # requirement measurement and the vertical stage gate.
+                if not isinstance(result['building'].get('meta'), dict):
+                    result['building']['meta'] = {}
+                result['building']['meta']['type'] = 'warehouse'
+                # Dock intents leave the rooms while their rectangles are fitted and
+                # repaired position-only; they return as exact dock groups below.
+                result['building'], dock_intents = WP.stash_dock_intents(result['building'])
             if warehouse and target is not None:
                 from warehouse_program_feasibility import generated_indoor_area
                 from warehouse_soft_area_fit import fit_soft_area
@@ -436,6 +448,12 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                     result['building'] = fit_soft_area(result['building'], requirements, target)
             from acs_plan_overlap_repair import repair_overlap
             result["building"] = repair_overlap(result["building"], prompt, budget)
+            if warehouse:
+                # Free, deterministic and disclosed: exact dock doors on the dock
+                # zones' exterior walls, then one shift that keeps a truck court.
+                result['building'], notes = WP.layout_docks(result['building'], requirements, dock_intents)
+                result['building'], moved = WP.place_for_truck_court(result['building'], requirements)
+                WP.disclose(result['building'], notes + moved)
         emit("REVIEW",provider_calls=budget["used"])
     candidate = result["building"]
     if rules is not None:

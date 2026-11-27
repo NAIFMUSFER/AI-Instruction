@@ -804,6 +804,7 @@ jobs:
             tests/remediation/test_guest_roof_parity.py \
             tests/remediation/test_apartment_floor_line_and_courtyard.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
+            tests/remediation/test_warehouse_planning.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
         shell: bash
@@ -834,6 +835,7 @@ jobs:
             tests/remediation/test_context_details_browser_geometry.cjs \
             tests/remediation/test_context_local_integration.cjs \
             tests/remediation/test_warehouse_local_brief.cjs \
+            tests/remediation/test_warehouse_brief_docks.mjs \
             tests/remediation/test_context_object_controls.mjs \
             tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_guest_recovery_writes.cjs \

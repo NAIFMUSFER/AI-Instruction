@@ -92,7 +92,7 @@ const patterns=[
   ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مطابخ|kitchens?)(?![\\p{L}\\p{N}])`,'kitchen'],
   ['dock_count',`عدد\\s+الارصفه?\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
   ['dock_count',`عدد\\s+الارصفة\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
-  ['dock_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:ارصفه|ارصفة|docks?)(?![\\p{L}\\p{N}])`],
+  ['dock_count',`(?<![\\p{L}\\p{N}.])(?:و\\s{0,2})?(?<n>${N})\\s+(?:ارصفه|ارصفة|docks?)(?![\\p{L}\\p{N}])`],
   ['min_rack_group_count',`(?:على\\s+الاقل|at\\s+least)\\s+(?<n>${N})\\s+(?:مجموعات\\s+رفوف|rack\\s+groups?)(?![\\p{L}\\p{N}])`],
 ];
 // A plot's street frontage is its width along that street: «عرض الواجهة الشمالية ٢٠ م على الشارع».
@@ -101,6 +101,19 @@ const landFrontage=`(?:عرض\\s+)?(?:ال)?واجه[ةه]\\s+${site}\\s*[:=]?\\
 // The plot's own area («أرض مستطيلة مساحتها ٥٠٠ م²»): a check on width × depth, never a requirement.
 const plotArea=`(?:مساح[ةه]\\s+${site}|(?<![\\p{L}])${site}(?:\\s+[\\p{L}\\u064B-\\u0652]+){0,2}?\\s+مساحت(?:ها|ه))\\s*[:=]?\\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\\.[0-9]+)?)\\s*(?:م(?:تر)?\\s*(?:مربع|²)|m²|sqm)(?![\\p{L}\\p{N}])`;
 // What a qualified sentence would have yielded: only these deserve a question.
+// A dock count names its side when a receiving or shipping word sits next to it
+// in its clause: «4 أرصفة استلام»، «الاستلام … فيه 4 أرصفة»، «و4 أرصفة صادر».
+// «تحميل/تفريغ» name any loading dock, not a side.
+const dockIn=/استلام|نستلم|استقبال|وارد|inbound|receiv/iu, dockOut=/شحن|صادر|outbound|shipping|dispatch/iu;
+function dockSide(text,match){
+  const kind=part=>dockIn.test(part)===dockOut.test(part)?null:dockIn.test(part)?'in':'out';
+  const after=text.slice(match.index+match[0].length).split(/[،,.؛;:]|[0-9]/u)[0];
+  if(kind(after))return kind(after);
+  const before=text.slice(0,match.index).split(/[،,.؛;:]/u).pop();
+  const last=re=>Math.max(-1,...Array.from(before.matchAll(new RegExp(re.source,'giu')),m=>m.index));
+  const i=last(dockIn),o=last(dockOut);
+  return i===o?null:i>o?'in':'out';
+}
 const quantityHints=[...patterns.map(p=>p[1]),...buildingSides.map(p=>p[1]),buildingPair,sitePair,frontage,landFrontage,plotArea,
   `(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*${N}\\s*[×x]\\s*${N}`].map(p=>new RegExp(p,'iu'));
 // «أرضي وأول وثانٍ» lists every floor; «أرضي + ٢» counts the floors above the ground floor.
@@ -129,7 +142,7 @@ function qualifiedQuestion(text,quote){
 
 export function analyzeBrief(brief) {
   if(typeof brief!=='string'||cp(brief)>60000)throw new Error('الوصف يتجاوز الحد المسموح.');
-  const candidates=[],questions=[],seen=new Set(),areas=[],listed=new Set();
+  const candidates=[],questions=[],seen=new Set(),areas=[],listed=new Set(),docks=[];
   const chunks=brief.matchAll(/[^\n؛;!?؟]+/gu);
   const add=(metric,n,unit,match,base,source='requested',role)=>{
     const numeric=typeof n==='string'?n.replace(/[,٬]/g,''):n;
@@ -219,6 +232,7 @@ export function analyzeBrief(brief) {
         }
         if(metric==='level_count'){levelCount(match.groups.n,match);continue;}
         if(metric==='room_count'&&floorNamed.test(text)){questions.push(qualifiedQuestion('في الدور',chunk[0]));continue;}
+        if(metric==='dock_count'&&!minimum)docks.push({n:Number(match.groups.n),side:dockSide(text,match),start:chunk.index+match.index,end:chunk.index+match.index+match[0].length});
         add(minimum?'min_dock_count':metric,match.groups.n,match.groups.u,match,chunk.index,'requested',role);
       }
     }
@@ -257,6 +271,17 @@ export function analyzeBrief(brief) {
     }
   };
   for(const chunk of chunks)scan(chunk,true);
+  // «4 أرصفة استلام … و4 أرصفة صادر» are two groups of one building: their sum is
+  // the dock total, read as an inference to confirm. A count without a side keeps
+  // its own reading (a repeated «عدد الأرصفة ٤؛ ٤ أرصفة» is one fact).
+  const sided=[...new Map(docks.filter(d=>d.side).map(d=>[d.side+':'+d.n,d])).values()];
+  if(!docks.some(d=>!d.side)&&new Set(sided.map(d=>d.side)).size===2&&sided.every(d=>Number.isInteger(d.n))){
+    const start=Math.min(...sided.map(d=>d.start)),end=Math.max(...sided.map(d=>d.end));
+    for(let i=candidates.length-1;i>=0;i--)if(candidates[i].metric==='dock_count')candidates.splice(i,1);
+    const span={start:cp(brief.slice(0,start)),end:cp(brief.slice(0,end))};
+    candidates.push({id:'text-'+span.start+'-dock_count',metric:'dock_count',expected:sided.reduce((s,d)=>s+d.n,0),
+      source:'inferred',source_id:'brief:text',evidence:brief.slice(start,end),source_span:span,confirmed:false});
+  }
   // «اجعل الأرضي والأول مسكنًا واحدًا … وخصص الدور الثاني لشقة» lists the floors of
   // one dwelling, not the building: a list below a floor named elsewhere is no count.
   const highest=Math.max(-1,...Array.from(normal(brief).matchAll(namedFloor),m=>ordinals.indexOf(m.groups.o)));
