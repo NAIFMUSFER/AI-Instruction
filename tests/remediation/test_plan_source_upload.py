@@ -120,10 +120,12 @@ class UploadTests(unittest.TestCase):
                 self.assertEqual(result['provider_calls'],1)
                 self.assertEqual(len(sent),1)
                 body=sent[0]
-                # Doors drawn in the file are read; nothing else is invented.
+                # Doors and windows drawn in the file are read; nothing else is invented.
                 self.assertIn('أخرج لكل غرفة id وname وrole',body['system'])
                 self.assertIn('الأبواب المرسومة في الصورة فقط',body['system'])
-                self.assertIn('لا تختلق أبوابًا غير مرسومة، ولا أثاثًا أو تجهيزات أو نوافذ',body['system'])
+                self.assertIn('النوافذ المرسومة في الصورة فقط',body['system'])
+                self.assertIn('لا تختلق نوافذ غير مرسومة',body['system'])
+                self.assertIn('لا تختلق أبوابًا غير مرسومة، ولا أثاثًا أو تجهيزات',body['system'])
                 self.assertNotIn('أضِف نقاط الكهرباء',body['system'])
                 self.assertNotIn('استنتج أبعاد كل غرفة',body['system'])
                 self.assertNotIn(brief,body['system'])

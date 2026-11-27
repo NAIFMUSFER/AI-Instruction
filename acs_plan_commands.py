@@ -377,7 +377,7 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
         if transcription and command.get("acknowledge_transcription") is not True:
             raise PlanError("TRANSCRIPTION_ACKNOWLEDGEMENT_REQUIRED",
                             "هذه النسخة مقروءة من ملفك. أكد أنك تعتمدها كنسخة منقولة من ملفك "
-                            "(الأبواب المرئية فقط مرسومة) قبل الاعتماد.")
+                            "(الأبواب والنوافذ المرئية فقط مرسومة) قبل الاعتماد.")
         receipt = workspace.approve(
             expected, expected_head=expected, actor_label=actor,
             confirmed=command.get("confirmed"),

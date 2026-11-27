@@ -269,7 +269,7 @@ def existing_geometry_verifier(building: dict) -> dict:
         'coverage': {'vertical_circulation': vertical_geometry_coverage(building, vertical_state)}}
 
 
-TRANSCRIPTION_NOTE = 'المخطط مقروء من ملفك؛ الأبواب المرئية فقط مرسومة.'
+TRANSCRIPTION_NOTE = 'المخطط مقروء من ملفك؛ الأبواب والنوافذ المرئية فقط مرسومة.'
 
 
 def advisory_notes(notes, transcription=False):
