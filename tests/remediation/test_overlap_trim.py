@@ -21,7 +21,10 @@ sys.path.insert(0, str(ROOT))
 import acs_residential_generation as G
 from acs_provider_budget import limited
 
-LAYOUT = json.loads((ROOT / 'tests/remediation/fixtures/floor_program/corner_duplex_layout.json').read_text())
+# The provider's layout before any repair, deliberately with its overlap. It is
+# not a reviewed model, so it is kept out of the *.json fixtures that
+# test_validate_against_real_models scans for false positives.
+LAYOUT = json.loads((ROOT / 'tests/remediation/fixtures/floor_program/corner_duplex_layout.unrepaired').read_text())
 BRIEF = 'عمارة من ثلاثة أدوار: دوبلكس في الأرضي والأول وشقة مستقلة في الدور الثاني'
 
 
