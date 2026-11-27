@@ -67,6 +67,12 @@
   #login #acsAuthStatus{padding:12px 14px;border-radius:var(--ui-radius);background:var(--ui-info-bg);
     border:1px solid var(--ui-info-border);color:var(--ui-info-text);text-align:start}
   #login #acsAuthStatus.bad,#login.auth-outage #acsAuthStatus{background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+  /* Preview copies send sign-in to the official site (claude/auth-official-origin
+     adds #acsAuthOfficial): the same calm info panel with one clear link. */
+  #login .auth-official{margin:20px 0 0;padding:14px;border-radius:var(--ui-radius);background:var(--ui-info-bg);
+    border:1px solid var(--ui-info-border);color:var(--ui-info-text);font-size:15px;line-height:1.65}
+  #login .auth-official a{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:10px 14px;
+    border-radius:var(--ui-radius);background:var(--ui-primary);color:var(--ui-on-primary);font-weight:700;text-decoration:none}
   #login form{display:flex;flex-direction:column;margin-top:20px}
   #login label{display:block;font-size:14px;font-weight:600;color:var(--ui-text);margin:16px 0 6px}
   #login input{width:100%;min-height:var(--ui-tap);padding:12px 14px;font:inherit;font-size:16px;
