@@ -31,7 +31,7 @@ async function openGuestWorkspace() {
           <p id="guestFacts" hidden></p>
           <p id="guestStorageNote" hidden>تُحفظ تغييرات هذا المثال في مسودة مستقلة على جهازك.</p>
           <button id="guestProjects" type="button" aria-haspopup="dialog">مشاريعي على هذا الجهاز</button>
-          <a id="guestNew" href="/?guest=1&amp;new=1" target="_blank" rel="noopener">مشروع جديد في علامة تبويب أخرى</a>
+          <a id="guestNew" href="/?guest=1&amp;new=1" target="_blank" rel="noopener">مشروع جديد ↗</a>
           <button id="guestReviseExisting" type="button" aria-haspopup="dialog" hidden>تعديل التصميم الحالي</button>
           <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
             <button id="guestExample" type="button">عمارة تجريبية</button>
@@ -41,9 +41,9 @@ async function openGuestWorkspace() {
             <button id="guestInterior" type="button">من الداخل</button>
             <button id="guestDetail" type="button">تفاصيل المدخل</button>
           </div>
-          <button id="guestFloors" type="button">اختيار الطوابق والطبقات</button>
+          <button id="guestFloors" type="button">الأدوار والطبقات</button>
           <a id="guestNativeSample" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون" hidden><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>
-          <button id="guestExport" type="button">تنزيل النموذج بصيغة JSON</button>
+          <button id="guestExport" type="button">حفظ نسخة على جهازي (JSON)</button>
           <a id="guestSignin" href="/?signin=1">تسجيل الدخول للحفظ السحابي</a>
         </div>
       </details>
