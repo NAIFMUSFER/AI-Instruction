@@ -83,6 +83,7 @@ jobs:
                    tests/phase9_2/test_live_render.py \
                    tests/remediation/test_validate_topology.py \
                    tests/remediation/test_validate_against_real_models.py \
+                   tests/remediation/test_healthcare_program.py \
                    tests/remediation/test_autofix_propose_boundary.py \
                    tests/remediation/test_doc_claims.py \
                    tests/remediation/test_ci_apt_mirror.py
