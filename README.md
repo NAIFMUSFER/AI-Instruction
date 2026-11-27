@@ -571,6 +571,7 @@ size derived from the budget and re-derived from measured output.
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `ACS_REQUEST_TIMEOUT_S` | `840` | Server deadline for one request; deliberately shorter than the frontend's 900 s so the client receives a JSON 504. |
+| `ACS_WORKSPACE_JOB_TIMEOUT_S` | `1800` | Deadline for one project-workspace generation job. The page polls the job, so no HTTP client waits on it; a timeout after a saved stage can be resumed from that stage. |
 | `ACS_UPSTREAM_TIMEOUT_S` | `600` | Deadline for one model-provider call. |
 | `ACS_UPSTREAM_BACKOFF_S` | `2` | Backoff between retries of transient upstream faults only. |
 | `ACS_WORKER_THREADS` | `8` | In-process generation worker threads. |

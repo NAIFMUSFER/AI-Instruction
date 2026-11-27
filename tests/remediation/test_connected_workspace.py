@@ -189,6 +189,10 @@ class WorkspaceLifecycle(unittest.TestCase):
         runner = Runner(model(kind))
         rid = S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
         self.assertEqual(set(runner.calls[0][1]), {'brief', 'requirements', 'option', 'max_provider_calls'})
+        # A polled background job: its own deadline, not the HTTP request's 840 s.
+        from acs_generation_job import WORKSPACE_JOB_TIMEOUT_S
+        self.assertEqual(runner.calls[0][2].get('timeout_s'), WORKSPACE_JOB_TIMEOUT_S)
+        self.assertGreaterEqual(WORKSPACE_JOB_TIMEOUT_S, 1800)
         return rid
 
     def test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work(self):

@@ -128,7 +128,8 @@ class OrphanedReceipts(Harness):
     """Deploy/OOM/crash, or a lost terminal write, used to leave RUNNING forever."""
 
     async def test_dead_process_receipt_becomes_interrupted_after_the_worker_deadline(self):
-        deadline = JOBS.DEFAULT_TIMEOUT_S + H.ORPHAN_GRACE_S
+        # A workspace job has its own (longer) deadline than one HTTP request.
+        deadline = max(JOBS.DEFAULT_TIMEOUT_S, JOBS.WORKSPACE_JOB_TIMEOUT_S) + H.ORPHAN_GRACE_S
         self.running(age_s=deadline - 30)          # another process may still be finishing it
         self.assertEqual((await self.poll())["state"], "RUNNING")
         self.running(age_s=deadline + 30)          # nobody can still write its receipt

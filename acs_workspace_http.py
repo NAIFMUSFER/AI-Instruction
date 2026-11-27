@@ -67,9 +67,9 @@ def _orphaned(row, now=None):
     started = _started_at(row)
     if started is None:
         return False
-    from acs_generation_job import DEFAULT_TIMEOUT_S
+    from acs_generation_job import DEFAULT_TIMEOUT_S, WORKSPACE_JOB_TIMEOUT_S
     own = row.get("worker_id") == WORKER_ID
-    limit = OWN_ORPHAN_AFTER_S if own else DEFAULT_TIMEOUT_S + ORPHAN_GRACE_S
+    limit = OWN_ORPHAN_AFTER_S if own else max(DEFAULT_TIMEOUT_S, WORKSPACE_JOB_TIMEOUT_S) + ORPHAN_GRACE_S
     return ((now or datetime.now(timezone.utc)) - started).total_seconds() > limit
 
 

@@ -54,6 +54,19 @@ class ResumeAfterTruncation(unittest.TestCase):
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_TRUNCATED', checkpoint, resumed_by='x'))['job']['can_resume'])
 
 
+class WorkspaceDeadline(unittest.TestCase):
+    def test_a_long_job_on_another_worker_is_not_called_orphaned_before_its_own_deadline(self):
+        from datetime import datetime, timedelta, timezone
+        from acs_generation_job import WORKSPACE_JOB_TIMEOUT_S
+        now = datetime.now(timezone.utc)
+        def running(age_s):
+            return {'id': 'other-job', 'state': 'RUNNING', 'worker_id': 'another-worker',
+                    'created_at': (now - timedelta(seconds=age_s)).isoformat()}
+        # Twenty-five minutes in: still inside a 30-minute workspace job.
+        self.assertFalse(H._orphaned(running(1500), now))
+        self.assertTrue(H._orphaned(running(WORKSPACE_JOB_TIMEOUT_S + H.ORPHAN_GRACE_S + 60), now))
+
+
 class OutputCaps(unittest.TestCase):
     def test_openings_and_repair_calls_leave_room_for_thinking(self):
         self.assertGreaterEqual(G.DETAIL_MAX_TOKENS, 16000)

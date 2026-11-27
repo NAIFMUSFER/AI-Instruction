@@ -504,6 +504,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         if kwargs["used_calls"] >= command["max_provider_calls"]:
             raise PlanError("ACS_PROVIDER_BUDGET_EXHAUSTED", geometry_failure_message("ACS_PROVIDER_BUDGET_EXHAUSTED"))
     controls = {"on_progress":on_progress} if on_progress else {}
+    from acs_generation_job import WORKSPACE_JOB_TIMEOUT_S
+    controls["timeout_s"] = WORKSPACE_JOB_TIMEOUT_S
     result = runner.run(target, kwargs, request_id=command["job_id"], **controls)
     if not isinstance(result, dict) or not isinstance(result.get("building"), dict):
         raise PlanError("INVALID_PLAN", "لم يعد المزود بمخطط صالح.")
