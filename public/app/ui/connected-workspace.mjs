@@ -153,7 +153,7 @@ function ownerMessage(code,message,fallback){
 function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));$('cwRevision').disabled=on;root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob||b.dataset.unavailable==='true';});syncApproval(); }
 async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
-  if(!session)throw new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.');
+  if(!session)throw Object.assign(new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.'),{code:'AUTH_REQUIRED',status:401}); // nothing was sent
   const path='/v1/projects/'+projectId+(commands?'/plan/commands':'/workspace');
   const response=await window.ACS_AUTH.acsFetchJSON(path,body,session.access_token,body.action==='artifact'?90000:20000);
   if(commands){
@@ -440,6 +440,18 @@ function generationCalls(program){
   const chosen=Number($('cwBudget').value),storeys=Array.isArray(program?.levels)?program.levels.length:0;
   return chosen===8&&storeys>=3?12:chosen;
 }
+// The ceiling the request sends, in Arabic counting: «حتى 8 طلبات»، «حتى 12 طلبًا».
+const requestsText=n=>n===1?'طلبًا واحدًا':n===2?'طلبين':n>=3&&n<=10?n+' طلبات':n+' طلبًا';
+// A 4xx answer with the server's code is a refusal: the server created no job (it
+// checks the request before it saves one), so nothing is pending. A network loss,
+// a timeout (408 included) or a 5xx may have left a job, which the owner follows instead.
+const refusedByServer=e=>Number.isInteger(e?.status)&&e.status>=400&&e.status<500&&e.status!==408&&typeof e?.code==='string'&&!!e.code;
+function refusedGeneration(e,what='التوليد'){
+  stopProgress();clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(err){}
+  $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;
+  if(e.code.startsWith('PLOT_')){step(1,{record:true});plotRules.show();}
+  status(ownerMessage(e.code,e.message,'رفض الخادم الطلب.')+' لم يبدأ '+what+'، ولم يُرسل أي طلب إلى الذكاء الاصطناعي، ومدخلاتك كما هي.',true);
+}
 async function generation(option) {
   if(pendingJob)throw new Error('توجد مهمة معلّقة. استعد حالتها أولًا.');
   if(!$('cwConfirmed').checked)throw new Error('راجع برنامج المشروع وأكد المتطلبات أولًا.');
@@ -447,15 +459,23 @@ async function generation(option) {
   const plot=source.source_id?{}:plotRules.command(); // validated before any paid call
   const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());
   const reading=source.source_id?{}:briefReader.command(); // the confirmed smart-reading card, checked before any paid call
+  // The server's deterministic plot refusals (parking that does not fit, no buildable
+  // area) are checked on this exact request here, before the paid confirmation.
+  const refused=plotRules.preflight({...plot,brief:program.brief,requirements:program.requirements,program:reading.program});
+  if(refused){step(1,{record:true});plotRules.show();throw new Error(refused.message);}
   const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,...reading,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:(source.source_id&&planUpload.calls())||generationCalls(reading.program)};
-  // A generation is a paid, multi-minute run: the owner confirms it first.
+  // A generation is a paid, multi-minute run: the owner confirms it first, told the call ceiling sent.
   const name=source.source_id?'قراءة المخطط المرفوع':'«'+(root.querySelector('[data-option="'+option+'"]')?.closest('article')?.querySelector('h2')?.textContent.replace(/\s*·\s*مقترح لك$/,'')||'البديل '+option)+'»';
   const read=source.source_id?planUpload.confirm():null;
-  if(!await confirmPaid(read?read.text:'سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ويستهلك من رصيد الذكاء الاصطناعي. يمكنك مغادرة الصفحة والعودة لمتابعته.',read?read.go:'ابدأ التوليد',read?.title)){status(read?'لم تبدأ القراءة، ولم يُستهلك أي رصيد.':'لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
+  if(!await confirmPaid(read?read.text:'سيبدأ إعداد '+name+'. يستغرق عادةً من دقيقتين إلى أربع دقائق، ونحو ربع ساعة لمبنى من ثلاثة أدوار. يستهلك حتى '+requestsText(body.max_provider_calls)+' من رصيد الذكاء الاصطناعي؛ هذا حد أعلى ولا يُستخدم منه إلا ما يلزم. يمكنك مغادرة الصفحة والعودة لمتابعته.',read?read.go:'ابدأ التوليد',read?.title)){status(read?'لم تبدأ القراءة، ولم يُستهلك أي رصيد.':'لم يبدأ التوليد، ولم يُستهلك أي رصيد.');return;}
   beginJob(body.job_id,null,!!read);
   Object.assign(body,plot);
   setBusy(true);$('cwRecoverJob').hidden=false;status(read?read.sent:'جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
-  try{const result=await api(body);await handleJob(result.job);}
+  try{
+    let result;
+    try{result=await api(body);}catch(e){if(refusedByServer(e)){refusedGeneration(e);return;}throw e;}
+    await handleJob(result.job);
+  }
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
   finally{setBusy(false);}
 }
@@ -687,7 +707,8 @@ function mount(){
     const body={action:'chat_edit',job_id:crypto.randomUUID(),expected_head:state.head,notes:[{text}],confirmed:true,max_provider_calls:3};
     beginJob(body.job_id);
     $('cwRecoverJob').hidden=false;setBusy(true);status('جارٍ إرسال طلب التعديل…');
-    try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+ownerMessage(err?.code,err?.message,''),true);}
+    try{let result;try{result=await api(body);}catch(err){if(refusedByServer(err)){refusedGeneration(err,'التعديل');return;}throw err;}await handleJob(result.job);}
+    catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+ownerMessage(err?.code,err?.message,''),true);}
   });});
   $('cwSelection').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const data=await api({action:'edit_geometry',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],rect:['cwX','cwZ','cwW','cwD'].map(id=>Number($(id).value))});await renderState(data);status('حُفظ التعديل كنسخة جديدة.');});});
   {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.setAttribute('data-mutate','');roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';

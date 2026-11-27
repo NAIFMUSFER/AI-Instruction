@@ -114,7 +114,10 @@ function dockSide(text,match){
   const i=last(dockIn),o=last(dockOut);
   return i===o?null:i>o?'in':'out';
 }
-const quantityHints=[...patterns.map(p=>p[1]),...buildingSides.map(p=>p[1]),buildingPair,sitePair,frontage,landFrontage,plotArea,
+// A count of rooms or flats without its kind («في كل دور ٣ غرف») is never read, but
+// a held-back clause that has one is asked about.
+const spaceCount=`(?<![\\p{L}\\p{N}.])${N}\\s*(?:غرف(?:ة|ه)?|حمامات|دورات\\s+مياه|مجالس|صالات|شقق|شق[ةه]|وحدات|rooms?|flats?|apartments?)(?![\\p{L}\\p{N}])`;
+const quantityHints=[...patterns.map(p=>p[1]),...buildingSides.map(p=>p[1]),buildingPair,sitePair,frontage,landFrontage,plotArea,spaceCount,
   `(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*${N}\\s*[×x]\\s*${N}`].map(p=>new RegExp(p,'iu'));
 // «أرضي وأول وثانٍ» lists every floor; «أرضي + ٢» counts the floors above the ground floor.
 const ordinals=['اول','ثان','ثالث','رابع','خامس','سادس','سابع','ثامن','تاسع','عاشر'];
@@ -129,6 +132,38 @@ const listGuard=/(?:^|\s)و?(?:لا|ليس|بدون|اذا|او)(?:\s|$)|تقر�
 // Sentences inside one line: a full stop that is not a decimal point.
 const sentences=chunk=>Array.from(chunk[0].matchAll(/(?:[^.]|\.(?=[0-9٠-٩۰-۹]))+\.?/gu),m=>({0:m[0],index:chunk.index+m.index}));
 const scopeWords=/(?:\b(?:per|each)\b|كل\s+(?:دور|طابق|شقه|شقة)|لكل|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|(?:هذا|ذلك)\s+(?:الدور|الطابق))/iu;
+const scopeAll=new RegExp(scopeWords.source,'giu');
+const blank=(text,re)=>text.replace(re,m=>' '.repeat(m.length));
+// Clauses inside a held-back sentence: a «،» or «,» that is not a digit group
+// («5,000»، «٢٠،٥») and not beside «×» (a pair is never cut).
+const clauses=chunk=>{
+  const text=normal(chunk[0]),parts=[];let start=0;
+  for(const {index:i} of text.matchAll(/[،,]/gu)){
+    const before=text.slice(Math.max(0,i-8),i),after=text.slice(i+1,i+9);
+    if(/[0-9]$/.test(before)&&/^[0-9]/.test(after)||/[×xX*]\s*$/.test(before)||/^\s*[×xX*]/.test(after))continue;
+    parts.push({0:chunk[0].slice(start,i+1),index:chunk.index+start});start=i+1;
+  }
+  parts.push({0:chunk[0].slice(start),index:chunk.index+start});
+  return parts.filter(p=>/[^\s،,.]/u.test(p[0]));
+};
+// A condition, an alternative or an exception reaches across a comma («إذا…، …»،
+// «…، أو …»، «…، عدا الأخير»): that sentence stays held back whole. «٣ أدوار غير
+// الأرضي» only counts floors.
+const groundExcluded=/(?:ادوار|طوابق|دورين|طابقين|دوران|طابقان)\s+(?:غير|عدا|ماعدا|بخلاف|فوق)\s+(?:(?:ال)?(?:دور|طابق)\s+)?(?:ال)?ارضي(?![\p{L}])/gu;
+const acrossClauses=/(?:^|[\s،,])و?(?:اذا|ان|لو|او|ام|الا|سوى|عدا|ماعدا|باستثناء|بخلاف|غير)(?![\p{L}])|ما\s+عدا|\b(?:if|or|unless|except)\b/iu;
+const reachesAcross=text=>acrossClauses.test(text.replace(groundExcluded,' '));
+// The flats on every floor: «في كل دور شقتان»، «شقتين لكل طابق»، «لكل دور ٢ شقة»،
+// «٤ شقق في كل دور»، «شقة واحدة في كل دور». A floor qualifier («في كل دور علوي»)
+// or a range («شقتين إلى ثلاث») is not one count for every floor.
+const everyFloor='(?:(?:في|ب)\\s*كل|لكل|كل)\\s+(?:دور|طابق)(?![\\p{L}])';
+const flatCount=`(?:(?<n>[0-9]+)\\s*(?:شقق|شق[ةه]|flats?|apartments?)|(?<w>${Object.keys(bedroomWords).join('|')})\\s+شقق|(?<two>شقتان|شقتين)|(?<one>شق[ةه]\\s+واحد[ةه]))(?![\\p{L}\\p{N}])(?!\\s*(?:[-–—/−]|(?:الى|حتى|او|to|or)(?![\\p{L}])))`;
+const flatsPerFloor=[
+  new RegExp(`(?<![\\p{L}\\p{N}.])(?:و\\s*)?ب?${flatCount}\\s+${everyFloor}(?!\\s+(?:(?:ال)?(?:علوي|سفلي|متكرر|نموذجي|اخير|ارضي|سكني)|من|فوق|تحت)(?![\\p{L}]))`,'giud'),
+  new RegExp(`(?<![\\p{L}])(?:و\\s*)?${everyFloor}(?:\\s+(?:فيه|فيها|به|بها))?\\s+${flatCount}`,'giud'),
+];
+// Read from a clause of a qualified sentence: the plot and the floors, never a count
+// the sentence's floor or flat scope may cover.
+const plotMetrics=new Set(['site_width_m','site_depth_m','level_count','building_width_m','building_depth_m']);
 const approximate=/(?:\b(?:about|around|approximately)\b|تقريب|حوالي|نحو\s*[0-9]|تقارب|قراب[ةه])/iu;
 const rangeWords=/[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]/iu;
 // The reason a sentence with a quantity is not read as an exact project total.
@@ -169,8 +204,31 @@ export function analyzeBrief(brief) {
     }
     for(const match of text.matchAll(groundPlus))if(!near(match))add('level_count',Number(match.groups.n)+1,null,match,chunk.index);
   };
-  const scan=(chunk,line)=>{
+  // «في كل دور شقتان»: the flats on each floor (unit_count_per_level), read only when
+  // nothing else in the clause qualifies it and its sentence has no condition,
+  // alternative or exception. The rest of the clause is still read for the plot;
+  // its room counts stay questions, since the floor scope may cover them.
+  const perFloorFlats=(text,chunk,ctx)=>{
+    const found=[];
+    for(const re of flatsPerFloor)for(const m of text.matchAll(re)){
+      const g=m.groups,start=m.index,end=start+m[0].length;
+      if(found.some(f=>start<f.end&&f.start<end))continue;
+      if(g.w&&compoundWordCount(text,{index:m.indices.groups.w[0],0:text.slice(m.indices.groups.w[0],end)}))return false;
+      const n=g.n?Number(g.n):g.w?bedroomWords[g.w]:g.two?2:1;
+      if(!(n>=1))return false;
+      found.push({n,start,end,match:m});
+    }
+    if(!found.length||bounded.test(text)||reachesAcross(ctx.text)||ambiguous.test(blank(text,scopeAll)))return false;
+    let rest=chunk[0];
+    for(const f of found){add('unit_count_per_level',f.n,null,f.match,chunk.index);rest=rest.slice(0,f.start)+' '.repeat(f.end-f.start)+rest.slice(f.end);}
+    scan({0:rest,index:chunk.index},{level:'clause',ctx:{text,cite:chunk[0]},plotOnly:true,cite:chunk[0]});
+    return true;
+  };
+  const scan=(chunk,{level='line',ctx=null,plotOnly=false,cite=chunk[0]}={})=>{
     const text=normal(chunk[0]);
+    // A clause of a qualified sentence keeps only plot and floor facts; any other count is asked about.
+    let held=false;
+    const keep=metric=>{if(!plotOnly||plotMetrics.has(metric))return true;held=true;return false;};
     floorLists(text,chunk);
     const wordCounts=[
       ...Array.from(text.matchAll(new RegExp(wordBedroom,'gu')),match=>({metric:'room_count',role:'bedroom',n:bedroomWords[match.groups.word],match})),
@@ -179,7 +237,7 @@ export function analyzeBrief(brief) {
     // Building target area is a planning budget, not site area. Approximate
     // wording is intentionally reviewable/inferred rather than silently hard.
     const areaPattern=/(?:مساحة\s+(?:المبنى|مبنى(?:\s+المستودع)?)(?:\s+(?:المستهدفة|المغلقة))?|building\s+(?:target\s+)?area)\s*(?:تقارب|قرابة|حوالي|≈|~)?\s*[:=]?\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\.[0-9]+)?)\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/giu;
-    for(const match of text.matchAll(areaPattern))add('building_target_area_m2',match.groups.n,null,match,chunk.index,'inferred');
+    for(const match of text.matchAll(areaPattern))if(keep('building_target_area_m2'))add('building_target_area_m2',match.groups.n,null,match,chunk.index,'inferred');
     // A comma-grouped measured area such as 5,000 m² is an ordinary
     // thousands separator, not a numeric range/decimal ambiguity. It may stay
     // in the brief without creating a noisy pre-generation question. We do
@@ -188,9 +246,14 @@ export function analyzeBrief(brief) {
     const groupedMeasuredArea=/[0-9]+(?:[,٬][0-9]{3})+\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/iu;
     if((ambiguous.test(text)&&!areaPattern.test(text)&&!groupedMeasuredArea.test(text))||(wordCounts.length&&wordRange.test(text))){
       // Only the qualified sentence is held back; the line's other sentences are still read.
-      const parts=line?sentences(chunk):[];
-      if(parts.length>1){for(const part of parts)scan(part,false);return;}
-      if(/[0-9]/.test(text)||wordCounts.length)if(wordCounts.length||quantityHints.some(hint=>hint.test(text)))questions.push(qualifiedQuestion(text,chunk[0]));
+      const parts=level==='line'?sentences(chunk):[];
+      if(parts.length>1){for(const part of parts)scan(part,{level:'sentence'});return;}
+      // …and in it only the qualified clause: «عمارة من ٣ أدوار على أرض ٢٠×٢٥ متر، في كل دور
+      // شقتان» still gives the plot and the floors.
+      const pieces=level!=='clause'&&!reachesAcross(text)?clauses(chunk):[];
+      if(pieces.length>1){for(const piece of pieces)scan(piece,{level:'clause',ctx:{text,cite:chunk[0]},plotOnly:true});return;}
+      if(perFloorFlats(text,chunk,ctx||{text,cite:chunk[0]}))return;
+      if(/[0-9]/.test(text)||wordCounts.length)if(wordCounts.length||quantityHints.some(hint=>hint.test(text)))questions.push(qualifiedQuestion(text,cite));
       return;
     }
     // «٣ أدوار غير الأرضي» and «أرضي + ٣ أدوار» are four floors with the ground floor.
@@ -224,6 +287,7 @@ export function analyzeBrief(brief) {
     }
     for(const [metric,pattern,role] of patterns){
       for(const match of text.matchAll(new RegExp(pattern,'giu'))){
+        if(!keep(metric))continue;
         // A minimum dock request must not become an exact count.
         const prefix=text.slice(Math.max(0,match.index-20),match.index);
         const minimum=metric==='dock_count'&&/(?:على\s+الاقل|at\s+least)\s*$/i.test(prefix);
@@ -237,6 +301,7 @@ export function analyzeBrief(brief) {
       }
     }
     for(const {metric,role,n,match} of wordCounts){
+      if(!keep(metric))continue;
       if(floorNamed.test(text)&&metric==='room_count'){questions.push(qualifiedQuestion('في الدور',chunk[0]));continue;}
       if(ambiguous.test(text)||bounded.test(text)||compoundWordCount(text,match)){
         questions.push('راجع العدد المركّب أو الشرط في: «'+chunk[0].trim().slice(0,200)+'». أضف العدد الإجمالي المؤكد في الحقول.');continue;
@@ -246,14 +311,14 @@ export function analyzeBrief(brief) {
     // Standalone project-dimension lines, never a room's dimensions or a
     // unitless number. An unlabelled pair still needs explicit order review.
     if(!bounded.test(text)){
-      for(const [metric,label] of line?[['site_width_m','عرض'],['site_depth_m','عمق']]:[]){
+      for(const [metric,label] of level==='line'?[['site_width_m','عرض'],['site_depth_m','عمق']]:[]){
         for(const pattern of [
           `^\\s*(?:ال)?${label}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})\\s*[.،,]?\\s*$`,
           `^\\s*(?<n>${N})\\s*(?<u>${U})\\s+(?:ال)?${label}\\s*[.،,]?\\s*$`,
         ])for(const match of text.matchAll(new RegExp(pattern,'giu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
       }
       const compact=`^\\s*(?<n>${N})\\s*(?<u>${U})\\s*(?:×|x|في)\\s*(?<d>${N})\\s*(?<du>${U})\\s*[.،,]?\\s*$`;
-      for(const match of line?text.matchAll(new RegExp(compact,'giu')):[]){
+      for(const match of level==='line'?text.matchAll(new RegExp(compact,'giu')):[]){
         add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
         add('site_depth_m',match.groups.d,match.groups.du,match,chunk.index,'inferred');
       }
@@ -269,8 +334,9 @@ export function analyzeBrief(brief) {
       const quote=chunk[0].slice(match.index,match.index+match[0].length);
       questions.push('أكّد وحدة أبعاد الموقع «'+quote+'» وترتيب العرض والعمق، ثم أدخل القيم بالمتر في الحقول.');
     }
+    if(held)questions.push(qualifiedQuestion(floorNamed.test(ctx.text)?'في الدور':ctx.text,ctx.cite));
   };
-  for(const chunk of chunks)scan(chunk,true);
+  for(const chunk of chunks)scan(chunk);
   // «4 أرصفة استلام … و4 أرصفة صادر» are two groups of one building: their sum is
   // the dock total, read as an inference to confirm. A count without a side keeps
   // its own reading (a repeated «عدد الأرصفة ٤؛ ٤ أرصفة» is one fact).
@@ -361,6 +427,14 @@ export function buildBriefProgram(input) {
     if(previous&&Math.abs(previous.expected-c.expected)>1e-8)throw new Error('تعارض في الوصف: '+requirementLabel(c)+' ورد بأكثر من قيمة. وضّح القيمة المطلوبة في الوصف.');
     grouped.set(key,c);
     const r=known.get(key);
+    // The flats on each floor are entered in «الشقق واحتياجات الأسرة» and the chosen
+    // option confirms them; a different count typed there is a conflict.
+    if(!r&&c.metric==='unit_count_per_level'){
+      const typed=input.type==='residential'&&input.unitsScope==='per_level'?Number(normalizeNumberText(String(input.units??''))):NaN;
+      if(String(input.units??'').trim()&&Number.isFinite(typed)&&typed!==c.expected)
+        throw new Error('تعارض بين الوصف وعدد الشقق: الوصف يذكر '+c.expected+' في كل دور («'+c.evidence+'») وفي «الشقق واحتياجات الأسرة» '+typed+'. صحّح أحدهما قبل التوليد.');
+      continue;
+    }
     if(!r)throw new Error('ورد متطلب '+requirementLabel(c)+' في الوصف. أضفه إلى البرنامج قبل التأكيد.');
     if(Math.abs(r.expected-c.expected)>1e-8)throw new Error('تعارض بين الوصف والحقول في '+requirementLabel(c)+'. صحّح الوصف أو القيمة قبل التوليد.');
   }

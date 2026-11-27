@@ -1,7 +1,7 @@
 // Step 01 plot inputs: street side(s), setbacks, coverage and parking. Empty
 // fields use labelled default assumptions that the server resolves and writes
 // into the review; nothing here is a regulatory ruling.
-import {PLACEMENTS,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES,SIDES,SIDE_AR,SOURCE_TITLE,SOURCE_URL,overlay,parseNumber,plotCommand,preview,summaryText,villaBrief} from '../core/plot-rules.mjs';
+import {PLACEMENTS,PLOT_ISSUE_NAMES,PLOT_SCOPE_NAMES,SIDES,SIDE_AR,SOURCE_TITLE,SOURCE_URL,overlay,parseNumber,plotCommand,plotPreflight,preview,summaryText,villaBrief} from '../core/plot-rules.mjs';
 
 const sideOptions = first => first+SIDES.map(s => '<option value="'+s+'">'+SIDE_AR[s].replace('ال','')+'</option>').join('');
 
@@ -28,6 +28,12 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
   const anchor = $('cwResidential') || $('cwBuildingFields') || $('cwLevels')?.closest('.cw-fields');
   if (anchor) anchor.after(section); else $('cwBriefForm')?.append(section);
   const link = $('cwPlotSource'); link.href = SOURCE_URL; link.textContent = SOURCE_TITLE;
+  // The plot section sits in the folded «تفاصيل إضافية»: a parking shortfall is also
+  // shown above the confirmation, so it is seen before any paid request.
+  const alert = document.createElement('p');
+  alert.id = 'cwPlotAlert'; alert.className = 'cw-warning'; alert.hidden = true;
+  alert.setAttribute?.('role', 'alert');
+  $('cwConfirmed')?.closest?.('label')?.before?.(alert);
   const fields = ['cwPlotStreet','cwPlotStreet2','cwPlotStreetWidth',...SIDES.map(s => 'cwPlotSetback'+s),'cwPlotCoverage','cwPlotParking','cwPlotParkingCount','cwPlotLanding'];
   const value = id => { const n = $(id); return !n ? '' : n.type === 'checkbox' ? n.checked : n.value; };
   const primary = () => { const v = own ? value('cwPlotStreet') : value('cwStreet'); return SIDES.includes(v) ? v : ''; };
@@ -36,29 +42,45 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
       setbacks:Object.fromEntries(SIDES.map(s => [s, value('cwPlotSetback'+s)])), coverage:value('cwPlotCoverage'),
       placement:value('cwPlotParking') || 'front_setback', count:value('cwPlotParkingCount'), landing:value('cwPlotLanding')};
   }
-  function program() {
+  function program(pilotis = value('cwPlotParking') === 'pilotis') {
     const levels = parseNumber(value('cwLevels')) || 1, units = parseNumber(value('cwUnits')) || null;
-    const pilotis = value('cwPlotParking') === 'pilotis';
     const total = units && value('cwUnitsScope') === 'per_level' ? units * Math.max(1, levels - (pilotis ? 1 : 0)) : units;
     const villa = villaBrief(value('cwBrief'), total);
     return {levels, units:total, villa};
   }
-  function current() {
-    const raw = inputs(), parsed = plotCommand(raw), {levels, units, villa} = program();
+  function current(placement) {
+    const raw = inputs(), parsed = plotCommand(raw), at = placement || parsed.parking.placement, {levels, units, villa} = program(at === 'pilotis');
+    const bw = parseNumber(value('cwBldWidth')), bd = parseNumber(value('cwBldDepth'));
     const p = preview({villa, levels, units, width:parseNumber(value('cwWidth')), depth:parseNumber(value('cwDepth')),
       streets:parsed.streets, streetWidth:parsed.street_width_m ?? null, setbacks:parsed.setbacks_m,
-      coverage:parsed.max_coverage ?? null, placement:parsed.parking.placement, count:parsed.parking.count ?? null});
+      coverage:parsed.max_coverage ?? null, placement:at, count:parsed.parking.count ?? null,
+      building:bw > 0 && bd > 0 ? [bw, bd] : null});
     return {p, parsed};
+  }
+  // When the front setback is short, say whether pilotis parking would hold the flats above it.
+  function pilotisNote(p, parsed) {
+    if (parsed.parking.placement !== 'front_setback' || p.ok || !(p.capacity < p.required)) return '';
+    try {
+      const alt = current('pilotis').p;
+      if (!alt.ready || !alt.ok || alt.required == null || alt.capacity < alt.required || (parseNumber(value('cwLevels')) || 1) < 2) return '';
+      const stalls = n => n === 1 ? 'موقف واحد' : n === 2 ? 'موقفين' : n + (n <= 10 ? ' مواقف' : ' موقفًا');
+      return ' تحت المبنى (بيلوتي) يتسع الدور الأرضي لنحو '+stalls(alt.capacity)+'، والمطلوب حينها '+alt.required+' للشقق في الأدوار فوقه؛ اختياره يغيّر عدد الشقق، فراجع البدائل بعده.';
+    } catch (e) { return ''; }
   }
   function refresh() {
     // A plan read from the owner's file is transcribed as drawn: no plot rules (U8).
     section.hidden = value('cwType') !== 'residential' || value('cwStartMode') === 'upload';
     let p;
     try {
-      const now = current(); p = now.p;
-      $('cwPlotSummary').textContent = summaryText(p, now.parsed.parking.placement)
+      const now = current(), alternative = pilotisNote(now.p, now.parsed); p = now.p;
+      $('cwPlotSummary').textContent = summaryText(p, now.parsed.parking.placement) + alternative
         + (primary() ? '' : ' جهة الشارع غير محددة فنفترض الشمال.');
-    } catch (e) { $('cwPlotSummary').textContent = e.message; }
+      const short = p.ready && p.capacity != null && p.required != null && p.capacity < p.required;
+      if ($('cwPlotSummary').dataset) $('cwPlotSummary').dataset.parking = short ? 'short' : 'ok';
+      alert.textContent = short ? 'المواقف لا تتسع: '+p.warnings.find(w => w.includes('لا يتسع'))+alternative
+        +' (التفاصيل في «تفاصيل إضافية» ← «الأرض والارتدادات والمواقف»).' : '';
+    } catch (e) { $('cwPlotSummary').textContent = e.message; alert.textContent = ''; }
+    alert.hidden = section.hidden || !alert.textContent;
     for (const s of SIDES) $('cwPlotSetback'+s).placeholder = p?.setbacks ? 'افتراضي '+p.setbacks[s] : 'افتراضي';
     $('cwPlotCoverage').placeholder = p?.coverage ? 'افتراضي '+Math.round(p.coverage * 100) : 'افتراضي';
     $('cwPlotStreetWidth').placeholder = 'غير معروف — نفترض 15';
@@ -70,7 +92,7 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     refresh();
   }
   section.addEventListener('input', save); section.addEventListener('change', save);
-  for (const id of ['cwWidth','cwDepth','cwLevels','cwUnits','cwUnitsScope','cwType','cwStreet','cwBrief','cwStartMode'])
+  for (const id of ['cwWidth','cwDepth','cwLevels','cwBldWidth','cwBldDepth','cwUnits','cwUnitsScope','cwType','cwStreet','cwBrief','cwStartMode'])
     for (const kind of ['input','change']) $(id)?.addEventListener(kind, refresh);
   refresh();
   return {
@@ -89,6 +111,16 @@ export function createPlotRules(root, {storageKey, issueNames, scopeNames}) {
     command() {
       if (value('cwType') !== 'residential') return {};
       return {plot:plotCommand(inputs())};
+    },
+    // The server's deterministic plot refusal for this exact request, or null:
+    // checked before the paid confirmation ({brief, requirements, plot, program}).
+    preflight(request) {
+      return request?.plot ? plotPreflight(request) : null;
+    },
+    // Open the plot inputs where the owner fixes a refusal.
+    show() {
+      const more = section.closest?.('details'); if (more) more.open = true;
+      section.scrollIntoView?.({block:'start', behavior:'smooth'});
     },
     draw(projection, summary, add) {
       for (const shape of overlay(summary, projection?.level_index)) add(shape.tag, shape.attrs);

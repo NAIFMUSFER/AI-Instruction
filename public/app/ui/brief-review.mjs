@@ -118,7 +118,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
 
   function rows(){return [...$('cwRequirements').children].map(row=>({metric:row.querySelector('select').value,role:row.querySelector('[data-role]').value,expected:row.querySelector('[data-value]').value}));}
   function input(){const residential=$('cwType').value==='residential';return {brief:$('cwBrief').value,type:$('cwType').value,width:$('cwWidth').value,depth:$('cwDepth').value,levels:$('cwLevels').value,
-    buildingWidth:residential?$('cwBldWidth').value:'',buildingDepth:residential?$('cwBldDepth').value:'',rows:rows(),savedRequirements};}
+    buildingWidth:residential?$('cwBldWidth').value:'',buildingDepth:residential?$('cwBldDepth').value:'',units:$('cwUnits')?.value??'',unitsScope:$('cwUnitsScope')?.value??'',rows:rows(),savedRequirements};}
   function draft(){
     const data=input();
     try{localStorage.setItem(storageKey(),JSON.stringify({brief:data.brief,type:data.type,w:data.width,d:data.depth,levels:data.levels,bw:$('cwBldWidth').value,bd:$('cwBldDepth').value,rows:data.rows,savedRequirements,starterFields:[...linkedFields]}));}catch(e){}
@@ -169,7 +169,11 @@ export function createBriefEditor(root,{storageKey,onError}) {
   function apply(candidate){
     const id=fields[candidate.metric];
     if(id)$(id).value=candidate.expected;
-    else{
+    // «في كل دور شقتان» fills the flat count of «الشقق واحتياجات الأسرة», as a confirmed smart reading does.
+    else if(candidate.metric==='unit_count_per_level'&&$('cwUnits')&&$('cwUnitsScope')){
+      $('cwUnits').value=String(candidate.expected);$('cwUnitsScope').value='per_level';
+      $('cwUnits').dispatchEvent(new Event('change',{bubbles:true}));
+    }else{
       let row=[...$('cwRequirements').children].find(node=>requirementKey({metric:node.querySelector('select').value,role:node.querySelector('[data-role]').value})===requirementKey(candidate));
       if(!row)row=add(candidate);else row.querySelector('[data-value]').value=candidate.expected;
     }
