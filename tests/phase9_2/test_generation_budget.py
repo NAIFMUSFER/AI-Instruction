@@ -287,7 +287,9 @@ chk('the ladder that remains exists only for an empty reply, and is bounded',
     # two declared rungs, plus the one low-effort rung that only a
     # thinking-only reply (no text) can reach on adaptive-thinking models
     and _src.count('attempts.append((max_tokens, None, "low"))') == 1
-    and 'if effort is not None and not thought_out:' in _src)
+    and 'if effort is not None and not thought_out and not low_first:' in _src
+    # heavy stages send the low-effort rung first and alone
+    and 'attempts = attempts[-1:]' in _src)
 
 def _single_then_staged():
     """المرحلة الواحدة تنقطع، فتُصعَّد إلى الخطة + التفصيل بلا تدخّل."""

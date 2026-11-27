@@ -276,7 +276,7 @@ def main():
     sent5 = install(lambda n: empty if n == 1 else answered)
     U5 = fresh()
     sink5 = []
-    out5, tel5 = run_once(U5, sink5)
+    out5, tel5 = run_once(U5, sink5, stage="brief_read")
     chk("EFFORT RUNG — after a thinking-only reply the call is answered",
         isinstance(out5, str) and out5.strip() == '{"floors":{}}', out5)
     chk("  …by exactly one more request", len(sent5) == 2, len(sent5))
@@ -291,7 +291,7 @@ def main():
         tel5.get("retries_skipped") == 1, tel5.get("retries_skipped"))
     sent6 = install(lambda n: empty)
     U6 = fresh()
-    out6, tel6 = run_once(U6, [])
+    out6, tel6 = run_once(U6, [], stage="brief_read")
     chk("EFFORT RUNG — if low effort also returns no text the call fails as before "
         "after two paid requests, never three",
         isinstance(out6, E.AcsApiError) and len(sent6) == 2, (type(out6).__name__, len(sent6)))
@@ -303,12 +303,36 @@ def main():
                                                     "message": "upstream is overloaded"}}
     sent7 = install(lambda n: _Overloaded())
     U7 = fresh()
-    out7, tel7 = run_once(U7, [])
+    out7, tel7 = run_once(U7, [], stage="brief_read")
     chk("EFFORT RUNG — a transient overload is not answered by thinking less: "
         "no low-effort request follows it",
         isinstance(out7, E.AcsApiError)
         and not any((x.get("extra_body") or {}).get("output_config") for x in sent7),
         (type(out7).__name__, [x.get("extra_body") for x in sent7]))
+    # ── Heavy stages ask for low effort first, alone ────────────────────────
+    # Live (jobs 67d07028, 6cd7137f): every plan chunk, repair and openings
+    # request at the default effort spent its whole cap thinking; the
+    # low-effort request after it answered. Those stages now send it first.
+    for st in ("plan_chunk", "repair", "detail"):
+        sent8 = install(lambda n: answered)
+        U8 = fresh()
+        out8, tel8 = run_once(U8, [], stage=st)
+        chk("LOW EFFORT FIRST (%s) — one request answers the stage" % st,
+            isinstance(out8, str) and out8.strip() == '{"floors":{}}' and len(sent8) == 1,
+            (type(out8).__name__, len(sent8)))
+        chk("  …and that request asks for low effort",
+            len(sent8) == 1 and sent8[0].get("extra_body") == {"output_config": {"effort": "low"}},
+            sent8[0].get("extra_body") if sent8 else None)
+    sent9 = install(lambda n: empty)
+    U9 = fresh()
+    out9, tel9 = run_once(U9, [], stage="plan_chunk")
+    chk("LOW EFFORT FIRST — a thinking-only low-effort reply fails after one paid request",
+        isinstance(out9, E.AcsApiError) and len(sent9) == 1, (type(out9).__name__, len(sent9)))
+    sent10 = install(lambda n: answered)
+    U10 = fresh()
+    out10, _ = run_once(U10, [], stage="brief_read")
+    chk("LOW EFFORT FIRST — other stages keep the model's default effort first",
+        len(sent10) == 1 and not sent10[0].get("extra_body"), [x.get("extra_body") for x in sent10])
     os.environ["ACS_LLM_MODEL"] = "claude-haiku-4-5"
 
     # نجاحٌ من أوّل محاولة: لا شيء يُسقَط.

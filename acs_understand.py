@@ -649,6 +649,13 @@ def _sdk_version():
 _EFFORT_MODELS = re.compile(r"^claude-(?:(?:opus|sonnet|fable)-5|opus-4-[6-9]|sonnet-4-6)")
 
 
+# Stages whose first request already asks for low effort on adaptive-thinking
+# models (see the attempt ladder in _call_llm_impl). Comma-separated override.
+LOW_EFFORT_FIRST_STAGES = frozenset(
+    s.strip() for s in os.environ.get("ACS_LOW_EFFORT_FIRST_STAGES",
+                                      "plan_chunk,repair,detail").split(",") if s.strip())
+
+
 def _supports_effort(model):
     return isinstance(model, str) and bool(_EFFORT_MODELS.match(model))
 
@@ -999,6 +1006,14 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                        and _sdk_supports(client, "extra_body"))
         if effort_rung:
             attempts.append((max_tokens, None, "low"))
+        # Live (jobs 67d07028 and 6cd7137f, Opus 5.5): at the model's default
+        # effort every plan chunk, repair and openings request spent its whole
+        # cap thinking and returned no text; the low-effort request that
+        # followed answered each time. On those stages the low-effort request
+        # is sent first and alone: one paid request per stage instead of two.
+        low_first = effort_rung and stage in LOW_EFFORT_FIRST_STAGES
+        if low_first:
+            attempts = attempts[-1:]
 
         # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
         # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
@@ -1016,7 +1031,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         sent_fingerprints = set()
         thought_out = False        # a reply arrived and spent the cap without text
         for mt, think, effort in attempts:
-            if effort is not None and not thought_out:
+            if effort is not None and not thought_out and not low_first:
                 # The effort rung answers a thinking-only reply, not a
                 # transient error: an overload is not cured by thinking less.
                 continue
