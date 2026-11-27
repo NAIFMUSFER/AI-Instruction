@@ -2,7 +2,7 @@
 import { openGuestFloorPlan } from './guest-floor-plan.mjs';
 import { apartmentConfirmation } from '../core/local-apartment.mjs';
 import { installGuestRoomCard } from './guest-room-card.mjs';
-import { openGuestProjectsDialog } from './guest-projects.mjs';
+import { openGuestProjectsDialog, listGuestProjects } from './guest-projects.mjs';
 
 const A = window.ACS;
 const $ = id => document.getElementById(id);
@@ -13,45 +13,59 @@ async function openGuestWorkspace() {
   document.body.classList.add('acs-guest');
   const banner = document.createElement('aside');
   banner.id = 'acsGuestBanner';
-  banner.setAttribute('aria-label', 'أدوات المشروع المحلي');
+  banner.setAttribute('aria-label', 'شريط المشروع');
+  // One primary action («مشروع جديد»), two views and one «•••» menu. The ways to
+  // begin and the projects on this device live in the start sheet below.
   banner.innerHTML = `
     <div class="guest-identity">
       <strong id="acsGuestStatus" role="status">مشروع تجريبي</strong>
       <span id="guestSaveStatus" role="status">غير محفوظ على هذا الجهاز</span>
-      <a id="guestAccount" class="guest-account" href="/?signin=1" aria-label="تسجيل الدخول لحفظ مشاريعك في حسابك">تسجيل الدخول</a>
     </div>
     <div class="guest-controls">
-      <button id="guestCreate" type="button">صف مبناك</button>
-      <button id="guestRevise" type="button" aria-haspopup="dialog" hidden>تعديل التصميم</button>
+      <button id="guestStart" type="button" aria-haspopup="dialog">مشروع جديد</button>
       <button id="guestPlan" type="button" aria-haspopup="dialog">المخطط</button>
       <button id="guestViewToggle" type="button">كشف الدور</button>
       <details id="guestOptions">
-        <summary id="guestTools" aria-label="خيارات المشروع المحلي"><span aria-hidden="true">•••</span></summary>
+        <summary id="guestTools" aria-label="المزيد"><span aria-hidden="true">•••</span></summary>
         <div class="guest-menu">
           <p id="guestFacts" hidden></p>
           <p id="guestStorageNote" hidden>تُحفظ تغييرات هذا المثال في مسودة مستقلة على جهازك.</p>
-          <button id="guestProjects" type="button" aria-haspopup="dialog">مشاريعي على هذا الجهاز</button>
-          <a id="guestNew" href="/?guest=1&amp;new=1" target="_blank" rel="noopener">مشروع جديد في علامة تبويب أخرى</a>
+          <button id="guestRevise" type="button" aria-haspopup="dialog" hidden>تعديل التصميم</button>
           <button id="guestReviseExisting" type="button" aria-haspopup="dialog" hidden>تعديل التصميم الحالي</button>
-          <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
-            <button id="guestExample" type="button">عمارة تجريبية</button>
-            <button id="guestWarehouse" type="button">مستودع تجريبي</button>
-          </div>
+          <button id="guestProjects" type="button" aria-haspopup="dialog">مشاريعي على هذا الجهاز</button>
           <div class="guest-menu-grid" role="group" aria-label="مشاهد المبنى">
             <button id="guestInterior" type="button">من الداخل</button>
             <button id="guestDetail" type="button">تفاصيل المدخل</button>
           </div>
-          <button id="guestFloors" type="button">اختيار الطوابق والطبقات</button>
+          <button id="guestFloors" type="button">الطوابق والطبقات</button>
           <a id="guestNativeSample" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون" hidden><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>
-          <button id="guestExport" type="button">تنزيل النموذج بصيغة JSON</button>
-          <a id="guestSignin" href="/?signin=1">تسجيل الدخول للحفظ السحابي</a>
+          <button id="guestExport" type="button">تنزيل ملف المشروع</button>
+          <a id="guestSignin" href="/?signin=1">تسجيل الدخول</a>
         </div>
       </details>
     </div>
     <div class="guest-warning" id="guestWarning" hidden>
       <span id="guestFeedback" role="status"></span>
     </div>
-    <button id="guestDownload" type="button" hidden>تنزيل JSON</button>
+    <button id="guestDownload" type="button" hidden>تنزيل ملف المشروع</button>
+    <dialog id="guestStartDialog" class="guest-sheet" dir="rtl" aria-labelledby="guestStartTitle">
+      <div class="guest-sheet-head"><h2 id="guestStartTitle">مشروع جديد</h2><button id="guestStartClose" class="guest-sheet-close" type="button" aria-label="إغلاق">✕</button></div>
+      <p class="guest-sheet-lead">كيف تحب أن تبدأ؟</p>
+      <div class="guest-ways">
+        <button id="guestCreate" class="guest-way guest-way-main" type="button"><b>اكتب وصف بيتك</b><span>الغرف والمساحات بكلماتك، ونرسم المخطط والمجسّم.</span></button>
+        <a id="guestNewDraft" class="guest-way guest-way-main" href="/?guest=1&amp;new=1" hidden><b>اكتب وصف بيتك</b><span>مشروع جديد منفصل على هذا الجهاز.</span></a>
+        <a id="guestUploadPlan" class="guest-way" href="/?signin=1"><b>ارفع مخطط بيتك</b><span>صورة أو PDF · يحتاج تسجيل الدخول.</span></a>
+        <div class="guest-way guest-way-examples" role="group" aria-labelledby="guestExamplesTitle">
+          <b id="guestExamplesTitle">ابدأ من مثال</b>
+          <div class="guest-way-row"><button id="guestExample" type="button">عمارة سكنية</button><button id="guestWarehouse" type="button">مستودع</button><a id="guestExampleLink" href="/?guest=1&amp;example=apartment-20x25" hidden>افتح المثال</a></div>
+        </div>
+      </div>
+      <section id="guestRecent" class="guest-recent" aria-labelledby="guestRecentTitle" hidden>
+        <h3 id="guestRecentTitle">مشاريعك على هذا الجهاز</h3>
+        <ul id="guestRecentList"></ul>
+        <button id="guestRecentAll" type="button" aria-haspopup="dialog">كل المشاريع ونقلها لجهاز آخر</button>
+      </section>
+    </dialog>
     <dialog id="guestRevisionDialog" dir="rtl" aria-labelledby="guestRevisionTitle">
       <form id="guestRevisionForm">
         <h2 id="guestRevisionTitle">تعديل التصميم</h2>
@@ -151,13 +165,17 @@ async function openGuestWorkspace() {
       ? `المبنى ${apartment.width_m} × ${apartment.depth_m} م · ${apartment.occupied_levels} أدوار · ${apartment.units_total} شقق`
       : '';
     $('guestCreate').hidden = namedDraft && Boolean(apartment);
+    $('guestNewDraft').hidden = !$('guestCreate').hidden;
     $('guestRevise').hidden = !namedDraft || !apartment;
     $('guestReviseExisting').hidden = namedDraft || !apartment;
+    // A sample never replaces a named project: there the sheet links to the example instead.
+    for (const id of ['guestExample','guestWarehouse']) $(id).hidden = namedDraft;
+    $('guestExampleLink').hidden = !namedDraft;
     for (const id of ['guestPlan','guestExport','guestInterior','guestDetail','guestFloors']) $(id).hidden = !model;
   }
   const exampleDraft = A_AUTH_SCOPE() === 'acs_guest_apartment_20x25_v1';
   $('guestStorageNote').hidden = !exampleDraft;
-  if (exampleDraft) $('guestSignin').href = $('guestAccount').href = '/?signin=1&example=apartment-20x25';
+  if (exampleDraft) $('guestSignin').href = '/?signin=1&example=apartment-20x25';
   document.addEventListener('click', event => {
     if (options.open && !options.contains(event.target)) closeOptions();
   });
@@ -175,10 +193,48 @@ async function openGuestWorkspace() {
   // draft recovery below, which gates every local write; taps then fall back
   // to the inspector.
   try { installGuestRoomCard(A); } catch { A.guestRoomCard = null; }
+  const showProjects = () => openGuestProjectsDialog(A, A_AUTH_SCOPE()).catch(() => feedbackMessage('تعذّر عرض المشاريع المحفوظة على هذا الجهاز.'));
   $('guestProjects').addEventListener('click', () => {
     closeOptions();
-    openGuestProjectsDialog(A, A_AUTH_SCOPE()).catch(() => feedbackMessage('تعذّر عرض المشاريع المحفوظة على هذا الجهاز.'));
+    showProjects();
   });
+  // «مشروع جديد»: the ways to begin, then the visitor's own projects on this device.
+  const startDialog = $('guestStartDialog');
+  const closeStart = () => { if (startDialog.open) startDialog.close(); };
+  async function showRecent() {
+    const section = $('guestRecent'), list = $('guestRecentList');
+    try {
+      const { rows } = await listGuestProjects(A, A_AUTH_SCOPE());
+      const mine = rows.filter(row => !row.sample && !row.empty && !row.unreadable).slice(0, 4);
+      list.replaceChildren(...mine.map(row => {
+        const item = document.createElement('li');
+        const holder = row.current || !row.href ? document.createElement('div') : document.createElement('a');
+        if (holder.tagName === 'A') holder.href = row.href;
+        const name = document.createElement('b');
+        name.textContent = row.name;
+        const detail = document.createElement('span');
+        detail.textContent = row.current ? ['مفتوح الآن', row.facts].filter(Boolean).join(' · ') : row.facts || '';
+        holder.append(name, detail);
+        if (row.current) item.setAttribute('aria-current', 'true');
+        item.append(holder);
+        return item;
+      }));
+      section.hidden = !mine.length;
+    } catch { section.hidden = true; }
+  }
+  $('guestStart').addEventListener('click', () => {
+    closeOptions();
+    facts();
+    startDialog.showModal();
+    ($('guestCreate').hidden ? $('guestNewDraft') : $('guestCreate')).focus();
+    showRecent();
+  });
+  $('guestStartClose').addEventListener('click', closeStart);
+  startDialog.addEventListener('click', event => {
+    const box = startDialog.getBoundingClientRect();
+    if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) closeStart();
+  });
+  $('guestRecentAll').addEventListener('click', () => { closeStart(); showProjects(); });
   $('guestFloors').addEventListener('click', () => {
     openPanel('acsTabModel');
     $('floors').querySelector('button')?.focus();
@@ -418,11 +474,12 @@ async function openGuestWorkspace() {
   }
   for (const [id, kind] of [['guestExample','residential'],['guestWarehouse','warehouse']]) {
     $(id).addEventListener('click', () => {
-      closeOptions(true);
+      closeStart();
       sample(kind);
     });
   }
   $('guestCreate').addEventListener('click', () => {
+    closeStart();
     openPanel('acsTabMake');
     $('descText').focus();
   });

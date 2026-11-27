@@ -39,6 +39,13 @@ async function openGuestOptions(page) {
  }
 }
 
+// «مشروع جديد» opens the ways to begin; the earlier release had them in «•••».
+async function openGuestStart(page) {
+ const start = page.locator('#guestStart');
+ if (!await start.count()) return openGuestOptions(page);
+ if (!await page.locator('#guestStartDialog').evaluate(element => element.open)) await start.click();
+}
+
 async function assertTouchTargets(page, selectors) {
  for (const selector of selectors) {
   const box = await page.locator(selector).boundingBox();
@@ -96,12 +103,15 @@ async function run(target,{expectSha=process.env.ACS_VERIFY_EXPECT_SHA||""}={}){
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.deepEqual(await page.evaluate(()=>({lang:document.documentElement.lang,dir:document.documentElement.dir})),{lang:'ar',dir:'rtl'});
    if(await page.locator('#guestTools').count()){
-    await assertTouchTargets(page,['#guestCreate','#guestPlan','#guestViewToggle','#guestTools']);
+    await assertTouchTargets(page,[await page.locator('#guestStart').count()?'#guestStart':'#guestCreate','#guestPlan','#guestViewToggle','#guestTools']);
     if(width===393)assert.ok((await page.locator('#acsGuestBanner').boundingBox()).height<=80,'compact mobile guest toolbar');
     assert.equal(await page.locator('#guestSignin').isVisible(),false);
    }
    await openGuestOptions(page);
-   await assertTouchTargets(page,['#guestExample','#guestWarehouse','#guestCreate','#guestSignin']);
+   await assertTouchTargets(page,['#guestSignin']);
+   await page.locator('#guestTools').click();
+   await openGuestStart(page);
+   await assertTouchTargets(page,['#guestExample','#guestWarehouse','#guestCreate']);
    await page.locator('#guestWarehouse').focus();assert.equal(await page.evaluate(()=>document.activeElement.id),'guestWarehouse');
    assert.match(await page.locator('#acsGuestStatus').textContent(),/محلي|الجهاز|تجريبي/);
    assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_guest_project_v1');
@@ -109,7 +119,7 @@ async function run(target,{expectSha=process.env.ACS_VERIFY_EXPECT_SHA||""}={}){
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    const views=[];
    for(const [kind,id] of [['residential','guestExample'],['warehouse','guestWarehouse']]){
-    begin('select_'+kind);await openGuestOptions(page);await page.locator('#'+id).click();
+    begin('select_'+kind);await openGuestStart(page);await page.locator('#'+id).click();
     if(kind==='warehouse')await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
     await page.waitForFunction(()=>window.ACS?.renderDiagnosticsDetail?.().canonical_meshes>0);
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));

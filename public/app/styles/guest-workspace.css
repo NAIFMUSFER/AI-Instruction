@@ -1,4 +1,5 @@
-/* Compact local studio toolbar. The full viewport remains available below it. */
+/* Project bar: one primary action («مشروع جديد»), two views and «•••».
+   Colours, radii and type come from the shared --ui-* tokens in app.css. */
 #acsGuestBanner {
   position: fixed;
   z-index: 25;
@@ -8,14 +9,15 @@
   grid-template-columns: minmax(0,1fr) auto;
   align-items: center;
   gap: 4px 12px;
-  max-width: 660px;
-  padding: 5px 12px;
-  border: 1px solid #c8cbc3;
-  border-radius: 12px;
-  background: #fbfaf6;
-  color: #202e2a;
-  box-shadow: 0 3px 12px #23342c1a;
-  font: 14px/1.4 system-ui,sans-serif;
+  max-width: 680px;
+  padding: 6px 8px 6px 6px;
+  padding-inline-start: 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: var(--ui-shadow);
+  font: 15px/1.45 var(--ui-font);
   direction: rtl;
 }
 #guestReturnToModel { position:sticky; inset-inline-start:0; z-index:1; min-height:44px; flex:none; }
@@ -23,12 +25,12 @@
 #acsGuestBanner .guest-identity { min-width: 0; }
 #acsGuestBanner .guest-identity strong, #guestSaveStatus {
   display: block;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-#acsGuestBanner .guest-identity strong { font-size: 15px; }
-#acsGuestBanner #guestSaveStatus { color: #4f6159; font-size: 12px; }
-/* A visible, quiet way into an account from the first screen (not a dominant CTA). */
-#acsGuestBanner a.guest-account { display: inline-block; min-height: 24px; min-width: 0; padding: 2px 0; border: 0; background: none; color: #0b5d7a; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+#acsGuestBanner .guest-identity strong { font-size: 15px; font-weight: 700; }
+#acsGuestBanner #guestSaveStatus { color: var(--ui-text-2); font-size: 12.5px; }
 .guest-controls, .guest-menu-grid { display: flex; align-items: center; gap: 4px; }
 #acsGuestBanner button, #acsGuestBanner a, #guestTools {
   box-sizing: border-box;
@@ -37,88 +39,117 @@
   justify-content: center;
   min-height: 44px;
   min-width: 44px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 12px;
   background: transparent;
   color: inherit;
-  font: 600 13px/1.35 system-ui,sans-serif;
+  font: 600 14px/1.35 var(--ui-font);
   text-align: center;
   text-decoration: none;
   cursor: pointer;
 }
-#acsGuestBanner :is(#guestCreate,#guestRevise,#guestApplyRevision) { background: #234e40; color: #fff; }
-#acsGuestBanner button:hover, #acsGuestBanner a:hover, #guestTools:hover, #guestOptions[open] > summary { background: #e7ebe3; }
-#acsGuestBanner #guestCreate:hover { background: #183e31; }
-#guestRevisionDialog { margin:auto; width:min(27rem, calc(100% - 24px)); box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:20px; background:#fffdf8; color:#213c40; font:15px/1.5 system-ui,sans-serif; }
-#guestRevisionDialog::backdrop { background:rgb(13 27 35 / 65%); }
-#guestRevisionForm { display:grid; gap:10px; }
-#guestRevisionForm h2,#guestRevisionForm p { margin:0; }
-/* The dark panel's muted 12px h2 rule must not leak into this light dialog. */
-#guestRevisionForm h2 { font-size:1.12rem; color:inherit; border:0; padding:0; }
-#guestRevisionForm textarea { box-sizing:border-box; width:100%; padding:9px; font:inherit; color:#203a31; background:white; border:1px solid #9cafa5; border-radius:6px; }
-#guestRevisionError { color:#84391e; }
-#acsGuestBanner :is(button,a,summary):focus-visible { outline: 3px solid #0b72a0; outline-offset: 1px; }
+#acsGuestBanner :is(#guestStart,#guestApplyRevision) { background: var(--ui-primary); color: var(--ui-on-primary); padding-inline: 16px; }
+#acsGuestBanner button:hover, #acsGuestBanner a:hover, #guestTools:hover, #guestOptions[open] > summary { background: var(--ui-surface-2); }
+#acsGuestBanner :is(#guestStart,#guestApplyRevision):hover { background: var(--ui-primary-hover); }
+#acsGuestBanner :is(button,a,summary):focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 1px; }
 #guestTools { list-style: none; letter-spacing: 1px; }
 #guestTools::-webkit-details-marker { display: none; }
 #guestOptions { flex: 0 0 auto; }
 #guestOptions:not([open]) .guest-menu { display: none; }
 #acsGuestBanner .guest-menu {
   position: absolute;
-  inset-block-start: calc(100% + 5px);
+  inset-block-start: calc(100% + 6px);
   inset-inline-end: 0;
-  width: min(270px,100%);
-  max-height: 65vh;
-  max-height: 65dvh;
+  width: min(290px,100%);
+  max-height: 70vh;
+  max-height: 70dvh;
   box-sizing: border-box;
   display: grid;
   gap: 2px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid #c8cbc3;
-  border-radius: 12px;
-  background: #fbfaf6;
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  background: var(--ui-surface);
   padding: 8px;
-  box-shadow: 0 7px 22px #21393029;
+  box-shadow: var(--ui-shadow);
 }
-#acsGuestBanner .guest-menu p { margin: 2px 6px 6px; color: #4a5c53; font-size: 12px; }
-#acsGuestBanner .guest-menu-grid { padding-bottom: 6px; border-bottom: 1px solid #d5dcd3; }
-#acsGuestBanner .guest-menu-grid > button { flex: 1; background: #eef0e9; }
-#acsGuestBanner .guest-menu > :is(a,button) { justify-content: flex-start; }
-#acsGuestBanner .guest-menu a { border-top: 1px solid #d5dcd3; border-radius: 0; color: #34594d; }
+#acsGuestBanner .guest-menu p { margin: 4px 10px 6px; color: var(--ui-text-2); font-size: 13px; }
+#acsGuestBanner .guest-menu-grid { padding-block: 4px; }
+#acsGuestBanner .guest-menu-grid > button { flex: 1; background: var(--ui-surface-2); }
+#acsGuestBanner .guest-menu > :is(a,button) { justify-content: flex-start; font-weight: 500; font-size: 15px; }
+#acsGuestBanner .guest-menu > #guestSignin { margin-top: 4px; border-top: 1px solid var(--ui-border); border-radius: 0 0 10px 10px; color: var(--ui-link); font-weight: 600; }
 #acsGuestBanner .guest-warning, #acsGuestBanner #guestDownload { grid-column: 1/-1; }
-#acsGuestBanner .guest-warning { color: #783920; font-size: 12px; }
-#acsGuestBanner #guestDownload { justify-self: start; background: #f1e5d9; color: #54351c; }
+#acsGuestBanner .guest-warning { color: var(--ui-warn-text); font-size: 13px; }
+#acsGuestBanner #guestDownload { justify-self: start; background: var(--ui-warn-bg); border-color: var(--ui-warn-border); color: var(--ui-warn-text); }
+/* Shared light/dark dialog surface: start sheet, revision, projects. */
+:is(#guestStartDialog,#guestRevisionDialog,#guestProjectsDialog) { box-sizing:border-box; margin:auto; border:1px solid var(--ui-border); border-radius:20px; background:var(--ui-surface); color:var(--ui-text); font:16px/1.55 var(--ui-font); box-shadow:var(--ui-shadow); }
+:is(#guestStartDialog,#guestRevisionDialog,#guestProjectsDialog)::backdrop { background:var(--ui-scrim); }
+:is(#guestStartDialog,#guestRevisionDialog,#guestProjectsDialog) :focus-visible { outline:3px solid var(--ui-focus); outline-offset:2px; }
+/* «مشروع جديد»: three ways to begin, then the visitor's projects. */
+#guestStartDialog { width:min(30rem, calc(100% - 24px)); max-height:90dvh; padding:20px; overflow-y:auto; }
+#guestStartDialog .guest-sheet-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#guestStartDialog h2 { margin:0; padding:0; border:0; font-size:22px; font-weight:800; color:inherit; }
+#acsGuestBanner #guestStartDialog .guest-sheet-close { min-width:44px; min-height:44px; padding:0; border-radius:12px; font-size:18px; color:var(--ui-text-2); }
+#guestStartDialog .guest-sheet-lead { margin:2px 0 16px; color:var(--ui-text-2); }
+#guestStartDialog .guest-ways { display:grid; gap:10px; }
+#acsGuestBanner #guestStartDialog .guest-way { display:grid; justify-items:start; justify-content:stretch; gap:2px; width:100%; min-height:64px; padding:14px 16px; border:1px solid var(--ui-border); border-radius:14px; background:var(--ui-surface); color:var(--ui-text); text-align:start; font:inherit; }
+#acsGuestBanner #guestStartDialog .guest-way:hover { background:var(--ui-surface-2); }
+#acsGuestBanner #guestStartDialog .guest-way-main { border-color:var(--ui-primary); background:var(--ui-primary-soft); }
+#guestStartDialog .guest-way b { font-size:17px; font-weight:700; }
+#guestStartDialog .guest-way span { color:var(--ui-text-2); font-size:14px; font-weight:400; line-height:1.5; }
+#guestStartDialog .guest-way-row { display:flex; flex-wrap:wrap; gap:8px; width:100%; margin-top:6px; }
+#acsGuestBanner #guestStartDialog .guest-way-row > :is(button,a) { flex:1 1 8rem; min-height:44px; border:1px solid var(--ui-border-strong); border-radius:12px; background:var(--ui-surface); font-size:15px; }
+#acsGuestBanner #guestStartDialog .guest-way-row > :is(button,a):hover { background:var(--ui-surface-2); }
+#guestStartDialog .guest-recent { margin-top:20px; padding-top:16px; border-top:1px solid var(--ui-border); }
+#guestStartDialog .guest-recent h3 { margin:0 0 8px; font-size:16px; font-weight:700; }
+#guestRecentList { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+#acsGuestBanner #guestRecentList :is(a,div) { display:grid; justify-items:start; justify-content:stretch; gap:0; width:100%; min-height:56px; padding:10px 14px; border:1px solid var(--ui-border); border-radius:12px; background:var(--ui-surface); color:var(--ui-text); text-align:start; font:inherit; }
+#acsGuestBanner #guestRecentList a:hover { background:var(--ui-surface-2); }
+#guestRecentList li[aria-current="true"] :is(a,div) { border-color:var(--ui-primary); }
+#guestRecentList b { font-size:15px; font-weight:700; }
+#guestRecentList span { color:var(--ui-text-2); font-size:13px; }
+#acsGuestBanner #guestRecentAll { margin-top:8px; padding-inline:4px; color:var(--ui-link); font-weight:600; }
+#guestRevisionDialog { width:min(27rem, calc(100% - 24px)); padding:20px; }
+#guestRevisionForm { display:grid; gap:10px; }
+#guestRevisionForm h2,#guestRevisionForm p { margin:0; }
+/* The dark panel's muted 12px h2 rule must not leak into this dialog. */
+#guestRevisionForm h2 { font-size:1.2rem; color:inherit; border:0; padding:0; }
+#guestRevisionForm textarea { box-sizing:border-box; width:100%; padding:10px 12px; font:inherit; color:var(--ui-text); background:var(--ui-field); border:1px solid var(--ui-border-strong); border-radius:12px; }
+#guestRevisionForm > div { display:flex; flex-wrap:wrap; gap:8px; }
+#acsGuestBanner #guestCancelRevision { border-color:var(--ui-border-strong); }
+#guestRevisionError { color:var(--ui-warn-text); }
 body.acs-guest #camBar { top: 88px; }
 body.acs-guest #genLLM:disabled,body.acs-guest #bNotesApply:disabled { opacity:.55; cursor:not-allowed; }
 body.acs-guest #left [hidden] { display: none!important; }
 @media (max-width: 820px) {
+  /* Phone: the project name on one short line, the four actions across the
+     full width beneath it. Stays under 80px so the building remains in view. */
   #acsGuestBanner {
     inset-inline: 8px;
-    inset-block-start: calc(6px + env(safe-area-inset-top,0px));
+    inset-block-start: calc(8px + env(safe-area-inset-top,0px));
     max-width: none;
-    padding: 4px 7px;
-    gap: 3px 5px;
-    border-radius: 10px;
+    grid-template-columns: minmax(0,1fr);
+    padding: 4px 6px 5px;
+    gap: 2px;
+    border-radius: 16px;
   }
-  #acsGuestBanner .guest-identity strong { font-size: 13px; }
-  /* Name on its own line; save status and the sign-in link share ONE line that
-     never wraps (the status truncates), so a wider Arabic font cannot add a
-     third row and grow the toolbar over the model. */
-  #acsGuestBanner .guest-identity { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; column-gap: 4px; }
-  #acsGuestBanner .guest-identity strong { grid-column: 1 / -1; }
-  #acsGuestBanner #guestSaveStatus { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
-  /* Padding enlarges the tap area without growing the toolbar. */
-  #acsGuestBanner a.guest-account { display: inline-block; min-height: 0; padding: 10px 4px; margin: -10px 0; font-size: 11px; white-space: nowrap; }
-  #acsGuestBanner button,#guestTools { padding-inline: 6px; font-size: 12px; }
-  #acsGuestBanner .guest-controls { gap: 1px; }
+  #acsGuestBanner .guest-identity { display: flex; align-items: baseline; gap: 6px; min-width: 0; height: 20px; padding-inline: 8px; line-height: 20px; overflow: hidden; }
+  #acsGuestBanner .guest-identity strong { flex: none; max-width: 60%; font-size: 13.5px; }
+  #acsGuestBanner .guest-identity strong::after { content: "·"; margin-inline-start: 6px; color: var(--ui-text-2); font-weight: 400; }
+  #acsGuestBanner #guestSaveStatus { min-width: 0; font-size: 12px; }
+  #acsGuestBanner .guest-controls { gap: 4px; }
+  #acsGuestBanner .guest-controls > button { flex: 1 1 0; min-width: 0; padding-inline: 6px; font-size: 14px; }
+  #acsGuestBanner .guest-controls > #guestStart { flex-grow: 1.35; }
+  #acsGuestBanner #guestTools { padding-inline: 8px; }
+  #acsGuestBanner .guest-menu > :is(a,button) { font-size: 15px; }
+  #guestStartDialog { margin-block-end:0; width:100%; max-width:100%; max-height:88dvh; border-radius:20px 20px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px)); }
   body.acs-guest #camBar { top: auto; }
   body.acs-guest #left.open { z-index: 35; }
 }
 @media (max-width: 355px) {
-  #acsGuestBanner { grid-template-columns: 1fr; }
-  #acsGuestBanner .guest-identity { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-  #acsGuestBanner .guest-controls { justify-content: space-between; }
+  #acsGuestBanner .guest-controls > button { font-size: 13px; padding-inline: 4px; }
 }
 
 /* Classic read-only fallback stays usable if the complete module graph fails. */
@@ -218,22 +249,21 @@ body.acs-guest-fallback-active::after{display:none!important}
 #guestRoomCard .qc input[type=color] { width:28px; height:28px; padding:0; border:1px solid #a0b1ab; border-radius:6px; background:none; }
 #guestRoomCard :focus-visible { outline:3px solid #0b72a0; outline-offset:1px; }
 /* Projects on this device. */
-#guestProjectsDialog { margin:auto; width:min(30rem, calc(100% - 24px)); max-height:88dvh; box-sizing:border-box; border:1px solid #879b99; border-radius:12px; padding:18px; background:#fffdf8; color:#213c40; font:15px/1.6 system-ui,sans-serif; }
-#guestProjectsDialog::backdrop { background:rgb(13 27 35 / 65%); }
-#guestProjectsDialog h2 { margin:0 0 6px; padding:0; border:0; font-size:1.15rem; color:inherit; }
-#guestProjectsDialog h3 { margin:14px 0 4px; font-size:1rem; }
+#guestProjectsDialog { width:min(30rem, calc(100% - 24px)); max-height:88dvh; padding:20px; }
+#guestProjectsDialog h2 { margin:0 0 6px; padding:0; border:0; font-size:1.2rem; color:inherit; }
+#guestProjectsDialog h3 { margin:16px 0 4px; font-size:1rem; }
 #guestProjectsDialog p, #guestProjectsDialog ol { margin:4px 0; }
-#guestProjectsList { list-style:none; margin:8px 0; padding:0; display:grid; gap:6px; }
-#guestProjectsList li { display:grid; gap:2px; padding:8px 10px; border:1px solid #d5dcd3; border-radius:8px; background:#fbfaf6; }
-#guestProjectsList li[aria-current="true"] { border-color:#234e40; }
-#guestProjectsList span { color:#4a5c53; font-size:13px; }
-#guestProjectsList em { font-style:normal; color:#234e40; font-weight:700; font-size:13px; }
-#guestProjectsList a, #guestProjectsDialog button { min-height:44px; display:inline-flex; align-items:center; justify-content:center; padding:4px 14px; border:1px solid #a0b1ab; border-radius:8px; background:#fffdf8; color:#1e383a; font:inherit; text-decoration:none; cursor:pointer; justify-self:start; }
-#guestProjectsDialog .guest-projects-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-#guestProjectsDownload { background:#234e40!important; border-color:#234e40!important; color:#fff!important; }
-#guestProjectsImportNote { color:#4a5c53; font-size:12px; }
-#guestProjectsClose { margin-top:12px; }
-#guestProjectsDialog :focus-visible { outline:3px solid #0b72a0; outline-offset:1px; }
+#guestProjectsDialog > p, #guestProjectsDialog ol { color:var(--ui-text-2); font-size:15px; }
+#guestProjectsList { list-style:none; margin:10px 0; padding:0; display:grid; gap:6px; }
+#guestProjectsList li { display:grid; gap:2px; padding:10px 12px; border:1px solid var(--ui-border); border-radius:12px; background:var(--ui-surface); }
+#guestProjectsList li[aria-current="true"] { border-color:var(--ui-primary); }
+#guestProjectsList span { color:var(--ui-text-2); font-size:13px; }
+#guestProjectsList em { font-style:normal; color:var(--ui-link); font-weight:700; font-size:13px; }
+#guestProjectsList a, #guestProjectsDialog button { min-height:44px; display:inline-flex; align-items:center; justify-content:center; padding:4px 16px; border:1px solid var(--ui-border-strong); border-radius:12px; background:var(--ui-surface); color:var(--ui-text); font:inherit; font-weight:600; text-decoration:none; cursor:pointer; justify-self:start; }
+#guestProjectsDialog .guest-projects-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+#guestProjectsDownload { background:var(--ui-primary)!important; border-color:var(--ui-primary)!important; color:var(--ui-on-primary)!important; }
+#guestProjectsImportNote { color:var(--ui-text-2); font-size:13px; }
+#guestProjectsClose { margin-top:14px; }
 @media (max-width: 820px) {
   #guestRoomCard { inset-inline:12px; inset-block-end:calc(76px + env(safe-area-inset-bottom,0px)); width:auto; }
 }
