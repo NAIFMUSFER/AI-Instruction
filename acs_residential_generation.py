@@ -342,10 +342,12 @@ def _core_instruction(issues):
             "core, and the core must still touch that floor's circulation.")
 
 
-STACK_REPAIR = '''\nUNSUPPORTED_UPPER_ROOM: that upper room stands over open ground on its
-storey_below (the review blocks it as floating). Move or resize it to lie over
-rooms of storey_below, or on the ground storey add a covered porch under it
-(role porch, walls "none", covered true). Keep its program size.'''
+# Only on a repair call with a floating room. A room of storey 2 or up over a
+# void needs the porch on storey_below too, not only on the ground.
+STACK_REPAIR = '''\nUNSUPPORTED_UPPER_ROOM: that upper room stands over a void of storey_below
+(the review blocks it as floating). Move or resize it over rooms of
+storey_below, or add a covered porch under it (role porch, walls "none",
+covered true) on storey_below and each open storey beneath. Keep its program size.'''
 
 
 def _unsupported_findings(building):
@@ -484,6 +486,169 @@ def _support_porches(building, unsupported):
     if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
         meta['assumptions'].append('أُضيف في الدور الأرضي رواق مظلل بأعمدة (' + str(len(pieces)) + ') تحت غرف '
                                    'الدور الأول التي كانت فوق أرض مكشوفة، لتُحمل عليه؛ عدّله أو حرّك الغرف فوقه.')
+    return value
+
+
+# A room of storey N >= 2 over a void of storey N-1 (live: the corner duplex's
+# second-floor flat put its kitchen, laundry and pantry over the garden side,
+# open on the first floor and on the ground) is carried for free by a covered,
+# wall-less space on N-1 under it, and on every lower storey that is open there
+# too, down to a ground porch: one column line reaches the ground.
+#
+# The space on N-1 is role porch, never terrace or balcony: the review reads a
+# terrace or balcony as open to the sky (acs_validate._open_air) and never
+# checks what carries it, and a confirmed floor program counts terraces and
+# balconies per floor (acs_floor_program.COUNTED_ROLES), so an added one would
+# be an extra program room. A porch is covered and wall-less, needs no door of
+# its own (acs_validate, acs_residential_access), is drawn without walls
+# (acs_compiler, acs_plan_drafting) and must itself stand on the storey below,
+# which is what makes the column line reach the ground. Above the ground it is
+# reached through a room it touches, so it is kept only beside one.
+STACK_SNAP_M = 1.5           # a narrower open gap to a room of N-1 is closed
+STACK_ACCESS_M = 1.4         # wall shared with the room it is entered from (a 1.0 m door and its frame)
+STACK_ACCESS_ROLES = ('living', 'dining', 'corridor', 'majlis', 'office', 'entrance', 'bedroom', 'kitchen')
+UPPER_PORCH_NAME = 'شرفة مغطاة'
+GROUND_PORCH_NAME = 'رواق مظلل'
+
+
+def _span(a, b, axis):
+    """Overlap of two rects along ``axis`` (0: x, 1: z)."""
+    return min(a[axis] + a[axis + 2], b[axis] + b[axis + 2]) - max(a[axis], b[axis])
+
+
+def _contact(a, b):
+    """Length of the wall a and b share (touching edges), 0 when they do not touch."""
+    for axis in (0, 1):
+        if (abs(a[axis] + a[axis + 2] - b[axis]) <= 1e-4 or abs(b[axis] + b[axis + 2] - a[axis]) <= 1e-4):
+            run = _span(a, b, 1 - axis)
+            if run > 1e-4:
+                return run
+    return 0.0
+
+
+def _snap(rect, rooms, taken):
+    """Grow ``rect`` across an open gap of at most STACK_SNAP_M to the nearest
+    room edge it faces, side by side (W, N, E, S), while the strip it adds is
+    free: the support then meets the rooms around it, with no sliver between."""
+    rect = list(rect)
+    for _ in range(2):
+        moved = False
+        for axis, low in ((0, True), (1, True), (0, False), (1, False)):
+            near = None
+            for r in rooms:
+                if _span(rect, r, 1 - axis) <= 1e-4:
+                    continue
+                gap = (rect[axis] - (r[axis] + r[axis + 2])) if low else (r[axis] - (rect[axis] + rect[axis + 2]))
+                if 1e-4 < gap <= STACK_SNAP_M + 1e-9 and (near is None or gap < near):
+                    near = gap
+            if near is None:
+                continue
+            grown = list(rect)
+            if low:
+                grown[axis] = round(rect[axis] - near, 2)
+            grown[axis + 2] = round(rect[axis + 2] + near, 2)
+            if any(_overlaps(grown, r) for r in rooms + taken):
+                continue
+            rect, moved = grown, True
+        if not moved:
+            break
+    return rect
+
+
+def _stacked_supports(building, unsupported):
+    """Column lines under rooms of storey N >= 2 over a void of storey N-1.
+
+    Returns a list of chains, one per support on N-1: [(template, room), ...]
+    from N-1 down to the lowest storey open under it, or [] when none applies.
+    Each storey that gets a room must use its template alone (a shared
+    template would repeat it). The N-1 support is kept only beside a room of
+    N-1 it can be entered from; the storeys below are filled where open."""
+    from acs_plot_rules import _occupied
+    from acs_residential_access import wall_less
+    levels = _occupied(building)
+    if len(levels) < 3:
+        return []
+    position = {l['template']: n for n, l in enumerate(levels)}
+    alone = {t for t in position if sum(1 for l in levels if l['template'] == t) == 1}
+    # A shared upper template (typical floors) over a storey of its own is fine.
+    stacked = {(levels[n]['template'], levels[n - 1]['template']) for n in range(2, len(levels))}
+    floors = building['floors']
+    def rooms_of(template):
+        return [r for r in floors[template]['rooms'] if isinstance(r, dict) and _numeric_rect(r.get('rect'))]
+    groups = {}
+    for f in unsupported:
+        upper, lower = f['room_ref'][0], f.get('storey_below')
+        if lower in alone and (upper, lower) in stacked:
+            groups.setdefault((upper, lower), set()).add(f['room_ref'][1])
+    added, taken, chains = {}, {}, []
+    def new_id(template):
+        used = taken.setdefault(template, {r.get('id') for r in floors[template]['rooms'] if isinstance(r, dict)})
+        n = 1
+        while template + '_porch_' + str(n) in used:
+            n += 1
+        used.add(template + '_porch_' + str(n))
+        return template + '_porch_' + str(n)
+    for (upper, lower), ids in sorted(groups.items(), key=lambda g: (-position[g[0][1]], g[0][1])):
+        floating = [r['rect'] for r in rooms_of(upper) if r.get('id') in ids]
+        rooms = rooms_of(lower)
+        below = [r['rect'] for r in rooms]
+        pieces = [p for p in uncovered(floating, below + [r['rect'] for r in added.get(lower, [])], PORCH_MIN_SIDE_M)
+                  if p[2] * p[3] >= PORCH_MIN_M2 - 1e-9]
+        for piece in pieces:
+            rect = _snap(piece, below, [r['rect'] for r in added.get(lower, [])])
+            entries = [r for r in rooms if r.get('role') in STACK_ACCESS_ROLES and not wall_less(r)
+                       and _contact(rect, r['rect']) >= STACK_ACCESS_M - 1e-9]
+            if not entries:
+                continue
+            entry = min(entries, key=lambda r: (STACK_ACCESS_ROLES.index(r['role']), -_contact(rect, r['rect']),
+                                                str(r.get('id'))))
+            unit = entry.get('unit_id') if isinstance(entry.get('unit_id'), str) and entry['unit_id'] else None
+            porch = {'id': new_id(lower), 'name': UPPER_PORCH_NAME, 'role': 'porch', 'rect': rect,
+                     'walls': 'none', 'covered': True, **({'unit_id': unit} if unit else {})}
+            chain, carried = [(lower, porch)], [rect]
+            for level in reversed(levels[:position[lower]]):
+                template = level['template']
+                ground = level is levels[0]
+                if template not in alone:
+                    break
+                under = [r['rect'] for r in rooms_of(template)] + [r['rect'] for r in added.get(template, [])]
+                parts = [p for p in uncovered(carried, under, PORCH_MIN_SIDE_M) if p[2] * p[3] >= PORCH_MIN_M2 - 1e-9]
+                if not parts:
+                    break
+                units = {r.get('unit_id') for r in rooms_of(template)
+                         if isinstance(r.get('unit_id'), str) and r['unit_id']}
+                share = (next(iter(units)) if len(units) == 1 else None) if ground else unit
+                for part in parts:
+                    chain.append((template, {'id': new_id(template),
+                                             'name': GROUND_PORCH_NAME if ground else UPPER_PORCH_NAME,
+                                             'role': 'porch', 'rect': part, 'walls': 'none', 'covered': True,
+                                             **({'unit_id': share} if share else {})}))
+                carried = parts
+            for template, room in chain:
+                added.setdefault(template, []).append(room)
+            chains.append(chain)
+    return chains
+
+
+def _with_supports(building, chains):
+    """A copy of ``building`` with the chains' rooms added and disclosed in Arabic."""
+    from acs_floor_program import floor_name
+    from acs_plot_rules import _occupied
+    value = json.loads(canonical(building))
+    position = {l['template']: n for n, l in enumerate(_occupied(value))}
+    count = {}
+    for chain in chains:
+        for template, room in chain:
+            value['floors'][template]['rooms'].append(copy.deepcopy(room))
+            count[template] = count.get(template, 0) + 1
+    tops = sorted({position[chain[0][0]] + 1 for chain in chains})
+    parts = [(GROUND_PORCH_NAME if position[t] == 0 else UPPER_PORCH_NAME + ' بأعمدة') + ' في '
+             + floor_name(position[t]) + ' (' + str(n) + ')' for t, n in sorted(count.items(), key=lambda i: -position[i[0]])]
+    meta = value.setdefault('meta', {})
+    if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
+        meta['assumptions'].append('أُضيفت ' + ' و'.join(parts) + ' تحت غرف ' + ' و'.join(floor_name(i) for i in tops)
+                                   + ' التي كانت فوق فراغ، لتُحمل عليها ويصل خط الأعمدة إلى الأرض؛ تُدخل الشرفة '
+                                   'المغطاة من الغرفة المجاورة لها. عدّلها أو حرّك الغرف فوقها.')
     return value
 
 
@@ -730,20 +895,42 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         meta = trimmed.setdefault('meta', {})
         meta.setdefault('assumptions', []).append(note + '؛ راجع المقاسين.')
         return trimmed, after
+    def floating_of(found):
+        return [i for i in found[1] if i.get('code') == 'UNSUPPORTED_UPPER_ROOM']
+    def coverage_ok(value):
+        """A free support never takes a storey past the plot's building coverage."""
+        if plot is None or not isinstance(plot.get('max_coverage'), (int, float)):
+            return True
+        import acs_plot_rules as P
+        footprint = max([sum(r['rect'][2] * r['rect'][3] for r in P._rooms(value, l['template']))
+                         for l in P._occupied(value)] or [0])
+        return footprint <= plot['max_coverage'] * plot['land']['w'] * plot['land']['d'] + 1e-6
     def support(value, found):
         """Covered porches under first-storey rooms over open ground, for free."""
-        floating = [i for i in found[1] if i.get('code') == 'UNSUPPORTED_UPPER_ROOM']
-        porched = _support_porches(value, floating) if floating else None
-        if porched is None:
+        porched = _support_porches(value, floating_of(found)) if floating_of(found) else None
+        if porched is None or not coverage_ok(porched):
             return value, found
         after = findings(porched)
-        left = sum(1 for i in after[1] if i.get('code') == 'UNSUPPORTED_UPPER_ROOM')
-        if added(found, after) or left >= len(floating):
+        if added(found, after) or len(floating_of(after)) >= len(floating_of(found)):
             return value, found
         return porched, after
+    def stack(value, found):
+        """Column lines under rooms of storey 2 and up over a void, for free:
+        each chain is kept only if it carries a floating room and adds nothing."""
+        chains = _stacked_supports(value, floating_of(found)) if floating_of(found) else []
+        kept, now = [], found
+        for chain in chains:
+            candidate = _with_supports(value, kept + [chain])
+            if not coverage_ok(candidate):
+                continue
+            after = findings(candidate)
+            if added(now, after) or len(floating_of(after)) >= len(floating_of(now)):
+                continue
+            kept, now = kept + [chain], after
+        return (_with_supports(value, kept), now) if kept else (value, found)
     def settle(value, found):
         """Try the deterministic fixes; keep each only if it adds no finding."""
-        value, found = support(*trim(value, found))
+        value, found = stack(*support(*trim(value, found)))
         issues, soft = found
         core = next((i for i in issues if i.get('code') == 'RESIDENTIAL_CORE_MISSING'), None)
         if core is None or not core.get('misaligned') or dwelling_kind(value, brief, requirements) != SINGLE_DWELLING:
@@ -918,6 +1105,84 @@ def _guest_doors(building, brief, plot, dwelling):
     return added
 
 
+SUPPORT_DOOR_W = 1.0
+
+
+def _support_doors(building, plot, dwelling):
+    """Give a covered porch above the ground the door it is entered by, for free.
+
+    The layout stage keeps an upper porch (a column line under a floating
+    room, ``_stacked_supports``) only beside a room it can be entered from. The
+    openings stage reads "a porch needs no door" and may leave that room's
+    wall closed: the porch would then be cut off. The door goes in that room's
+    wall facing the porch, on a free run clear of its openings; it is kept only
+    if it reaches the porch and adds no access, opening or zoning finding.
+    Mutates ``building`` like the openings stage; True when a door was added."""
+    import acs_plot_rules as P
+    from acs_residential_access import PORCH_ROLES, issues, detail_issues, wall_less
+    levels = P._occupied(building)
+    if len(levels) < 2:
+        return False
+    ground = levels[0]['template']
+    def cut_off():
+        return {tuple(i['room_ref']) for i in issues(building, doors=True, dwelling=dwelling)
+                if i.get('room_ref') and i['room_ref'][0] != ground}
+    def others():
+        found = {i.get('message') or i.get('code') for i in detail_issues(building, dwelling)}
+        if plot is not None:
+            found |= {i.get('message') for i in P.opening_findings(building, plot)}
+            hard, soft = [], []
+            P._zoning(building, plot, hard, soft)
+            found |= {i.get('message') for i in hard + soft}
+        return found
+    added = []
+    for template, rid in sorted(cut_off()):
+        rooms = P._rooms(building, template)
+        porch = next((r for r in rooms if r.get('id') == rid), None)
+        if porch is None or not wall_less(porch) or str(porch.get('role') or '').lower() not in PORCH_ROLES:
+            continue
+        entries = sorted((r for r in rooms if r is not porch and r.get('role') in STACK_ACCESS_ROLES
+                          and not wall_less(r) and _contact(porch['rect'], r['rect']) >= STACK_ACCESS_M - 1e-9),
+                         key=lambda r: (STACK_ACCESS_ROLES.index(r['role']), -_contact(porch['rect'], r['rect']),
+                                        str(r.get('id'))))
+        before = others()
+        for room in entries:
+            x, z, w, d = room['rect']
+            px, pz, pw, pd = porch['rect']
+            side = ('E' if abs(x + w - px) <= 1e-4 else 'W' if abs(px + pw - x) <= 1e-4
+                    else 'S' if abs(z + d - pz) <= 1e-4 else 'N')
+            walls = room.get('walls')
+            if isinstance(walls, list) and side not in walls:
+                continue
+            axis = 0 if side in ('N', 'S') else 1
+            origin = room['rect'][axis]
+            lo = max(room['rect'][axis], porch['rect'][axis]) - origin
+            hi = min(room['rect'][axis] + room['rect'][axis + 2], porch['rect'][axis] + porch['rect'][axis + 2]) - origin
+            taken = sorted((o['offset'] - o.get('width', 0.9) / 2 - 0.1, o['offset'] + o.get('width', 0.9) / 2 + 0.1)
+                           for kind in ('doors', 'windows') for o in room.get(kind) or []
+                           if isinstance(o, dict) and o.get('edge') == side and isinstance(o.get('offset'), (int, float)))
+            runs, cursor = [], lo + 0.2
+            for a, b in taken + [(hi - 0.2, hi - 0.2)]:
+                if min(a, hi - 0.2) - cursor >= SUPPORT_DOOR_W - 1e-9:
+                    runs.append((min(a, hi - 0.2) - cursor, cursor, min(a, hi - 0.2)))
+                cursor = max(cursor, b)
+            if not runs:
+                continue
+            _, a, b = max(runs)
+            door = {'id': str(room['id'])[:48] + '_porch_door', 'edge': side, 'offset': round((a + b) / 2, 3),
+                    'width': SUPPORT_DOOR_W, 'height': 2.2, 'material': 'glass'}
+            room.setdefault('doors', []).append(door)
+            if (template, rid) not in cut_off() and others() <= before:
+                added.append(UPPER_PORCH_NAME + ' من «' + str(room.get('name') or room['id'])[:40] + '»')
+                break
+            room['doors'].remove(door)
+    if added:
+        meta = building.setdefault('meta', {})
+        if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
+            meta['assumptions'].append('أُضيف باب إلى ' + '، و'.join(added) + ' لأنها لا تُدخل إلا منها؛ راجع موقعه.')
+    return bool(added)
+
+
 def detail(building, brief, budget, done=None, requirements=None, plot=None, program=None, keep_unresolved=False):
     """Openings per room group. ``program`` (a validated confirmed brief program)
     adds the target floor's own rooms to each call's context, nothing more."""
@@ -986,6 +1251,10 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
     for template, offset, rooms in groups:
         if template+':'+str(offset) not in done:
             propose(template, offset, rooms)
+    # Free and before any corrective call: an upper covered porch gets the
+    # door of the room it is entered from when the openings left it closed.
+    if _support_doors(building, plot, dwelling):
+        checkpoint()
     # One bounded corrective pass. Completed geometry and unaffected groups
     # remain available if the provider fails or the original budget runs out.
     from acs_residential_access import scoped, detail_issues

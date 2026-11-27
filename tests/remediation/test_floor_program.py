@@ -30,6 +30,7 @@ sys.path.insert(0, str(ROOT / 'tests' / 'remediation'))
 import acs_brief_reader as B
 import acs_floor_program as F
 import acs_plot_rules as P
+import acs_residential_generation as G
 import acs_understand as U
 import acs_workspace_service as S
 from acs_plan_bridge import existing_geometry_verifier
@@ -225,12 +226,16 @@ class Generation(unittest.TestCase):
         self.assertEqual(set(context['program']), {'level_0', 'level_1', 'level_2'})
         self.assertEqual(context['program']['level_1']['floor'], 'الدور الأول')
         # The stubbed plan chunks leave the fixture's corridor fill out, so one
-        # second-floor bedroom stands over a void of the first floor (the first-
-        # floor one over the ground got a free porch): the same repair carries it.
-        self.assertEqual([f['code'] for f in context['findings']], ['PROGRAM_ROOM_SIZE_OFF', 'UNSUPPORTED_UPPER_ROOM'])
+        # second-floor bedroom stands over a void of the first floor. A covered
+        # porch under it, entered from a first-floor room, carries it for free
+        # (a porch is no program room, so the confirmed counts are unchanged);
+        # the repair only carries the majlis size.
+        self.assertEqual([f['code'] for f in context['findings']], ['PROGRAM_ROOM_SIZE_OFF'])
         self.assertEqual(context['findings'][0]['room_ref'], ['level_0', 'level_0_majlis_1'])
-        self.assertEqual(context['findings'][1]['room_ref'], ['level_2', 'level_2_bedroom_2'])
-        self.assertIn('UNSUPPORTED_UPPER_ROOM: that upper room', system)
+        porches = [r for r in context['building']['floors']['level_1']['rooms'] if r['role'] == 'porch']
+        self.assertEqual([(p['name'], p['walls'], p['covered']) for p in porches], [('شرفة مغطاة', 'none', True)])
+        self.assertEqual(G._unsupported_findings(context['building']), [])
+        self.assertNotIn('UNSUPPORTED_UPPER_ROOM: that upper room', system)
         self.assertIn('context.program holds each floor template', system)
         for _, text, system in self.provider.stage('detail'):
             context = json.loads(text)

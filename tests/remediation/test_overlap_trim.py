@@ -50,16 +50,16 @@ class TrimSliverOverlap(unittest.TestCase):
     def test_prepare_layout_spends_no_provider_call_on_a_sliver(self):
         # The sliver is trimmed for free. The same layout also had five upper
         # rooms over open ground (the live V1's five «معلّق» findings): four
-        # first-floor ones get a free covered porch below, and only the second-
-        # floor bathroom over a first-floor void is left for one repair call.
+        # first-floor ones get a free covered porch below, and the second-
+        # floor bathroom over a first-floor void a covered porch on the first
+        # floor with one under it on the ground, also for free.
         with limited(12, used=7) as budget, patch('acs_understand.call_llm', return_value='{}') as provider:
             out = G.prepare_layout(copy.deepcopy(LAYOUT), BRIEF, [], budget)
-        self.assertEqual(provider.call_count, 1)
-        context = json.loads(provider.call_args.args[0])
-        self.assertEqual(context['findings'], [{'code': 'UNSUPPORTED_UPPER_ROOM', 'room_ref': ['level_2', 'level_2_bathroom_2'],
-                                                'supported_share': 0.0, 'storey_below': 'level_1'}])
+        provider.assert_not_called()
+        self.assertEqual(G._unsupported_findings(out), [])
         self.assertEqual(G._geometry(G._canonical_room_roles(out))[0], [])
         self.assertTrue(any('تداخل صغير' in a for a in out['meta']['assumptions']), 'the trim is disclosed')
+        self.assertTrue(any('شرفة مغطاة' in a for a in out['meta']['assumptions']), 'the stacked porch is disclosed')
 
     def test_without_budget_for_a_repair_the_sliver_and_porches_are_still_free(self):
         with limited(12, used=11) as budget, patch('acs_understand.call_llm') as provider:
