@@ -219,4 +219,22 @@ class PhysicalStairs(unittest.TestCase):
         self.assertIs(out['floors'],b['floors']);self.assertNotIn('meta',b)
         self.assertEqual(report['unsupported'][0]['code'],'STAIR_CORE_NOT_DECLARED')
 
+    def test_a_core_large_enough_gets_the_largest_code_based_profile(self):
+        import acs_drafting_standards as STD
+        cases = {(2.6, 5.0): (1.0, .28, 1.0), (2.2, 4.2): (.92, .26, .92), (4, 4): (.9, .25, .9)}
+        for (w, d), (flight, tread, landing) in cases.items():
+            b = model()
+            room = b['floors']['shared']['rooms'][0]
+            room['rect'] = [0, 0, w, d]; room['doors'][0]['offset'] = w / 2
+            b['site'] = {'w': w, 'd': d}
+            out, report, reason = with_default_stairs(b)
+            self.assertIsNone(reason); self.assertEqual(report['generated_connections'], 1, (w, d))
+            s = stair_connections(out)[0]['object']['stair']
+            self.assertEqual((s['flight_width_m'], s['tread_m'], s['mid_landing_m']), (flight, tread, landing), (w, d))
+            riser = 3.2 / (2 * s['risers_per_flight'])
+            if flight == 1.0:  # the profile a 2.6 x 5 m core gets meets the general (IBC) row
+                self.assertTrue(all(STD.stair_ok(riser, tread, 'general').values()), STD.stair_ok(riser, tread, 'general'))
+            if flight == .92:
+                self.assertTrue(STD.stair_ok(riser, tread, 'dwelling')['tread_ok'])
+
 if __name__ == '__main__': unittest.main()

@@ -10,6 +10,8 @@ import json
 import math
 
 EPS = 1e-6
+# (flight width, tread, landing depth) in metres, tried in order; 9 risers per flight.
+STAIR_PROFILES=((1.0,.28,1.0),(.92,.26,.92),(.9,.25,.9))
 SCHEMA = 'acs.stairs/1'
 # A bounded default-authoring profile, deliberately below canonical admission's
 # 900 kB/50k nodes. These do not redefine the limits for imported/authored models.
@@ -455,9 +457,16 @@ def with_default_stairs(model):
                 h=target_elev-elev
                 if not 2.4-EPS<=h<=3.6+EPS:
                     code='STAIR_DEFAULT_RISE_UNSUPPORTED';break
-                w,d=1.9,3.8; fw,fd=(w,d) if rot%180==0 else (d,w)
-                if rc[2]<fw+wall-EPS or rc[3]<fd+wall-EPS:
+                # The largest profile that fits the core: IBC-based (1.0 m flights,
+                # 0.28 m treads, landings as deep as the flight), then IRC dwelling
+                # minimums, then the original compact profile for small cores.
+                for flight,tread,landing in STAIR_PROFILES:
+                    w,d=2*flight+.1,2*landing+8*tread; fw,fd=(w,d) if rot%180==0 else (d,w)
+                    if rc[2]>=fw+wall-EPS and rc[3]>=fd+wall-EPS:
+                        break
+                else:
                     code='STAIR_CORE_TOO_SMALL';break
+                w,d=_q(w),_q(d); fw,fd=(w,d) if rot%180==0 else (d,w)
                 offset=door.get('offset'); width=door.get('width')
                 if not _number(offset) or not _number(width) or width<=0 or width>w:
                     code='STAIR_ENTRY_UNSUPPORTED';break
@@ -477,8 +486,8 @@ def with_default_stairs(model):
                      'kind':'stairs','form':'u_return','x':_q(x),'z':_q(z),'y':0,'w':w,'d':d,'h':_q(h),
                      'rot':rot,'count':1,'pitch':1,'dir':'x',
                      'stair':{'schema':'acs.stair/1','source_level_index':level['index'],'target_level_index':target['index'],
-                         'source_elevation_m':elev,'target_elevation_m':target_elev,'flight_width_m':.9,'gap_m':.1,
-                         'tread_m':.25,'risers_per_flight':9,'entry_landing_m':.9,'mid_landing_m':.9,'landing_thickness_m':.15},
+                         'source_elevation_m':elev,'target_elevation_m':target_elev,'flight_width_m':flight,'gap_m':.1,
+                         'tread_m':tread,'risers_per_flight':9,'entry_landing_m':landing,'mid_landing_m':landing,'landing_thickness_m':.15},
                      'stair_provenance':{'source':'system_default','source_room_id':room.get('id'),'core_id':core}}
                 geometry=resolve_stair_geometry(obj)
                 arrival=_world_rect(geometry['arrival'],obj,room)

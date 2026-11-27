@@ -2,6 +2,8 @@
    renderer, storage, authentication or provider dependencies. Metres; object
    local +X rotates toward +Z. Geometry never certifies safe traversal or codes. */
 const STAIR_EPS=1e-6;
+// (flight width, tread, landing depth) in metres, tried in order; 9 risers per flight.
+const STAIR_PROFILES=[[1.0,.28,1.0],[.92,.26,.92],[.9,.25,.9]];
 const stairDict=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const stairNumber=v=>typeof v==='number'&&Number.isFinite(v);
 const stairClone=v=>structuredClone(v);
@@ -229,8 +231,9 @@ function withDefaultStairs(model){
       if(edges.size!==1||doors.length!==1||!['N','E','S','W'].includes(edge)){code='STAIR_ENTRY_UNSUPPORTED';break;}
       const door=doors[0],rot={N:0,E:90,S:180,W:270}[edge],h=targetElev-elev;
       if(h<2.4-STAIR_EPS||h>3.6+STAIR_EPS){code='STAIR_DEFAULT_RISE_UNSUPPORTED';break;}
-      const w=1.9,d=3.8,[fw,fd]=rot%180===0?[w,d]:[d,w];
-      if(rc[2]<fw+wall-STAIR_EPS||rc[3]<fd+wall-STAIR_EPS){code='STAIR_CORE_TOO_SMALL';break;}
+      const profile=STAIR_PROFILES.find(([f,t,l])=>{const pw=2*f+.1,pd=2*l+8*t,[a,b]=rot%180===0?[pw,pd]:[pd,pw];return rc[2]>=a+wall-STAIR_EPS&&rc[3]>=b+wall-STAIR_EPS;});
+      if(!profile){code='STAIR_CORE_TOO_SMALL';break;}
+      const [flight,tread,landing]=profile,w=stairRound(2*flight+.1),d=stairRound(2*landing+8*tread),[fw,fd]=rot%180===0?[w,d]:[d,w];
       const offset=door.offset,width=door.width;
       if(!stairNumber(offset)||!stairNumber(width)||width<=0||width>w){code='STAIR_ENTRY_UNSUPPORTED';break;}
       const x=['N','S'].includes(edge)?offset:edge==='W'?wall/2+d/2:rc[2]-wall/2-d/2;
@@ -239,7 +242,7 @@ function withDefaultStairs(model){
       const base=stairId('stairs_'+core+'_'+level.index+'_'+target.index),usedIds=new Set(Object.values(room).filter(Array.isArray).flatMap(values=>values.filter(item=>stairDict(item)&&typeof item.id==='string').map(item=>item.id)));
       let objectId=base,n=2;while(usedIds.has(objectId)){const suffix='_'+n;objectId=Array.from(base).slice(0,160-suffix.length).join('')+suffix;n++;}
       const obj={id:objectId,kind:'stairs',form:'u_return',x:stairRound(x),z:stairRound(z),y:0,w,d,h:stairRound(h),rot,count:1,pitch:1,dir:'x',
-        stair:{schema:'acs.stair/1',source_level_index:level.index,target_level_index:target.index,source_elevation_m:elev,target_elevation_m:targetElev,flight_width_m:.9,gap_m:.1,tread_m:.25,risers_per_flight:9,entry_landing_m:.9,mid_landing_m:.9,landing_thickness_m:.15},
+        stair:{schema:'acs.stair/1',source_level_index:level.index,target_level_index:target.index,source_elevation_m:elev,target_elevation_m:targetElev,flight_width_m:flight,gap_m:.1,tread_m:tread,risers_per_flight:9,entry_landing_m:landing,mid_landing_m:landing,landing_thickness_m:.15},
         stair_provenance:{source:'system_default',source_room_id:room.id??null,core_id:core}};
       const geometry=resolveStairGeometry(obj),arrival=stairWorldRect(geometry.arrival,obj,room),targetRoom=stairCores(model,target).find(r=>r.core_id===core);
       if(!stairEntryMatches(targetRoom,arrival,rot,wall)){code='STAIR_ENTRY_UNSUPPORTED';break;}
