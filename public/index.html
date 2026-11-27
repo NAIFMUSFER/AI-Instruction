@@ -45,32 +45,37 @@
 <!-- شاشة الدخول -->
 <div id="login">
   <div class="card">
-    <div class="auth-brand"><b lang="en">ACS</b> استوديو البناء</div>
+    <div class="auth-brand"><svg class="auth-mark" aria-hidden="true" width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="10" fill="currentColor"/><path d="M9 17.5 18 10l9 7.5V27a1 1 0 0 1-1 1h-5.5v-6h-5v6H10a1 1 0 0 1-1-1z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg><span>استوديو البناء</span></div>
     <h1 id="acsAuthTitle">تسجيل الدخول</h1>
+    <p id="acsAuthLead" class="auth-lead">احفظ تصاميمك وافتحها من أي جهاز.</p>
     <div class="auth-access">
       <div id="acsAuthStatus" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
     <form id="acsAuthForm" novalidate>
       <div id="acsAuthGoogleField">
         <button id="acsAuthGoogle" class="auth-google" type="button"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.17 7.09-10.33 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.41 14.41 0 0 1 9.75 24c0-1.59.27-3.13.78-4.59l-7.98-6.19A23.87 23.87 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span id="acsAuthGoogleLabel">المتابعة باستخدام Google</span></button>
-        <div class="auth-divider">أو باستخدام البريد الإلكتروني</div>
       </div>
-      <div id="acsAuthNameField" hidden><label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" autocomplete="name" maxlength="160" placeholder="اسمك أو اسم المنشأة" /></div>
-      <div id="acsAuthCredentials">
-        <div id="acsAuthEmailField"><label for="lgEmail">البريد الإلكتروني</label><input id="lgEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="320" dir="ltr" placeholder="you@example.com" /></div>
-        <div id="acsAuthPasswordField">
-        <label for="lgPassword">كلمة المرور</label>
-        <div class="auth-password"><input id="lgPassword" type="password" autocomplete="current-password" maxlength="256" aria-describedby="acsAuthStatus" placeholder="كلمة المرور" /><button id="acsPasswordToggle" class="auth-text-button" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button></div>
+      <!-- البريد وكلمة المرور خلف زرّ واحد: مسار Google هو الأساسي. -->
+      <button id="acsAuthEmailToggle" class="auth-email-toggle" type="button" aria-expanded="false" aria-controls="acsAuthEmailBox">الدخول بالبريد الإلكتروني</button>
+      <div id="acsAuthEmailBox" class="auth-email" hidden>
+        <div id="acsAuthNameField" hidden><label for="lgName">الاسم</label><input id="lgName" autocomplete="name" maxlength="160" placeholder="اسمك" /></div>
+        <div id="acsAuthCredentials">
+          <div id="acsAuthEmailField"><label for="lgEmail">البريد الإلكتروني</label><input id="lgEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="320" dir="ltr" placeholder="you@example.com" /></div>
+          <div id="acsAuthPasswordField">
+          <label for="lgPassword">كلمة المرور</label>
+          <div class="auth-password"><input id="lgPassword" type="password" autocomplete="current-password" maxlength="256" aria-describedby="acsAuthStatus" placeholder="كلمة المرور" /><button id="acsPasswordToggle" class="auth-text-button" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button></div>
+          </div>
+          <div id="acsAuthConfirmField" hidden><label for="lgPasswordConfirm">تأكيد كلمة المرور الجديدة</label><input id="lgPasswordConfirm" type="password" autocomplete="new-password" maxlength="256" /></div>
         </div>
-        <div id="acsAuthConfirmField" hidden><label for="lgPasswordConfirm">تأكيد كلمة المرور الجديدة</label><input id="lgPasswordConfirm" type="password" autocomplete="new-password" maxlength="256" /></div>
+        <div id="acsAuthProjectField" hidden><label for="lgProject">اسم المشروع</label><input id="lgProject" maxlength="200" placeholder="مثال: بيتي في الرياض" /></div>
+        <button id="lgGo" type="submit">تسجيل الدخول</button>
+        <div class="auth-help"><button id="acsAuthRecover" class="auth-text-button" type="button">نسيت كلمة المرور؟</button><button id="acsAuthResend" class="auth-text-button" type="button">إعادة إرسال رسالة التأكيد</button></div>
+        <button id="lgSignup" class="auth-switch" type="button">إنشاء حساب جديد</button>
       </div>
-      <div id="acsAuthProjectField" hidden><label for="lgProject">اسم المشروع · <span lang="en" dir="ltr">Project name</span></label><input id="lgProject" maxlength="200" placeholder="مثال: عمارة سكنية بالرياض" /></div>
-      <button id="lgGo" type="submit">تسجيل الدخول ▸</button>
-      <button id="lgSignup" class="auth-secondary" type="button">إنشاء حساب جديد</button>
-      <div class="auth-help"><button id="acsAuthRecover" class="auth-text-button" type="button">نسيت كلمة المرور؟</button><button id="acsAuthResend" class="auth-text-button" type="button">إعادة إرسال تأكيد البريد</button></div>
     </form>
+    <div class="auth-or" aria-hidden="true">أو</div>
     <p class="auth-guest-option"><a id="acsAuthGuestLink" href="/?guest=1">متابعة بدون حساب</a></p>
-    <p class="hint auth-privacy">مساحة خاصة لمشاريعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></p>
+    <p class="auth-privacy"><a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></p>
     <noscript><p role="alert">فعّل JavaScript لاستخدام تسجيل الدخول والاستوديو.</p></noscript>
   </div>
 </div>

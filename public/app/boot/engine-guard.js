@@ -7,7 +7,7 @@
   "use strict";
   var SESSION_KEY="acs_supabase_session_v1", PROJECT_KEY="acs_project_v1", RECOVERY_KEY="acs_password_recovery_v1";
   var GOOGLE_KEY="acs_google_pkce_v1", GOOGLE_MAX_AGE=10*60*1000, googleNavigation=false;
-  var memorySession=null, refreshFlight=null, sessionEpoch=0, busy=false, mode="signin";
+  var memorySession=null, refreshFlight=null, sessionEpoch=0, busy=false, mode="signin", emailExpanded=false;
   var onEntry=null, restoredSession=null;
   var callbackHash=typeof location.hash==="string"?new URLSearchParams(location.hash.slice(1)):null;
   var callbackQuery=new URLSearchParams(location.search||""), googleCallback=null;
@@ -72,6 +72,13 @@
     var google=byId("acsAuthGoogleField");if(google)google.hidden=next!=="signin"&&next!=="signup";
     var local=localHost(), signup=next==="signup", project=next==="project", resume=next==="resume";
     var recover=next==="recover", confirm=next==="confirm", update=next==="update";
+    // Email and password sit behind one button on the sign-in screen; every
+    // other mode needs the form. Localhost opens it for the name-only dev entry.
+    var emailOpen=next!=="signin"||emailExpanded||local;
+    var login=byId("login");if(login)login.setAttribute("data-auth-mode",next);
+    var box=byId("acsAuthEmailBox"),toggle=byId("acsAuthEmailToggle");
+    if(box)box.hidden=!emailOpen;
+    if(toggle){toggle.hidden=emailOpen;toggle.setAttribute("aria-expanded",String(emailOpen));}
     var name=byId("acsAuthNameField"), p=byId("acsAuthProjectField"), cred=byId("acsAuthCredentials");
     if(name)name.hidden=!local&&!signup;
     if(p)p.hidden=!local&&!project;
@@ -79,8 +86,9 @@
     var ef=byId("acsAuthEmailField"),pf=byId("acsAuthPasswordField"),cf=byId("acsAuthConfirmField");
     if(ef)ef.hidden=update;if(pf)pf.hidden=recover||confirm;if(cf)cf.hidden=!update;
     var title=byId("acsAuthTitle");if(title)title.textContent=resume?"العودة إلى مشروعك":project?"أنشئ مشروعك الأول":signup?"حساب جديد":"تسجيل الدخول";
-    var go=byId("lgGo");if(go)go.textContent=resume?"إعادة المحاولة":project?"فتح المشروع ▸":signup?"إنشاء الحساب ▸":"تسجيل الدخول ▸";
-    var back=byId("lgSignup");if(back)back.textContent=project||resume?"استخدام حساب آخر":signup?"لدي حساب — تسجيل الدخول":"إنشاء حساب جديد";
+    var lead=byId("acsAuthLead");if(lead)lead.textContent=resume||project||recover||confirm||update?"":signup?"أنشئ حسابًا بالبريد الإلكتروني.":"احفظ تصاميمك وافتحها من أي جهاز.";
+    var go=byId("lgGo");if(go)go.textContent=resume?"إعادة المحاولة":project?"فتح المشروع":signup?"إنشاء الحساب":"تسجيل الدخول";
+    var back=byId("lgSignup");if(back)back.textContent=project||resume?"استخدام حساب آخر":signup?"لديّ حساب — تسجيل الدخول":"إنشاء حساب جديد";
     var pw=byId("lgPassword");if(pw){pw.autocomplete=signup?"new-password":"current-password";pw.placeholder=signup?"8 أحرف على الأقل":"كلمة المرور";}
     if(recover||confirm||update){
       if(title)title.textContent=update?"اختر كلمة مرور جديدة":confirm?"تأكيد البريد الإلكتروني":"استعادة الحساب";
@@ -375,6 +383,7 @@
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
     var google=byId("acsAuthGoogle");if(google)google.addEventListener("click",startGoogle);
+    var emailToggle=byId("acsAuthEmailToggle");if(emailToggle)emailToggle.addEventListener("click",function(){if(busy)return;emailExpanded=true;setMode(mode);byId("lgEmail").focus();});
     window.addEventListener("pageshow",function(e){
       if(e.persisted&&googleNavigation){googleNavigation=false;forgetGoogle();setBusy(false);setStatus("يمكنك المحاولة باستخدام Google مرة أخرى.",false);}
     });

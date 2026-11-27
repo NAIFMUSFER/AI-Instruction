@@ -120,6 +120,17 @@ async function runAuthShippedPage(){
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       assert.ok((await page.locator('#login .card').boundingBox()).width<=448,'shared card styles must not stretch the sign-in form');
       assert.equal(await page.locator('#acsAuthGoogle').isVisible(),true);
+      // One primary path: email and password wait behind a single disclosure.
+      assert.equal(await page.locator('#lgEmail').isVisible(),false,'email sign-in starts collapsed');
+      assert.equal(await page.locator('#lgGo').isVisible(),false);
+      assert.equal(await page.locator('#acsAuthRecover').isVisible(),false,'recovery belongs to email mode');
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),true,'the guest path is visible without opening email');
+      const emailToggle=page.locator('#acsAuthEmailToggle');
+      assert.equal(await emailToggle.getAttribute('aria-expanded'),'false');
+      assert.ok((await emailToggle.boundingBox()).height>=44);
+      await emailToggle.click();
+      assert.equal(await emailToggle.isVisible(),false);
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'lgEmail','opening email mode focuses the address field');
       await page.locator('#acsAuthRecover').click();
       assert.equal(await page.locator('#lgGo').textContent(),'إرسال رابط الاستعادة');
       assert.equal(await page.locator('#lgPassword').isVisible(),false);

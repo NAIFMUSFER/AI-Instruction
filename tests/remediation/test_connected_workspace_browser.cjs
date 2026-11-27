@@ -180,7 +180,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    });
    await page.goto('https://acs-ui.test/?signin=1');
    assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
-   await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
+   await page.locator('#acsAuthEmailToggle').click();await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
    if(!noWebGL){await verifyBuildingSeparateFromLand(page,width);await verifyPromptStarters(page,port,width);}
    await newProject(page,'مشروع قبول '+width);
