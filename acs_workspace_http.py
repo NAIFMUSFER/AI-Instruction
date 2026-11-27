@@ -27,10 +27,11 @@ RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE"
                               "ACS_PROVIDER_BUDGET_EXHAUSTED"})
 
 
-# A reply cut at the output cap after a saved stage: resuming re-runs only that
-# stage from the checkpoint. Without a checkpoint it is not offered, because a
-# restart would pay for every stage again and meet the same cap.
-RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED"})
+# A reply cut at the output cap, or a job stopped at the worker deadline, after
+# a saved stage: resuming re-runs only the unfinished stages from the checkpoint.
+# Without a checkpoint it is not offered, because a restart would pay for every
+# stage again and meet the same cap or deadline.
+RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED", "ACS_TIMEOUT"})
 
 
 def _resumable_failure(code, checkpoint=None):
@@ -66,9 +67,9 @@ def _orphaned(row, now=None):
     started = _started_at(row)
     if started is None:
         return False
-    from acs_generation_job import DEFAULT_TIMEOUT_S
+    from acs_generation_job import DEFAULT_TIMEOUT_S, WORKSPACE_JOB_TIMEOUT_S
     own = row.get("worker_id") == WORKER_ID
-    limit = OWN_ORPHAN_AFTER_S if own else DEFAULT_TIMEOUT_S + ORPHAN_GRACE_S
+    limit = OWN_ORPHAN_AFTER_S if own else max(DEFAULT_TIMEOUT_S, WORKSPACE_JOB_TIMEOUT_S) + ORPHAN_GRACE_S
     return ((now or datetime.now(timezone.utc)) - started).total_seconds() > limit
 
 

@@ -38,12 +38,33 @@ class ResumeAfterTruncation(unittest.TestCase):
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_TRUNCATED'))['job']['can_resume'])
         self.assertFalse(H._resumable_failure('ACS_UPSTREAM_TRUNCATED'))
 
+    def test_a_job_stopped_at_the_deadline_after_a_saved_layout_offers_a_resume(self):
+        # Live job e53cc4f7 (the owner's corner duplex): six paid calls, the full
+        # layout saved, then the 840 s worker deadline before the repair stage.
+        view = H._job_view(row('ACS_TIMEOUT', {'kind': 'layout', 'building': {}}))
+        self.assertTrue(view['job']['can_resume'])
+        self.assertFalse(H._job_view(row('ACS_TIMEOUT'))['job']['can_resume'], 'no checkpoint: no paid restart offered')
+        self.assertFalse(H._job_view(row('ACS_TIMEOUT', {'kind': 'layout'}, resumed_by='x'))['job']['can_resume'])
+
     def test_other_upstream_failures_stay_final_and_known_resumable_codes_are_unchanged(self):
         checkpoint = {'kind': 'details'}
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_REFUSED', checkpoint))['job']['can_resume'])
         self.assertTrue(H._job_view(row('PLAN_DETAIL_INCOMPLETE', checkpoint))['job']['can_resume'])
         self.assertTrue(H._job_view(row('PLAN_LAYOUT_INCOMPLETE'))['job']['can_resume'], 'a generate restart, as before')
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_TRUNCATED', checkpoint, resumed_by='x'))['job']['can_resume'])
+
+
+class WorkspaceDeadline(unittest.TestCase):
+    def test_a_long_job_on_another_worker_is_not_called_orphaned_before_its_own_deadline(self):
+        from datetime import datetime, timedelta, timezone
+        from acs_generation_job import WORKSPACE_JOB_TIMEOUT_S
+        now = datetime.now(timezone.utc)
+        def running(age_s):
+            return {'id': 'other-job', 'state': 'RUNNING', 'worker_id': 'another-worker',
+                    'created_at': (now - timedelta(seconds=age_s)).isoformat()}
+        # Twenty-five minutes in: still inside a 30-minute workspace job.
+        self.assertFalse(H._orphaned(running(1500), now))
+        self.assertTrue(H._orphaned(running(WORKSPACE_JOB_TIMEOUT_S + H.ORPHAN_GRACE_S + 60), now))
 
 
 class OutputCaps(unittest.TestCase):

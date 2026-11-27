@@ -61,6 +61,10 @@ def _env_float(name, default):
 
 CAPACITY = max(1, _env_int("ACS_JOB_CAPACITY", _env_int("ACS_WORKER_THREADS", 8)))
 DEFAULT_TIMEOUT_S = _env_float("ACS_REQUEST_TIMEOUT_S", 840.0)
+# A workspace generation runs as a background job the page polls, so no HTTP
+# client waits on it: its deadline is its own, long enough for a large staged
+# plan (each staged call can think for several minutes).
+WORKSPACE_JOB_TIMEOUT_S = _env_float("ACS_WORKSPACE_JOB_TIMEOUT_S", 1800.0)
 ADMISSION_WAIT_S = _env_float("ACS_JOB_ADMISSION_WAIT_S", 0.0)
 TERMINATE_GRACE_S = _env_float("ACS_JOB_TERMINATE_GRACE_S", 3.0)
 EXECUTOR = _env("ACS_JOB_EXECUTOR", EXECUTOR_PROCESS).lower()
