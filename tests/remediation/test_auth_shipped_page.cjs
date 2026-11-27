@@ -159,6 +159,7 @@ async function runAuthShippedPage(){
       await page.screenshot({path:path.join(ROOT,'logs','auth-service-unavailable-'+width+'.png'),mask:[page.locator('input')]});
       failSignin=false;await page.locator('#lgGo').click();
       await page.locator('#acsAuthProjectField').waitFor({state:'visible'});
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),false,'a signed-in owner naming a first project gets no guest detour');
       assert.equal(await page.locator('#lgPassword').inputValue(),'');
       assert.equal(await page.locator('#acsAuthCredentials').isVisible(),false);
       const firstSourceRestore=sourceResponse(page);

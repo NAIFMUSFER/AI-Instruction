@@ -271,6 +271,11 @@ async function runGuestWorkspaceTests(){
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#guestStartDialog').isVisible(),false);
    assert.equal(await page.evaluate(()=>document.activeElement.id),'guestStart');
+   // Developer tools (server override, engineering panels, build identity and
+   // diagnostics, declared capabilities) never reach a homeowner on the public site.
+   assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('acs-dev')),false);
+   assert.deepEqual(await page.evaluate(()=>['llmURL','acsOpenBim','acsBuildId','acsDiagBtn','acsCapList']
+    .map(id=>getComputedStyle(document.getElementById(id).closest('.acs-dev-only')).display)),['none','none','none','none','none']);
 
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.equal(await page.evaluate(()=>window.__guestAuthEvents),0);

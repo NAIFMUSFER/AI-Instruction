@@ -27,6 +27,15 @@ async function run(){
    // 3. Back on the main link, the list shows both and links to the draft.
    const page=root.page;await page.reload();
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+   // «مشروع جديد» lists the visitor's own projects under the ways to begin; the sample is not theirs.
+   await L.press(page,size,'#guestStart');
+   await page.locator('#guestRecent').waitFor({state:'visible'});
+   const recent=await page.locator('#guestRecentList > li').evaluateAll(items=>items.map(li=>({text:li.innerText,href:li.querySelector('a')?.getAttribute('href')||null})));
+   assert.equal(recent.length,1,size.name+': only the visitor\'s own project is listed '+JSON.stringify(recent));
+   assert.match(recent[0].text,/عمارة أبو فهد/);assert.match(recent[0].text,/24 × 25 م/);
+   assert.equal(recent[0].href,new URL(draftUrl).pathname+new URL(draftUrl).search,size.name+': the recent row opens the draft');
+   assert.ok((await page.locator('#guestRecentList a').boundingBox()).height>=44,'44px recent project row');
+   await page.keyboard.press('Escape');await page.locator('#guestStartDialog').waitFor({state:'hidden'});
    await L.press(page,size,'#guestTools');
    const entry=page.locator('#guestProjects');
    assert.equal((await entry.textContent()).trim(),'مشاريعي على هذا الجهاز');
