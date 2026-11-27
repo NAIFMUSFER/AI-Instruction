@@ -535,7 +535,7 @@ def prompt_text(rules, ground_template=None, typical_template=None):
              + '، '.join(SIDE_AR[s] + ' ' + _fmt(sb[s]) + ' م' for s in SIDES) + '.',
              '- المساحة القابلة للبناء: x من ' + _fmt(x) + ' إلى ' + _fmt(x + w) + ' وz من ' + _fmt(z) + ' إلى '
              + _fmt(z + d) + ' (' + _fmt(w) + ' × ' + _fmt(d) + ' م). ضع كل غرف كل الأدوار داخلها، ولا تضع أي غرفة في الارتدادات. '
-             'إن زادت عن حاجة البرنامج فلا تكبّر الشقق لملئها؛ اترك الباقي فراغًا خارجيًا.']
+             'إن زادت عن حاجة البرنامج فلا تكبّر الشقق لملئها؛ اترك الباقي فراغًا خارجيًا لا تعلوه غرفة في دور أعلى.']
     if park['placement'] == 'front_setback' and park['required']:
         lines.append('- المواقف: ' + str(park['required']) + ' مواقف في الارتداد الأمامي على شارع '
                      + SIDE_AR[rules['streets'][0]] + ' تحسبها المنصة؛ لا ترسمها غرفًا واترك واجهة المدخل مطلة عليها.')
@@ -557,8 +557,9 @@ def prompt_text(rules, ground_template=None, typical_template=None):
                      + _fmt(rules['unit_area_tolerance'] * 100) + '٪).')
     lines.append('- النوافذ: لا نافذة ولا باب على جدار يقع على حد أرض جار (مسافة 0). نوافذ الغرف السكنية على واجهة '
                  'تطل على الشارع أو تبعد عن حد الجار ' + _fmt(rules['window_min_m']) + ' م على الأقل.')
-    lines.append('- الخصوصية: اجعل باب الشقة أو المسكن بجوار المجلس (منطقة الضيوف)، ولا يواجه باب غرفة نوم باب المدخل '
-                 'على أقل من ' + _fmt(ENTRY_BEDROOM_MIN_M) + ' م.')
+    lines.append('- الخصوصية: باب المجلس (منطقة الضيوف) على ' + _fmt(ENTRY_MAJLIS_MAX_M) + ' م على الأكثر من باب الشقة أو '
+                 'المسكن، أو للمجلس باب ضيوف خارجي خاص في الأرضي، ولا يواجه باب غرفة نوم باب المدخل على أقل من '
+                 + _fmt(ENTRY_BEDROOM_MIN_M) + ' م.')
     return '\n'.join(lines)
 
 
@@ -589,9 +590,8 @@ plot.streets. Never put an external door on an upper template (it would open
 onto the void). Never put a window or door on a wall lying on a plot line of a
 non-street side (distance 0). Windows of bedrooms, living rooms, majlis and
 kitchens go on façades facing a street or at least plot.window_min_m from a
-non-street plot line. Keep each apartment or dwelling entrance door next to the
-majlis, and no bedroom door within 3 m of the entrance door. The lobby or
-landing counts as the COMMON corridor when the plan has no separate one.'''
+non-street plot line. No bedroom door within 3 m of an entrance door. The
+lobby or landing counts as the COMMON corridor when the plan has no separate one.'''
 
 
 def repair_instruction(findings):

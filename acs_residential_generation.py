@@ -61,6 +61,19 @@ Do not invent a plot's regulatory setbacks or claim compliance. Emit no furnitur
 electrical points or openings during outline and plan_chunk; a separate stage
 will add openings. Do not embed the full brief repeatedly in room entries.
 Do not output validation, authority, approval, baseline or measured metrics.
+STACKING: every room of an upper storey stands over rooms of the storey below
+(context.below: inside extent, off open), never over a yard, garden, pool or
+setback. If an upper storey needs more area, add under it on the ground storey
+a covered porch (role porch, walls "none", covered true), not a void. Cantilever
+(max 1.2 m) only if the brief asks. Upper bathrooms, kitchens and laundries sit
+over wet rooms; group wet rooms on shared walls.
+ZONING: majlis and guest WC within 5 m of the entrance serving them (the flat or
+house entrance, or a guest door of their own on an exterior wall); bedrooms in
+the private zone away from it. A room the brief opens to a yard (pool bathroom,
+store) is on the ground storey against that yard.
+Clear short side unless the brief sizes the room (m): bedroom 2.7, maid/driver
+2.1, living/majlis/dining 3.0, kitchen 2.1, bathroom 1.5 (WC 1.2), corridor 1.2,
+entrance 1.5, laundry/dressing/pantry/store 1.2.
 '''
 
 # A villa or house (acs_plot_rules.dwelling): a livable Saudi family home, not
@@ -131,6 +144,11 @@ window; do not invent an internal window to satisfy an assumed daylight rule.
 Keep openings within their wall spans and do not overlap openings. Provide one
 light point per enclosed occupied room. These are editable concept proposals.
 Do not claim daylight compliance, engineering approval, structure or fire design.
+A yard room (pool bathroom, store) opens on its exterior wall to that yard.
+Guests with their own entrance get an external door into the majlis or its
+guest lobby; else the majlis door is within 5 m of the entrance door. Doors:
+entrance 1.0-1.2, rooms 0.9, baths 0.8. Habitable windows about 1/8 of the floor
+area, sill 0.9 (bath 1.6). A porch (walls "none") needs no door.
 '''
 
 # مرادفات أدوار صريحة فقط؛ لا نستنتج الدور من اسم الغرفة أو نص الطلب.
