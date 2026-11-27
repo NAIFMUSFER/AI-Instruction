@@ -57,7 +57,7 @@ async function pick(page,record){
    if(!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
    return route.fulfill({headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP},body:fs.readFileSync(file)});
   });
-  await page.goto(ORIGIN+'/?signin=1');await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
+  await page.goto(ORIGIN+'/?signin=1');await page.locator('#acsAuthEmailToggle').click();await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
   await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
   const first=await state(page),r1=first.head;assert.ok(approved(first,r1));
   const column=first.object_actions.items.find(row=>row.kind==='column'&&row.supported);assert.ok(column);assert.ok(column.context_detail_provenance);

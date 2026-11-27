@@ -130,6 +130,17 @@ async function runAuthShippedPage(){
       assert.ok((await page.locator('#login .card').boundingBox()).width<=448,'shared card styles must not stretch the sign-in form');
       assert.equal(await page.locator('#acsAuthGoogle').isVisible(),true);
       assert.equal(await page.locator('#acsAuthOfficial').isVisible(),false,'the official site shows no preview notice');
+      // One primary path: email and password wait behind a single disclosure.
+      assert.equal(await page.locator('#lgEmail').isVisible(),false,'email sign-in starts collapsed');
+      assert.equal(await page.locator('#lgGo').isVisible(),false);
+      assert.equal(await page.locator('#acsAuthRecover').isVisible(),false,'recovery belongs to email mode');
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),true,'the guest path is visible without opening email');
+      const emailToggle=page.locator('#acsAuthEmailToggle');
+      assert.equal(await emailToggle.getAttribute('aria-expanded'),'false');
+      assert.ok((await emailToggle.boundingBox()).height>=44);
+      await emailToggle.click();
+      assert.equal(await emailToggle.isVisible(),false);
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'lgEmail','opening email mode focuses the address field');
       await page.locator('#acsAuthRecover').click();
       assert.equal(await page.locator('#lgGo').textContent(),'إرسال رابط الاستعادة');
       assert.equal(await page.locator('#lgPassword').isVisible(),false);
@@ -158,6 +169,7 @@ async function runAuthShippedPage(){
       await page.screenshot({path:path.join(ROOT,'logs','auth-service-unavailable-'+width+'.png'),mask:[page.locator('input')]});
       failSignin=false;await page.locator('#lgGo').click();
       await page.locator('#acsAuthProjectField').waitFor({state:'visible'});
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),false,'a signed-in owner naming a first project gets no guest detour');
       assert.equal(await page.locator('#lgPassword').inputValue(),'');
       assert.equal(await page.locator('#acsAuthCredentials').isVisible(),false);
       const firstSourceRestore=sourceResponse(page);
@@ -254,6 +266,7 @@ async function runAuthShippedPage(){
       assert.equal(await notice.isVisible(),false,'the official site opens its normal sign-in');
       for(const signup of [false,true]){
         await page.goto(PREVIEW+'/?signin=1&example=apartment-20x25');await notice.waitFor({state:'visible'});
+        await page.locator('#acsAuthEmailToggle').click();
         if(signup)await page.locator('#lgSignup').click();
         await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');
         await Promise.all([page.waitForURL(target),page.locator('#lgGo').click()]);
