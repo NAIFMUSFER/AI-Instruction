@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 391977,
+    "core_initial_bytes": 392011,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The declared boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 45,
@@ -327,7 +327,7 @@
     ],
     "first_party_dynamic_import_count": 37,
     "first_party_module_count": 64,
-    "first_party_total_bytes": 2728540,
+    "first_party_total_bytes": 2728574,
     "guest_route_additional_bytes": 1794187,
     "guest_route_modules": [
       "public/app/core/stairs.mjs",
@@ -362,7 +362,7 @@
       "public/app/render/guest-software-view.mjs",
       "public/app/ui/guest-software-studio.mjs"
     ],
-    "initial_javascript_bytes": 460913,
+    "initial_javascript_bytes": 460947,
     "largest_module": {
       "bytes": 243660,
       "group": "core",
@@ -624,9 +624,9 @@
         "pct_of_first_party_js": 1.22
       },
       {
-        "bytes": 30873,
+        "bytes": 30907,
         "group": "ui",
-        "gzip_bytes": 10769,
+        "gzip_bytes": 10775,
         "loaded": "eager",
         "path": "public/app/ui/plan-upload.mjs",
         "pct_of_first_party_js": 1.13
@@ -1063,7 +1063,7 @@
     "sha256": "bf6580495eb6c64784046448a4ce92fb10de8f9c4a1189ae7a73c08b483492f7",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2728540 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52931 byte shell and the application JavaScript (2728574 bytes) lives in 64 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,
