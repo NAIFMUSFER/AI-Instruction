@@ -804,6 +804,57 @@ def _on_plot(building, plot):
     return P.fit_to_envelope(building, plot)[0]
 
 
+MAJLIS_DOOR_HALF_M = 0.45   # a door is never at the very corner of a wall
+
+
+def _majlis_far_findings(value, plot):
+    """A flat's majlis drawn far from its entry door, found before openings.
+
+    The review measures the majlis door against the flat's entry door
+    (PLOT_ZONING_MAJLIS_FAR, at most ENTRY_MAJLIS_MAX_M) only once doors
+    exist, when the openings stage can no longer move rooms. Live (job
+    1b0eb00e): the second-floor flat's majlis ended 5.8 m from the flat's
+    door and the plan could not be approved. Here the entry door is where the
+    flat's entrance room meets the stair landing or lobby (the middle of their
+    shared wall), and the majlis door is at best half a door from the room's
+    nearest corner, so a layout whose majlis cannot come within the limit is a
+    soft finding the layout repair already pays for."""
+    if not isinstance(plot, dict) or not plot.get('zoning_requested') or plot.get('dwelling') == 'villa':
+        return []
+    import acs_plot_rules as P
+    from acs_residential_access import edge, OPPOSITE, EPS
+    out = []
+    for level in P._occupied(value):
+        rooms = P._rooms(value, level['template'])
+        # The flat's door opens onto the landing or lobby, never into the lift or stair.
+        common = [r for r in rooms if not r.get('unit_id') and r.get('role') in ('lobby', 'entrance', 'corridor', 'landing')]
+        for unit in sorted({r.get('unit_id') for r in rooms if isinstance(r.get('unit_id'), str) and r['unit_id']}):
+            own = [r for r in rooms if r.get('unit_id') == unit]
+            doors = []
+            for room in own:
+                if room.get('role') not in ('entrance', 'lobby', 'corridor'):
+                    continue
+                for other in common:
+                    for side, opp in OPPOSITE.items():
+                        line, lo, hi = edge(room, side)
+                        line2, lo2, hi2 = edge(other, opp)
+                        a, b = max(lo, lo2), min(hi, hi2)
+                        if abs(line - line2) <= EPS and b - a > 0.8:
+                            mid = (a + b) / 2
+                            doors.append((mid, line) if side in ('N', 'S') else (line, mid))
+            if not doors:
+                continue  # entered from the street only: measured once doors exist
+            for majlis in (r for r in own if r.get('role') == 'majlis'):
+                x, z, w, d = majlis['rect']
+                best = min(math.hypot(max(x - px, 0, px - x - w), max(z - pz, 0, pz - z - d)) for px, pz in doors)
+                if best + MAJLIS_DOOR_HALF_M > P.ENTRY_MAJLIS_MAX_M + 1e-6:
+                    out.append({'code': 'LAYOUT_MAJLIS_FAR', 'room_ref': [level['template'], majlis.get('id')],
+                                'nearest_m': round(best + MAJLIS_DOOR_HALF_M, 2), 'limit_m': P.ENTRY_MAJLIS_MAX_M,
+                                'fix': "move the majlis beside the flat's entrance room so its door can be within "
+                                       "%g m of the flat's entry door" % P.ENTRY_MAJLIS_MAX_M})
+    return out
+
+
 def prepare_layout(building, brief, requirements, budget, plot=None, program=None):
     """Bounded correction before openings; every result is checked again.
 
@@ -868,6 +919,8 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         # stage cannot move rooms, so it rides on the repair. Measured on any
         # numeric layout, so a free fix sees whether it adds one.
         soft += _unsupported_findings(value)
+        if geometry_ok:
+            soft += _majlis_far_findings(value, plot)
         return issues + program, soft
     def added(before, after):
         known = {_finding_key(i) for i in before[0] + before[1]}
