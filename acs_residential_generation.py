@@ -1436,6 +1436,12 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
                         break
                     raise PlanError('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح الفتحات ضمن الحد المختار.')
                 propose(template, offset, rooms, findings+extra)
+        # The corrective call rewrites whole room groups, so a door the free
+        # steps added before it can be gone again (live job 1b0eb00e: the
+        # upper lounge lost its door onto the balcony). They run once more.
+        if (findings or extra) and (_match_doors(building) | bool(_support_doors(building, plot, dwelling))
+                                    | bool(_ease_bedroom_doors(building, plot, dwelling))):
+            checkpoint()
         if _guest_doors(building, brief, plot, dwelling):
             checkpoint()
         # keep_unresolved: every room already has its openings, so the paid plan
