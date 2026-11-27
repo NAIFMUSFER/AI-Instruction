@@ -84,6 +84,8 @@ jobs:
                    tests/remediation/test_validate_topology.py \
                    tests/remediation/test_validate_against_real_models.py \
                    tests/remediation/test_healthcare_program.py \
+                   tests/remediation/test_typology_packs.py \
+                   tests/remediation/test_upper_floor_support.py \
                    tests/remediation/test_autofix_propose_boundary.py \
                    tests/remediation/test_doc_claims.py \
                    tests/remediation/test_ci_apt_mirror.py

@@ -924,8 +924,11 @@ AUTHORING_COMPANIONS = ['acs_engineering_approval.py']
 browser_specs |= set(AUTHORING_COMPANIONS)
 # Staged packs: reviewed modules the owner has not wired in yet (their tests run,
 # nothing imports them). Proven below to be unreachable and not shipped; the
-# wiring change moves each into the image (docs/research/healthcare_integration_plan.md).
-STAGED_PACKS = ['acs_healthcare_program.py']
+# wiring change moves each into the image (docs/research/healthcare_integration_plan.md,
+# docs/research/typologies_integration_plan.md).
+STAGED_PACKS = ['acs_healthcare_program.py', 'acs_typology_common.py', 'acs_typology_hotel.py',
+                'acs_typology_mosque.py', 'acs_typology_office.py', 'acs_typology_retail.py',
+                'acs_typology_school.py']
 all_specs = sorted(x for x in os.listdir(ROOT)
                    if re.match(r'^acs_.*\.(py|json)$', x))
 unclassified = []
