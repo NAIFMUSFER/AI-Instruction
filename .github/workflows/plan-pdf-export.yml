@@ -14,6 +14,10 @@ on:
       - 'acs_plan_review.py'
       - 'acs_plan_lock_binding.py'
       - 'acs_plan_projection.py'
+      - 'acs_plan_drafting.py'
+      - 'acs_drafting_standards.py'
+      - 'tests/remediation/test_plan_drafting.py'
+      - 'tests/remediation/test_plan_drafting_exports.py'
 permissions:
   contents: read
 concurrency:
@@ -48,6 +52,7 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python tests/remediation/test_plan_pdf_export.py 2>&1 | tee logs/plan-pdf-export.log
+          python tests/remediation/test_plan_drafting_exports.py 2>&1 | tee logs/plan-drafting-exports.log
       - name: Ensure tests did not mutate the repository
         run: git diff --exit-code
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

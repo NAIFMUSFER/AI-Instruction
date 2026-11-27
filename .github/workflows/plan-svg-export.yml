@@ -8,6 +8,11 @@ on:
       - 'acs_plan_review.py'
       - 'acs_plan_lock_binding.py'
       - 'acs_plan_projection.py'
+      - 'acs_plan_drafting.py'
+      - 'acs_drafting_standards.py'
+      - 'tests/remediation/test_plan_drafting.py'
+      - 'acs_geometry_contract.py'
+      - 'acs_stairs.py'
 permissions:
   contents: read
 concurrency:
@@ -26,7 +31,7 @@ jobs:
           python-version: '3.11'
       - name: Standard-library import and compile gate
         run: |
-          python -S -m py_compile tools/acs_plan_svg_export.py tests/remediation/test_plan_svg_export.py
+          python -S -m py_compile tools/acs_plan_svg_export.py tests/remediation/test_plan_svg_export.py acs_plan_drafting.py acs_drafting_standards.py tests/remediation/test_plan_drafting.py
           python -S - <<'PYTHON'
           import sys
           from tools import acs_plan_svg_export
@@ -40,6 +45,10 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_svg_export.py 2>&1 | tee logs/plan-svg-export.log
+      - name: Drawing-standard drafting layer (stdlib-only)
+        run: |
+          set -o pipefail
+          python -S tests/remediation/test_plan_drafting.py 2>&1 | tee logs/plan-drafting.log
       - name: Ensure tests did not mutate the repository
         run: git diff --exit-code
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
