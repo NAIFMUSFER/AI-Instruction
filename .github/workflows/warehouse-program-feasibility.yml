@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # The dock pipeline test saves, approves and exports a warehouse, which needs
+      # the runtime packages (numpy for the compiler, the export libraries).
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
       - run: PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py
       - run: node tests/remediation/test_warehouse_building_target.mjs
       - run: node tests/remediation/test_warehouse_brief_docks.mjs
