@@ -6,6 +6,8 @@ const {spawn,execFileSync}=require('node:child_process');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
+// Sign-in works only on the official site's origin (any other is a preview copy).
+const ORIGIN=/OFFICIAL_ORIGIN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(PUB,'app','boot','api-base.js'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 // Read the actual authorized workspace state, independently of visible button labels.
@@ -165,7 +167,7 @@ w.write(sys.argv[1])`,pdfFixture]);
       }
       return route.fulfill({response});
     }
-    if(url.hostname!=='acs-ui.test')return route.abort();
+    if(url.origin!==ORIGIN)return route.abort();
     const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!f.startsWith(PUB+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile())return route.fulfill({status:404,body:''});
     return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
@@ -178,7 +180,7 @@ w.write(sys.argv[1])`,pdfFixture]);
      try{await route.abort('failed');}catch(_){}
     }
    });
-   await page.goto('https://acs-ui.test/?signin=1');
+   await page.goto(ORIGIN+'/?signin=1');
    assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
    await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
