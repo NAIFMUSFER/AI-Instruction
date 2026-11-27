@@ -12,6 +12,7 @@ const session = (overrides = {}) => ({access_token:'access-a', refresh_token:'re
 const response = (data, status=200) => ({ok:status<400, status, text:async()=>JSON.stringify(data)});
 const problem = (code, status=503) => response({error:{code,message:'message-'+code}},status);
 const settle = () => new Promise(resolve=>setImmediate(resolve));
+const OFFICIAL = 'https://acs.example.test', PREVIEW = 'main--acs.example.test';
 function harness(handler, initial=null, hostname='acs.example.test', hash='', options={}) {
   const map=new Map(initial?[[KEY,JSON.stringify(initial)]]:[]), calls=[], entered=[], nodes=new Map(), listeners={};
   if(options.recovery)map.set("acs_password_recovery_v1",options.recovery);
@@ -27,13 +28,14 @@ function harness(handler, initial=null, hostname='acs.example.test', hash='', op
   }
   const document={readyState:'loading',getElementById:element,querySelector:()=>null,
     addEventListener(){},createElement:()=>element('new'),body:{classList:{remove(){}}}};
-  const location={hostname,origin:'https://'+hostname,hash,pathname:'/',search:options.search===undefined?'?signin=1':options.search,reload(){h.reloads++;},assign(url){navigations.push(url);}};
+  const location={hostname,origin:'https://'+hostname,hash,pathname:options.pathname||'/',search:options.search===undefined?'?signin=1':options.search,reload(){h.reloads++;},assign(url){navigations.push(url);}};
   const ctx={document,location,history:{replaceState(a,b,url){const u=new URL(url,location.origin);location.hash=u.hash;location.search=u.search;}},console,setTimeout,clearTimeout,AbortController,URL,URLSearchParams,CustomEvent:class{},
     crypto:webcrypto,TextEncoder,btoa:s=>Buffer.from(s,'binary').toString('base64'),
     sessionStorage:{getItem:k=>tab.get(k)||null,setItem:(k,v)=>tab.set(k,v),removeItem:k=>tab.delete(k)},
     localStorage:{get length(){return map.size;},key:i=>Array.from(map.keys())[i]??null,getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)},
     fetch:async(url,opts)=>{calls.push({url,opts});return handler(new URL(url).pathname,opts,calls);},
-    window:{ACS_API:{configured:'https://api.example.test',url:p=>'https://override.example.test'+p},
+    // Production api-base.js names the official site; acs.example.test plays it here.
+    window:{ACS_API:{configured:'https://api.example.test',officialOrigin:options.officialOrigin===undefined?OFFICIAL:options.officialOrigin,url:p=>'https://override.example.test'+p},
       addEventListener:(k,fn)=>{listeners[k]=fn;}}};
   const h={ctx,calls,map,tab,navigations,nodes,entered,reloads:0,el:element,listeners};
   vm.runInNewContext(source,ctx);
@@ -354,6 +356,85 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     h.map.clear();h.listeners.storage({key:null});
     assert.equal(h.el('designWorkspace').hidden,true);
     assert.equal(h.ctx.window.ACS.projectId,null);assert.equal(h.reloads,1);
+  });
+  // A Netlify preview or branch deploy is refused by the backend's CORS. Sign-in
+  // there must lead to the official site instead of failing as a network error.
+  await test('a preview copy sends Google and email sign-in to the official site without any account request',async()=>{
+    const h=harness(()=>{throw Error('a preview copy must not call account services');},null,PREVIEW,
+      '#access_token=leak-access&refresh_token=leak-refresh',
+      {search:'?signin=1&example=apartment-20x25&debug=1&code='+CODE+'&error=leak&token=leak'});
+    const target=OFFICIAL+'/?signin=1&example=apartment-20x25&debug=1';
+    h.init();await settle();
+    assert.equal(h.calls.length,0);assert.equal(h.entered.length,0);assert.equal(h.ctx.location.hash,'');
+    assert.equal(h.el('acsAuthOfficial').hidden,false);
+    assert.equal(h.el('acsAuthOfficialLink').getAttribute('href'),target);
+    assert.notEqual(h.el('acsAuthStatus').attrs.role,'alert','the notice is not an error');
+    assert.equal(h.el('login').classList.contains('auth-outage'),false);
+    assert.equal(h.el('acsAuthGuestLink').getAttribute('href'),'/?guest=1&example=apartment-20x25');
+    await h.el('acsAuthGoogle').emit('click');
+    assert.deepEqual(h.navigations,[target]);assert.equal(h.tab.has(GOOGLE),false);
+    assert.equal(h.el('acsAuthStatus').attrs.role,'status');assert.match(h.el('acsAuthStatus').textContent,/الموقع الرسمي/);
+    assert.equal(h.el('acsAuthGoogleLabel').textContent,'المتابعة باستخدام Google');
+    h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='typed-password';
+    h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.navigations[1],target);assert.equal(h.el('lgPassword').value,'','the typed password is cleared, never carried');
+    h.el('lgSignup').emit('click');assert.equal(h.el('acsAuthTitle').textContent,'حساب جديد');
+    h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='typed-password';
+    h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.navigations[2],target);assert.equal(h.el('lgPassword').value,'');
+    await assert.rejects(h.auth.acsFetchJSON('/v1/auth/signin',{}),e=>e.code==='AUTH_OFFICIAL_SITE_REQUIRED'&&e.status===421);
+    assert.equal(h.calls.length,0);
+    for(const url of h.navigations){
+      const u=new URL(url);assert.equal(u.origin,OFFICIAL);assert.equal(u.hash,'');
+      assert.ok(!/leak|code|token|error|password|a%40example/.test(url),url);
+    }
+  });
+  await test('a preview copy uses no Google return, pending proof or stored session',async()=>{
+    const h=harness(()=>{throw Error('no account request from a preview copy');},session({expires_at:1}),PREVIEW,'',
+      {search:'?code='+CODE,tab:pending({user_id:'user-a',redirect_to:'https://'+PREVIEW+'/'})});
+    const saved=h.map.get(KEY);
+    h.init();await settle();
+    assert.equal(h.calls.length,0);assert.equal(h.entered.length,0);
+    assert.equal(h.navigations.length,0,'the notice offers the official site; it never navigates by itself');
+    assert.equal(h.tab.has(GOOGLE),false);assert.equal(h.ctx.location.search,'');
+    assert.equal(h.el('acsAuthOfficialLink').getAttribute('href'),OFFICIAL+'/?signin=1');
+    await assert.rejects(h.auth.freshSession(),e=>e.code==='AUTH_OFFICIAL_SITE_REQUIRED');
+    assert.equal(h.map.get(KEY),saved,'an account saved in this browser is left untouched');
+    assert.equal(h.calls.length,0);
+  });
+  await test('guest entry on a preview copy is unchanged',async()=>{
+    for(const [search,scope] of [['','acs_guest_project_v1'],['?guest=1&example=apartment-20x25','acs_guest_apartment_20x25_v1']]){
+      const h=harness(()=>{throw Error('guest must not fetch');},null,PREVIEW,'',{search});
+      h.init();await settle();
+      assert.equal(h.entered[0].mode,'guest');assert.equal(h.auth.storageScope(),scope);
+      assert.equal(h.calls.length,0);assert.equal(h.navigations.length,0);
+      assert.equal(h.el('acsAuthOfficialLink').getAttribute('href'),undefined);
+      await assert.rejects(h.auth.acsFetchJSON('/v1/auth/projects',{}),e=>e.code==='GUEST_SIGNIN_REQUIRED');
+    }
+  });
+  await test('the official site and localhost keep the direct account flow',async()=>{
+    const official=harness((path,opts)=>googleStart(opts));official.init();await settle();
+    assert.equal(official.el('acsAuthOfficialLink').getAttribute('href'),undefined);
+    await official.el('acsAuthGoogle').emit('click');
+    assert.equal(official.calls.length,1);assert.equal(new URL(official.navigations[0]).origin,'https://fixture.supabase.co');
+    const local=harness(()=>{throw Error('local entry needs no network');},null,'localhost','',{search:''});
+    local.init();await settle();assert.equal(local.el('acsAuthOfficialLink').getAttribute('href'),undefined);
+    local.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(local.entered[0].mode,'local');assert.equal(local.navigations.length,0);
+  });
+  await test('the official link keeps the path on the official origin and drops other parameters',async()=>{
+    const h=harness(()=>{throw Error('no network');},null,PREVIEW,'',
+      {pathname:'//evil.example/x',search:'?signin=1&next=https%3A%2F%2Fevil.example&refresh_token=leak&example=apartment-20x25'});
+    h.init();await settle();
+    const link=new URL(h.el('acsAuthOfficialLink').getAttribute('href'));
+    assert.equal(link.origin,OFFICIAL);assert.equal(link.pathname,'//evil.example/x');
+    assert.equal(link.search,'?signin=1&example=apartment-20x25');assert.equal(link.hash,'');
+  });
+  await test('without a declared official origin the account flow is the previous direct one',async()=>{
+    // A cached older api-base.js must not strand sign-in; the backend stays the authority.
+    const h=harness((path,opts)=>googleStart(opts,'https://'+PREVIEW+'/'),null,PREVIEW,'',{officialOrigin:''});
+    h.init();await h.el('acsAuthGoogle').emit('click');
+    assert.equal(h.calls.length,1);assert.equal(h.el('acsAuthOfficialLink').getAttribute('href'),undefined);
   });
   console.log('AUTH SESSION: '+passed+' passed, 0 failed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

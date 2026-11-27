@@ -165,8 +165,11 @@ async function serve(context, denied){
     return route.fulfill({body:fs.readFileSync(file),headers:{'content-type':mime[path.extname(file)]||'application/octet-stream','content-security-policy':csp}});
   });
 }
+// «مشروع جديد» holds the ways to begin (brief, examples); «•••» holds the rest.
+const START_SHEET=new Set(['guestCreate','guestExample','guestWarehouse']);
 async function menu(page,id){
-  const item=page.locator('#'+id);if(!(await item.isVisible()))await page.locator('#guestTools').click();
+  const item=page.locator('#'+id);
+  if(!(await item.isVisible()))await page.locator(START_SHEET.has(id)?'#guestStart':'#guestTools').click();
   await item.click();
 }
 async function ready(page){
@@ -579,7 +582,7 @@ async function checkedViewport(browser,width,spec){
       await cameraControl(page,'arch');await capture(page,report,'warehouse-eye-level','street');
       await detailAndInterior(page,report,'warehouse');
     }
-    step('complete_arabic_brief');await page.locator('#guestCreate').click();
+    step('complete_arabic_brief');await menu(page,'guestCreate');
     await page.locator('#descText').fill(brief);await page.locator('#genText').click();
     await page.locator('#guestConfirm[data-mode="confirm"]').waitFor();await page.locator('#guestConfirmDraw').click();
     await page.waitForFunction(expected=>{

@@ -7,7 +7,7 @@
   "use strict";
   var SESSION_KEY="acs_supabase_session_v1", PROJECT_KEY="acs_project_v1", RECOVERY_KEY="acs_password_recovery_v1";
   var GOOGLE_KEY="acs_google_pkce_v1", GOOGLE_MAX_AGE=10*60*1000, googleNavigation=false;
-  var memorySession=null, refreshFlight=null, sessionEpoch=0, busy=false, mode="signin";
+  var memorySession=null, refreshFlight=null, sessionEpoch=0, busy=false, mode="signin", emailExpanded=false;
   var onEntry=null, restoredSession=null;
   var callbackHash=typeof location.hash==="string"?new URLSearchParams(location.hash.slice(1)):null;
   var callbackQuery=new URLSearchParams(location.search||""), googleCallback=null;
@@ -23,6 +23,23 @@
   }else callbackHash=null;
   function byId(id){return document.getElementById(id);}
   function localHost(){return ["127.0.0.1","localhost","::1","[::1]"].indexOf(location.hostname)>=0;}
+  function officialEntry(){
+    // Account services accept only the official site's origin (backend CORS).
+    // A Netlify preview or branch copy sends sign-in to that site instead of
+    // calling the backend and reporting a misleading network failure. Only
+    // harmless parameters travel: never a code, error, token or fragment.
+    var a=window.ACS_API, site=a&&typeof a.officialOrigin==="string"?a.officialOrigin.replace(/\/+$/,""):"";
+    if(!site||localHost()||location.origin===site)return "";
+    try{
+      var target=new URL(site), from=new URLSearchParams(location.search||""), keep=new URLSearchParams();
+      if(target.protocol!=="https:"||target.origin!==site)return "";
+      keep.set("signin","1");
+      ["example","debug"].forEach(function(k){from.getAll(k).forEach(function(v){keep.append(k,v);});});
+      target.pathname=location.pathname||"/";target.search=keep.toString();
+      return target.origin===site?target.href:"";
+    }catch(e){return "";}
+  }
+  var officialSignin=officialEntry();
   function hasStoredKey(key){
     // Decide entry using key names only; an explicit guest never reads account credentials.
     try{for(var i=0;i<localStorage.length;i++)if(localStorage.key(i)===key)return true;}catch(e){}
@@ -72,6 +89,13 @@
     var google=byId("acsAuthGoogleField");if(google)google.hidden=next!=="signin"&&next!=="signup";
     var local=localHost(), signup=next==="signup", project=next==="project", resume=next==="resume";
     var recover=next==="recover", confirm=next==="confirm", update=next==="update";
+    // Email and password sit behind one button on the sign-in screen; every
+    // other mode needs the form. Localhost opens it for the name-only dev entry.
+    var emailOpen=next!=="signin"||emailExpanded||local;
+    var login=byId("login");if(login)login.setAttribute("data-auth-mode",next);
+    var box=byId("acsAuthEmailBox"),toggle=byId("acsAuthEmailToggle");
+    if(box)box.hidden=!emailOpen;
+    if(toggle){toggle.hidden=emailOpen;toggle.setAttribute("aria-expanded",String(emailOpen));}
     var name=byId("acsAuthNameField"), p=byId("acsAuthProjectField"), cred=byId("acsAuthCredentials");
     if(name)name.hidden=!local&&!signup;
     if(p)p.hidden=!local&&!project;
@@ -79,8 +103,9 @@
     var ef=byId("acsAuthEmailField"),pf=byId("acsAuthPasswordField"),cf=byId("acsAuthConfirmField");
     if(ef)ef.hidden=update;if(pf)pf.hidden=recover||confirm;if(cf)cf.hidden=!update;
     var title=byId("acsAuthTitle");if(title)title.textContent=resume?"العودة إلى مشروعك":project?"أنشئ مشروعك الأول":signup?"حساب جديد":"تسجيل الدخول";
-    var go=byId("lgGo");if(go)go.textContent=resume?"إعادة المحاولة":project?"فتح المشروع ▸":signup?"إنشاء الحساب ▸":"تسجيل الدخول ▸";
-    var back=byId("lgSignup");if(back)back.textContent=project||resume?"استخدام حساب آخر":signup?"لدي حساب — تسجيل الدخول":"إنشاء حساب جديد";
+    var lead=byId("acsAuthLead");if(lead)lead.textContent=resume||project||recover||confirm||update?"":signup?"أنشئ حسابًا بالبريد الإلكتروني.":"احفظ تصاميمك وافتحها من أي جهاز.";
+    var go=byId("lgGo");if(go)go.textContent=resume?"إعادة المحاولة":project?"فتح المشروع":signup?"إنشاء الحساب":"تسجيل الدخول";
+    var back=byId("lgSignup");if(back)back.textContent=project||resume?"استخدام حساب آخر":signup?"لديّ حساب — تسجيل الدخول":"إنشاء حساب جديد";
     var pw=byId("lgPassword");if(pw){pw.autocomplete=signup?"new-password":"current-password";pw.placeholder=signup?"8 أحرف على الأقل":"كلمة المرور";}
     if(recover||confirm||update){
       if(title)title.textContent=update?"اختر كلمة مرور جديدة":confirm?"تأكيد البريد الإلكتروني":"استعادة الحساب";
@@ -92,6 +117,8 @@
   }
   async function acsFetchJSON(path,body,token,timeoutMs){
     if(guestEntry)throw error("سجّل الدخول لاستخدام الذكاء والحفظ السحابي. التجربة الحالية محلية على جهازك.","GUEST_SIGNIN_REQUIRED",401);
+    // The backend refuses this origin; fail here, without a request, and say where sign-in works.
+    if(officialSignin)throw error("تسجيل الدخول متاح على الموقع الرسمي فقط.","AUTH_OFFICIAL_SITE_REQUIRED",421);
     var url=api(path);if(!url)throw error("تعذّر الاتصال بخدمة الدخول.","AUTH_NOT_CONFIGURED",503);
     var headers={"content-type":"application/json","accept":"application/json"};
     if(token)headers.authorization="Bearer "+token;
@@ -186,8 +213,22 @@
   function clearPassword(){var pw=byId("lgPassword");if(pw){pw.value="";pw.type="password";}var t=byId("acsPasswordToggle");if(t){t.textContent="إظهار";t.setAttribute("aria-label","إظهار كلمة المرور");t.setAttribute("aria-pressed","false");}}
   function forgetGoogle(){try{sessionStorage.removeItem(GOOGLE_KEY);}catch(e){}}
   function pendingGoogle(){try{return JSON.parse(sessionStorage.getItem(GOOGLE_KEY)||"null");}catch(e){return null;}}
+  function openOfficialSite(){
+    // Nothing typed here travels: the password is cleared before navigating.
+    clearPassword();forgetGoogle();
+    setStatus("جارٍ فتح الموقع الرسمي لتسجيل الدخول…",false);
+    location.assign(officialSignin);
+  }
+  function showOfficialSite(){
+    // A copy the backend refuses uses no callback, stored session or Google proof.
+    googleCallback=null;callbackHash=null;forgetGoogle();
+    var link=byId("acsAuthOfficialLink"),notice=byId("acsAuthOfficial");
+    if(link)link.setAttribute("href",officialSignin);
+    if(notice)notice.hidden=false;
+  }
   async function startGoogle(){
     if(busy||(mode!=="signin"&&mode!=="signup"))return;
+    if(officialSignin){openOfficialSite();return;}
     clearPassword();setBusy(true);setStatus("جارٍ فتح تسجيل الدخول باستخدام Google…",false);
     var epoch=++sessionEpoch;
     try{
@@ -284,6 +325,7 @@
   }
   async function submit(){
     if(busy)return;
+    if(officialSignin){openOfficialSite();return;}
     if(mode==="resume"){await restore();return;}
     var v=values();
     if(mode==="recover"||mode==="confirm"||mode==="update"){await accountAction(v);return;}
@@ -375,8 +417,10 @@
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
     var google=byId("acsAuthGoogle");if(google)google.addEventListener("click",startGoogle);
+    var emailToggle=byId("acsAuthEmailToggle");if(emailToggle)emailToggle.addEventListener("click",function(){if(busy)return;emailExpanded=true;setMode(mode);byId("lgEmail").focus();});
     window.addEventListener("pageshow",function(e){
       if(e.persisted&&googleNavigation){googleNavigation=false;forgetGoogle();setBusy(false);setStatus("يمكنك المحاولة باستخدام Google مرة أخرى.",false);}
+      if(e.persisted&&officialSignin)setStatus("",false);
     });
     byId("lgSignup").addEventListener("click",function(){if(busy)return;if(mode==="project"||mode==="resume"||mode==="update"){clearSession();clearPassword();}setStatus("",false);setMode(mode==="signin"?"signup":"signin");});
     [["acsAuthRecover","recover"],["acsAuthResend","confirm"]].forEach(function(pair){var b=byId(pair[0]);if(b)b.addEventListener("click",function(){if(busy)return;clearPassword();setMode(pair[1]);setStatus("استخدم البريد نفسه الذي أنشأت به حسابك.",false);byId("lgEmail").focus();});});
@@ -390,7 +434,8 @@
         location.reload();
       }
     });
-    acceptEmailCallback();
+    if(officialSignin)showOfficialSite();
+    else acceptEmailCallback();
   }
   function storageScope(){
     if(guestEntry){

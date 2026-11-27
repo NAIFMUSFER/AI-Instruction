@@ -15,6 +15,10 @@ class ConnectedTypologyIsolation(unittest.TestCase):
     def test_warehouse_help_remains_typology_specific(self):
         src=UI.read_text(encoding='utf-8')
         self.assertIn("$('cwType').value==='residential'",src)
-        self.assertIn("للمستودعات",src)
+        # The side help box was removed (2026-11 redesign); the typed example in
+        # the description box now carries the warehouse-specific guidance.
+        copy=src[src.index('function projectCopy()'):src.index('let root,')]
+        self.assertIn("$('cwBrief').placeholder=residential?",copy)
+        self.assertIn("مثال للمستودعات",copy)
 
 if __name__=='__main__': unittest.main()

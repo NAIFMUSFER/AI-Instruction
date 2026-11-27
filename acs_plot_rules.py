@@ -847,20 +847,47 @@ def _upper_doors(building, blocking, advisory):
 
 
 def stalls(building, rules):
-    """Front-setback stall rectangles derived from the ground floor (not stored)."""
+    """Every front-setback stall position that fits beside the entrance path.
+
+    This is the capacity layout the parking check counts (not stored). The plan
+    draws only the requested stalls: see ``requested_stalls``."""
+    return _front_row(building, rules)[0]
+
+
+def requested_stalls(building, rules):
+    """The stalls the plan draws: the requested count, not the capacity.
+
+    Picks the fitting positions nearest the entrance path (ties: the lower
+    position), keeps the capacity layout's order, and never draws more than
+    fit; a shortfall is reported by ``check``."""
+    row, gap = _front_row(building, rules)
+    required = (rules.get('parking') or {}).get('required')
+    if type(required) is not int or required >= len(row):
+        return row
+    if required <= 0:
+        return []
+    primary = rules['streets'][0]
+    axis = 0 if primary in ('N', 'S') else 1
+    centre = lambda s: s[axis] + s[axis + 2] / 2
+    keep = sorted(range(len(row)), key=lambda i: (abs(centre(row[i]) - gap), i))[:required]
+    return [row[i] for i in sorted(keep)]
+
+
+def _front_row(building, rules):
+    """(stall rectangles that fit, the entrance path's centre along the frontage)."""
     park = rules['parking']
     if park.get('placement') != 'front_setback' or not park.get('required'):
-        return []
+        return [], None
     levels = _occupied(building)
     if not levels:
-        return []
+        return [], None
     W, D = rules['land']['w'], rules['land']['d']
     primary = rules['streets'][0]
     rooms = _rooms(building, levels[0]['template'])
     stall_w, stall_d = _stall(rules)
     depth = min([_plot_distance(rules, r, primary) for r in rooms] or [0.0])
     if depth < stall_d - EPS:
-        return []
+        return [], None
     along = W if primary in ('N', 'S') else D
     gap = along / 2
     for room in rooms:
@@ -881,7 +908,7 @@ def stalls(building, rules):
             s = round(lo + i * stall_w, 3)
             out.append({'N': [s, 0.0, stall_w, stall_d], 'S': [s, D - stall_d, stall_w, stall_d],
                         'W': [0.0, s, stall_d, stall_w], 'E': [W - stall_d, s, stall_d, stall_w]}[primary])
-    return out
+    return out, gap
 
 
 def _stall(rules):
@@ -1087,7 +1114,10 @@ def summary(building, rules):
     if rules is None:
         return None
     park = rules['parking']
+    # The drawing shows the requested stalls; the capacity stays a number.
+    capacity = parking_capacity(building, rules) if park.get('placement') in ('front_setback', 'pilotis') else None
     return {'land': rules['land'], 'streets': rules['streets'], 'setbacks_m': rules['setbacks_m'],
             'envelope': rules['envelope'], 'max_coverage': rules['max_coverage'],
             'parking': {'placement': park.get('placement'), 'required': park.get('required'),
-                        'stalls': stalls(building, rules)[:200]}}
+                        'stall_m': list(_stall(rules)), 'capacity': capacity,
+                        'stalls': requested_stalls(building, rules)[:200]}}

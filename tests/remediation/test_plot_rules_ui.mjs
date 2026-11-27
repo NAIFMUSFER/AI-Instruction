@@ -116,6 +116,30 @@ check('overlay draws the envelope on every floor and stalls on the ground floor'
   assert.deepEqual(overlay(null, 0), []);
 });
 
+check('the plan draws the requested stalls at the stated size, not the estimated capacity', () => {
+  // The live review: a confirmed program asking for 2 stalls of 2.7 × 5.2 m drew every stall that fits.
+  const server = python(`
+sys.path.insert(0,'tests/remediation')
+import test_floor_program as T, acs_plot_rules as P
+from floor_program_fixture import owner_model
+m,r=owner_model(),T.rules()
+print(json.dumps({'summary':P.summary(m,r),'fit':len(P.stalls(m,r))}))`, null);
+  assert.ok(server.fit > 2, 'more stalls fit than were requested');
+  const stalls = shapes => shapes.filter(s => s.attrs['data-plot'] === 'stall');
+  const drawn = stalls(overlay(server.summary, 0));
+  assert.equal(server.summary.parking.required, 2);
+  assert.equal(drawn.length, 2);
+  for (const s of drawn) { assert.equal(s.attrs.width, 2.7); assert.equal(s.attrs.height, 5.2); }
+  assert.equal(server.summary.parking.capacity, server.fit, 'the capacity stays a number');
+  assert.equal(stalls(overlay(server.summary, 1)).length, 0, 'stalls only on the ground floor');
+  // A summary from an older server listed every stall that fits: still only the requested count.
+  const row = Array.from({length: 6}, (_, i) => [i * 2.7, 0, 2.7, 5.2]);
+  const legacy = {envelope: [1.5, 5.5, 13, 16], parking: {placement: 'front_setback', required: 2, stalls: row}};
+  assert.deepEqual(stalls(overlay(legacy, 0)).map(s => s.attrs.x), [0, 2.7]);
+  assert.equal(stalls(overlay({...legacy, parking: {...legacy.parking, required: 0}}, 0)).length, 0);
+  assert.equal(stalls(overlay({...legacy, parking: {stalls: row}}, 0)).length, 6, 'no stated count: draw what the server sent');
+});
+
 // ── minimal DOM for the step-01 module ──────────────────────────────────────
 class Node {
   constructor(tag, attrs = {}) { Object.assign(this, {tagName: tag.toUpperCase(), listeners: {}, hidden: false, textContent: '', placeholder: '', value: '', checked: false}, attrs); }

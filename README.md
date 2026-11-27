@@ -139,7 +139,7 @@ strict CSP in §16.
 
 ```
 HTML shell  →  boot scripts (classic, run before modules)
-                 boot/api-base.js       the single API origin
+                 boot/api-base.js       the single API origin and the official site origin
                  boot/build-info.js     window.ACS_BUILD_INFO (stamped at deploy)
                  boot/engine-guard.js   window.ACS init, login gate, 12 s engine warning
                  boot/debug-toggle.js   ?debug=1 counter
@@ -725,6 +725,13 @@ The two deployments are joined by exactly one string on each side: the frontend'
 backend's `ACS_ALLOWED_ORIGINS` / `_DEFAULT_ORIGIN`
 (`https://sprightly-selkie-d906c3.netlify.app`).
 
+The frontend names that same site in `OFFICIAL_ORIGIN`
+(`public/app/boot/api-base.js`). A Netlify deploy preview or branch deploy
+(`*--sprightly-selkie-d906c3.netlify.app`) is a different origin, and the
+backend's CORS refuses it. On such a copy the sign-in screen shows a short
+notice, and Google, email sign-in and sign-up open the official site's sign-in
+instead of calling the backend. Guest mode works there unchanged.
+
 **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED:** no deploy was performed or
 observed from this sandbox. There is no network egress here.
 
@@ -1008,7 +1015,7 @@ executed here. **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.**
 
 | Target | URL | Declared in |
 | --- | --- | --- |
-| Frontend | `https://sprightly-selkie-d906c3.netlify.app` | `netlify.toml` (publishes `public/`), `.env.example` and `render.yaml` (`ACS_ALLOWED_ORIGINS`), `acs_understand_api._DEFAULT_ORIGIN` |
+| Frontend | `https://sprightly-selkie-d906c3.netlify.app` | `netlify.toml` (publishes `public/`), `.env.example` and `render.yaml` (`ACS_ALLOWED_ORIGINS`), `acs_understand_api._DEFAULT_ORIGIN`, `OFFICIAL_ORIGIN` in `public/app/boot/api-base.js` |
 | Backend | `https://acs-engine.onrender.com` | `render.yaml` (service `acs-engine`, `healthCheckPath: /health`), the CSP `connect-src` in `netlify.toml`, `CONFIGURED_BASE` in `public/index.html` |
 
 ### Procedure

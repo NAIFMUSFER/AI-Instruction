@@ -13,8 +13,8 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
  const choice=(id,options)=>'<select id="'+id+'">'+options.map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select>';
  section.innerHTML=`<h3 id="cwResidentialTitle">الشقق واحتياجات الأسرة</h3><div class="cw-fields" id="cwApartmentFields"><label>عدد الشقق<input id="cwUnits" type="text" inputmode="numeric" autocomplete="off" placeholder="غير محدد"></label><label>المقصود بالعدد<select id="cwUnitsScope"><option value="total">إجمالي المبنى</option><option value="per_level">في كل دور</option></select></label><label>الاستخدام<select id="cwPurpose"><option value="unknown">لا أعرف الآن</option><option value="family">سكن عائلي</option><option value="rental">تأجير</option></select></label></div><div class="cw-fields" id="cwFlatFields"><label>غرف النوم في الشقة<input id="cwBedrooms" type="text" inputmode="numeric" autocomplete="off" placeholder="اقترح لي"></label><label>دورات المياه في الشقة<input id="cwBathrooms" type="text" inputmode="numeric" autocomplete="off" placeholder="اقترح لي"></label></div><div class="cw-fields" id="cwVillaFields" hidden><label>غرف النوم<input id="cwVillaBedrooms" type="text" inputmode="numeric" autocomplete="off" placeholder="افتراضي ${VILLA_DEFAULTS.bedrooms}"></label><label>جناح رئيسي بحمام خاص${choice('cwVillaMaster',[['yes','نعم'],['no','لا']])}</label><label>الحمامات ودورات المياه<input id="cwVillaBathrooms" type="text" inputmode="numeric" autocomplete="off" placeholder="تلقائي"></label><label>غرفة خادمة${choice('cwVillaMaid',[['no','لا'],['yes','نعم، بدورة مياه']])}</label><label>غرفة سائق${choice('cwVillaDriver',[['no','لا'],['yes','نعم، بدورة مياه']])}</label></div><p id="cwVillaSummary" class="cw-muted" role="status" aria-live="polite" hidden></p><div class="cw-fields"><label>مجلس الضيوف<select id="cwGuests"><option value="suggest">اقترح لي</option><option value="separate">مجلس مستقل</option><option value="none">بدون مجلس مستقل</option></select></label><label>المدينة<input id="cwCity" maxlength="120" placeholder="مثل: الرياض"></label><label>جهة الشارع<select id="cwStreet"><option value="unknown">لا أعرف الآن</option><option value="N">شمال</option><option value="S">جنوب</option><option value="E">شرق</option><option value="W">غرب</option></select></label></div><p id="cwResidentialSummary" class="cw-muted"></p>`;
  ($('cwBuildingFields')||$('cwLevels').closest('.cw-fields')).after(section);
- const sourcePanel=el('section',null,root.querySelector('[data-step-panel="2"]'));sourcePanel.className='cw-card';sourcePanel.id='cwResearch';
- el('h3','مراجع تساعدك على مراجعة التصميم',sourcePanel);const note=el('p','',sourcePanel);note.id='cwResearchStatus';const links=el('div',null,sourcePanel);
+ const sourcePanel=el('details',null,root.querySelector('[data-step-panel="2"]'));sourcePanel.className='cw-more';sourcePanel.id='cwResearch';
+ el('summary','مراجع رسمية للاشتراطات',sourcePanel);const note=el('p','',sourcePanel);note.id='cwResearchStatus';const links=el('div',null,sourcePanel);
  // Arabic counting: 1 مفرد، 2 مثنى، 3–10 جمع، 11+ مفرد منصوب.
  const counted=(n,one,two,few,many)=>{n=Number(n);return n===1?one:n===2?two:n>=3&&n<=10?n+' '+few:n+' '+many;};
  const bedrooms=n=>counted(n,'غرفة نوم','غرفتا نوم','غرف نوم','غرفة نوم'),baths=n=>counted(n,'دورة مياه','دورتا مياه','دورات مياه','دورة مياه'),flats=n=>counted(n,'شقة واحدة','شقتان','شقق','شقة');
@@ -71,7 +71,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
  function showVilla(base){
   const program=villaFromBase(base),levels=Number(normalizeNumberText($('cwLevels').value))||1;
   choices=villaOptions(program,{levels,buildable:buildable(),guests:$('cwGuests').value});
-  for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.querySelector('p').textContent=o.roomsText+' '+o.why+' '+o.tradeoff;
+  for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.dataset.recommended=String(!!o.recommended);card.querySelector('p').textContent=o.roomsText+' '+o.why+' '+o.tradeoff;
    card.querySelector('[data-residential-detail]')?.remove();
    const p=el('p','تقدير المساحة المبنية ≈ '+o.estimatedArea+' م² على '+counted(o.levels,'دور واحد','دورين','أدوار','دورًا')+(o.available!=null?' من نحو '+o.available+' م² تسمح بها الارتدادات ونسبة البناء':'')+'. '+(o.feasible?'تقدير أولي يشمل الجدران والحركة؛ يُفحص المخطط بعد التوليد على غرف النوم والحمامات ودورة مياه الضيوف.':'المساحة المسموح ببنائها لا تكفي هذا البديل. قلّل غرف النوم أو اختر بديلًا أصغر.'),card);
    p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار «'+o.title+'» والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
@@ -81,7 +81,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
   choices=programOptions(program,{buildable:buildable(),guests:$('cwGuests').value});
   // A confirmed requirement that the program contradicts is shown now, not after a paid call.
   const conflict=programConflicts(program,base.requirements)[0];
-  for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');
+  for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.dataset.recommended=String(!!o.recommended);
    card.querySelector('p').textContent='الغرف نفسها من برنامجك المؤكد، بتوزيع مختلف: '+o.why+' '+o.tradeoff;
    card.querySelector('[data-residential-detail]')?.remove();
    if(conflict)o.feasible=false;
@@ -133,7 +133,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
   },
   fill(){try{const data=JSON.parse(localStorage.getItem(storageKey())||'null');if(data)for(const id of fields)if(typeof data[id]==='string')$(id).value=data[id];}catch(e){}summary();},
   prepare(base){
-   summary();choices=[];prepared=fingerprint(base);for(const old of originals){const b=root.querySelector('[data-option="'+old.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=old.title;card.querySelector('p').textContent=old.body;card.querySelector('[data-residential-detail]')?.remove();b.textContent=old.button;b.dataset.unavailable='false';}sourcePanel.hidden=$('cwType').value!=='residential';
+   summary();choices=[];prepared=fingerprint(base);for(const old of originals){const b=root.querySelector('[data-option="'+old.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=old.title;card.querySelector('p').textContent=old.body;card.querySelector('[data-residential-detail]')?.remove();b.textContent=old.button;b.dataset.unavailable='false';delete card.dataset.recommended;}sourcePanel.hidden=$('cwType').value!=='residential';
    if($('cwType').value==='residential')sources();
    if($('cwType').value!=='residential')return;
    if(villa()){showVilla(base);return;}
@@ -143,7 +143,7 @@ export function createResidentialOptions(root,{storageKey,api,onError,buildable=
    const units=Number($('cwUnits').value)*($('cwUnitsScope').value==='per_level'?Number(levels):1);
    const fixed=role=>base.requirements.find(r=>r.metric==='room_count'&&r.role===role)?.expected;
    choices=residentialOptions({units:$('cwUnits').value,scope:$('cwUnitsScope').value,levels,width:$('cwBldWidth').value||$('cwWidth').value,depth:$('cwBldDepth').value||$('cwDepth').value,bedrooms:fixed('bedroom')!=null?fixed('bedroom')/units:$('cwBedrooms').value,bathrooms:fixed('bathroom')!=null?fixed('bathroom')/units:$('cwBathrooms').value,guests:$('cwGuests').value,purpose:$('cwPurpose').value});
-   for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.querySelector('p').textContent=bedrooms(o.bedrooms)+'، صالة، مطبخ، '+baths(o.bathrooms)+(o.majlis?'، مجلس مستقل':'')+' في كل شقة. '+o.why+' '+o.tradeoff;
+   for(const o of choices){const b=root.querySelector('[data-option="'+o.id+'"]'),card=b.closest('article');card.querySelector('h2').textContent=o.title+(o.recommended?' · مقترح لك':'');card.dataset.recommended=String(!!o.recommended);card.querySelector('p').textContent=bedrooms(o.bedrooms)+'، صالة، مطبخ، '+baths(o.bathrooms)+(o.majlis?'، مجلس مستقل':'')+' في كل شقة. '+o.why+' '+o.tradeoff;
     card.querySelector('[data-residential-detail]')?.remove();const p=el('p',flats(o.total)+'؛ توزيعها على الأدوار: '+o.distribution.join('، ')+'. تقدير الشقة '+o.estimatedUnitArea+' م². '+(o.feasible?o.feasibilityNote:'المساحة الإجمالية لا تكفي هذا البرنامج المقترح. قلّل عدد الشقق أو عدّل الغرف قبل التوليد.'),card);p.dataset.residentialDetail='';card.insertBefore(p,b);b.textContent='اختيار '+o.title+' والتوليد';b.disabled=!o.feasible;b.dataset.unavailable=String(!o.feasible);
    }
   },

@@ -5,6 +5,11 @@ const fs=require('node:fs'),path=require('node:path');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
+// The page sends sign-in on any other origin to the official site, which is
+// also the only origin the backend's CORS accepts. A Netlify branch deploy of
+// the same site is the copy the owner's iPhone was refused from.
+const OFFICIAL=/OFFICIAL_ORIGIN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(PUB,'app','boot','api-base.js'),'utf8'))[1];
+const PREVIEW='https://main--'+new URL(OFFICIAL).host;
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'fixture-user',email:'fixture@example.test'}});
 const sourcePath='/v1/projects/fixture-project/workspace/plan-source';
@@ -35,7 +40,7 @@ async function runAuthShippedPage(){
   try{
     for(const width of [393,1440]){
       const context=await browser.newContext({viewport:{width,height:width===393?852:900}}), page=await context.newPage();
-      const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, failGoogle=true, googleChallenge=null;
+      const errors=[], calls=[], localModules=[], backendRefused=[];let firstProject=null, failSignin=true, failGoogle=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
       try{
       await context.route('**/*',async route=>{
@@ -45,10 +50,14 @@ async function runAuthShippedPage(){
           assert.equal(url.pathname,'/auth/v1/authorize');
           assert.equal(url.searchParams.get('code_challenge'),googleChallenge);
           // The test provider completes consent in the same tab, as a user would.
-          return route.fulfill({contentType:'text/html',body:'<a href="https://acs-ui.test/?code=11111111-1111-4111-8111-111111111111">Continue with test account</a>'});
+          return route.fulfill({contentType:'text/html',body:'<a href="'+OFFICIAL+'/?code=11111111-1111-4111-8111-111111111111">Continue with test account</a>'});
         }
         if(url.hostname==='acs-engine.onrender.com'){
-          const headers={'content-type':'application/json','access-control-allow-origin':'https://acs-ui.test',
+          // Like the deployed backend, only the official origin passes CORS.
+          const from=(await req.allHeaders()).origin;
+          if(from!==OFFICIAL){backendRefused.push(req.method()+' '+url.pathname+' from '+from);
+            return route.fulfill({status:400,contentType:'text/plain',body:'Disallowed CORS origin'});}
+          const headers={'content-type':'application/json','access-control-allow-origin':OFFICIAL,
             'access-control-allow-headers':'content-type,accept,authorization','access-control-allow-methods':'GET,POST,OPTIONS'};
           if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
           calls.push(url.pathname);
@@ -57,8 +66,8 @@ async function runAuthShippedPage(){
           else if(url.pathname==='/v1/auth/google/start'){
             const input=req.postDataJSON();googleChallenge=input.code_challenge;
             assert.equal(input.code_verifier,undefined);
-            body={redirect_to:'https://acs-ui.test/',url:'https://auth.example.test/auth/v1/authorize?'+new URLSearchParams({
-              provider:'google',redirect_to:'https://acs-ui.test/',code_challenge:googleChallenge,code_challenge_method:'s256'})};
+            body={redirect_to:OFFICIAL+'/',url:'https://auth.example.test/auth/v1/authorize?'+new URLSearchParams({
+              provider:'google',redirect_to:OFFICIAL+'/',code_challenge:googleChallenge,code_challenge_method:'s256'})};
             if(failGoogle){status=503;body={error:{code:'AUTH_UPSTREAM_UNAVAILABLE'}};}
           }else if(url.pathname==='/v1/auth/google/exchange'){
             const input=req.postDataJSON();assert.equal(input.auth_code,'11111111-1111-4111-8111-111111111111');
@@ -104,13 +113,13 @@ async function runAuthShippedPage(){
           else return route.abort();
           return route.fulfill({status,headers,body:JSON.stringify(body)});
         }
-        if(url.hostname!=='acs-ui.test')return route.abort();
+        if(url.origin!==OFFICIAL&&url.origin!==PREVIEW)return route.abort();
         const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
         if(!f.startsWith(PUB+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile())return route.fulfill({status:404,body:''});
         return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream',
           'content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
       });
-      await page.goto('https://acs-ui.test/?signin=1');
+      await page.goto(OFFICIAL+'/?signin=1');
       await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
       assert.equal(await page.evaluate(()=>!!window.ACS_AUTH&&!window.ACS.guest),true);
       assert.equal(await page.locator('#app canvas').count(),0,'sign-in must allocate no hidden renderer');
@@ -120,6 +129,18 @@ async function runAuthShippedPage(){
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       assert.ok((await page.locator('#login .card').boundingBox()).width<=448,'shared card styles must not stretch the sign-in form');
       assert.equal(await page.locator('#acsAuthGoogle').isVisible(),true);
+      assert.equal(await page.locator('#acsAuthOfficial').isVisible(),false,'the official site shows no preview notice');
+      // One primary path: email and password wait behind a single disclosure.
+      assert.equal(await page.locator('#lgEmail').isVisible(),false,'email sign-in starts collapsed');
+      assert.equal(await page.locator('#lgGo').isVisible(),false);
+      assert.equal(await page.locator('#acsAuthRecover').isVisible(),false,'recovery belongs to email mode');
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),true,'the guest path is visible without opening email');
+      const emailToggle=page.locator('#acsAuthEmailToggle');
+      assert.equal(await emailToggle.getAttribute('aria-expanded'),'false');
+      assert.ok((await emailToggle.boundingBox()).height>=44);
+      await emailToggle.click();
+      assert.equal(await emailToggle.isVisible(),false);
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'lgEmail','opening email mode focuses the address field');
       await page.locator('#acsAuthRecover').click();
       assert.equal(await page.locator('#lgGo').textContent(),'إرسال رابط الاستعادة');
       assert.equal(await page.locator('#lgPassword').isVisible(),false);
@@ -148,6 +169,7 @@ async function runAuthShippedPage(){
       await page.screenshot({path:path.join(ROOT,'logs','auth-service-unavailable-'+width+'.png'),mask:[page.locator('input')]});
       failSignin=false;await page.locator('#lgGo').click();
       await page.locator('#acsAuthProjectField').waitFor({state:'visible'});
+      assert.equal(await page.locator('#acsAuthGuestLink').isVisible(),false,'a signed-in owner naming a first project gets no guest detour');
       assert.equal(await page.locator('#lgPassword').inputValue(),'');
       assert.equal(await page.locator('#acsAuthCredentials').isVisible(),false);
       const firstSourceRestore=sourceResponse(page);
@@ -169,7 +191,7 @@ async function runAuthShippedPage(){
       // auth flow so the stale logout handler cannot overtake the Google redirect.
       await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1'));
-      await page.goto('https://acs-ui.test/?signin=1');
+      await page.goto(OFFICIAL+'/?signin=1');
       await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
       assert.equal(await page.evaluate(()=>!!window.ACS_AUTH&&!window.ACS.guest),true);
       assert.equal(await page.locator('#camBar').isVisible(),false);
@@ -180,7 +202,7 @@ async function runAuthShippedPage(){
       await retry.waitFor({state:'visible'});
       assert.equal(await retry.isEnabled(),true);
       assert.match(await page.locator('#acsAuthStatus').innerText(),/الاتصال بخدمة الحسابات.*Google/);
-      assert.equal(page.url(),'https://acs-ui.test/?signin=1');
+      assert.equal(page.url(),OFFICIAL+'/?signin=1');
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
       failGoogle=false;
       const googleSourceRestore=sourceResponse(page);
@@ -192,21 +214,21 @@ async function runAuthShippedPage(){
       await consent.click();
       await page.waitForFunction(workspaceEntered);
       await privateWorkspaceReady(page,googleSourceRestore);
-      assert.equal(page.url(),'https://acs-ui.test/');
+      assert.equal(page.url(),OFFICIAL+'/');
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
       assert.equal(calls.filter(p=>p==='/v1/auth/google/exchange').length,1);
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before);
       const second=await context.newPage();
       const secondSource=sourceResponse(second);
-      await second.goto('https://acs-ui.test/?signin=1');
+      await second.goto(OFFICIAL+'/?signin=1');
       await privateWorkspaceReady(second,secondSource);
       await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),second.waitForNavigation({waitUntil:'domcontentloaded'}),second.locator('#cwLogout').click()]);
       assert.equal(await page.locator('#designWorkspace').isVisible(),false,'signing out in the other tab closes the old project');
       assert.equal(await page.evaluate(()=>localStorage.getItem('acs_supabase_session_v1')),null);
       await second.close();
       const privateReads=calls.filter(p=>p.includes('project')).length;
-      await page.goto('https://acs-ui.test/?signin=1#type=recovery&refresh_token=fixture-email-refresh');
+      await page.goto(OFFICIAL+'/?signin=1#type=recovery&refresh_token=fixture-email-refresh');
       await page.locator('#lgPasswordConfirm').waitFor({state:'visible'});
       assert.equal(new URL(page.url()).hash,'','the recovery fragment is cleared immediately');
       assert.equal(await page.locator('#designWorkspace').isVisible(),false);
@@ -222,10 +244,45 @@ async function runAuthShippedPage(){
       assert.deepEqual(errors,[]);
       fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
       await page.screenshot({path:path.join(ROOT,'logs','auth-'+width+'.png')});
-      console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload, cross-tab logout and password recovery');
+      // A Netlify branch copy of the site. The backend refuses its origin, as it
+      // refused the owner's iPhone, so sign-in must lead to the official site
+      // instead of failing as a connection error. Guest entry stays as it was.
+      const target=OFFICIAL+'/?signin=1&example=apartment-20x25';
+      const notice=page.locator('#acsAuthOfficial'),officialLink=page.locator('#acsAuthOfficialLink');
+      await page.goto(PREVIEW+'/?signin=1&example=apartment-20x25&code=11111111-1111-4111-8111-111111111111');
+      await notice.waitFor({state:'visible'});
+      assert.match(await notice.innerText(),/نسخة معاينة.*الموقع الرسمي/s);
+      assert.equal(await officialLink.textContent(),'الانتقال إلى الموقع الرسمي');
+      assert.equal(await officialLink.getAttribute('href'),target,'same path and harmless parameters, never the OAuth code');
+      assert.equal(new URL(page.url()).searchParams.has('code'),false);
+      assert.equal(await page.locator('#acsAuthStatus').textContent(),'','the notice is not an error');
+      assert.equal(await page.locator('#login').evaluate(el=>el.classList.contains('auth-outage')),false);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      const linkBox=await officialLink.boundingBox(),noticeBox=await notice.boundingBox(),googleTop=(await page.locator('#acsAuthGoogle').boundingBox()).y;
+      assert.ok(linkBox.height>=44&&noticeBox.y+noticeBox.height<=googleTop,'the official-site action is a full target above the account buttons');
+      await page.screenshot({path:path.join(ROOT,'logs','auth-preview-'+width+'.png'),mask:[page.locator('input')]});
+      await Promise.all([page.waitForURL(target),page.getByRole('button',{name:'المتابعة باستخدام Google'}).click()]);
+      await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
+      assert.equal(await notice.isVisible(),false,'the official site opens its normal sign-in');
+      for(const signup of [false,true]){
+        await page.goto(PREVIEW+'/?signin=1&example=apartment-20x25');await notice.waitFor({state:'visible'});
+        await page.locator('#acsAuthEmailToggle').click();
+        if(signup)await page.locator('#lgSignup').click();
+        await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');
+        await Promise.all([page.waitForURL(target),page.locator('#lgGo').click()]);
+        assert.equal(await page.locator('#lgPassword').inputValue(),'','nothing typed on the copy travels');
+      }
+      assert.deepEqual(backendRefused,[],'the preview copy sends no account request for the backend to refuse');
+      await page.goto(PREVIEW+'/?signin=1&example=apartment-20x25');await notice.waitFor({state:'visible'});
+      await Promise.all([page.waitForURL(PREVIEW+'/?guest=1&example=apartment-20x25'),page.locator('#acsAuthGuestLink').click()]);
+      await page.waitForFunction(()=>window.ACS?.guest===true&&window.ACS.guestWorkspaceReady===true);
+      assert.equal(await notice.isVisible(),false);
+      assert.deepEqual(backendRefused,[]);
+      assert.deepEqual(errors,[]);
+      console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload, cross-tab logout, password recovery and preview-copy handoff to the official site');
       }catch(error){
         fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
-        const visible=await page.evaluate(()=>Object.fromEntries(['acsAuthStatus','cwStatus'].map(id=>{
+        const visible=await page.evaluate(()=>Object.fromEntries(['acsAuthStatus','acsAuthOfficial','cwStatus'].map(id=>{
           const el=document.getElementById(id),rect=el?.getBoundingClientRect(),style=el&&getComputedStyle(el);
           return [id,{visible:!!rect&&rect.width>0&&rect.height>0&&style.visibility!=='hidden'&&style.display!=='none',text:el?.textContent?.slice(0,300)||''}];
         }))).catch(()=>({unavailable:true}));
@@ -233,7 +290,8 @@ async function runAuthShippedPage(){
           .replace(/https?:\/\/[^\s]+/g,value=>{try{const url=new URL(value);return url.origin+url.pathname;}catch{return '[url]';}})
           .replace(/(?:Bearer\s+|(?:access_token|refresh_token|code_verifier|password)\s*[:=]\s*)\S+/gi,'[redacted]')
           .slice(0,500);
-        const diagnostic={width,error_type:error.name,error_message:message,visible,endpoint_paths:[...new Set(calls)],local_modules:localModules};
+        const diagnostic={width,error_type:error.name,error_message:message,visible,endpoint_paths:[...new Set(calls)],local_modules:localModules,
+          refused_by_backend_cors:backendRefused.map(entry=>entry.replace(/ from .*/,''))};
         fs.writeFileSync(path.join(ROOT,'logs','auth-failure-'+width+'.json'),JSON.stringify(diagnostic,null,2));
         await page.screenshot({path:path.join(ROOT,'logs','auth-failure-'+width+'.png'),mask:[page.locator('input')]}).catch(()=>{});
         console.error('AUTH FIXTURE DIAGNOSTIC',JSON.stringify(diagnostic));

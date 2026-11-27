@@ -284,7 +284,52 @@ class PassingLayouts(unittest.TestCase):
         self.assertEqual(P.check(b, rules)[0], [])
         summary = P.summary(b, rules)
         self.assertEqual(summary['parking']['stalls'], stalls)
+        self.assertEqual((summary['parking']['required'], summary['parking']['capacity']), (6, 6))
         self.assertEqual(summary['envelope'], rules['envelope'])
+
+    def test_the_plan_draws_the_requested_stalls_not_the_capacity(self):
+        rows = program(levels=2, units=4, per_level=2)
+        brief = 'عمارة سكنية\nتوزيع الشقق من الأرضي إلى الأعلى: 2، 2.'
+        for count in (0, 1, 2, 4, 6):
+            with self.subTest(count=count):
+                rules = P.resolve({'streets': ['N'], 'parking': {'placement': 'front_setback', 'count': count}},
+                                  brief, rows, 'C')
+                b = L.propose(brief, rows, rules)
+                self.assertIsNotNone(b)
+                every = P.stalls(b, rules)
+                drawn = P.requested_stalls(b, rules)
+                summary = P.summary(b, rules)['parking']
+                # The capacity layout is unchanged; the drawing holds exactly the requested count.
+                self.assertEqual(len(every), 6 if count else 0)
+                self.assertEqual(len(drawn), count)
+                self.assertEqual(summary['stalls'], drawn)
+                self.assertEqual(summary['capacity'], len(every))
+                self.assertTrue(all(s in every for s in drawn), 'drawn stalls are positions that fit')
+                self.assertEqual(P.parking_capacity(b, rules), len(every))
+                self.assertNotIn('PLOT_PARKING_SHORTFALL', codes(P.check(b, rules)[0]))
+
+    def test_drawn_stalls_flank_the_entrance_path_in_order(self):
+        rows = program(levels=2, units=4, per_level=2)
+        brief = 'عمارة سكنية\nتوزيع الشقق من الأرضي إلى الأعلى: 2، 2.'
+        rules = P.resolve({'streets': ['N'], 'parking': {'placement': 'front_setback', 'count': 2}}, brief, rows, 'C')
+        b = L.propose(brief, rows, rules)
+        every, gap = P._front_row(b, rules)
+        drawn = P.requested_stalls(b, rules)
+        self.assertEqual(drawn, sorted(drawn), 'kept in the capacity layout order')
+        self.assertLess(drawn[0][0] + drawn[0][2], gap)            # one stall on each side of the path
+        self.assertGreater(drawn[1][0], gap)
+        nearest = sorted(abs(s[0] + s[2] / 2 - gap) for s in every)[:2]
+        self.assertEqual(sorted(abs(s[0] + s[2] / 2 - gap) for s in drawn), nearest)
+
+    def test_a_shortfall_draws_what_fits_and_still_blocks(self):
+        rows = program(levels=2, units=4, per_level=2)
+        brief = 'عمارة سكنية\nتوزيع الشقق من الأرضي إلى الأعلى: 2، 2.'
+        rules = P.resolve({'streets': ['N'], 'parking': {'placement': 'front_setback', 'count': 6}}, brief, rows, 'C')
+        b = L.propose(brief, rows, rules)
+        more = copy.deepcopy(rules)
+        more['parking']['required'] = 9                 # more than the six that fit
+        self.assertEqual(P.summary(b, more)['parking']['stalls'], P.stalls(b, more))
+        self.assertIn('PLOT_PARKING_SHORTFALL', codes(P.check(b, more)[0]))
 
     def test_pilotis_ground_floor_holds_the_parking_and_no_flats(self):
         rows = program(levels=3, units=4, per_level=2)

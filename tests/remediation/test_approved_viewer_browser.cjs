@@ -10,6 +10,9 @@ execFileSync(process.env.PYTHON||'python',['tests/remediation/approved_viewer_fi
 const fixtures=JSON.parse(fs.readFileSync(path.join(output,'fixtures.json'),'utf8'));
 const meta={scope:'synthetic exact approved artifacts; not live AI or physical mobile acceptance',budgets:{first_view_ms:3000,desktop_frame_p95_ms:20,mobile_frame_p95_ms:33,transition_timeout_ms:2000,transition_stall_ms:10000,idle_additional_render_calls:0},measurements:[]};
 const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app/styles/connected-workspace.css"><script type="importmap">{"imports":{"three":"/vendor/three@0.160.0/build/three.module.js","three/addons/":"/vendor/three@0.160.0/examples/jsm/"}}</script></head><body><main id="designWorkspace"><h1>مراجعة عرض النسخة المعتمدة</h1><p>حالة اختبار صناعية ثابتة — ليست توليدًا بالذكاء</p><div id="cwViewer"></div></main></body></html>`;
+// Room names actually on screen: storey, selection and screen box of each.
+const visibleLabels=page=>page.evaluate(()=>[...document.querySelectorAll('#cwViewer .av-label:not([hidden])')].map(node=>{const r=node.getBoundingClientRect();return{level:node.dataset.level,selected:node.classList.contains('av-label-selected'),left:r.left,right:r.right,top:r.top,bottom:r.bottom};}));
+const overlapping=rows=>rows.filter((a,i)=>rows.some((b,j)=>j>i&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)).length;
 (async()=>{let browser;try{
  browser=await PW.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});
  for(const viewport of [{width:1440,height:900},{width:393,height:852}])for(const fixture of fixtures){
@@ -53,6 +56,8 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    assert.ok(transitionMs<(hardware.cpuLogicalCores>=4?meta.budgets.transition_timeout_ms:meta.budgets.transition_stall_ms),'view transition '+name+' took '+Math.round(transitionMs)+' ms');
    const stats=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(stats.lastFrame.mode,'settled');assert.equal(stats.view,name);assert.equal(stats.modelHash,fixture.model_hash);assert.equal(stats.meshCount,baseline.meshCount);assert.equal(stats.triangleCount,baseline.triangleCount,'presentation never changes approved triangles');assert.equal(stats.presentation.clippingPlanes,1,'cutaway never changes the compiled clipping-plane count');
    const shownLabels=await page.locator('.av-label:not([hidden])').count();if(['aerial','cutaway'].includes(name))assert.ok(viewport.width<600?shownLabels===0:shownLabels>0,viewport.width<600?'phone keeps room names off until asked':'room names are visible in plan-like views');if(['street','interior','detail'].includes(name))assert.equal(shownLabels,0,'room names do not float over eye-level views');
+   // One storey is named at a time (the top one from outside or above, the cut one in the cutaway), and names never overlap.
+   if(viewport.width>=600&&['exterior','aerial','cutaway'].includes(name)){const placed=await visibleLabels(page);assert.equal(stats.presentation.labelsShown,placed.length);assert.ok(placed.length>0&&placed.every(row=>row.level===String(stats.presentation.labelLevel)),'one storey is named in '+name+': '+JSON.stringify([stats.presentation.labelLevel,placed.map(row=>row.level)]));assert.equal(overlapping(placed),0,'room names do not overlap in '+name);}
    assert.equal(stats.presentation.roofShown,canonicalRoof&&!['aerial','cutaway'].includes(name),'initial view only shows roofs present in the artifact');
    const fits=await page.evaluate(async()=>{const stats=document.querySelector('#cwViewer').acsViewer.inspect();if(!stats.framedBounds)return true;const THREE=await import('three');const camera=new THREE.PerspectiveCamera(stats.fov,stats.aspect,.001,10000);camera.position.fromArray(stats.camera);camera.lookAt(new THREE.Vector3().fromArray(stats.target));camera.updateMatrixWorld();return [0,1].every(i=>[0,1].every(j=>[0,1].every(k=>{const p=new THREE.Vector3(stats.framedBounds[i?'max':'min'][0],stats.framedBounds[j?'max':'min'][1],stats.framedBounds[k?'max':'min'][2]).project(camera);return Math.abs(p.x)<=.94&&Math.abs(p.y)<=.94;})));});
    assert.equal(fits,true,name+' bounds must fit the actual aspect ratio');
@@ -60,6 +65,8 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    views.push({view:name,transition_ms:transitionMs,active_frame_intervals_ms:stats.frameIntervalsMs.slice(intervalStart),stats,screenshot});
   }
   await page.locator('[data-view="aerial"]').click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
+  // The detail view selected a ground-floor element: its room keeps its name over the top storey's names.
+  if(viewport.width>=600){const placed=await visibleLabels(page),chosen=placed.filter(row=>row.selected);assert.equal(chosen.length,1,'the selected room keeps its name');assert.equal(chosen[0].level,'0','the detail view picked the ground-floor entrance');if(fixture.kind==='residential')assert.equal((await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect())).presentation.labelLevel,1,'shown although the top storey is the one named');assert.equal(overlapping(placed),0,'names around the selected one give way');}
   await page.locator('.av-more summary').click();
   const wallMode=page.getByRole('combobox',{name:'ألوان الجدران'});assert.equal(await wallMode.inputValue(),'assumed');
   assert.ok(baseline.presentation.eligibleWalls>0);
@@ -103,6 +110,8 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    await page.locator('[data-view="aerial"]').click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
    const allFloors=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(allFloors.presentation.visibleRoofMeshCount,0,'default all-floor aerial view hides the roof again');assert.equal(allFloors.presentation.roofShown,false);assert.equal(allFloors.modelHash,fixture.model_hash);assert.equal(allFloors.meshCount,baseline.meshCount);
    await page.locator('select[aria-label="الدور المعروض في 3D"]').selectOption('1');const after=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.ok(after.visibleMeshCount<baseline.meshCount&&after.visibleMeshCount>0,'floor isolation preserves selected physical level');
+   // A chosen floor names its own rooms, also below the top storey.
+   for(const floor of ['0','1']){await page.locator('select[aria-label="الدور المعروض في 3D"]').selectOption(floor);await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);const floorNames=await visibleLabels(page);assert.ok(floorNames.length>0&&floorNames.every(row=>row.level===floor),'floor '+floor+' names its own rooms');assert.equal((await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect())).presentation.labelLevel,Number(floor));}
   }
   // Measure continuous input through the shipping keyboard/orbit handler. Every
   // timestamp is an actual RAF callback with a changed camera and rendered frame.
