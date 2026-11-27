@@ -1108,8 +1108,160 @@ def _guest_doors(building, brief, plot, dwelling):
 SUPPORT_DOOR_W = 1.0
 
 
+DOOR_MATCH_MAX_M = 0.6   # two doors this close on one shared wall are one doorway
+
+
+def _match_doors(building):
+    """Line up the two halves of a doorway the openings stage drew apart, for free.
+
+    A doorway between two rooms is drawn in both rooms. Live (job 6cd7137f):
+    the flat's lobby put its door 0.4 m from the landing's door on their shared
+    wall, so neither door met the other and every room of the flat was cut off
+    from the stair. When the two doors on one shared wall are no more than
+    DOOR_MATCH_MAX_M apart (centre to centre) and do not already meet, both
+    move to their common centre, inside the shared run and clear of every other
+    door and window on those walls. Nothing else changes.
+    Mutates ``building``; returns the number of doorways aligned."""
+    from acs_residential_access import EPS, OPPOSITE, edge, wall
+    from acs_plan_review import _number
+
+    def runs(room, side, skip):
+        line, origin, _ = edge(room, side)
+        out = []
+        for kind in ('doors', 'windows'):
+            for o in room.get(kind) or []:
+                if o is skip or not isinstance(o, dict) or o.get('edge') != side:
+                    continue
+                if _number(o.get('offset')) and _number(o.get('width')):
+                    out.append((origin + o['offset'] - o['width'] / 2, origin + o['offset'] + o['width'] / 2))
+        return out
+
+    aligned = 0
+    for floor in (building.get('floors') or {}).values():
+        rooms = [r for r in (floor.get('rooms') or []) if isinstance(r, dict)
+                 and isinstance(r.get('rect'), list) and len(r['rect']) == 4 and all(_number(v) for v in r['rect'])]
+        for i, a in enumerate(rooms):
+            for b in rooms[i + 1:]:
+                for side, other in OPPOSITE.items():
+                    line, lo, hi = edge(a, side)
+                    line2, lo2, hi2 = edge(b, other)
+                    low, high = max(lo, lo2), min(hi, hi2)
+                    if abs(line - line2) > EPS or high - low <= EPS or not (wall(a, side) and wall(b, other)):
+                        continue
+                    for da in [d for d in a.get('doors') or [] if isinstance(d, dict) and d.get('edge') == side]:
+                        for db in [d for d in b.get('doors') or [] if isinstance(d, dict) and d.get('edge') == other]:
+                            if not all(_number(d.get(k)) and (k == 'offset' or d[k] > 0)
+                                       for d in (da, db) for k in ('offset', 'width')):
+                                continue
+                            ca, cb = lo + da['offset'], lo2 + db['offset']
+                            wa, wb = da['width'], db['width']
+                            met = min(ca + wa / 2, cb + wb / 2) - max(ca - wa / 2, cb - wb / 2) >= min(wa, wb) - EPS
+                            if met or abs(ca - cb) > DOOR_MATCH_MAX_M + EPS:
+                                continue
+                            half = max(wa, wb) / 2
+                            c = min(max((ca + cb) / 2, low + half), high - half)
+                            if high - low < 2 * half - EPS:
+                                continue
+                            span = (c - half, c + half)
+                            if any(min(q, span[1]) - max(p, span[0]) > EPS
+                                   for p, q in runs(a, side, da) + runs(b, other, db)):
+                                continue
+                            da['offset'] = round(c - lo, 3)
+                            db['offset'] = round(c - lo2, 3)
+                            aligned += 1
+    return aligned
+
+
+def _ease_bedroom_doors(building, plot, dwelling):
+    """Slide a bedroom doorway along its wall, away from the flat's door, for free.
+
+    Live (job 6cd7137f): the first-floor bedroom's door was 2.72 m from the
+    flat's door (the rule asks 3 m, PLOT_ZONING_BEDROOM_AT_ENTRY) while the
+    same shared wall had room 0.35 m further on. Both halves of the doorway
+    (the bedroom's door and the matching door of the room across) move
+    together, in 5 cm steps, to the nearest position that clears the rule.
+    A move is kept only if it removes that finding and adds no other access,
+    opening or zoning finding. Mutates ``building``; returns the moves kept."""
+    if plot is None:
+        return 0
+    import acs_plot_rules as P
+    from acs_residential_access import EPS, OPPOSITE, edge, detail_issues
+
+    def zoning():
+        hard, soft = [], []
+        P._zoning(building, plot, hard, soft)
+        return hard + soft
+
+    def others(skip):
+        found = {i.get('message') or i.get('code') for i in detail_issues(building, dwelling)}
+        found |= {i.get('message') for i in P.opening_findings(building, plot)}
+        found |= {i.get('message') for i in zoning() if tuple(i.get('room_ref') or ()) != skip}
+        return found
+
+    moved = 0
+    for finding in [f for f in zoning() if f.get('code') == 'PLOT_ZONING_BEDROOM_AT_ENTRY']:
+        template, rid = finding['room_ref']
+        rooms = P._rooms(building, template)
+        bed = next((r for r in rooms if r.get('id') == rid), None)
+        if bed is None:
+            continue
+        key = (template, rid)
+        before = others(key)
+        done = False
+        for door in [d for d in bed.get('doors') or [] if isinstance(d, dict)]:
+            side = door.get('edge')
+            if side not in OPPOSITE or not isinstance(door.get('offset'), (int, float)):
+                continue
+            line, lo, hi = edge(bed, side)
+            centre = lo + door['offset']
+            half = door.get('width', 0.9) / 2
+            for other in rooms:
+                if other is bed:
+                    continue
+                line2, lo2, hi2 = edge(other, OPPOSITE[side])
+                low, high = max(lo, lo2), min(hi, hi2)
+                if abs(line - line2) > EPS or high - low < 2 * half - EPS:
+                    continue
+                mate = next((d for d in other.get('doors') or [] if isinstance(d, dict)
+                             and d.get('edge') == OPPOSITE[side] and isinstance(d.get('offset'), (int, float))
+                             and abs(lo2 + d['offset'] - centre) <= EPS + 1e-3), None)
+                if mate is None:
+                    continue
+                old = (door['offset'], mate['offset'])
+                steps = int(round((high - low - 2 * half) / 0.05))
+                spots = sorted({round(low + half + k * 0.05, 3) for k in range(steps + 1)} | {round(high - half, 3)},
+                               key=lambda c: abs(c - centre))
+                for c in spots:
+                    if abs(c - centre) <= EPS:
+                        continue
+                    door['offset'], mate['offset'] = round(c - lo, 3), round(c - lo2, 3)
+                    if not any(tuple(f.get('room_ref') or ()) == key and f.get('code') == 'PLOT_ZONING_BEDROOM_AT_ENTRY'
+                               for f in zoning()) and others(key) <= before:
+                        moved += 1
+                        done = True
+                        break
+                    door['offset'], mate['offset'] = old
+                if done:
+                    break
+            if done:
+                break
+    if moved:
+        meta = building.setdefault('meta', {})
+        if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
+            meta['assumptions'].append('حُرّك باب غرفة نوم على جداره نفسه (' + str(moved)
+                                       + ') ليبعد 3 م على الأقل عن باب الشقة؛ راجع موقعه.')
+    return moved
+
+
+# Wall-less upper spaces that get a door from the room beside them when the
+# openings left them closed: covered porches (column lines) and open terraces
+# or balconies (live job 6cd7137f: the flat's terrace touched only its majlis,
+# which had no door onto it).
+SUPPORT_DOOR_ROLES = frozenset({'porch', 'portico', 'canopy', 'terrace', 'balcony', 'roof_terrace'})
+
+
 def _support_doors(building, plot, dwelling):
-    """Give a covered porch above the ground the door it is entered by, for free.
+    """Give a covered porch or open terrace above the ground the door it is entered by, for free.
 
     The layout stage keeps an upper porch (a column line under a floating
     room, ``_stacked_supports``) only beside a room it can be entered from. The
@@ -1139,7 +1291,7 @@ def _support_doors(building, plot, dwelling):
     for template, rid in sorted(cut_off()):
         rooms = P._rooms(building, template)
         porch = next((r for r in rooms if r.get('id') == rid), None)
-        if porch is None or not wall_less(porch) or str(porch.get('role') or '').lower() not in PORCH_ROLES:
+        if porch is None or not wall_less(porch) or str(porch.get('role') or '').lower() not in SUPPORT_DOOR_ROLES:
             continue
         entries = sorted((r for r in rooms if r is not porch and r.get('role') in STACK_ACCESS_ROLES
                           and not wall_less(r) and _contact(porch['rect'], r['rect']) >= STACK_ACCESS_M - 1e-9),
@@ -1173,7 +1325,9 @@ def _support_doors(building, plot, dwelling):
                     'width': SUPPORT_DOOR_W, 'height': 2.2, 'material': 'glass'}
             room.setdefault('doors', []).append(door)
             if (template, rid) not in cut_off() and others() <= before:
-                added.append(UPPER_PORCH_NAME + ' من «' + str(room.get('name') or room['id'])[:40] + '»')
+                label = UPPER_PORCH_NAME if str(porch.get('role') or '').lower() in PORCH_ROLES else \
+                    '«' + str(porch.get('name') or porch['id'])[:40] + '»'
+                added.append(label + ' من «' + str(room.get('name') or room['id'])[:40] + '»')
                 break
             room['doors'].remove(door)
     if added:
@@ -1251,9 +1405,17 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
     for template, offset, rooms in groups:
         if template+':'+str(offset) not in done:
             propose(template, offset, rooms)
+    # Free and before any corrective call: the two halves of a doorway the
+    # openings drew a little apart are lined up on their shared wall.
+    if _match_doors(building):
+        checkpoint()
     # Free and before any corrective call: an upper covered porch gets the
     # door of the room it is entered from when the openings left it closed.
     if _support_doors(building, plot, dwelling):
+        checkpoint()
+    # Free: a bedroom door a little too close to the flat's door slides along
+    # its own wall when the wall has room for it.
+    if _ease_bedroom_doors(building, plot, dwelling):
         checkpoint()
     # One bounded corrective pass. Completed geometry and unaffected groups
     # remain available if the provider fails or the original budget runs out.

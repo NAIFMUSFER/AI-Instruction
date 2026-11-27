@@ -170,7 +170,10 @@ def yard_service(room,rooms):
 def wall_less(room):
     """Declares no wall at all (walls "none" or []): a porch or canopy, never a room."""
     walls=room.get('walls')
-    return (isinstance(walls,str) and walls.strip().lower()=='none') or (isinstance(walls,list) and not walls)
+    # ["none"] is how some plans spell it: a list naming no side has no wall,
+    # exactly as wall() reads it.
+    return (isinstance(walls,str) and walls.strip().lower()=='none') or (
+        isinstance(walls,list) and not any(side in walls for side in OPPOSITE))
 
 PORCH_ROLES={'porch','portico','canopy'}
 
@@ -277,6 +280,12 @@ def issues(building,doors=True,dwelling=None):
         for unit in sorted({r.get('unit_id') for r in rooms if isinstance(r.get('unit_id'),str) and r['unit_id']}):
             own={r['id'] for r in rooms if r.get('unit_id')==unit}
             entries={rid for rid in own if by_id[rid].get('role') in {'corridor','entrance','living','majlis'} and graph[rid]&access}
+            if doors and at_ground:
+                # A ground-floor home's own street door is an entrance too: the
+                # guest wing a brief brings in from the street (majlis and its
+                # guest lobby) is entered there, not through the stair lobby.
+                entries|={rid for rid in own if by_id[rid].get('role') in {'entrance','majlis'}
+                          and opens_outside(by_id[rid],rooms)}
             for rid in sorted(own-reachable(entries,own,graph)):
                 if outside(rid):continue
                 issue(rid,'أكمل مسار الدخول من الممر المشترك إلى هذه الشقة ثم غرفها، دون المرور بشقة أخرى'+('؛ يجب أن تتقابل الأبواب على الجدار المشترك.' if doors else '.'))
