@@ -355,7 +355,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('اختر آخر نسخة قبل تعديل السطح'));
    assert.equal(workspaceActions.filter(action=>action==='set_roof').length,roofRequests,'a forced historical roof event sends no write request');
    const afterHistoricalClick=await workspaceState(page);assert.equal(afterHistoricalClick.head,beforeHistoricalClick.head);assert.deepEqual(afterHistoricalClick.history,beforeHistoricalClick.history,'historical roof refusal preserves immutable history');
-   await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
+   await page.locator('#cwLogout').click();await page.locator('#acsAuthEmailToggle').waitFor({state:'visible'}); // signed out: the sign-in screen is back (email folded under its button)
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);
    console.log('PASS connected workspace '+width+(noWebGL?' without WebGL: 2D, save, approve, SVG, recover and logout remain available':': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout'));
