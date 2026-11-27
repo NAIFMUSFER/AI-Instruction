@@ -38,6 +38,14 @@ class ResumeAfterTruncation(unittest.TestCase):
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_TRUNCATED'))['job']['can_resume'])
         self.assertFalse(H._resumable_failure('ACS_UPSTREAM_TRUNCATED'))
 
+    def test_a_job_stopped_at_the_deadline_after_a_saved_layout_offers_a_resume(self):
+        # Live job e53cc4f7 (the owner's corner duplex): six paid calls, the full
+        # layout saved, then the 840 s worker deadline before the repair stage.
+        view = H._job_view(row('ACS_TIMEOUT', {'kind': 'layout', 'building': {}}))
+        self.assertTrue(view['job']['can_resume'])
+        self.assertFalse(H._job_view(row('ACS_TIMEOUT'))['job']['can_resume'], 'no checkpoint: no paid restart offered')
+        self.assertFalse(H._job_view(row('ACS_TIMEOUT', {'kind': 'layout'}, resumed_by='x'))['job']['can_resume'])
+
     def test_other_upstream_failures_stay_final_and_known_resumable_codes_are_unchanged(self):
         checkpoint = {'kind': 'details'}
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_REFUSED', checkpoint))['job']['can_resume'])
