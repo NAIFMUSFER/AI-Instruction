@@ -17,7 +17,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 from acs_plan_lock_binding import PlanLockWorkspace
-from acs_plan_projection import PROVENANCE_SCHEMA, SCOPE, project, provenance_map, to_svg
+from acs_plan_projection import PROVENANCE_SCHEMA, SCOPE, project, provenance_map, render_svg
 from acs_plan_review import PlanError, canonical, digest
 
 SCHEMA = "acs.plan-svg-export/1.0"
@@ -140,7 +140,8 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
             or projected.get("scope") != SVG_SCOPE):
         raise PlanError("BASELINE_CHANGED", "SVG projection detached from Frozen Baseline")
 
-    svg_bytes = to_svg(bound.revision, level_index).encode("utf-8")
+    rendered = render_svg(bound.revision, level_index)
+    svg_bytes = rendered["svg_text"].encode("utf-8")
     metadata = _svg_metadata(svg_bytes)
     expected_metadata = {k: v for k, v in projected.items() if k != "primitives"}
     if canonical(metadata) != canonical(expected_metadata):
@@ -165,6 +166,7 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
         "provenance_hash": provenance["provenance_hash"],
         "source_map_hash": digest(source_map), "source_map": source_map,
         "projection_hash": digest(projected), "projected_space_count": len(primitives),
+        "drafting": json.loads(canonical(rendered["drafting"])),
         "canonical_model_is_source_of_truth": True,
         "svg_is_source_of_truth": False,
         "provider_calls": 0, "replanning_calls": 0,

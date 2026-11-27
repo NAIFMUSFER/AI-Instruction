@@ -1,0 +1,817 @@
+{
+ "meta": {
+  "type": "polyclinic",
+  "assumptions": [
+   "نموذج معيب عمدًا لاختبار فحوص الرعاية الصحية: ممر ضيق، غرفة كشف صغيرة، باب بين اللوازم النظيفة والمتسخة، ولا دورة مياه لذوي الإعاقة."
+  ]
+ },
+ "site": {
+  "w": 24,
+  "d": 9.6
+ },
+ "floor_height": 3.6,
+ "wall_h": 3.0,
+ "wall_t": 0.2,
+ "levels": [
+  {
+   "index": 0,
+   "id": "L0",
+   "name": "الدور الأرضي",
+   "template": "ground"
+  }
+ ],
+ "floors": {
+  "ground": {
+   "rooms": [
+    {
+     "id": "sample",
+     "name": "سحب العينات",
+     "role": "sample_collection",
+     "rect": [
+      0,
+      0,
+      3,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d7a",
+       "edge": "S",
+       "offset": 1.5,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w18",
+       "edge": "N",
+       "offset": 1.5,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_sample",
+       "type": "light",
+       "x": 1.5,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "lab",
+     "name": "المختبر",
+     "role": "lab",
+     "rect": [
+      3,
+      0,
+      4,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d8a",
+       "edge": "S",
+       "offset": 2.0,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w19",
+       "edge": "N",
+       "offset": 2.0,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_lab",
+       "type": "light",
+       "x": 2.0,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "reception",
+     "name": "الاستقبال",
+     "role": "reception",
+     "rect": [
+      7,
+      0,
+      3,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d3b",
+       "edge": "E",
+       "offset": 2.0,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w20",
+       "edge": "N",
+       "offset": 1.5,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_reception",
+       "type": "light",
+       "x": 1.5,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "entrance",
+     "name": "المدخل الرئيسي",
+     "role": "entrance",
+     "rect": [
+      10,
+      0,
+      4,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "x1",
+       "edge": "N",
+       "offset": 2.0,
+       "width": 1.8,
+       "height": 2.14,
+       "material": "aluminium"
+      },
+      {
+       "id": "d2a",
+       "edge": "S",
+       "offset": 2.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d3a",
+       "edge": "W",
+       "offset": 2.0,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d4a",
+       "edge": "E",
+       "offset": 2.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_entrance",
+       "type": "light",
+       "x": 2.0,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "waiting",
+     "name": "الانتظار",
+     "role": "waiting",
+     "rect": [
+      14,
+      0,
+      6,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d4b",
+       "edge": "W",
+       "offset": 2.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d5a",
+       "edge": "S",
+       "offset": 3.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d6a",
+       "edge": "E",
+       "offset": 2.0,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w21",
+       "edge": "N",
+       "offset": 3.0,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_waiting",
+       "type": "light",
+       "x": 3.0,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "pharmacy",
+     "name": "الصيدلية",
+     "role": "pharmacy",
+     "rect": [
+      20,
+      0,
+      4,
+      4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d6b",
+       "edge": "W",
+       "offset": 2.0,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w22",
+       "edge": "N",
+       "offset": 2.0,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_pharmacy",
+       "type": "light",
+       "x": 2.0,
+       "z": 2.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "corridor",
+     "name": "الممر",
+     "role": "corridor",
+     "rect": [
+      0,
+      4,
+      24,
+      1.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d2b",
+       "edge": "N",
+       "offset": 12.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d5b",
+       "edge": "N",
+       "offset": 17.0,
+       "width": 1.6,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d7b",
+       "edge": "N",
+       "offset": 1.5,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d8b",
+       "edge": "N",
+       "offset": 5.0,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d9b",
+       "edge": "S",
+       "offset": 1.6,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d10b",
+       "edge": "S",
+       "offset": 4.8,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d11b",
+       "edge": "S",
+       "offset": 8.0,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d12b",
+       "edge": "S",
+       "offset": 11.6,
+       "width": 1.2,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d13b",
+       "edge": "S",
+       "offset": 14.8,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d14b",
+       "edge": "S",
+       "offset": 17.2,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d15b",
+       "edge": "S",
+       "offset": 19.6,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "d16b",
+       "edge": "S",
+       "offset": 22.4,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_corridor",
+       "type": "light",
+       "x": 12.0,
+       "z": 1.0
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "exam_1",
+     "name": "غرفة كشف 1",
+     "role": "exam_room",
+     "rect": [
+      0,
+      5.4,
+      2.6,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d9a",
+       "edge": "N",
+       "offset": 1.6,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w23",
+       "edge": "S",
+       "offset": 1.6,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_exam_1",
+       "type": "light",
+       "x": 1.6,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "exam_2",
+     "name": "غرفة كشف 2",
+     "role": "exam_room",
+     "rect": [
+      3.2,
+      5.4,
+      3.2,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d10a",
+       "edge": "N",
+       "offset": 1.6,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w24",
+       "edge": "S",
+       "offset": 1.6,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_exam_2",
+       "type": "light",
+       "x": 1.6,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "exam_3",
+     "name": "غرفة كشف 3",
+     "role": "exam_room",
+     "rect": [
+      6.4,
+      5.4,
+      3.2,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d11a",
+       "edge": "N",
+       "offset": 1.6,
+       "width": 1.0,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w25",
+       "edge": "S",
+       "offset": 1.6,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_exam_3",
+       "type": "light",
+       "x": 1.6,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "treatment",
+     "name": "غرفة العلاج",
+     "role": "treatment_room",
+     "rect": [
+      9.6,
+      5.4,
+      4,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d12a",
+       "edge": "N",
+       "offset": 2.0,
+       "width": 1.2,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w26",
+       "edge": "S",
+       "offset": 2.0,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "id": "p_treatment",
+       "type": "light",
+       "x": 2.0,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "wc_access",
+     "name": "مخزن",
+     "role": "store",
+     "rect": [
+      13.6,
+      5.4,
+      2.4,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d13a",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_wc_access",
+       "type": "light",
+       "x": 1.2,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "opd"
+    },
+    {
+     "id": "clean_util",
+     "name": "غرفة اللوازم النظيفة",
+     "role": "clean_utility",
+     "rect": [
+      16,
+      5.4,
+      2.4,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d14a",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "bad_a",
+       "edge": "E",
+       "offset": 2.6,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_clean_util",
+       "type": "light",
+       "x": 1.2,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "support"
+    },
+    {
+     "id": "soiled_util",
+     "name": "غرفة اللوازم المتسخة",
+     "role": "soiled_utility",
+     "rect": [
+      18.4,
+      5.4,
+      2.4,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d15a",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "bad_b",
+       "edge": "W",
+       "offset": 2.6,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_soiled_util",
+       "type": "light",
+       "x": 1.2,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "support"
+    },
+    {
+     "id": "waste",
+     "name": "غرفة النفايات الطبية",
+     "role": "waste_hold",
+     "rect": [
+      20.8,
+      5.4,
+      3.2,
+      3.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "doors": [
+      {
+       "id": "d16a",
+       "edge": "N",
+       "offset": 1.6,
+       "width": 0.9,
+       "height": 2.14,
+       "material": "wood"
+      },
+      {
+       "id": "x17",
+       "edge": "S",
+       "offset": 1.6,
+       "width": 1.2,
+       "height": 2.14,
+       "material": "aluminium"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "id": "p_waste",
+       "type": "light",
+       "x": 1.6,
+       "z": 1.8
+      }
+     ],
+     "unit_id": "support"
+    }
+   ]
+  }
+ }
+}

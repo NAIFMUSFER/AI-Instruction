@@ -38,6 +38,12 @@ production route, warehouse policy, or deployment setting is enabled by this PR.
   primitives and carry revision/model provenance. DXF has metre units and a
   reversible ACS (x,z) → CAD (x,-z) mapping. `ezdxf` is an optional exporter
   dependency, not added to the production runtime in this PR.
+* `acs_plan_drafting.py` (with the table `acs_drafting_standards.py`): the
+  drawing layer used by the SVG, PDF and DXF sheets. It draws only canonical
+  facts (walls at the model thickness, doors, windows, docks, explicit stairs)
+  plus disclosed conventions (door swing side/hand), at a standard scale on ISO
+  paper, with NCS layers, dimension chains and net-area room tags. See
+  `docs/research/cad_drafting_standards.md`.
 * The three backend companions are explicitly copied into the container, but
   no route imports or enables them. Importing them with `python -S` requires no
   third-party package and must not import a provider or the optional CAD library.
@@ -53,8 +59,10 @@ The adapter is not registered on production routes. Before exposure it must run
 behind the existing body caps, quotas, isolated/cancellable job runner, and
 recoverable asynchronous delivery. It must not execute on an HTTP event loop.
 
-The CAD projection is **SPACE_BOUNDARIES_ONLY**. It does not draw complete walls,
-doors/windows, structural grids, MEP or permit sheets. Space rectangle totals
+The hash-bound CAD projection is **SPACE_BOUNDARIES_ONLY**. The sheets drawn
+from it add walls, doors/windows, stairs, dimensions and room tags from the same
+canonical model; they still do not draw structural grids, columns, MEP or permit
+sheets, and door swing side/hand are drafting defaults. Space rectangle totals
 are NOT gross floor area, net floor area, or an efficiency score; those metrics
 remain null. DXF files are parsed/audited with ezdxf; native AutoCAD/DWG opening
 has not been verified. Arabic label content round-trips; visual font shaping

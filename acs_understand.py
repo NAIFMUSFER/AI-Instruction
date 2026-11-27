@@ -123,7 +123,7 @@ Room يقبل إضافةً لما سبق:
   "stations": [ {"kind":"pack|inspect|label|qa|sort|void|desk|charger|locker|wrap",
                  "x":,"z":,"count":int,"pitch":float,"dir":"x|z"} ]
               ← صف محطات متكرّر (طاولة + شاشة + طابعة حسب النوع).
-  "docks":    [ {"edge":"N|S|E|W","offset":,"width":3.6,"height":4.2,"count":int,"pitch":float} ]
+  "docks":    [ {"edge":"N|S|E|W","offset":,"width":3.0,"height":3.0,"count":int,"pitch":4.0} ]
               ← أرصفة تحميل: فتحة + باب منزلق + لوح تسوية + مصدّات.
 
 PointType إضافية (معدات): scanner · printer · scale · monitor · ptl(pick-to-light) · charger ·
@@ -223,7 +223,7 @@ FEWSHOT_OUT = {
 }
 
 KNOWLEDGE_WAREHOUSE = r"""
-قواعد المستودعات ومراكز التوزيع (تجارة إلكترونية) — التزم بها حرفياً:
+قواعد المستودعات ومراكز التوزيع (تجارة إلكترونية) — افتراضات لما لم يحدده العميل:
 
 تدفّق العمل (يحدّد ترتيب المناطق من الشمال z=0 إلى الجنوب z=D):
   استلام/أرصفة واردة → تفريغ سريع → تجهيز وارد مرقّم → فحص جودة → (كروس دوك للسريع) →
@@ -231,23 +231,23 @@ KNOWLEDGE_WAREHOUSE = r"""
   فرز آلي → تجميع طلبات → تجهيز شحن حسب الناقل → أرصفة صادرة.
 اجعل المسافة بين الاستلام والشحن أقصر ما يمكن، وضع الأصناف سريعة الدوران (Class A) أقرب لمنطقة الالتقاط.
 
-أبعاد قياسية إلزامية:
-- رصيف تحميل: عرض 3.5–3.7 م، ارتفاع باب 4.0–4.5 م، تباعد بين مراكز الأرصفة 4.0–6.5 م،
-  ومساحة مناورة أمامه ≥ 12 م.
-- ممر رافعة شوكية بين رفوف البالتات ≥ 3.4 م (اتجاهان ≥ 4.5 م). ممر خدمة أرفف يدوي ≥ 1.2 م.
+أبعاد مرجعية:
+- رصيف تحميل على جدار خارجي: باب 2.7–3.0 م عرضًا × 3.0 م ارتفاعًا، تباعد المراكز 3.7–4.3 م
+  (لا أقل من 3.66 م)، عمق تجهيز داخلي خلفه 16–20 م، وساحة شاحنات أمامه ≥ 35 م داخل الأرض.
+- ممر رفوف البالتات: رافعة موازنة ≈ 3.6 م، ريتش ترك 2.7–3.2 م، VNA موجّهة 1.6–2.1 م. ممر خدمة أرفف يدوي ≥ 1.2 م.
 - ممر مشاة ≥ 1.2 م بخطوط صفراء ومفصول عن مسار الرافعات والروبوت.
 - مسار AMR ≥ 1.0 م للاتجاه الواحد، مع محطات شحن على طرف المسار.
-- رفّ بالتات: عمق 1.1 م، طول الخانة 2.7 م، 4 مستويات، ارتفاع 8–9 م.
+- رفّ بالتات: عمق 1.1 م، طول الخانة 2.7 م، 4 مستويات، ارتفاع 8–9 م، وقمته تحت الرشاشات بـ ≥ 0.46 م (ESFR ≥ 0.91 م).
 - رفّ متوسط: عمق 0.6 م، خانة 1.2 م، 5 مستويات، ارتفاع 2.4 م.
 - صناديق صغيرة: عمق 0.45 م، خانة 0.9 م، 6 مستويات، ارتفاع 2.1 م.
 - محطة تغليف: 1.8×0.9 م وتباعد 2.6 م، مع ميزان وطابعة ملصقات وشاشة تحقّق.
 - سير ناقل: عرض 0.8–1.0 م على ارتفاع 0.85–0.95 م، حواجز جانبية، وإيقاف طوارئ كل ≤ 12 م.
 - ارتفاع صافٍ للمستودع 10–14 م (اجعل wall_h بهذا المدى، والمكاتب الداخلية 3.0–3.2 م).
 
-سلامة وأمن (إلزامي):
+سلامة وأمن:
 - طفاية لكل ≈1000 م² وعلى كل مخرج، وحنفيات حريق على المحيط، ورشاشات سقفية في كل منطقة تخزين.
-- ≥ 4 مخارج طوارئ موزّعة، ونقطة تجمّع (assembly) خارج مسارات الرافعات.
-- كاميرات على كل رصيف وعلى الممرات الرئيسية والبوابات (لا تقل عن 6).
+- مخارج طوارئ موزّعة على المحيط (مسار الهروب ≤ 76 م في مخزن مرشوش)، ونقطة تجمّع (assembly) خارج مسارات الرافعات.
+- كاميرات على كل رصيف وعلى الممرات الرئيسية والبوابات.
 - بوابات أمنية (gate) عند مداخل المشاة، وعين غسيل (eyewash) في الصيانة ومناطق المواد.
 
 الترميز اللوني الصناعي (استخدمه في wall_color للمناطق أو اتركه ليُشتقّ من role):
@@ -1609,12 +1609,14 @@ def _outline(description, model=None, btype="residential", telemetry=None,
     return zones, envelope, issues
 
 
-def _plan_spatial_context(envelope, zones_by_id, results, template):
+def _plan_spatial_context(envelope, zones_by_id, results, template, support=False):
     """Read-only context: only accepted rooms, never failed-chunk placeholders.
 
     Rebuilt before each call, including recursive split halves, so later calls
     see earlier accepted geometry. Template identity distinguishes stacked floors.
-    No room is moved, resized, or invented here.
+    No room is moved, resized, or invented here. With ``support`` (residential)
+    an upper storey also gets ``below``: the storey under it, its extent and
+    the open rectangles inside that extent, so its rooms stand on built space.
     """
     context = {k: envelope[k] for k in
                ("site", "levels", "floor_height", "wall_h", "wall_t")
@@ -1635,7 +1637,32 @@ def _plan_spatial_context(envelope, zones_by_id, results, template):
                 "template", chunk.get("template"))
             planned.append(item)
     context["planned_rooms"] = planned
+    if support:
+        below = _storey_below(envelope, template)
+        rects = [r["rect"] for r in planned if r.get("template") == below]
+        # Only a storey planned in full is a support to plan over: with its
+        # zones still pending (or a failed chunk) the extent would mislead.
+        wanted = {z for z, item in zones_by_id.items() if item.get("template") == below}
+        done = {r["id"] for r in planned if r.get("template") == below}
+        from acs_residential_generation import support_context
+        found = support_context(rects) if below is not None and wanted <= done else None
+        if found is not None:
+            context["below"] = dict(found, template=below)
     return context
+
+
+def _storey_below(envelope, template):
+    """The template of the storey directly under ``template``'s lowest storey."""
+    levels = [l for l in (envelope or {}).get("levels") or [] if isinstance(l, dict)
+              and type(l.get("index")) is int and isinstance(l.get("template"), str)]
+    own = [l["index"] for l in levels if l["template"] == template]
+    if not own:
+        return None
+    under = [l for l in levels if l["index"] < min(own)]
+    if not under:
+        return None
+    below = max(under, key=lambda l: l["index"])["template"]
+    return below if below != template else None
 
 
 def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
@@ -1696,7 +1723,8 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
                                  btype=btype, telemetry=ctel,
                                  request_id=request_id,
                                  spatial_context=_plan_spatial_context(
-                                     envelope, zones_by_id, results, chunk.get("template")))
+                                     envelope, zones_by_id, results, chunk.get("template"),
+                                     support=_is_residential(btype)))
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"]))
         results.append((chunk, rooms, iss))

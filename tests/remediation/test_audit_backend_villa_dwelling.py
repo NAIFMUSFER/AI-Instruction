@@ -131,9 +131,14 @@ class SavedVillaRegression(unittest.TestCase):
         self.assertIn('RESIDENTIAL_ACCESS_DISCONNECTED', core['deterministic_alignment'])
         self.assertIn('stairs rect [0, 20, 4.2, 6]', system)
         self.assertIn('ONE single-family dwelling', system)
-        # The unsupported upper bedroom is a real defect the openings stage rejects.
-        self.assertEqual(context['advisories'], [{'code': 'UNSUPPORTED_UPPER_ROOM',
-            'room_ref': ['villa_upper', 'bedroom_3'], 'supported_share': 0.0, 'storey_below': 'villa_ground'}])
+        # The upper bedroom over open ground was a real defect (the review blocks
+        # it as «معلّق»); it is now carried on a covered ground porch, for free,
+        # so it is no longer a finding and the repair sees the porch.
+        self.assertNotIn('advisories', context)
+        porch = [r for r in context['building']['floors']['villa_ground']['rooms'] if r['role'] == 'porch']
+        self.assertEqual(porch, [{'id': 'villa_ground_porch_1', 'name': 'رواق مظلل', 'role': 'porch',
+                                  'rect': [11.8, 0, 6.2, 5], 'walls': 'none', 'covered': True}])
+        self.assertNotIn('UNSUPPORTED_UPPER_ROOM', system)
 
     def test_arabic_roles_are_canonical_and_villa_access_passes(self):
         building = R._canonical_room_roles(saved())

@@ -64,6 +64,8 @@ def _enclosed(r):
 
 
 OPEN_AIR_ROLES = ("terrace", "balcony", "roof_terrace")
+# Covered open spaces at ground level (a porch on columns under an upper room).
+PORCH_ROLES = ("porch", "portico", "canopy")
 
 
 def _open_air(r):
@@ -394,7 +396,10 @@ def review_building(b):
                     "(مجلس، صالة، مطبخ، غرف نوم، حمامات، ممر) كلٌّ برُكنها وأبعادها."
                     % (tmpl, rid, area))
 
-            outdoor = tmpl in roof_only_templates or _is_outdoor(rid)
+            # A porch with no wall on any side (a covered porch under an upper
+            # room) is outdoors: no wall to hang a door in, no room to light.
+            outdoor = tmpl in roof_only_templates or _is_outdoor(rid) or (
+                not _enclosed(r) and str(r.get("role") or "").lower() in PORCH_ROLES)
 
             # باب لكل غرفة داخلية (عدا الأسوار والمواقف والمناطق المفتوحة)
             if not strict and not r.get("doors") and not outdoor and not openz \

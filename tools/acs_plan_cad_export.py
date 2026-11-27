@@ -6,11 +6,14 @@ This boundary intentionally calls :meth:`PlanLockWorkspace.handoff` before any
 projection or CAD dependency is invoked, so an unapproved draft cannot reach the
 approved-export path.
 
-Only the exact ``SPACE_BOUNDARIES_ONLY`` projection already admitted by
-``acs_plan_projection`` is exported.  No wall thickness, opening geometry,
-structure, MEP, rack clearances, code dimensions, or other missing facts are
-invented.  DXF still uses the existing optional ``ezdxf`` dependency and makes no
-native-DWG or AutoCAD certification claim.
+The hash-bound content is the exact ``SPACE_BOUNDARIES_ONLY`` projection already
+admitted by ``acs_plan_projection``. The sheet also draws walls at the canonical
+thickness, doors, windows, stairs, dimension chains and room tags derived from
+the same canonical model (``acs_plan_drafting``); its summary and hash are in the
+receipt. Structure, MEP, rack clearances and code checks are not drawn and no
+missing fact is invented. DXF uses NCS/AIA layer names, metre units and the
+optional ``ezdxf`` dependency, and makes no native-DWG or AutoCAD certification
+claim.
 """
 from __future__ import annotations
 
@@ -22,7 +25,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 from acs_plan_lock_binding import PlanLockWorkspace
-from acs_plan_projection import PROVENANCE_SCHEMA, SCOPE, project, provenance_map, to_dxf, to_svg
+from acs_plan_projection import PROVENANCE_SCHEMA, SCOPE, project, provenance_map, render_svg, to_dxf
 from acs_plan_review import PlanError, canonical, digest
 
 SCHEMA = "acs.plan-cad-export/1.0"
@@ -129,7 +132,8 @@ def export_approved_cad(workspace: PlanLockWorkspace, revision_id: str, level_in
         raise PlanError("PROJECTION_CHANGED", "CAD projection is detached from the Frozen Baseline")
 
     if fmt == "SVG":
-        artifact_text = to_svg(bound.revision, level_index)
+        rendered = render_svg(bound.revision, level_index)
+        artifact_text, drafting = rendered["svg_text"], rendered["drafting"]
         try:
             root = ET.fromstring(artifact_text)
             metadata_node = root.find("{*}metadata")
@@ -150,6 +154,7 @@ def export_approved_cad(workspace: PlanLockWorkspace, revision_id: str, level_in
         if not isinstance(manifest, dict) or canonical(manifest) != canonical(projection):
             raise PlanError("PROJECTION_CHANGED", "DXF manifest is detached from the approved projection")
         artifact_text = generated["dxf_text"]
+        drafting = generated.get("drafting")
         format_claims = {
             "native_dwg": generated.get("native_dwg") is True,
             "autocad_verified": generated.get("autocad_verified") is True,
@@ -189,6 +194,9 @@ def export_approved_cad(workspace: PlanLockWorkspace, revision_id: str, level_in
         "projection_manifest": json.loads(canonical(projection)),
         "provider_calls": 0,
         "replanning_calls": 0,
+        # What the sheet draws beyond the hash-bound space boundaries, from the
+        # same canonical model: walls, openings, stairs, dimensions and tags.
+        "drafting": json.loads(canonical(drafting)) if isinstance(drafting, dict) else None,
         "canonical_model_is_source_of_truth": True,
         "cad_is_source_of_truth": False,
         "construction_document": False,

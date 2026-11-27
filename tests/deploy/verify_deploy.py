@@ -922,14 +922,24 @@ chk('artifact compilation resolves an exact stored approval before deriving file
 # تُشحَن في صورة الخادوم. تُصنَّف صراحةً، ويُثبَت أدناه أن الخادوم لا يصل إليها.
 AUTHORING_COMPANIONS = ['acs_engineering_approval.py']
 browser_specs |= set(AUTHORING_COMPANIONS)
+# Staged packs: reviewed modules the owner has not wired in yet (their tests run,
+# nothing imports them). Proven below to be unreachable and not shipped; the
+# wiring change moves each into the image (docs/research/healthcare_integration_plan.md,
+# docs/research/typologies_integration_plan.md).
+STAGED_PACKS = ['acs_healthcare_program.py', 'acs_typology_common.py', 'acs_typology_hotel.py',
+                'acs_typology_mosque.py', 'acs_typology_office.py', 'acs_typology_retail.py',
+                'acs_typology_school.py']
 all_specs = sorted(x for x in os.listdir(ROOT)
                    if re.match(r'^acs_.*\.(py|json)$', x))
 unclassified = []
 for a in all_specs:
     if (a in backend_files or a in image_files or a in browser_specs
-            or a in OFFLINE_TOOLS):
+            or a in OFFLINE_TOOLS or a in STAGED_PACKS):
         continue
     unclassified.append(a)
+for t in STAGED_PACKS:
+    chk('the staged pack %s is not reachable from the API yet' % t, t[:-3] not in closure)
+    chk('the staged pack %s is not shipped in the container yet' % t, t not in image_files)
 note('%d canonical file(s) are browser-mirrored: %s'
      % (len(browser_specs), ', '.join(sorted(browser_specs))))
 note('%d offline command-line tool(s), deployed nowhere by design: %s'

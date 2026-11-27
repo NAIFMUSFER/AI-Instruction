@@ -4,6 +4,7 @@ import json
 import math
 import re
 from acs_plan_review import PlanError, canonical, _structure, _geometry, _program
+from acs_residential_access import MIN_SHORT_SIDE_M
 from acs_workspace_progress import emit
 
 # Output caps for the repair and openings calls. The model thinks before it
@@ -60,6 +61,19 @@ Do not invent a plot's regulatory setbacks or claim compliance. Emit no furnitur
 electrical points or openings during outline and plan_chunk; a separate stage
 will add openings. Do not embed the full brief repeatedly in room entries.
 Do not output validation, authority, approval, baseline or measured metrics.
+STACKING: every room of an upper storey stands over rooms of the storey below
+(context.below: inside extent, off open), never over a yard, garden, pool or
+setback. If an upper storey needs more area, add under it on the ground storey
+a covered porch (role porch, walls "none", covered true), not a void. Cantilever
+(max 1.2 m) only if the brief asks. Upper bathrooms, kitchens and laundries sit
+over wet rooms; group wet rooms on shared walls.
+ZONING: majlis and guest WC within 5 m of the entrance serving them (the flat or
+house entrance, or a guest door of their own on an exterior wall); bedrooms in
+the private zone away from it. A room the brief opens to a yard (pool bathroom,
+store) is on the ground storey against that yard.
+Clear short side unless the brief sizes the room (m): bedroom 2.7, maid/driver
+2.1, living/majlis/dining 3.0, kitchen 2.1, bathroom 1.5 (WC 1.2), corridor 1.2,
+entrance 1.5, laundry/dressing/pantry/store 1.2.
 '''
 
 # A villa or house (acs_plot_rules.dwelling): a livable Saudi family home, not
@@ -130,6 +144,11 @@ window; do not invent an internal window to satisfy an assumed daylight rule.
 Keep openings within their wall spans and do not overlap openings. Provide one
 light point per enclosed occupied room. These are editable concept proposals.
 Do not claim daylight compliance, engineering approval, structure or fire design.
+A yard room (pool bathroom, store) opens on its exterior wall to that yard.
+Guests with their own entrance get an external door into the majlis or its
+guest lobby; else the majlis door is within 5 m of the entrance door. Doors:
+entrance 1.0-1.2, rooms 0.9, baths 0.8. Habitable windows about 1/8 of the floor
+area, sill 0.9 (bath 1.6). A porch (walls "none") needs no door.
 '''
 
 # مرادفات أدوار صريحة فقط؛ لا نستنتج الدور من اسم الغرفة أو نص الطلب.
@@ -221,7 +240,7 @@ _CORE_ROLES = {'stairs', 'stair', 'elevator'}
 _OVERLAP_EPS = 0.0001
 
 REPAIR_SYSTEM = '''\nCorrect this incomplete unapproved layout. Return ONLY
-{"floors":{"existing_template":{"rooms":[{"id":"stable id","name":"Arabic name","role":"bedroom|living|kitchen|bathroom|majlis|corridor|entrance|lobby|stairs|elevator","unit_id":"apartment id when applicable","core_id":"shared core id when applicable","rect":[0,0,3,4],"walls":["N","S","E","W"]}]}}}.
+{"floors":{"existing_template":{"rooms":[{"id":"stable id","name":"Arabic name","role":"bedroom|living|kitchen|bathroom|majlis|corridor|entrance|lobby|stairs|elevator|porch","unit_id":"apartment id when applicable","core_id":"shared core id when applicable","rect":[0,0,3,4],"walls":["N","S","E","W"]}]}}}.
 Keep exactly the existing template keys. Do not return site, levels or any
 other top-level field. Keep valid room identities where possible; replace
 apartment shells by the confirmed room program. Correct all supplied findings,
@@ -323,23 +342,149 @@ def _core_instruction(issues):
             "core, and the core must still touch that floor's circulation.")
 
 
-ADVISORY_REPAIR = '''\nThe openings stage will also reject every room listed in advisories: an upper
-room resting on less than half of its area over built space on the storey below.
-Move or resize those rooms over built space in this same answer.'''
+STACK_REPAIR = '''\nUNSUPPORTED_UPPER_ROOM: that upper room stands over open ground on its
+storey_below (the review blocks it as floating). Move or resize it to lie over
+rooms of storey_below, or on the ground storey add a covered porch under it
+(role porch, walls "none", covered true). Keep its program size.'''
 
 
-def _advisories(building):
-    """Layout defects the openings stage rejects but cannot fix (rooms cannot
-    move there). They inform the repair; they never block or pass a layout."""
+def _unsupported_findings(building):
+    """Upper rooms resting on less than half of their area over the storey below.
+
+    The review blocks each one as «معلّق» (acs_validate check 3, same measure),
+    and the openings stage cannot move rooms, so the layout stage reports them."""
     from acs_validate import unsupported_rooms
     return [{'code': 'UNSUPPORTED_UPPER_ROOM', 'room_ref': [upper, rid],
              'supported_share': round(ratio, 2), 'storey_below': lower}
             for upper, rid, ratio, lower in unsupported_rooms(building)]
 
 
+def _finding_key(item):
+    """A finding's identity for the free fixes' guard: a changed share is the same finding."""
+    return canonical({k: v for k, v in item.items() if k not in {'supported_share', 'deterministic_alignment'}})
+
+
 def _overlaps(a, b):
     return (min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0]) > _OVERLAP_EPS
             and min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]) > _OVERLAP_EPS)
+
+
+def uncovered(region, covers, min_side=0.0, limit=32):
+    """Rectangles of the union of ``region`` rects that no ``covers`` rect covers.
+
+    A grid on every rectangle edge; the largest free rectangle at least
+    ``min_side`` on both sides is taken first, then the next, at most
+    ``limit`` of them. What is narrower than ``min_side`` stays uncovered.
+    Deterministic; rounded to the centimetre."""
+    region = [r for r in region if _numeric_rect(r) and r[2] > 0 and r[3] > 0]
+    if not region:
+        return []
+    covers = [r for r in covers if _numeric_rect(r)]
+    def cuts(axis):
+        lo = min(r[axis] for r in region); hi = max(r[axis] + r[axis + 2] for r in region)
+        values = {lo, hi}
+        for r in region + covers:
+            for v in (r[axis], r[axis] + r[axis + 2]):
+                if lo < v < hi:
+                    values.add(v)
+        return sorted(values)
+    xs, zs = cuts(0), cuts(1)
+    inside = lambda rects, px, pz: any(r[0] < px < r[0] + r[2] and r[1] < pz < r[1] + r[3] for r in rects)
+    free = [[inside(region, (xs[i] + xs[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2)
+             and not inside(covers, (xs[i] + xs[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2)
+             for i in range(len(xs) - 1)] for j in range(len(zs) - 1)]
+    out = []
+    while len(out) < limit:
+        best = None
+        for i1 in range(len(xs) - 1):
+            for i2 in range(i1, len(xs) - 1):
+                width = xs[i2 + 1] - xs[i1]
+                if width < min_side - 1e-9:
+                    continue
+                top = None
+                for j in range(len(zs)):
+                    open_row = j < len(zs) - 1 and all(free[j][i1:i2 + 1])
+                    if open_row and top is None:
+                        top = j
+                    elif not open_row and top is not None:
+                        depth = zs[j] - zs[top]
+                        if depth >= min_side - 1e-9 and (best is None or width * depth > best[0] + 1e-9):
+                            best = (width * depth, i1, i2, top, j)
+                        top = None
+        if best is None:
+            break
+        _, i1, i2, j1, j2 = best
+        for j in range(j1, j2):
+            for i in range(i1, i2 + 1):
+                free[j][i] = False
+        out.append([round(xs[i1], 2), round(zs[j1], 2), round(xs[i2 + 1] - xs[i1], 2), round(zs[j2] - zs[j1], 2)])
+    return out
+
+
+def support_context(rects):
+    """What an upper storey's planner needs from the storey below: its extent and
+    the open (unbuilt) rectangles inside it, largest first, at most 12."""
+    rects = [r for r in rects if _numeric_rect(r) and r[2] > 0 and r[3] > 0]
+    if not rects:
+        return None
+    x0 = min(r[0] for r in rects); z0 = min(r[1] for r in rects)
+    extent = [round(x0, 2), round(z0, 2), round(max(r[0] + r[2] for r in rects) - x0, 2),
+              round(max(r[1] + r[3] for r in rects) - z0, 2)]
+    holes = [h for h in uncovered([extent], rects, 0.5) if h[2] * h[3] >= 0.5]
+    holes.sort(key=lambda h: -h[2] * h[3])
+    return {'extent': extent, 'open': holes[:12]}
+
+
+# A first-storey room over open ground is carried on columns: a covered porch
+# («رواق مظلل») is drawn under it on the ground storey, for free, when that
+# ground is free, inside the plot and the porch adds no other finding.
+PORCH_MIN_SIDE_M = 1.0
+PORCH_MIN_M2 = 1.5
+
+
+def _support_porches(building, unsupported):
+    """A copy with covered porches under first-storey rooms over open ground, or None.
+
+    Only the lowest occupied storey gets porches, and only when its template is
+    used by that storey alone (a shared template would repeat them upstairs)."""
+    from acs_plot_rules import _occupied
+    levels = _occupied(building)
+    if len(levels) < 2:
+        return None
+    ground = levels[0]['template']
+    if sum(1 for l in levels if l['template'] == ground) != 1:
+        return None
+    above = levels[1]['template']
+    ids = {f['room_ref'][1] for f in unsupported
+           if f.get('storey_below') == ground and f['room_ref'][0] == above}
+    if not ids or above == ground:
+        return None
+    value = json.loads(canonical(building))
+    upper = [r for r in value['floors'][above]['rooms'] if isinstance(r, dict) and r.get('id') in ids
+             and _numeric_rect(r.get('rect'))]
+    rooms = value['floors'][ground]['rooms']
+    below = [r['rect'] for r in rooms if isinstance(r, dict) and _numeric_rect(r.get('rect'))]
+    pieces = [p for p in uncovered([r['rect'] for r in upper], below, PORCH_MIN_SIDE_M)
+              if p[2] * p[3] >= PORCH_MIN_M2 - 1e-9]
+    if not pieces:
+        return None
+    units = {r.get('unit_id') for r in rooms if isinstance(r, dict) and isinstance(r.get('unit_id'), str)
+             and r['unit_id']}
+    taken = {r.get('id') for r in rooms if isinstance(r, dict)}
+    for n, rect in enumerate(pieces, 1):
+        rid = ground + '_porch_' + str(n)
+        while rid in taken:
+            rid += '_'
+        taken.add(rid)
+        porch = {'id': rid, 'name': 'رواق مظلل', 'role': 'porch', 'rect': rect, 'walls': 'none', 'covered': True}
+        if len(units) == 1:
+            porch['unit_id'] = next(iter(units))
+        rooms.append(porch)
+    meta = value.setdefault('meta', {})
+    if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
+        meta['assumptions'].append('أُضيف في الدور الأرضي رواق مظلل بأعمدة (' + str(len(pieces)) + ') تحت غرف '
+                                   'الدور الأول التي كانت فوق أرض مكشوفة، لتُحمل عليه؛ عدّله أو حرّك الغرف فوقه.')
+    return value
 
 
 # A layout whose only hard finding is a sliver of overlap between two rooms
@@ -377,7 +522,7 @@ def _trim_overlaps(building, pairs):
             if room.get('role') in CORE_ROLES or room.get('core_id'):
                 continue
             size = room['rect'][2 + axis]
-            if size - depth < TRIM_MIN_SIDE_M - 1e-6:
+            if size - depth < max(TRIM_MIN_SIDE_M, MIN_SHORT_SIDE_M.get(room.get('role'), 0)) - 1e-6:
                 continue
             options.append((depth / size, room, other))
         if not options:
@@ -389,6 +534,45 @@ def _trim_overlaps(building, pairs):
         else:                             # room is after: push its near side forward
             r[axis] = round(r[axis] + depth, 3); r[2 + axis] = round(r[2 + axis] - depth, 3)
     return value
+
+
+def _regrow(before, after):
+    """A copy of ``after`` where each trimmed room grows back to its area along
+    its other axis, into free space on its floor and inside the site, or None.
+
+    Live: the trim took 0.6 m off the dressing room (18% under its target)
+    while 0.56 m of free space lay on its other side."""
+    value = json.loads(canonical(after))
+    site = value.get('site') or {}
+    grown = False
+    for template, floor in (value.get('floors') or {}).items():
+        old = {r.get('id'): r for r in ((before.get('floors') or {}).get(template) or {}).get('rooms') or []
+               if isinstance(r, dict)}
+        rooms = [r for r in floor.get('rooms') or [] if isinstance(r, dict) and _numeric_rect(r.get('rect'))]
+        for room in rooms:
+            prior = old.get(room.get('id'))
+            if prior is None or not _numeric_rect(prior.get('rect')) or prior['rect'] == room['rect']:
+                continue
+            r, p = room['rect'], prior['rect']
+            shrunk = 0 if abs(r[2] - p[2]) > 1e-6 else 1
+            grow, keep = 1 - shrunk, r[2 + shrunk]
+            if keep <= 0:
+                continue
+            delta = round(p[2] * p[3] / keep - r[2 + grow], 3)
+            if delta <= 1e-3:
+                continue
+            limit = site.get('w' if grow == 0 else 'd')
+            for start in (r[grow] - delta, r[grow]):       # before the room, then after it
+                rect = list(r)
+                rect[grow], rect[2 + grow] = round(start, 3), round(r[2 + grow] + delta, 3)
+                if rect[grow] < -1e-6 or (type(limit) in (int, float) and rect[grow] + rect[2 + grow] > limit + 1e-6):
+                    continue
+                if any(_overlaps(rect, o['rect']) for o in rooms if o is not room):
+                    continue
+                room['rect'] = rect
+                grown = True
+                break
+    return value if grown else None
 
 
 def _snap_stairs(building):
@@ -515,7 +699,14 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
                 soft += layout_findings(value, requirements)
         if floors is not None and geometry_ok:
             soft += floor_findings(value, floors, requirements)
+        # Blocking in the review («معلّق») but never a failed job: the openings
+        # stage cannot move rooms, so it rides on the repair. Measured on any
+        # numeric layout, so a free fix sees whether it adds one.
+        soft += _unsupported_findings(value)
         return issues + program, soft
+    def added(before, after):
+        known = {_finding_key(i) for i in before[0] + before[1]}
+        return [i for i in after[0] + after[1] if _finding_key(i) not in known]
     def trim(value, found):
         """Trim sliver overlaps for free; keep it only if it clears them and adds nothing."""
         issues, soft = found
@@ -527,17 +718,32 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         if trimmed is None:
             return value, found
         after = findings(trimmed)
-        known = {canonical(i) for i in issues + soft}
-        added = [i for i in after[0] + after[1] if canonical(i) not in known]
-        if added or any(i.get('code') == 'ROOM_OVERLAP' for i in after[0]):
+        if added(found, after) or any(i.get('code') == 'ROOM_OVERLAP' for i in after[0]):
             return value, found
+        note = 'صُحّح تداخل صغير بين غرفتين (حتى %.1f م) بقصّ إحداهما' % TRIM_MAX_M
+        regrown = _regrow(value, trimmed)
+        if regrown is not None:
+            again = findings(regrown)
+            if not added(after, again):
+                trimmed, after = regrown, again
+                note += ' ثم مدّها في فراغ حر لتستعيد مساحتها'
         meta = trimmed.setdefault('meta', {})
-        meta.setdefault('assumptions', []).append(
-            'صُحّح تداخل صغير بين غرفتين (حتى %.1f م) بقصّ إحداهما؛ راجع المقاسين.' % TRIM_MAX_M)
+        meta.setdefault('assumptions', []).append(note + '؛ راجع المقاسين.')
         return trimmed, after
+    def support(value, found):
+        """Covered porches under first-storey rooms over open ground, for free."""
+        floating = [i for i in found[1] if i.get('code') == 'UNSUPPORTED_UPPER_ROOM']
+        porched = _support_porches(value, floating) if floating else None
+        if porched is None:
+            return value, found
+        after = findings(porched)
+        left = sum(1 for i in after[1] if i.get('code') == 'UNSUPPORTED_UPPER_ROOM')
+        if added(found, after) or left >= len(floating):
+            return value, found
+        return porched, after
     def settle(value, found):
         """Try the deterministic fixes; keep each only if it adds no finding."""
-        value, found = trim(value, found)
+        value, found = support(*trim(value, found))
         issues, soft = found
         core = next((i for i in issues if i.get('code') == 'RESIDENTIAL_CORE_MISSING'), None)
         if core is None or not core.get('misaligned') or dwelling_kind(value, brief, requirements) != SINGLE_DWELLING:
@@ -545,12 +751,11 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         snapped, note = _snap_stairs(value)
         if snapped is not None:
             after = findings(snapped)
-            known = {canonical(i) for i in issues + soft if i is not core}
-            added = [i for i in after[0] + after[1] if canonical(i) not in known]
-            if not added:
+            extra = added(([i for i in issues if i is not core], soft), after)
+            if not extra:
                 return snapped, after
             note = ('not applied: copying the ground stair rectangle would add '
-                    + str(len(added)) + ' finding(s): ' + ', '.join(sorted({i['code'] for i in added})))
+                    + str(len(extra)) + ' finding(s): ' + ', '.join(sorted({i['code'] for i in extra})))
         core['deterministic_alignment'] = note
         return value, found
     building, (issues, soft) = settle(building, findings(building))
@@ -569,12 +774,10 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         return keep('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح توزيع الغرف ضمن الحد المختار.')
     for attempt in (1, 2):
         context={'building':building,'requirements':requirements,'findings':issues + soft,'brief':brief}
-        advisories = _advisories(building)
-        if advisories:
-            context['advisories'] = advisories
+        floating = any(i.get('code') == 'UNSUPPORTED_UPPER_ROOM' for i in soft)
         single = dwelling_kind(building, brief, requirements) == SINGLE_DWELLING
         system = (PLANNING_SYSTEM + REPAIR_SYSTEM + (SINGLE_DWELLING_REPAIR if single else '')
-                  + _core_instruction(issues) + (ADVISORY_REPAIR if advisories else ''))
+                  + _core_instruction(issues) + (STACK_REPAIR if floating else ''))
         if plot is not None:
             import acs_plot_rules as P
             context['plot'] = {k: plot[k] for k in ('land', 'streets', 'setbacks_m', 'envelope')}
@@ -608,6 +811,112 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
             return keep('PLAN_LAYOUT_INCOMPLETE','لم يجتز توزيع الغرف الفحص بعد محاولة التصحيح.')
         building, issues, soft = candidate, remaining, soft_left
         emit('LAYOUT',{'kind':'layout','building':building},provider_calls=budget['used'])
+
+GUEST_DOOR_W = 1.0
+GUEST_DOOR_RUN_M = 1.4     # free façade run the door needs, with its frame
+
+
+def _exterior_runs(room, rooms, side):
+    """Free (lo, hi) runs of a room's side, along its edge, that no enclosed room touches."""
+    from acs_residential_access import edge, wall_less
+    line, lo, hi = edge(room, side)
+    other_side = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[side]
+    cover = sorted((max(lo, edge(o, other_side)[1]), min(hi, edge(o, other_side)[2])) for o in rooms
+                   if o is not room and not wall_less(o) and abs(edge(o, other_side)[0] - line) <= 1e-4
+                   and min(hi, edge(o, other_side)[2]) - max(lo, edge(o, other_side)[1]) > 1e-4)
+    runs, cursor = [], lo
+    for a, b in cover:
+        if a - cursor > 1e-4:
+            runs.append((cursor, a))
+        cursor = max(cursor, b)
+    if hi - cursor > 1e-4:
+        runs.append((cursor, hi))
+    return runs
+
+
+def _guest_doors(building, brief, plot, dwelling):
+    """Give a ground-storey majlis far from every entrance its own guest door, for free.
+
+    Live (owner corner duplex): the majlis lay on the north and east façades
+    but its nearest entrance door was 6.87 m away, although the brief brings
+    guests in from the east. The door goes in the majlis' own exterior wall:
+    the side the brief names first, then street sides; never on a
+    neighbour's plot line or across an existing opening. It is kept only if
+    it clears that finding and adds no access, opening or zoning finding.
+    Mutates ``building`` in place like the openings stage; True when a door
+    was added."""
+    import acs_plot_rules as P
+    from acs_residential_access import SINGLE_DWELLING, detail_issues
+    single = dwelling == SINGLE_DWELLING
+    if plot is not None:
+        rules = plot
+    elif single:
+        rules = {'zoning_requested': P.zoning_requested(brief), 'dwelling': P.VILLA}
+    else:
+        return False
+    levels = P._occupied(building)
+    if not levels:
+        return False
+    ground = levels[0]['template']
+    def zoning():
+        hard, soft = [], []
+        P._zoning(building, rules, hard, soft)
+        return hard, soft
+    def other_findings():
+        found = [i.get('message') or i.get('code') for i in detail_issues(building, dwelling)]
+        if plot is not None:
+            found += [i.get('message') for i in P.opening_findings(building, plot)]
+        return set(found)
+    # A door the owner did not draw only where the brief asks for it: guest
+    # privacy (the finding blocks) or a guest entrance of their own
+    # («يدخل ضيف المجلس من الشرق»). Otherwise the finding stays a note.
+    hard, soft = zoning()
+    far = [i for i in hard + (soft if P.guest_entrance_requested(brief) else [])
+           if i['code'] == 'PLOT_ZONING_MAJLIS_FAR' and i['room_ref'][0] == ground]
+    if not far:
+        return False
+    rooms = P._rooms(building, ground)
+    streets = set((plot or {}).get('streets') or [])
+    asked = P.guest_entrance_side(brief)
+    added = False
+    for finding in far:
+        majlis = next((r for r in rooms if r.get('id') == finding['room_ref'][1]), None)
+        if majlis is None:
+            continue
+        options = []
+        for side in ('N', 'E', 'S', 'W'):
+            if plot is not None and side not in streets and P._plot_distance(plot, majlis, side) < P.EPS:
+                continue        # a door on a neighbour's plot line is blocked
+            origin = majlis['rect'][0] if side in ('N', 'S') else majlis['rect'][1]
+            taken = [(origin + o['offset'] - o.get('width', 0.9) / 2 - 0.1, origin + o['offset'] + o.get('width', 0.9) / 2 + 0.1)
+                     for kind in ('doors', 'windows') for o in majlis.get(kind) or []
+                     if isinstance(o, dict) and o.get('edge') == side and isinstance(o.get('offset'), (int, float))]
+            for lo, hi in _exterior_runs(majlis, rooms, side):
+                cursor = lo
+                for a, b in sorted(taken) + [(hi, hi)]:
+                    if min(a, hi) - cursor >= GUEST_DOOR_RUN_M - 1e-9:
+                        gap = P._plot_distance(plot, majlis, side) if plot is not None else 0.0
+                        options.append((side != asked, side not in streets, -gap, -(min(a, hi) - cursor),
+                                        side, (cursor + min(a, hi)) / 2 - origin))
+                    cursor = max(cursor, b)
+        before_other, before_zoning = other_findings(), {canonical(i) for i in sum(zoning(), [])}
+        for *_, side, offset in sorted(options):
+            door = {'id': str(majlis['id'])[:48] + '_guest_door', 'edge': side, 'offset': round(offset, 3),
+                    'width': GUEST_DOOR_W, 'height': 2.2, 'material': 'wood'}
+            majlis.setdefault('doors', []).append(door)
+            now = sum(zoning(), [])
+            if (not any(i['room_ref'] == finding['room_ref'] and i['code'] == finding['code'] for i in now)
+                    and {canonical(i) for i in now} <= before_zoning and other_findings() <= before_other):
+                added = True
+                break
+            majlis['doors'].remove(door)
+    if added:
+        meta = building.setdefault('meta', {})
+        if isinstance(meta, dict) and isinstance(meta.setdefault('assumptions', []), list):
+            meta['assumptions'].append('أُضيف للمجلس باب ضيوف خارجي في جداره الخارجي لأنه كان أبعد من '
+                                       + P._fmt(P.ENTRY_MAJLIS_MAX_M) + ' م عن أي مدخل؛ راجع موقعه.')
+    return added
+
 
 def detail(building, brief, budget, done=None, requirements=None, plot=None, program=None, keep_unresolved=False):
     """Openings per room group. ``program`` (a validated confirmed brief program)
@@ -696,6 +1005,8 @@ def detail(building, brief, budget, done=None, requirements=None, plot=None, pro
                         break
                     raise PlanError('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح الفتحات ضمن الحد المختار.')
                 propose(template, offset, rooms, findings+extra)
+        if _guest_doors(building, brief, plot, dwelling):
+            checkpoint()
         # keep_unresolved: every room already has its openings, so the paid plan
         # is kept as a draft; what remains is a blocking finding in the review.
         if not keep_unresolved and detail_issues(building,dwelling):

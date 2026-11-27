@@ -1,8 +1,14 @@
-"""Traceable SPACE-BOUNDARY projections of a canonical ACS plan revision.
+"""Traceable projections and 2D drawings of a canonical ACS plan revision.
 
-SVG/DXF share the same primitive list. These are not complete working drawings:
-no wall thickness offset, opening geometry, structural grids, or MEP is invented.
-DXF requires optional ezdxf; native AutoCAD/DWG compatibility is not certified.
+``project`` returns the provenance-bound SPACE_BOUNDARIES_ONLY primitive list
+(room rectangles at wall centre lines). ``to_svg``/``to_dxf`` draw a plan sheet
+from it plus the drafting layer in :mod:`acs_plan_drafting`: walls at the
+canonical thickness, doors, windows, stairs, dimension chains, room tags, north
+arrow, scale bar and title block. Every drawn fact comes from the canonical
+model; door swing side/hand are disclosed drafting defaults. Structural grids,
+columns and MEP are not drawn and nothing is invented. These are not working
+drawings. DXF requires optional ezdxf; native AutoCAD/DWG opening and Arabic
+display inside AutoCAD are not certified.
 
 The provenance map is deliberately requirement-aware but never guesses links.
 An entity is connected to a Program-of-Requirements item only through an explicit
@@ -16,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
 import xml.etree.ElementTree as ET
 from acs_plan_review import Revision, PlanError, _geometry, canonical, digest
 
@@ -231,32 +238,273 @@ def project(revision: Revision, level_index: int) -> dict:
             'construction_approved': False}
 
 
-def to_svg(revision: Revision, level_index: int) -> str:
+SVG_FONT = "'Noto Naskh Arabic','Noto Sans Arabic','DejaVu Sans','Segoe UI',Tahoma,Arial,sans-serif"
+
+
+def _drafting(revision: Revision, level_index: int, p: dict):
+    import acs_plan_drafting as D
+    model = revision.model
+    sheet = D.sheet_for(model)
+    paper = D.Paper(sheet)
+    draft = D.level_drafting(model, level_index, p['primitives'], p['source_map'])
+    level = next(v for v in model['levels'] if v['index'] == level_index)
+    title_en = ('Roof deck, unoccupied - Level %d' % level_index if level.get('kind') == 'roof'
+                else 'Level %d floor plan' % level_index)
+    # Same sheet number as this level's page in the PDF set (A-101, A-102, ...).
+    page = ([v['index'] for v in model['levels']].index(level_index) + 1, len(model['levels']))
+    return D, sheet, paper, draft, title_en, page
+
+
+def _is_rtl(text: str) -> bool:
+    return any(0x0590 <= ord(ch) <= 0x08FF or 0xFB1D <= ord(ch) <= 0xFEFC for ch in text)
+
+
+def _mm(value: float) -> str:
+    out = ('%.3f' % value).rstrip('0').rstrip('.')
+    return '0' if out in ('-0', '') else out
+
+
+class _SvgPen:
+    """Batches line work per layer into one path per layer (compact, CAD-like SVG)."""
+
+    def __init__(self, parent, place):
+        self.parent, self.place, self.paths = parent, place, {}
+
+    def _d(self, layer):
+        return self.paths.setdefault(layer, [])
+
+    def line(self, layer, a, b):
+        (x1, y1), (x2, y2) = self.place(a), self.place(b)
+        self._d(layer).append('M%s %sL%s %s' % (_mm(x1), _mm(y1), _mm(x2), _mm(y2)))
+
+    def loops(self, layer, loops):
+        for loop in loops:
+            pts = [self.place(pt) for pt in loop]
+            self._d(layer).append('M' + 'L'.join('%s %s' % (_mm(x), _mm(y)) for x, y in pts) + 'Z')
+
+    def arc(self, layer, c, r, start, end, k):
+        (cx, cy), (x1, y1), (x2, y2) = self.place(c), self.place(start), self.place(end)
+        sweep = 1 if (x1 - cx) * (y2 - cy) - (y1 - cy) * (x2 - cx) > 0 else 0
+        self._d(layer).append('M%s %sA%s %s 0 0 %d %s %s' % (_mm(x1), _mm(y1), _mm(r * k), _mm(r * k), sweep, _mm(x2), _mm(y2)))
+
+    def flush(self):
+        for layer, parts in self.paths.items():
+            ET.SubElement(self.parent, 'path', {'class': layer, 'd': ''.join(parts)})
+        self.paths = {}
+
+
+def _svg_text(parent, op, place):
+    x, y = place(op['at'])
+    anchor = op['anchor']
+    import acs_drafting_standards as STD
+    attrs = {'x': _mm(x), 'y': _mm(y), 'font-size': _mm(STD.font_size_mm(op['size'])),
+             'class': 'txt halo' if op.get('halo') else 'txt',
+             'data-layer': op['layer']}
+    if _is_rtl(op['text']):
+        attrs['direction'] = 'rtl'
+        anchor = {'start': 'end', 'end': 'start'}.get(anchor, anchor)
+    attrs['text-anchor'] = anchor
+    if op.get('rotate'):
+        attrs['transform'] = 'rotate(%s %s %s)' % (_mm(-op['rotate']), _mm(x), _mm(y))
+    ET.SubElement(parent, 'text', attrs).text = _text(op['text'])
+
+
+def _svg_style() -> str:
+    import acs_drafting_standards as STD
+    rules = ['text{font-family:%s;fill:#111;stroke:none}' % SVG_FONT,
+             '.halo{paint-order:stroke;stroke:#fff;stroke-width:0.6px;stroke-linejoin:round}',
+             '.sheet{fill:#fff;stroke:none}', '.room-hit{fill:#fff;fill-opacity:0;stroke:none}']
+    for name, spec in STD.LAYERS.items():
+        css = 'fill:none;stroke:%s;stroke-width:%s;stroke-linecap:round;stroke-linejoin:round' % (spec['svg'], spec['lw'])
+        dash = STD.LINETYPE_MM[spec['lt']]
+        if dash:
+            css += ';stroke-dasharray:%s' % ' '.join(_mm(v if v else 0.2) for v in dash)
+        rules.append('.%s{%s}' % (name, css))
+    rules.append('.A-WALL-PATT{fill:%s;stroke:none}' % STD.LAYERS['A-WALL-PATT']['svg'])
+    rules.append('.A-ANNO-TTLB.frame{stroke-width:0.7}')
+    return '\n'.join(rules)
+
+
+def render_svg(revision: Revision, level_index: int) -> dict:
+    """Plan sheet SVG (1 user unit = 1 mm on paper) plus its drafting summary."""
     p = project(revision, level_index)
-    width, depth = p['site']['w'], p['site']['d']
-    margin = max(width, depth) * .06
+    D, sheet, paper, draft, title_en, page = _drafting(revision, level_index, p)
+    pw, ph = sheet['paper_mm']
+    k = paper.k
     root = ET.Element('svg', {'xmlns': 'http://www.w3.org/2000/svg',
-        'viewBox': f'{-margin} {-margin * 2} {width + 2 * margin} {depth + 3 * margin}',
-        'role': 'img', 'aria-labelledby': 'plan-title plan-description'})
+        'width': '%smm' % _mm(pw), 'height': '%smm' % _mm(ph), 'viewBox': '0 0 %s %s' % (_mm(pw), _mm(ph)),
+        'role': 'img', 'aria-labelledby': 'plan-title plan-description',
+        'data-acs-drafting': D.SCHEMA, 'data-acs-drafting-hash': draft['drafting_hash'],
+        'data-acs-scale': '1:%d' % sheet['scale'], 'data-acs-paper': sheet['paper']})
     ET.SubElement(root, 'title', {'id': 'plan-title'}).text = f'ACS plan V{revision.number} — level {level_index}'
     ET.SubElement(root, 'desc', {'id': 'plan-description'}).text = (
-        'Schematic space boundaries in metres. Not construction documents. '
-        'Doors, windows, wall thickness and structural information are not drawn.')
-    ET.SubElement(root, 'metadata').text = json.dumps({k: v for k, v in p.items() if k != 'primitives'}, ensure_ascii=False)
-    ET.SubElement(root, 'rect', {'x': '0', 'y': '0', 'width': str(width), 'height': str(depth),
-                  'fill': 'white', 'stroke': '#697586', 'stroke-width': str(margin * .025)})
-    for item in p['primitives']:
-        x, z, w, d = item['rect_xz_m']
-        g = ET.SubElement(root, 'g', {'data-source-id': item['source_id']})
-        ET.SubElement(g, 'title').text = item['label']
-        ET.SubElement(g, 'rect', {'x': str(x), 'y': str(z), 'width': str(w), 'height': str(d),
-            'fill': 'none', 'stroke': '#14263b', 'stroke-width': str(margin * .04)})
-        label = ET.SubElement(g, 'text', {'x': str(x + w / 2), 'y': str(z + d / 2),
-            'text-anchor': 'middle', 'font-size': str(min(w, d) * .1)})
-        label.text = item['label']
-        ET.SubElement(g, 'text', {'x': str(x + w / 2), 'y': str(z + d / 2 + min(w, d) * .16),
-            'text-anchor': 'middle', 'font-size': str(min(w, d) * .075)}).text = f'{w:g} × {d:g} m'
-    return ET.tostring(root, encoding='unicode')
+        'Concept floor plan at 1:%d on %s (1 SVG unit = 1 mm on paper). Walls at the canonical thickness, '
+        'doors, windows, stairs, dimension chains in metres and room areas in m2 are drawn from the '
+        'canonical model; door swing side and hinge side are drafting defaults. Not construction documents. '
+        'Structural grid, columns and MEP are not drawn.' % (sheet['scale'], sheet['paper']))
+    ET.SubElement(root, 'metadata').text = json.dumps({k2: v for k2, v in p.items() if k2 != 'primitives'}, ensure_ascii=False)
+    ET.SubElement(root, 'style').text = _svg_style()
+    ET.SubElement(root, 'rect', {'class': 'sheet', 'x': '0', 'y': '0', 'width': _mm(pw), 'height': _mm(ph)})
+    place_model = paper.to_paper
+
+    def place_paper(pt):
+        return pt[0], pt[1]
+
+    x0, y0 = place_model((0.0, 0.0))
+    ET.SubElement(root, 'rect', {'class': 'C-PROP', 'x': _mm(x0), 'y': _mm(y0),
+                                 'width': _mm(p['site']['w'] * k), 'height': _mm(p['site']['d'] * k)})
+    ops = D.plan_ops(draft, paper)
+    pen = _SvgPen(root, place_model)
+    for op in ops['areas']:
+        pen.line(op['layer'], op['a'], op['b'])
+    pen.flush()
+    for op in ops['fills']:
+        path = ''.join('M' + 'L'.join('%s %s' % tuple(_mm(v) for v in place_model(pt)) for pt in loop) + 'Z'
+                       for loop in op['loops'])
+        ET.SubElement(root, 'path', {'class': op['layer'], 'd': path, 'fill-rule': 'evenodd'})
+    for op in ops['lines']:
+        if op['op'] == 'line':
+            pen.line(op['layer'], op['a'], op['b'])
+        elif op['op'] == 'loops':
+            pen.loops(op['layer'], op['loops'])
+        elif op['op'] == 'arc':
+            pen.arc(op['layer'], op['c'], op['r'], op['from'], op['to'], k)
+    pen.flush()
+    dim_texts = []
+    for op in ops['dims']:
+        for part in D.expand_dim(op, paper):
+            if part['op'] == 'line':
+                pen.line(part['layer'], part['a'], part['b'])
+            else:
+                dim_texts.append(part)
+    pen.flush()
+    _svg_shapes(root, ops['symbols'], place_model, k)
+    for op in dim_texts + ops['texts']:
+        _svg_text(root, op, place_model)
+    for op in ops['rooms']:
+        x, z, w, d = op['rect']
+        rx, ry = place_model((x, z))
+        g = ET.SubElement(root, 'g', {'data-source-id': op['source_id'], 'data-room-number': op['number']})
+        ET.SubElement(g, 'title').text = op['label']
+        ET.SubElement(g, 'desc').text = _text(op['desc'])
+        ET.SubElement(g, 'rect', {'class': 'room-hit', 'x': _mm(rx), 'y': _mm(ry), 'width': _mm(w * k), 'height': _mm(d * k)})
+        for text in op['texts']:
+            _svg_text(g, text, place_model)
+    sheet_ops = D.sheet_ops(draft, sheet, paper, model=revision.model, page_number=page[0], page_count=page[1],
+                            title_en=title_en, revision_id=revision.id, model_hash=revision.model_hash,
+                            provenance_hash=p['provenance_hash'], schedule=True)
+    pen = _SvgPen(root, place_paper)
+    for op in sheet_ops:
+        if op['op'] == 'line':
+            pen.line(op['layer'], op['a'], op['b'])
+    pen.flush()
+    _svg_shapes(root, [op for op in sheet_ops if op['op'] in ('poly', 'circle')], place_paper, 1.0)
+    for op in sheet_ops:
+        if op['op'] == 'text':
+            _svg_text(root, op, place_paper)
+    return {'svg_text': ET.tostring(root, encoding='unicode'), 'drafting': D.summary(draft, sheet)}
+
+
+def _svg_shapes(root, ops, place, k):
+    for op in ops:
+        if op['op'] == 'circle':
+            cx, cy = place(op['c'])
+            ET.SubElement(root, 'circle', {'class': op['layer'], 'cx': _mm(cx), 'cy': _mm(cy), 'r': _mm(op['r'] * k),
+                                           'style': 'fill:#111' if op.get('fill') else 'fill:none'})
+        elif op['op'] == 'poly':
+            pts = ' '.join('%s,%s' % tuple(_mm(v) for v in place(pt)) for pt in op['pts'])
+            cls = op['layer'] + (' frame' if op.get('weight') else '')
+            ET.SubElement(root, 'polygon', {'class': cls, 'points': pts,
+                                            'style': 'fill:#111' if op.get('fill') else 'fill:#fff' if op['layer'] == 'A-ANNO-SYMB' else 'fill:none'})
+
+
+def to_svg(revision: Revision, level_index: int) -> str:
+    return render_svg(revision, level_index)['svg_text']
+
+
+def _dxf_setup(doc, sheet):
+    import acs_drafting_standards as STD
+    scale = sheet['scale']
+    factor = scale / 1000.0
+    for name, pattern in STD.LINETYPE_MM.items():
+        if pattern and name not in doc.linetypes:
+            elements = [(v if i % 2 == 0 else -v) * factor for i, v in enumerate(pattern)]
+            doc.linetypes.add(name, [sum(abs(v) for v in elements)] + elements,
+                              description='ACS %s at 1:%d' % (name.lower(), scale))
+    for name, spec in STD.LAYERS.items():
+        layer = doc.layers.add(name, color=spec['aci'], linetype=spec['lt'] if spec['lt'] != 'CONTINUOUS' else 'Continuous',
+                               lineweight=int(round(spec['lw'] * 100)))
+        layer.description = spec['desc']
+        if spec.get('plot') is False:
+            layer.dxf.plot = 0
+    doc.styles.add('ACS-ARABIC', font='arial.ttf')
+    doc.dimstyles.add('ACS-ARCH', dxfattribs={
+        'dimscale': float(scale), 'dimtxt': 0.0025, 'dimtsz': 0.0012, 'dimexe': 0.002, 'dimexo': 0.002,
+        'dimdle': 0.0015, 'dimgap': 0.001, 'dimdec': 2, 'dimzin': 0, 'dimtad': 1, 'dimtih': 0, 'dimtoh': 0,
+        'dimlunit': 2, 'dimdsep': ord('.'), 'dimtxsty': 'ACS-ARABIC', 'dimclrd': 0, 'dimclre': 0, 'dimclrt': 0})
+    header = doc.header
+    header['$INSUNITS'] = 6
+    header['$MEASUREMENT'] = 1
+    header['$LUNITS'] = 2
+    header['$LUPREC'] = 3
+    header['$LWDISPLAY'] = 1
+    header['$LTSCALE'] = 1.0
+    header['$DIMSCALE'] = float(scale)
+    header['$TEXTSTYLE'] = 'ACS-ARABIC'
+    header['$DIMSTYLE'] = 'ACS-ARCH'
+
+
+def _dxf_entities(space, ops, to_cad, scale):
+    from ezdxf.enums import TextEntityAlignment
+    align = {'start': TextEntityAlignment.LEFT, 'middle': TextEntityAlignment.CENTER, 'end': TextEntityAlignment.RIGHT}
+    for op in ops:
+        attribs = {'layer': op['layer']}
+        kind = op['op']
+        made = []
+        if kind == 'line':
+            made.append(space.add_line(to_cad(op['a']), to_cad(op['b']), dxfattribs=attribs))
+        elif kind == 'loops':
+            for loop in op['loops']:
+                pts = [to_cad(pt) for pt in loop]
+                for a, b in zip(pts, pts[1:] + pts[:1]):
+                    space.add_line(a, b, dxfattribs=attribs)
+        elif kind == 'fill':
+            hatch = space.add_hatch(dxfattribs=attribs)
+            hatch.set_solid_fill(color=256)
+            for loop in op['loops']:
+                hatch.paths.add_polyline_path([to_cad(pt) for pt in loop], is_closed=True)
+        elif kind == 'arc':
+            c, a, b = to_cad(op['c']), to_cad(op['from']), to_cad(op['to'])
+            start = math.degrees(math.atan2(a[1] - c[1], a[0] - c[0]))
+            end = math.degrees(math.atan2(b[1] - c[1], b[0] - c[0]))
+            if ((end - start + 540.0) % 360.0) - 180.0 < 0:
+                start, end = end, start
+            radius = math.hypot(a[0] - c[0], a[1] - c[1])
+            made.append(space.add_arc(c, radius, start % 360.0, end % 360.0, dxfattribs=attribs))
+        elif kind == 'circle':
+            c = to_cad(op['c'])
+            r = op['r'] * op.get('_k', 1.0)
+            space.add_circle(c, r, dxfattribs=attribs)
+            if op.get('fill'):
+                hatch = space.add_hatch(dxfattribs=attribs)
+                hatch.set_solid_fill(color=256)
+                hatch.paths.add_edge_path().add_arc(c, r, 0, 360)
+        elif kind == 'poly':
+            pts = [to_cad(pt) for pt in op['pts']]
+            if op.get('fill'):
+                hatch = space.add_hatch(dxfattribs=attribs)
+                hatch.set_solid_fill(color=256)
+                hatch.paths.add_polyline_path(pts, is_closed=True)
+            for a, b in zip(pts, pts[1:] + pts[:1]):
+                space.add_line(a, b, dxfattribs=attribs)
+        elif kind == 'text':
+            text = space.add_text(op['text'].replace('\n', ' ').replace('\r', ' '), height=op['size'] * scale / 1000.0,
+                                  rotation=op.get('rotate') or 0.0, dxfattribs=dict(attribs, style='ACS-ARABIC'))
+            text.set_placement(to_cad(op['at']), align=align[op['anchor']])
+        for entity in made:
+            ids = op.get('source_ids') or []
+            if ids:
+                entity.set_xdata('ACS_PLAN', [(1000, source_id) for source_id in ids[:8]])
 
 
 def to_dxf(revision: Revision, level_index: int) -> dict:
@@ -265,26 +513,57 @@ def to_dxf(revision: Revision, level_index: int) -> dict:
         import ezdxf
     except ImportError as exc:
         raise PlanError('CAD_DEPENDENCY_UNAVAILABLE', 'DXF export needs optional ezdxf') from exc
+    D, sheet, paper, draft, title_en, page = _drafting(revision, level_index, p)
+    scale = sheet['scale']
     doc = ezdxf.new('R2010', units=6)
-    doc.layers.new('ACS_SPACE_BOUNDARIES')
-    doc.layers.new('ACS_SPACE_LABELS')
-    doc.layers.new('ACS_REVIEW_NOTES')
+    _dxf_setup(doc, sheet)
     doc.appids.new('ACS_PLAN')
     space = doc.modelspace()
+
+    def model_to_cad(pt):
+        return (pt[0], -pt[1])
+
+    def paper_to_cad(pt):
+        return model_to_cad(paper.to_model(pt))
+
+    # Canonical space boundaries first, in projection order, with provenance XDATA.
     for item in p['primitives']:
-        entity = space.add_lwpolyline(item['cad_polygon_xy_m'], close=True,
-                                     dxfattribs={'layer': 'ACS_SPACE_BOUNDARIES'})
+        entity = space.add_lwpolyline(item['cad_polygon_xy_m'], close=True, dxfattribs={'layer': 'A-AREA'})
         entity.set_xdata('ACS_PLAN', [(1000, item['source_id']), (1000, p['revision_id']),
                                      (1000, p['model_hash']), (1000, p['requirements_hash'])])
-        x, z, w, d = item['rect_xz_m']
-        space.add_text(item['label'].replace('\n', ' ').replace('\r', ' '),
-            dxfattribs={'insert': (x + .1 * w, -(z + .5 * d)), 'height': min(w, d) * .1,
-                        'layer': 'ACS_SPACE_LABELS'})
-    space.add_text('SCHEMATIC SPACE BOUNDARIES - NOT FOR CONSTRUCTION - UNITS: METRES',
-                   dxfattribs={'insert': (0, 1), 'height': .2, 'layer': 'ACS_REVIEW_NOTES'})
+    site = p['site']
+    corners = [(0.0, 0.0), (site['w'], 0.0), (site['w'], site['d']), (0.0, site['d'])]
+    for a, b in zip(corners, corners[1:] + corners[:1]):
+        space.add_line(model_to_cad(a), model_to_cad(b), dxfattribs={'layer': 'C-PROP'})
+    ops = D.plan_ops(draft, paper)
+    for phase in ('areas', 'fills', 'lines'):
+        _dxf_entities(space, ops[phase], model_to_cad, scale)
+    for op in ops['symbols']:
+        _dxf_entities(space, [op], model_to_cad, scale)
+    _dxf_entities(space, ops['texts'], model_to_cad, scale)
+    for op in ops['rooms']:
+        _dxf_entities(space, op['texts'], model_to_cad, scale)
+    for op in ops['dims']:
+        a, b = op['a'], op['b']
+        if op['axis'] == 'x':
+            p1, p2, base, angle = (a, -op['face']), (b, -op['face']), (a, -op['line']), 0
+        else:
+            p1, p2, base, angle = (op['face'], -a), (op['face'], -b), (op['line'], -a), 90
+        space.add_linear_dim(base=base, p1=p1, p2=p2, angle=angle, dimstyle='ACS-ARCH',
+                             dxfattribs={'layer': 'A-ANNO-DIMS'}).render()
+    sheet_ops = D.sheet_ops(draft, sheet, paper, model=revision.model, page_number=page[0], page_count=page[1],
+                            title_en=title_en, revision_id=revision.id, model_hash=revision.model_hash,
+                            provenance_hash=p['provenance_hash'], schedule=False)
+    for op in sheet_ops:
+        if op['op'] == 'circle':
+            op = dict(op, _k=1.0 / paper.k)
+        _dxf_entities(space, [op], paper_to_cad, scale)
+    from ezdxf import zoom
+    # Open on the whole sheet (CAD viewers start from the active viewport).
+    zoom.window(space, paper_to_cad((0.0, sheet['paper_mm'][1])), paper_to_cad((sheet['paper_mm'][0], 0.0)))
     if doc.audit().has_errors:
         raise PlanError('CAD_EXPORT_INVALID', 'DXF audit failed; no file returned')
     output = io.StringIO()
     doc.write(output)
-    return {'dxf_text': output.getvalue(), 'manifest': p,
+    return {'dxf_text': output.getvalue(), 'manifest': p, 'drafting': D.summary(draft, sheet),
             'native_dwg': False, 'autocad_verified': False}

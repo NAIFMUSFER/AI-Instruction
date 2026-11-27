@@ -4,6 +4,10 @@ on:
     paths:
       - 'tools/acs_plan_cad_export.py'
       - 'acs_plan_projection.py'
+      - 'acs_plan_drafting.py'
+      - 'acs_drafting_standards.py'
+      - 'tests/remediation/test_plan_drafting.py'
+      - 'tests/remediation/test_plan_drafting_exports.py'
       - 'acs_plan_lock_binding.py'
       - 'tests/remediation/test_plan_cad_export.py'
       - 'tests/remediation/test_plan_projection.py'
@@ -25,7 +29,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile approval-bound CAD exporter
-        run: python -m py_compile tools/acs_plan_cad_export.py tests/remediation/test_plan_cad_export.py
+        run: python -m py_compile tools/acs_plan_cad_export.py tests/remediation/test_plan_cad_export.py acs_plan_drafting.py acs_drafting_standards.py tests/remediation/test_plan_drafting_exports.py
       - name: Install existing locks and optional CAD test dependency
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt
@@ -38,5 +42,7 @@ jobs:
         run: |
           python tests/remediation/test_plan_cad_export.py
           python tests/remediation/test_plan_projection.py
+          python tests/remediation/test_plan_drafting.py
+          python tests/remediation/test_plan_drafting_exports.py
       - name: No generated diff
         run: git diff --exit-code

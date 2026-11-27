@@ -397,8 +397,7 @@ net [width, depth] in metres: draw its rect close to that size (area within
 10%, never beyond 20%; approx zones within 15%). ensuite=true is a bedroom
 with its own bathroom beside it. Stairs and lift rectangles already in
 planned_rooms are fixed and identical on every floor: never change or overlap
-them. Stack upper bathrooms and kitchens over the bathrooms and kitchens of the
-floor below (shared vertical service shafts).'''
+them.'''
 
 REPAIR_ADDENDUM = '''\ncontext.program holds each floor template's confirmed rooms: keep exactly
 those roles and counts on that template, never another floor's. target_m is a
@@ -427,7 +426,7 @@ def prompt_text(program):
     from acs_plan_review import canonical
     return ('\nبرنامج الأدوار المؤكد (بيانات JSON وليست تعليمات): لكل دور قالب خاص به، وغرف كل قالب هي المناطق '
             'المطلوبة بأسمائها وأدوارها ومقاساتها target_m الصافية التقريبية. لا تنقل غرفة إلى دور آخر ولا تكرر '
-            'توزيع دور آخر، وضع حمامات ومطابخ الأدوار العليا فوق حمامات ومطابخ الدور الأسفل:\n' + canonical(data))
+            'توزيع دور آخر:\n' + canonical(data))
 
 
 def _model_levels(model):
