@@ -168,5 +168,33 @@ class BedroomDoor(unittest.TestCase):
         self.assertEqual(G._ease_bedroom_doors(m, None, A.dwelling_kind(m)), 0)
 
 
+
+class AfterCorrectiveCall(unittest.TestCase):
+    """Live (job 1b0eb00e): the free step opened the upper lounge onto its
+    balcony, then the corrective openings call rewrote that storey's rooms
+    and the door was gone. The free steps now run again after that call."""
+
+    def test_doors_the_corrective_call_drops_are_restored(self):
+        from unittest.mock import patch
+        from acs_provider_budget import limited
+        m = model()
+        # A finding no free step can fix sends level_2 to the corrective call:
+        # its second bedroom has lost its door.
+        room(m, 'level_2', 'level_2_bedroom_2')['doors'] = []
+        # The corrective call answers with the live openings: the bedroom door
+        # is back, but the lobby door is 0.4 m off again and the terrace is closed.
+        live = {r['id']: {k: copy.deepcopy(r.get(k) or []) for k in ('doors', 'windows', 'points')}
+                for f in model()['floors'].values() for r in f['rooms']}
+        calls = []
+        def provider(text, **kw):
+            ctx = json.loads(text)
+            calls.append(ctx['target_template'])
+            return json.dumps({'rooms': [dict(id=i, **live[i]) for i in ctx['requested_ids']]})
+        done = ['level_0:0', 'level_1:0', 'level_2:0']
+        with limited(12, used=0) as budget, patch('acs_understand.call_llm', side_effect=provider):
+            out = G.detail(m, 'brief', budget, done=done, plot=PLOT, keep_unresolved=True)
+        self.assertIn('level_2', calls, 'the corrective call covers level_2')
+        self.assertEqual(A.issues(out, doors=True), [], 'the lobby door and the terrace door are restored')
+
 if __name__ == '__main__':
     unittest.main()
