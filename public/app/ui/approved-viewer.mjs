@@ -277,6 +277,31 @@ function lineSet(values,color,opacity){
   const line=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false}));
   line.userData.presentationOnly=true;return line;
 }
+// Which storey's rooms are named. One chosen floor: that floor. Every floor in
+// the cutaway: the storey the cut passes through. Every floor from outside or
+// above: the top storey, the one actually seen; lower storeys are hidden by it.
+export function labelLevel(floor,preset,storeys,clip){
+  if(floor!==null)return floor;
+  if(!storeys.length)return null;
+  if(preset==='cutaway'){
+    const cut=storeys.filter(row=>row.min<=clip+1e-6).sort((a,b)=>b.min-a.min)[0];
+    return (cut||[...storeys].sort((a,b)=>a.min-b.min)[0]).index;
+  }
+  return Math.max(...storeys.map(row=>row.index));
+}
+// Greedy screen placement: the kept (selected) room first, then larger rooms;
+// a name whose box would touch one already placed is left out.
+// candidates: [{x,y,w,h,area,keep}] centred screen boxes in px; returns shown indices.
+export function declutterLabels(candidates,gap=4){
+  const order=candidates.map((_,index)=>index).sort((a,b)=>(candidates[b].keep===true)-(candidates[a].keep===true)||candidates[b].area-candidates[a].area||a-b);
+  const placed=[],shown=new Set();
+  for(const index of order){
+    const c=candidates[index],box={left:c.x-c.w/2-gap/2,right:c.x+c.w/2+gap/2,top:c.y-c.h/2-gap/2,bottom:c.y+c.h/2+gap/2};
+    if(c.keep!==true&&placed.some(p=>box.left<p.right&&box.right>p.left&&box.top<p.bottom&&box.bottom>p.top))continue;
+    placed.push(box);shown.add(index);
+  }
+  return shown;
+}
 function element(tag,text,host,className){const node=document.createElement(tag);if(text!=null)node.textContent=text;if(className)node.className=className;if(host)host.append(node);return node;}
 
 export async function showApprovedGLTF(container, bytes, revisionId, options={}) {
@@ -530,34 +555,45 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const labelLayer=element('div',null,stage,'av-labels');labelLayer.setAttribute('aria-hidden','true');
   const labels=[],projected=new THREE.Vector3();let labelsOn=!phone;
   for(const row of roomBounds.values()){
-    if(labels.length>=80)break;if(isRoofRow(row))continue;
+    if(labels.length>=400)break;if(isRoofRow(row))continue;
     const source=options.projections?.find(p=>p.level_index===row.identity.level)?.primitives?.find(p=>p.source?.room_id===row.identity.room);
-    const node=element('span',source?.label||row.identity.room,labelLayer,'av-label');node.dir='auto';node.hidden=true;
-    labels.push({node,row,center:row.box.getCenter(new THREE.Vector3())});
+    const node=element('span',source?.label||row.identity.room,labelLayer,'av-label');node.dir='auto';node.hidden=true;node.dataset.level=String(row.identity.level);
+    const size=row.box.getSize(new THREE.Vector3());
+    labels.push({node,row,key:row.identity.level+'|'+row.identity.room,area:size.x*size.z,center:row.box.getCenter(new THREE.Vector3())});
   }
+  // Names of one storey only (see labelLevel), placed without overlap by room
+  // size; the selected room keeps its name. Hidden and occluded storeys get none.
   function placeLabels(){
     const show=labelsOn&&['exterior','aerial','cutaway'].includes(currentPreset),floor=floors.value==='all'?null:Number(floors.value),w=stage.clientWidth,h=stage.clientHeight;
+    const storeys=storeyLevels.map(index=>({index,min:levels.get(index).min.y,max:levels.get(index).max.y}));
+    const level=show?labelLevel(floor,currentPreset,storeys,clipPlane.constant):null;
+    const chosen=selected?selected.userData.acsViewerIdentity.level+'|'+selected.userData.acsViewerIdentity.room:null;
+    const candidates=[];
     for(const label of labels){
-      const box=label.row.box;let visible=show&&(floor===null||label.row.identity.level===floor);
-      // With every floor visible only the top instance is named, so stacked names do not collide.
-      if(visible&&floor===null&&currentPreset!=='exterior'&&label.row.identity.level!==topLevel)visible=false;
+      const box=label.row.box,keep=label.key===chosen;
+      let visible=show&&(label.row.identity.level===level||(keep&&(floor===null||label.row.identity.level===floor)));
       if(visible){
         projected.set(label.center.x,currentPreset==='cutaway'?Math.min(box.max.y,clipPlane.constant):box.max.y,label.center.z).project(camera);
         visible=projected.z>-1&&projected.z<1&&Math.abs(projected.x)<.97&&Math.abs(projected.y)<.94;
-        if(visible)label.node.style.transform=`translate(-50%,-50%) translate(${((projected.x+1)/2*w).toFixed(1)}px,${((1-projected.y)/2*h).toFixed(1)}px)`;
+        if(visible)candidates.push({label,keep,area:label.area,x:(projected.x+1)/2*w,y:(1-projected.y)/2*h});
       }
-      label.node.hidden=!visible;
     }
+    // Write every position, then read every size once, then decide.
+    for(const c of candidates){c.label.node.hidden=false;c.label.node.classList.toggle('av-label-selected',c.keep);c.label.node.style.transform=`translate(-50%,-50%) translate(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px)`;}
+    for(const c of candidates){c.w=c.label.node.offsetWidth||Math.min(16,c.label.node.textContent.length)*7+14;c.h=c.label.node.offsetHeight||18;}
+    const shown=declutterLabels(candidates),placed=new Set([...shown].map(index=>candidates[index].label));
+    for(const label of labels)label.node.hidden=!placed.has(label);
+    Object.assign(telemetry.presentation,{labelLevel:level,labelsShown:placed.size,labelsDecluttered:candidates.length-placed.size});
   }
   const controls=new OrbitControls(camera,canvas);controls.target.copy(center);controls.minDistance=.05;controls.maxDistance=extent*8;controls.enableDamping=false;controls.maxPolarAngle=Math.PI*.98;
   let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofLevels.size>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
   const updateControls=()=>{updatingControls=true;try{controls.update();}finally{updatingControls=false;}};
   const controlsChanged=()=>{if(!updatingControls)motion.request();};
-  const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index)),topLevel=storeyLevels.length?Math.max(...storeyLevels):null;
+  const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index));
   const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,previewFrames:0,settledFrames:0,lastFrame:null,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
     objectGroups:[...groups.entries()].filter(([key])=>key.startsWith('source|')).slice(0,256).map(([,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return {...items[0].userData.acsApprovedObjectSource,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
-    presentation:{wallFinish:wallMode.value,eligibleWalls:walls.count,floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
+    presentation:{wallFinish:wallMode.value,eligibleWalls:walls.count,floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,labelLevel:null,labelsShown:0,labelsDecluttered:0,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
   const preview=orbitPreview([...meshes,ground],[figures,gridMinor,...edgeLines.values(),...detailObjects.filter(item=>item.group!=='roof').map(item=>item.object)]);
