@@ -20,6 +20,10 @@ function assertConceptApproval(view,stage){
  assert.equal(view.authority?.can_approve_concept,true,stage+' must satisfy the actual canonical review: '+JSON.stringify(blockers));
 }
 
+// The review keeps engineer tools (roof toggle, restore, compare, nested locks)
+// and the room list folded; tests open them the way an owner would.
+async function openReviewTools(page){await page.evaluate(()=>{for(const id of ['cwMore','cwSpacesBox'])document.getElementById(id).open=true;});}
+
 // Every generation is a paid, multi-minute run and is confirmed in a dialog first.
 async function confirmPaidGeneration(page){
  await page.locator('#cwPaidConfirm').waitFor({state:'visible'});
@@ -263,6 +267,12 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.ok(program.every(r=>r.source_span&&r.confirmed));
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
+   await page.evaluate(()=>document.querySelector('#designWorkspace').scrollTo(0,0));
+   const planBox=await page.locator('#cwPlan').boundingBox();
+   assert.ok(planBox&&planBox.y+planBox.height/2<900,'the 2D plan is in the first screen of the review at '+width+'px: '+JSON.stringify(planBox));
+   assert.equal(await page.locator('#cwMore').evaluate(d=>d.open),false,'engineer tools are folded until asked');
+   assert.equal(await page.locator('#cwMore #cwRoof').count(),1,'the roof toggle is an advanced tool');
+   assert.match(await page.locator('#cwIssuesSummary').textContent(),/لا توجد ملاحظات|تحتاج إصلاحًا|للعلم/,'findings start with a one-line summary');
    assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
    // Actual cwRoof journey: an approved automatic roof is removed as a new
    // draft, survives reload and another controlled generation, then is restored.
@@ -271,7 +281,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    const roofProviderBefore=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();await page.locator('#cwShow3D').waitFor({state:'visible'});
    const approvedRoof=await workspaceState(page);assert.equal(revisionState(approvedRoof),'APPROVED');
-   await page.locator('[data-step="3"]').click();await page.locator('#cwRoof').click();
+   await page.locator('[data-step="3"]').click();await openReviewTools(page);await page.locator('#cwRoof').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('أكد إنشاء مسودة'));
    assert.equal((await workspaceState(page)).head,approvedRoof.head,'roof editing needs explicit approval-invalidation acknowledgement');
    await page.locator('#cwEditApprovalConfirm').check();await page.locator('#cwRoof').click();
@@ -286,6 +296,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    const regeneratedBare=await workspaceState(page);assert.equal(roofRows(regeneratedBare).length,0,'a later generated revision respects the saved roof-removal preference');assert.notEqual(regeneratedBare.head,removedRoof.head);assert.equal(regeneratedBare.history.length,removedRoof.history.length+1);
    if(width===1280)assert.equal(regeneratedBare.requirements.find(row=>row.metric==='unit_count')?.expected,2,'desktop regeneration must retain the selected two-apartment program');
    assertConceptApproval(regeneratedBare,'Regenerated residential/warehouse fixture');
+   await openReviewTools(page);
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'the explicit regeneration invokes the controlled provider exactly once');
    await page.locator('#cwRoof').click();await page.waitForFunction(()=>document.querySelector('#cwRoof').dataset.enabled==='true');
    const restoredRoof=await workspaceState(page);assert.equal(roofRows(restoredRoof).length,1);assert.equal(roofRows(restoredRoof)[0].level_auto,true);assert.notEqual(restoredRoof.head,regeneratedBare.head);assert.equal(restoredRoof.history.length,regeneratedBare.history.length+1);assert.notEqual(revisionState(restoredRoof),'APPROVED');
@@ -293,6 +304,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    // The nested-lock panel was mounted while this project was empty. It must
    // follow the newly generated revision without asking the owner to reload.
    await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
+   assert.equal(await page.locator('#cwMore #cwSemanticLocks').count(),1,'nested locks live under the folded advanced tools');
    await page.locator('#cwSemanticLockTarget').selectOption(JSON.stringify(['element','ground','a','points','light-a']));
    await page.locator('#cwSemanticLockScope').selectOption('position');
    await page.locator('#cwSemanticLockToggle').click();
