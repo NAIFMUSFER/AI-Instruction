@@ -643,6 +643,16 @@ def _sdk_version():
         return "unknown"
 
 
+# Models that take ``output_config.effort`` (adaptive thinking). On these the
+# only lever on how much of the output cap thinking may spend is the effort;
+# a thinking budget or thinking off is refused with a 400.
+_EFFORT_MODELS = re.compile(r"^claude-(?:(?:opus|sonnet|fable)-5|opus-4-[6-9]|sonnet-4-6)")
+
+
+def _supports_effort(model):
+    return isinstance(model, str) and bool(_EFFORT_MODELS.match(model))
+
+
 def _sdk_supports(client, param):
     """هل يقبل عميل anthropic المثبَّت هذا الوسيط؟ سؤالٌ يُسأل مرّة قبل النداء.
 
@@ -924,7 +934,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         supports_thinking_body = (deepseek_wire
                                   and _sdk_supports(client, "extra_body"))
 
-        def _build_kw(mt, thinking):
+        def _build_kw(mt, thinking, effort=None):
             """وسائط الطلب — تُبنى مرّةً، فتُبصَم ويُنادى بها الشيءُ نفسه.
 
             W2-D: كانت تُبنى داخل `_call` فلا يمكن مقارنة طلبين قبل إرسالهما.
@@ -951,6 +961,9 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                                   "parameter": "thinking",
                                   "sdk_version": sdk_ver})
                 kw["extra_body"] = {"thinking": thinking}
+            if effort is not None and effort_rung:
+                # SDK 0.40 has no output_config argument; extra_body carries it.
+                kw.setdefault("extra_body", {})["output_config"] = {"effort": effort}
             return kw
 
         def _call(kw):
@@ -974,9 +987,18 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         # المخرج أبكر لا أمتن. الانقطاع يعالجه تغيير الاستراتيجية في understand().
         OFF = {"type": "disabled"}
         attempts = [
-            (max_tokens, OFF),                   # الأفضل: بلا تفكير، سقف كامل
-            (max_tokens, None),                  # افتراضي النموذج
+            (max_tokens, OFF, None),             # الأفضل: بلا تفكير، سقف كامل
+            (max_tokens, None, None),            # افتراضي النموذج
         ]
+        # Adaptive-thinking models (Opus 5.5 and kin) refuse thinking off, so on
+        # the Anthropic wire both rungs above send the same request. When the
+        # model spends the whole cap thinking (stop=max_tokens, no text), one
+        # more request at low effort asks it to think less: same cap, a
+        # different request, so it can return the answer the first could not.
+        effort_rung = (not deepseek_wire and _supports_effort(model)
+                       and _sdk_supports(client, "extra_body"))
+        if effort_rung:
+            attempts.append((max_tokens, None, "low"))
 
         # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
         # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
@@ -992,7 +1014,12 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         # القاعدة عامّة لا مخصّصة: تُقارَن البصمة، فإن اختلف الطلب فعلاً — نسخة
         # SDK تعرف `thinking`، أو سقفٌ مختلف — أُرسِل كما كان.
         sent_fingerprints = set()
-        for mt, think in attempts:
+        thought_out = False        # a reply arrived and spent the cap without text
+        for mt, think, effort in attempts:
+            if effort is not None and not thought_out:
+                # The effort rung answers a thinking-only reply, not a
+                # transient error: an overload is not cured by thinking less.
+                continue
             tried += 1
             # F-50: يُسجَّل ما **طُلب** قبل النداء. كان max_output_tokens يُملأ بعد
             # نجاح الرد وحده، فسجلُّ الرفض يقول max_output_tokens=null — أي أن
@@ -1000,7 +1027,8 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             tel["requested_max_tokens"] = int(mt)
             tel.setdefault("max_output_tokens", int(mt))
             tel["transport"] = cfg.transport
-            kw = _build_kw(mt, think)
+            kw = _build_kw(mt, think, effort)
+            tel["effort_sent"] = effort
             tel["thinking_sent"] = ("thinking" in kw
                                     or "thinking" in kw.get("extra_body", {}))
             fp = _request_fingerprint(kw)
@@ -1093,6 +1121,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
 
             if text.strip():
                 break           # وصل نصّ — الحكم على اكتماله بعد الحلقة
+            thought_out = True
             print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
 
         # ── W2-E · دلالة الرد قبل أي تحليل ───────────────────────────────────

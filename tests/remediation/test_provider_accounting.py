@@ -214,7 +214,9 @@ def main():
     # test_thinking_wire.py, not a double that discards extension arguments.
     os.environ["ACS_LLM_PROVIDER"] = "anthropic"
     os.environ["ACS_LLM_BASE_URL"] = ""
-    os.environ["ACS_LLM_MODEL"] = "claude-sonnet-5"
+    # A model without output_config.effort: the two-rung ladder alone. The
+    # adaptive-thinking effort rung is covered in its own section below.
+    os.environ["ACS_LLM_MODEL"] = "claude-haiku-4-5"
     # ردٌّ بلا نصّ إطلاقاً: الشكل الحيّ الذي كان يستدعي إعادة المحاولة.
     empty = _Msg([_Blk("thinking")], stop="max_tokens",
                  usage=_Usage(i=5692, o=16000))
@@ -261,8 +263,53 @@ def main():
         [sorted(k for k in s) for s in sent2])
     chk("  …and nothing is recorded as skipped there",
         tel2.get("retry_skipped_reason") is None)
-    chk("the ladder itself is untouched — it is still two attempts",
-        src.count("(max_tokens, OFF)") == 1 and src.count("(max_tokens, None)") == 1)
+    chk("the ladder itself is untouched — still the same two rungs first",
+        src.count("(max_tokens, OFF, None)") == 1 and src.count("(max_tokens, None, None)") == 1)
+
+    # ── Adaptive-thinking models: one more request at low effort ────────────
+    # Live (job e53cc4f7's resume, repair stage, Opus 5.5): 16000 thinking
+    # tokens, stop=max_tokens, no text. Thinking off is refused on this model,
+    # so the only different request is a lower output_config.effort.
+    os.environ["ACS_LLM_MODEL"] = "claude-opus-5-5"
+    answered = _Msg([_Blk("thinking"), _Blk("text", '{"floors":{}}')], stop="end_turn",
+                    usage=_Usage(i=5692, o=4200))
+    sent5 = install(lambda n: empty if n == 1 else answered)
+    U5 = fresh()
+    sink5 = []
+    out5, tel5 = run_once(U5, sink5)
+    chk("EFFORT RUNG — after a thinking-only reply the call is answered",
+        isinstance(out5, str) and out5.strip() == '{"floors":{}}', out5)
+    chk("  …by exactly one more request", len(sent5) == 2, len(sent5))
+    chk("  …which asks for low effort and nothing else changes",
+        len(sent5) == 2 and sent5[1].get("extra_body") == {"output_config": {"effort": "low"}}
+        and {k: v for k, v in sent5[1].items() if k != "extra_body"}
+            == {k: v for k, v in sent5[0].items() if k != "extra_body"},
+        [sorted(x) for x in sent5])
+    chk("  …and the first request kept the model's default effort",
+        not sent5[0].get("extra_body"), sent5[0].get("extra_body"))
+    chk("  …and the identical second rung is still skipped, not paid",
+        tel5.get("retries_skipped") == 1, tel5.get("retries_skipped"))
+    sent6 = install(lambda n: empty)
+    U6 = fresh()
+    out6, tel6 = run_once(U6, [])
+    chk("EFFORT RUNG — if low effort also returns no text the call fails as before "
+        "after two paid requests, never three",
+        isinstance(out6, E.AcsApiError) and len(sent6) == 2, (type(out6).__name__, len(sent6)))
+    class _Overloaded(Exception):
+        def __init__(self):
+            Exception.__init__(self, "upstream is overloaded")
+            self.message, self.status_code = "upstream is overloaded", 529
+            self.body = {"type": "error", "error": {"type": "overloaded_error",
+                                                    "message": "upstream is overloaded"}}
+    sent7 = install(lambda n: _Overloaded())
+    U7 = fresh()
+    out7, tel7 = run_once(U7, [])
+    chk("EFFORT RUNG — a transient overload is not answered by thinking less: "
+        "no low-effort request follows it",
+        isinstance(out7, E.AcsApiError)
+        and not any((x.get("extra_body") or {}).get("output_config") for x in sent7),
+        (type(out7).__name__, [x.get("extra_body") for x in sent7]))
+    os.environ["ACS_LLM_MODEL"] = "claude-haiku-4-5"
 
     # نجاحٌ من أوّل محاولة: لا شيء يُسقَط.
     good = _Msg([_Blk("text", '{"ok":1}')], stop="end_turn",
