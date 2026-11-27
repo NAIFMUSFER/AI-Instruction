@@ -229,6 +229,9 @@ def _overlap(a, b, tol=0.05):
                 az + ad <= bz + tol or bz + bd <= az + tol)
 
 
+SUPPORTED_SHARE = 0.5      # an upper room rests on at least half of its area
+
+
 def _unsupported(levels, floors, tmpl_rects):
     """Check (3): rooms resting on less than half their area, storey by storey.
 
@@ -273,7 +276,10 @@ def _unsupported(levels, floors, tmpl_rects):
                 if ix > 0 and iz > 0:
                     covered += ix * iz
             ratio = covered / (w * d) if w * d > 0 else 1.0
-            if ratio < 0.5:
+            # Exactly half is supported: a room drawn on a centimetre grid
+            # that rests on 8.0 m of its 16.0 m measures 0.4999999999999999
+            # in floating point and was reported «معلّق: 50%».
+            if ratio < SUPPORTED_SHARE - 1e-6:
                 yield upper, rid, ratio, lower
 
 

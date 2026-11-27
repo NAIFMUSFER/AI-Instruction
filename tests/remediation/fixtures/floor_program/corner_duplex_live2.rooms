@@ -1,0 +1,1079 @@
+{
+ "site": {
+  "w": 24.0,
+  "d": 30.0
+ },
+ "floors": {
+  "level_0": {
+   "rooms": [
+    {
+     "id": "level_0_bathroom_1",
+     "name": "level_0_bathroom_1",
+     "role": "bathroom",
+     "rect": [
+      14.1,
+      12.6,
+      2.0,
+      1.5
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_2",
+     "name": "level_0_bathroom_2",
+     "role": "bathroom",
+     "rect": [
+      2.5,
+      14.7,
+      1.5,
+      3.7
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_3",
+     "name": "level_0_bathroom_3",
+     "role": "bathroom",
+     "rect": [
+      9.6,
+      17.4,
+      2.0,
+      1.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_4",
+     "name": "level_0_bathroom_4",
+     "role": "bathroom",
+     "rect": [
+      2.5,
+      22.0,
+      2.5,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bedroom_1",
+     "name": "level_0_bedroom_1",
+     "role": "bedroom",
+     "rect": [
+      4.0,
+      14.7,
+      4.2,
+      4.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_corridor",
+     "name": "level_0_corridor",
+     "role": "corridor",
+     "rect": [
+      8.2,
+      11.0,
+      1.4,
+      8.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_dining_1",
+     "name": "level_0_dining_1",
+     "role": "dining",
+     "rect": [
+      9.6,
+      11.0,
+      4.5,
+      4.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_elevator",
+     "name": "level_0_elevator",
+     "role": "elevator",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    },
+    {
+     "id": "level_0_entrance_1",
+     "name": "level_0_entrance_1",
+     "role": "entrance",
+     "rect": [
+      14.1,
+      10.8,
+      4.4,
+      1.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_entrance_2",
+     "name": "level_0_entrance_2",
+     "role": "entrance",
+     "rect": [
+      6.5,
+      6.0,
+      1.7,
+      6.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_kitchen_1",
+     "name": "level_0_kitchen_1",
+     "role": "kitchen",
+     "rect": [
+      2.5,
+      6.0,
+      4.0,
+      4.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_kitchen_2",
+     "name": "level_0_kitchen_2",
+     "role": "kitchen",
+     "rect": [
+      2.5,
+      10.6,
+      4.0,
+      2.1
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_living_1",
+     "name": "level_0_living_1",
+     "role": "living",
+     "rect": [
+      5.0,
+      19.0,
+      6.0,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_lobby",
+     "name": "level_0_lobby",
+     "role": "entrance",
+     "rect": [
+      10.8,
+      6.0,
+      2.2,
+      2.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_0_majlis_1",
+     "name": "level_0_majlis_1",
+     "role": "majlis",
+     "rect": [
+      13.0,
+      6.0,
+      5.5,
+      4.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_pantry_1",
+     "name": "level_0_pantry_1",
+     "role": "pantry",
+     "rect": [
+      2.5,
+      12.7,
+      2.2,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_porch_1",
+     "name": "level_0_porch_1",
+     "role": "porch",
+     "rect": [
+      16.1,
+      12.6,
+      1.7,
+      2.2
+     ],
+     "walls": "none",
+     "wall_h": 3.0,
+     "unit_id": "apartment_1",
+     "covered": true
+    },
+    {
+     "id": "level_0_stairs",
+     "name": "level_0_stairs",
+     "role": "stairs",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_0_storage_1",
+     "name": "level_0_storage_1",
+     "role": "storage",
+     "rect": [
+      2.5,
+      20.0,
+      2.5,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    }
+   ]
+  },
+  "level_1": {
+   "rooms": [
+    {
+     "id": "level_1_balcony_1",
+     "name": "level_1_balcony_1",
+     "role": "balcony",
+     "rect": [
+      8.2,
+      19.0,
+      2.8,
+      2.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_1",
+     "name": "level_1_bathroom_1",
+     "role": "bathroom",
+     "rect": [
+      2.5,
+      20.0,
+      2.8,
+      3.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_2",
+     "name": "level_1_bathroom_2",
+     "role": "bathroom",
+     "rect": [
+      14.8,
+      10.2,
+      2.5,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_3",
+     "name": "level_1_bathroom_3",
+     "role": "bathroom",
+     "rect": [
+      2.5,
+      12.4,
+      2.2,
+      3.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_1",
+     "name": "level_1_bedroom_1",
+     "role": "bedroom",
+     "rect": [
+      3.6,
+      15.4,
+      4.6,
+      4.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_2",
+     "name": "level_1_bedroom_2",
+     "role": "bedroom",
+     "rect": [
+      14.8,
+      6.0,
+      3.7,
+      4.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_3",
+     "name": "level_1_bedroom_3",
+     "role": "bedroom",
+     "rect": [
+      2.5,
+      6.0,
+      2.8,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_4",
+     "name": "level_1_bedroom_4",
+     "role": "bedroom",
+     "rect": [
+      5.3,
+      6.0,
+      2.9,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_corridor",
+     "name": "level_1_corridor",
+     "role": "corridor",
+     "rect": [
+      2.5,
+      11.0,
+      12.3,
+      1.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_dressing_1",
+     "name": "level_1_dressing_1",
+     "role": "dressing",
+     "rect": [
+      5.3,
+      20.0,
+      2.9,
+      3.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_elevator",
+     "name": "level_1_elevator",
+     "role": "elevator",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    },
+    {
+     "id": "level_1_entrance",
+     "name": "level_1_entrance",
+     "role": "entrance",
+     "rect": [
+      12.8,
+      6.0,
+      2.0,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_landing",
+     "name": "level_1_landing",
+     "role": "lobby",
+     "rect": [
+      10.8,
+      6.0,
+      2.0,
+      2.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_1_laundry_1",
+     "name": "level_1_laundry_1",
+     "role": "laundry",
+     "rect": [
+      14.8,
+      12.2,
+      3.0,
+      2.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_living_1",
+     "name": "level_1_living_1",
+     "role": "living",
+     "rect": [
+      8.2,
+      12.4,
+      3.4,
+      6.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_office_1",
+     "name": "level_1_office_1",
+     "role": "office",
+     "rect": [
+      11.6,
+      12.4,
+      3.2,
+      3.1
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_pantry_1",
+     "name": "level_1_pantry_1",
+     "role": "pantry",
+     "rect": [
+      8.2,
+      21.6,
+      2.8,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_stairs",
+     "name": "level_1_stairs",
+     "role": "stairs",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_1_storage_1",
+     "name": "level_1_storage_1",
+     "role": "storage",
+     "rect": [
+      17.3,
+      10.2,
+      1.2,
+      2.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    }
+   ]
+  },
+  "level_2": {
+   "rooms": [
+    {
+     "id": "level_2_bathroom_1",
+     "name": "level_2_bathroom_1",
+     "role": "bathroom",
+     "rect": [
+      6.2,
+      10.8,
+      2.0,
+      1.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bathroom_2",
+     "name": "level_2_bathroom_2",
+     "role": "bathroom",
+     "rect": [
+      2.5,
+      8.8,
+      2.8,
+      2.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bathroom_3",
+     "name": "level_2_bathroom_3",
+     "role": "bathroom",
+     "rect": [
+      6.2,
+      17.0,
+      2.8,
+      2.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_1",
+     "name": "level_2_bedroom_1",
+     "role": "bedroom",
+     "rect": [
+      2.5,
+      11.2,
+      3.5,
+      4.6
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_2",
+     "name": "level_2_bedroom_2",
+     "role": "bedroom",
+     "rect": [
+      9.0,
+      17.0,
+      3.8,
+      3.5
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_3",
+     "name": "level_2_bedroom_3",
+     "role": "bedroom",
+     "rect": [
+      2.5,
+      17.0,
+      3.7,
+      3.5
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_corridor",
+     "name": "level_2_corridor",
+     "role": "corridor",
+     "rect": [
+      2.5,
+      15.8,
+      16.0,
+      1.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_elevator",
+     "name": "level_2_elevator",
+     "role": "elevator",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    },
+    {
+     "id": "level_2_entrance_1",
+     "name": "level_2_entrance_1",
+     "role": "entrance",
+     "rect": [
+      10.8,
+      12.4,
+      2.0,
+      3.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_kitchen_1",
+     "name": "level_2_kitchen_1",
+     "role": "kitchen",
+     "rect": [
+      12.8,
+      17.0,
+      4.0,
+      3.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_landing",
+     "name": "level_2_landing",
+     "role": "lobby",
+     "rect": [
+      8.2,
+      11.0,
+      4.6,
+      1.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_2_laundry_1",
+     "name": "level_2_laundry_1",
+     "role": "laundry",
+     "rect": [
+      16.8,
+      17.0,
+      1.7,
+      2.3
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_living_1",
+     "name": "level_2_living_1",
+     "role": "living",
+     "rect": [
+      12.8,
+      11.0,
+      5.7,
+      4.8
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_majlis_1",
+     "name": "level_2_majlis_1",
+     "role": "majlis",
+     "rect": [
+      6.0,
+      12.4,
+      4.8,
+      3.4
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_pantry_1",
+     "name": "level_2_pantry_1",
+     "role": "pantry",
+     "rect": [
+      16.8,
+      19.3,
+      1.7,
+      1.7
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_stairs",
+     "name": "level_2_stairs",
+     "role": "stairs",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_2_terrace_1",
+     "name": "level_2_terrace_1",
+     "role": "terrace",
+     "rect": [
+      12.8,
+      6.0,
+      5.7,
+      5.0
+     ],
+     "walls": [
+      "N",
+      "E"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    }
+   ]
+  }
+ },
+ "levels": [
+  {
+   "id": "L0",
+   "name": "L0",
+   "index": 0,
+   "template": "level_0"
+  },
+  {
+   "id": "L1",
+   "name": "L1",
+   "index": 1,
+   "template": "level_1"
+  },
+  {
+   "id": "L2",
+   "name": "L2",
+   "index": 2,
+   "template": "level_2"
+  }
+ ],
+ "wall_h": 3.0,
+ "wall_t": 0.2,
+ "floor_height": 3.2,
+ "meta": {
+  "source": "live job 67d07028 / revision plan_24d7c7bc77e8451e87541367d339be5c, rooms only (doors, windows and roof omitted)"
+ }
+}

@@ -10,7 +10,10 @@ from the family entrance although the brief brings guests in from the east.
 Covered here, offline (every provider call is a stub):
 - the layout stage now reports floating rooms before any opening exists, the
   same five the review finds, and carries the first-floor ones on a covered
-  ground porch for free; only the second-floor one buys one repair call;
+  ground porch for free; the second-floor one over a first-floor void gets a
+  covered porch on the first floor and one under it on the ground, also for
+  free (test_stacked_support.py); only without a room to enter that porch
+  from does it buy one repair call;
 - the trimmed dressing room grows back to its area in free space;
 - upper-floor planning calls see the storey below (extent and open areas);
 - a small room the brief opens to the yard is reached from outside;
@@ -102,7 +105,20 @@ class FloatingRooms(unittest.TestCase):
         value['levels'].append({'id': 'L3', 'name': 'L3', 'index': 3, 'template': 'level_0'})
         self.assertIsNone(G._support_porches(value, G._unsupported_findings(trimmed())))
 
+    def test_the_second_floor_bathroom_over_a_first_floor_void_is_carried_for_free(self):
+        with limited(12, used=7) as budget, patch.object(U, 'call_llm', side_effect=AssertionError('paid')):
+            out = G.prepare_layout(copy.deepcopy(LAYOUT), 'عمارة: دوبلكس وشقة', [], budget)
+        self.assertEqual(budget['used'], 7)
+        self.assertEqual(V.unsupported_rooms(out), [])
+        upper = [r for r in out['floors']['level_1']['rooms'] if r['role'] == 'porch']
+        self.assertEqual([(r['rect'], r['name'], r['unit_id']) for r in upper],
+                         [([16.2, 20.8, 2.3, 3.2], 'شرفة مغطاة', 'apartment_1')], 'entered from the bedroom it touches')
+        self.assertIn([16.2, 20.8, 2.3, 3.2], [r['rect'] for r in out['floors']['level_0']['rooms'] if r['role'] == 'porch'],
+                      'the column line reaches the ground')
+
     def test_one_repair_call_carries_the_last_floating_room_and_its_answer_is_kept(self):
+        # Without a first-floor room to enter a covered porch from, the void
+        # under the flat's bathroom is left to one repair call.
         calls = []
         def provider(text, **kw):
             calls.append((kw['stage'], json.loads(text), kw['system_override']))
@@ -113,7 +129,8 @@ class FloatingRooms(unittest.TestCase):
                                                'rect': [16.2, 20.8, 2.3, 3.2], 'walls': ['N', 'S', 'E', 'W'],
                                                'unit_id': 'apartment_1'})
             return json.dumps({'floors': floors}, ensure_ascii=False)
-        with limited(12, used=7) as budget, patch.object(U, 'call_llm', side_effect=provider):
+        with limited(12, used=7) as budget, patch.object(U, 'call_llm', side_effect=provider), \
+                patch.object(G, 'STACK_ACCESS_M', 50.0):
             out = G.prepare_layout(copy.deepcopy(LAYOUT), 'عمارة: دوبلكس وشقة', [], budget)
         self.assertEqual([c[0] for c in calls], ['repair'])
         _, context, system = calls[0]
