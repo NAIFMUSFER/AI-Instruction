@@ -575,6 +575,73 @@ class HotelViolations(unittest.TestCase):
         self.assertTrue({'ROOM_NO_EXTERIOR_WALL', 'HOTEL_ROOM_SMALL'} <= found)
 
 
+class RemainingChecks(unittest.TestCase):
+    """One seeded violation for each check the classes above do not reach."""
+
+    def test_stairs_missing_or_dropped_from_a_storey(self):
+        b = no_doors(F.office())
+        for rid in ('stairs_a', 'stairs_b'):
+            rooms(b, 'typical')[rid]['role'] = 'storage'
+        self.assertIn('CORE_STAIRS_MISSING', codes(OFFICE, b, F.OPTIONS['office'])[0])
+        b = no_doors(F.office())
+        rooms(b, 'typical')['stairs_b']['core_id'] = 'core_x'
+        self.assertIn('CORE_MISSING_ON_STOREY', codes(OFFICE, b, F.OPTIONS['office'])[0])
+
+    def test_exits_too_close_without_sprinklers(self):
+        b = no_doors(F.office())
+        for t in ('ground', 'typical'):
+            rooms(b, t)['stairs_b']['role'] = 'storage'
+            rooms(b, t)['pantry']['role'] = 'stairs'
+        self.assertIn('EGRESS_EXITS_TOO_CLOSE', codes(OFFICE, b, {'sprinklered': False})[0])
+        self.assertNotIn('EGRESS_EXITS_TOO_CLOSE', codes(OFFICE, b, {'sprinklered': True})[0])
+
+    def test_third_storey_far_from_toilets_without_a_lift(self):
+        b = no_doors(F.office())
+        b['levels'].append({'index': 2, 'name': 'الدور الثاني', 'template': 'typical'})
+        for rid in ('wc_men', 'wc_women'):
+            rooms(b, 'typical')[rid]['role'] = 'storage'
+        blocking, advisory = codes(OFFICE, b, F.OPTIONS['office'])
+        self.assertIn('FIXTURES_TOO_FAR', blocking)
+        self.assertTrue({'OFFICE_STOREY_WITHOUT_TOILETS', 'OFFICE_NO_ELEVATOR'} <= advisory)
+
+    def test_office_without_prayer_room_and_an_oversized_private_office(self):
+        b = no_doors(F.office())
+        for t in ('ground', 'typical'):
+            rooms(b, t)['prayer_room']['role'] = 'storage'
+        rooms(b, 'ground')['open_office_n']['role'] = 'office'
+        advisory = codes(OFFICE, b, F.OPTIONS['office'])[1]
+        self.assertTrue({'OFFICE_NO_PRAYER_ROOM', 'ROOM_TOO_LARGE'} <= advisory)
+
+    def test_workplace_deeper_than_its_window_wall_allows(self):
+        b = F.building('office', (20, 16), [('g', {r['id']: r for r in (
+            F.room('lobby', 'بهو', 'lobby', (0, 13.5, 16, 2.5)),
+            F.room('store_w', 'مخزن', 'storage', (0, 0, 3, 12)),
+            F.room('open', 'مكاتب', 'open_office', (3, 0, 10, 12)),
+            F.room('store_e', 'مخزن', 'storage', (13, 0, 3, 12)),
+            F.room('corridor', 'ممر', 'corridor', (0, 12, 16, 1.5)))}, 1)])
+        no_doors(b)
+        self.assertIn('OFFICE_TOO_DEEP', codes(OFFICE, b, F.OPTIONS['office'])[1])
+
+    def test_mosque_without_shoe_area_and_a_small_womens_hall(self):
+        b = no_doors(F.mosque())
+        rooms(b, 'ground')['shoe_area']['role'] = 'corridor'
+        rooms(b, 'ground')['women_hall']['rect'] = [16, 14, 4, 6]
+        advisory = codes(MOSQUE, b, {'sprinklered': True, 'worshippers': 250})[1]
+        self.assertTrue({'MOSQUE_NO_SHOE_AREA', 'MOSQUE_WOMEN_HALL_SHARE'} <= advisory)
+
+    def test_school_corridor_below_practice_and_a_small_yard(self):
+        b = no_doors(F.school())
+        for t in ('ground', 'upper'):
+            rooms(b, t)['corridor']['rect'] = [2, 10, 36, 2.0]
+            for r in b['floors'][t]['rooms']:
+                if r['rect'][1] == 12.4:
+                    r['rect'][1], r['rect'][3] = 12.0, 8.0
+        b['floors']['ground']['rooms'].append(F.room('yard', 'الفناء', 'courtyard', (2, 20, 10, 2), walls='none'))
+        blocking, advisory = codes(SCHOOL, b, F.OPTIONS['school'])
+        self.assertEqual(blocking, set())
+        self.assertTrue({'SCHOOL_CORRIDOR_PRACTICE', 'SCHOOL_YARD_SMALL'} <= advisory)
+
+
 class Instructions(unittest.TestCase):
 
     def test_each_text_has_its_stated_size_within_its_bound(self):
