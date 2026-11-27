@@ -830,6 +830,7 @@ jobs:
             tests/remediation/test_approved_revision_race.mjs \
             tests/remediation/test_connected_revision_controls.mjs \
             tests/remediation/test_generation_calls.mjs \
+            tests/remediation/test_generation_preflight.mjs \
             tests/remediation/test_plan_labels.mjs \
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \

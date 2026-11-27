@@ -54,8 +54,10 @@ export function briefSays(text) {
   return HOUSE.test(t) ? 'single_dwelling' : null;
 }
 
+// stall: [width, depth] (a confirmed program may state its own); building: the
+// confirmed building [width, depth], whose ground floor holds pilotis parking.
 export function preview({villa=false, levels=1, units=null, width, depth, streets=[], streetWidth=null,
-                         setbacks={}, coverage=null, placement='front_setback', count=null}) {
+                         setbacks={}, coverage=null, placement='front_setback', count=null, stall=[STALL_W, STALL_D], building=null}) {
   const d = villa ? DEFAULTS.villa : DEFAULTS.apartments, warnings = [];
   const W = Number(width), D = Number(depth);
   if (!(W > 0 && D > 0)) return {ready:false, warnings:['أدخل عرض الأرض وعمقها لحساب المساحة القابلة للبناء.']};
@@ -72,10 +74,11 @@ export function preview({villa=false, levels=1, units=null, width, depth, street
   const cov = coverage ?? d.coverage;
   const regulatory = villa ? (W * D <= 400 ? 1 : 2) : (units ? Math.ceil(1.5 * units - 1e-9) : null);
   const required = placement === 'none' ? 0 : (count ?? regulatory);
+  const [stallW, stallD] = stall;
   let x0 = out.W, x1 = W - out.E, z0 = out.N, z1 = D - out.S;
-  if (placement === 'front_setback' && required > 0 && out[primary] < STALL_D) {
-    if (primary === 'N') z0 = STALL_D; else if (primary === 'S') z1 = D - STALL_D;
-    else if (primary === 'W') x0 = STALL_D; else x1 = W - STALL_D;
+  if (placement === 'front_setback' && required > 0 && out[primary] < stallD) {
+    if (primary === 'N') z0 = stallD; else if (primary === 'S') z1 = D - stallD;
+    else if (primary === 'W') x0 = stallD; else x1 = W - stallD;
   }
   if (x1 - x0 < 3 || z1 - z0 < 3) return {ready:false, setbacks:out, sources, coverage:cov, required,
     warnings:['الارتدادات لا تترك مساحة بناء كافية (أقل من 3 م). راجع الارتدادات أو مكان المواقف.']};
@@ -86,16 +89,81 @@ export function preview({villa=false, levels=1, units=null, width, depth, street
   }
   const envelope = [round2(x0), round2(z0), round2(x1 - x0), round2(z1 - z0)], area = envelope[2] * envelope[3];
   const frontage = primary === 'N' || primary === 'S' ? W : D;
+  const parkingArea = building ? building[0] * building[1] : area;
   let capacity = null;
-  if (placement === 'front_setback' && required > 0) capacity = Math.max(0, Math.floor((frontage - PATH_W) / STALL_W + 1e-9) - 1);
-  else if (placement === 'pilotis') capacity = Math.floor((area - PILOTIS_CORE_M2) / PILOTIS_M2_PER_STALL + 1e-9);
+  if (placement === 'front_setback' && required > 0) capacity = Math.max(0, Math.floor((frontage - PATH_W) / stallW + 1e-9) - 1);
+  else if (placement === 'pilotis') capacity = Math.floor((parkingArea - PILOTIS_CORE_M2) / PILOTIS_M2_PER_STALL + 1e-9);
+  // The required count is the owner's, or the stated regulatory default: an assumption they can lower.
+  const requiredSource = count != null ? 'user' : 'default';
+  const basis = requiredSource === 'user' ? 'من إدخالك' : villa ? 'افتراض نظامي لفيلا على أرض '+fmt(W * D)+' م²'
+    : 'افتراض نظامي: 1.5 موقف لكل شقة × '+units+' شقق مقربة للأعلى';
   if (required == null && placement !== 'none') warnings.push('حدّد عدد الشقق أو عدد المواقف حتى تُحجز المواقف.');
-  if (capacity != null && required != null && capacity < required)
-    warnings.push('المواقف المطلوبة '+required+' ولا يتسع '+(placement==='pilotis'?'الدور الأرضي':'الارتداد الأمامي')+' إلا لنحو '+capacity+'. '+(placement==='pilotis'?'قلّل عدد الشقق أو راجع الارتدادات.':'اختر المواقف تحت المبنى، أو قلّل الشقق، أو «بدون مواقف» إن كانت في قبو.'));
+  if (capacity != null && required != null && capacity < required) {
+    const lower = requiredSource === 'user' ? 'قلّل «عدد المواقف» إلى '+Math.max(capacity, 0)+' أو أقل'
+      : 'أدخل في «عدد المواقف» عددًا أقل ('+Math.max(capacity, 0)+' أو أقل) إن كان اشتراط أمانتك أقل، فالعدد '+required+' افتراض قابل للتعديل';
+    warnings.push(placement === 'pilotis'
+      ? 'المواقف المطلوبة '+required+' ('+basis+') ولا يتسع الدور الأرضي ('+fmt(parkingArea)+' م²) إلا لنحو '+Math.max(capacity, 0)+'. للمتابعة: '+lower
+        +'، أو قلّل عدد الشقق، أو راجع الارتدادات، أو اختر «'+PLACEMENTS.none+'» إن كانت المواقف في قبو.'
+      : 'المواقف المطلوبة '+required+' ('+basis+') ولا يتسع الارتداد الأمامي بطول '+fmt(frontage)+' م إلا لنحو '+capacity+' مع ممر المدخل. للمتابعة: '+lower
+        +'، أو اختر مكان المواقف «'+PLACEMENTS.pilotis+'»، أو «'+PLACEMENTS.none+'» إن كانت المواقف في قبو.');
+  }
   if (placement === 'pilotis' && levels < 2) warnings.push('المواقف تحت المبنى تحتاج دورين على الأقل.');
   if (placement === 'none' && regulatory) warnings.push('اخترت عدم تخصيص مواقف؛ الاشتراط الافتراضي '+regulatory+' مواقف وستظهر ملاحظة في المراجعة.');
-  return {ready:true, setbacks:out, sources, coverage:cov, envelope, area, share:area / (W * D), required, regulatory, capacity,
+  return {ready:true, setbacks:out, sources, coverage:cov, envelope, area, share:area / (W * D), required, requiredSource, basis, regulatory, capacity,
     frontage, warnings, ok:!warnings.some(w => /لا يتسع|تحتاج دورين|لا تترك/.test(w))};
+}
+
+// The server's deterministic plot refusals (acs_plot_rules.resolve), checked on the
+// request about to be sent and before the paid confirmation: a plot the server would
+// refuse never reaches the paid dialog. Same inputs as the server: the confirmed
+// requirements, the brief, the plot block and a confirmed program card, which fills
+// what the plot block leaves empty. Returns null, or {code, message} in Arabic.
+// The checks the server makes later from the chosen option (flat area, the pilotis
+// flat count) are not repeated here; the server still refuses them before any call.
+export function plotPreflight({brief='', requirements=[], plot={}, program=null}) {
+  const confirmed = metric => {
+    const values = new Set((requirements || []).filter(r => r && r.metric === metric && r.expected != null).map(r => r.expected));
+    return values.size === 1 ? [...values][0] : null;
+  };
+  const num = v => typeof v === 'number' && Number.isFinite(v);
+  const W = confirmed('site_width_m'), D = confirmed('site_depth_m');
+  if (!(num(W) && num(D) && W > 0 && D > 0))
+    return {code:'PLOT_SITE_REQUIRED', message:'أدخل عرض الأرض وعمقها حتى تُحسب المساحة القابلة للبناء بعد الارتدادات.'};
+  const said = briefSays(brief), count = confirmed('unit_count');
+  const villa = (said === 'single_dwelling' && (count == null || count === 1)) || (said === null && count === 1);
+  const lv = confirmed('level_count'), levels = Number.isInteger(lv) && lv > 0 ? lv : 1;
+  const units = Number.isInteger(count) && count > 0 ? count : (villa ? 1 : null);
+  const card = program && typeof program === 'object' ? program : null;
+  const site = card?.site || {}, parking = card?.parking || {};
+  const streets = plot.streets?.length ? plot.streets : (site.street_sides || []).filter(s => SIDES.includes(s)).slice(0, 2);
+  const setbacks = {};
+  for (const side of SIDES) {
+    const given = plot.setbacks_m?.[side], stated = site.setbacks_m?.[side];
+    if (num(given)) setbacks[side] = given; else if (num(stated)) setbacks[side] = stated;
+  }
+  let placement = plot.parking?.placement || 'front_setback';
+  const ground = Array.isArray(card?.levels) && card.levels.length ? card.levels[0] : null;
+  if (placement === 'front_setback' && ground && !ground.units?.length && (ground.use === 'parking' || parking.placement === 'pilotis')) placement = 'pilotis';
+  const sw = parking.stall_width_m, sd = parking.stall_depth_m;
+  const stall = num(sw) && num(sd) && sw >= 1.8 && sw <= 8 && sd >= 1.8 && sd <= 8 ? [sw, sd] : [STALL_W, STALL_D];
+  let bw = confirmed('building_width_m'), bd = confirmed('building_depth_m');
+  if (!(num(bw) && num(bd)) && num(site.footprint?.width_m) && num(site.footprint?.depth_m)) [bw, bd] = [site.footprint.width_m, site.footprint.depth_m];
+  const building = num(bw) && num(bd) ? [bw, bd] : null;
+  const count0 = Number.isInteger(plot.parking?.count) ? plot.parking.count : Number.isInteger(parking.count) ? parking.count : null;
+  const p = preview({villa, levels, units, width:W, depth:D, streets,
+    streetWidth:num(plot.street_width_m) ? plot.street_width_m : num(site.street_width_m) ? site.street_width_m : null,
+    setbacks, coverage:num(plot.max_coverage) ? plot.max_coverage : null, placement, count:count0, stall, building});
+  const refuse = (code, message) => ({code, message:message+' لم يُرسل أي طلب ولم يُستهلك أي رصيد؛ عدّل «الأرض والارتدادات والمواقف» في الخطوة 01 ثم أعد المحاولة.'});
+  if (p.required == null && placement !== 'none') return refuse('PLOT_PARKING_COUNT_REQUIRED', 'حدّد عدد الشقق أو عدد المواقف المطلوبة حتى تُحجز المواقف.');
+  if (!p.ready) return refuse('PLOT_ENVELOPE_EMPTY', p.warnings.join(' '));
+  if (building && (building[0] > p.envelope[2] + 0.01 || building[1] > p.envelope[3] + 0.01))
+    return refuse('PLOT_BUILDING_EXCEEDS_ENVELOPE', 'أبعاد المبنى المؤكدة '+fmt(building[0])+' × '+fmt(building[1])+' م أكبر من المساحة القابلة للبناء بعد الارتدادات '
+      +fmt(p.envelope[2])+' × '+fmt(p.envelope[3])+' م. صغّر المبنى أو راجع الارتدادات.');
+  if (placement === 'front_setback' && p.capacity != null && p.capacity < p.required)
+    return refuse('PLOT_PARKING_DOES_NOT_FIT', p.warnings.find(w => w.includes('لا يتسع')));
+  if (placement === 'pilotis' && levels < 2) return refuse('PLOT_PILOTIS_NEEDS_LEVELS', 'المواقف تحت المبنى تحتاج دورين على الأقل: دور أرضي للمواقف وفوقه الشقق.');
+  if (placement === 'pilotis' && p.capacity < p.required) return refuse('PLOT_PARKING_DOES_NOT_FIT', p.warnings.find(w => w.includes('لا يتسع')));
+  return null;
 }
 
 export function summaryText(p, placement) {
@@ -104,7 +172,9 @@ export function summaryText(p, placement) {
   let text = 'المساحة القابلة للبناء ≈ '+fmt(w)+' × '+fmt(d)+' م = '+fmt(p.area)+' م² ('+Math.round(p.share*100)+'٪ من الأرض) بعد الارتدادات'
     +(p.sources && Object.values(p.sources).includes('default') ? ' (بعضها افتراضي)' : '')+' ونسبة بناء '+Math.round(p.coverage*100)+'٪.';
   if (placement === 'pilotis') text += ' الدور الأرضي للمواقف والمدخل، والشقق في الأدوار فوقه.';
-  if (p.required && !p.warnings.some(w => w.includes('المواقف المطلوبة'))) text += ' المواقف المطلوبة '+p.required+(p.capacity != null ? '؛ السعة التقديرية '+p.capacity : '')+'.';
+  // The parking requirement against the capacity, before any paid request.
+  if (p.required && !p.warnings.some(w => w.includes('المواقف المطلوبة'))) text += ' المواقف المطلوبة '+p.required+(p.basis ? ' ('+p.basis+')' : '')
+    +(p.capacity != null ? '؛ السعة التقديرية '+p.capacity+(placement === 'pilotis' ? ' في الدور الأرضي' : ' في الارتداد الأمامي') : '')+'.';
   return [text, ...p.warnings].join(' ');
 }
 
