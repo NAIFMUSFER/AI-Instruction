@@ -123,6 +123,8 @@
 body.acs-guest #camBar { top: 88px; }
 body.acs-guest #genLLM:disabled,body.acs-guest #bNotesApply:disabled { opacity:.55; cursor:not-allowed; }
 body.acs-guest #left [hidden] { display: none!important; }
+/* The bar already says the project is kept on this device. */
+body.acs-guest #left #who { display: none; }
 @media (max-width: 820px) {
   /* Phone: the project name on one short line, the four actions across the
      full width beneath it. Stays under 80px so the building remains in view. */

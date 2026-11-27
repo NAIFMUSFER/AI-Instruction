@@ -84,16 +84,16 @@
 <div class="acs-hidden" id="left">
   <header>
     <div class="project-heading">
-      <h1>ACS — استوديو المشروع <span class="pill" id="who"></span></h1>
+      <h1>مشروعك <span class="pill" id="who"></span></h1>
       <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
     </div>
     <button id="projectPanelClose" type="button" title="العودة إلى المبنى / Return to the building" aria-label="إغلاق لوحة المشروع والعودة إلى المبنى — Close the project panel and return to the building">✕</button>
   </header>
 
     <div class="tabs" role="tablist" aria-label="أقسام لوحة المشروع — Project panel sections">
-    <button type="button" role="tab" data-tab="make" class="active" aria-selected="true" aria-controls="acsPanelMake" id="acsTabMake">١ · المشروع</button>
-    <button type="button" role="tab" data-tab="model" aria-selected="false" aria-controls="acsPanelModel" id="acsTabModel">٢ · النموذج</button>
-    <button type="button" role="tab" data-tab="show" aria-selected="false" aria-controls="acsPanelShow" id="acsTabShow">٣ · العرض</button>
+    <button type="button" role="tab" data-tab="make" class="active" aria-selected="true" aria-controls="acsPanelMake" id="acsTabMake">المشروع</button>
+    <button type="button" role="tab" data-tab="model" aria-selected="false" aria-controls="acsPanelModel" id="acsTabModel">النموذج</button>
+    <button type="button" role="tab" data-tab="show" aria-selected="false" aria-controls="acsPanelShow" id="acsTabShow">العرض</button>
   </div>
 
   <div class="body">
@@ -144,7 +144,7 @@
         <div class="lay"><input type="checkbox" id="strictMode">
           <label class="nm" for="strictMode">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره <span lang="en" dir="ltr">· Follow my description literally</span></label></div>
         <button class="ghost acs-u-05" id="genText">توليد محلي فوري (بلا ذكاء)</button>
-        <div class="fld acs-u-06"><div><label for="llmURL">خادم المحرّك — تجاوز يدوي</label>
+        <div class="fld acs-u-06 acs-dev-only"><div><label for="llmURL">خادم المحرّك — تجاوز يدوي</label>
           <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً"></div></div>
       </details>
     </div>
@@ -235,7 +235,10 @@
           <option value="1.8">عالٍ — أقصى واقعية</option>
         </select></div></div>
       <!-- تشخيص للمطوّر (عدّ العناصر الخام): مخفي إلا في وضع التصحيح
-           (?debug=1 في الرابط أو localStorage.acs_debug='1') -->
+           (?debug=1 في الرابط أو localStorage.acs_debug='1').
+           ‎.acs-dev-only‎: أدوات المطوّر (خادم المحرّك، اللوحات الهندسية، هوية
+           البناء والتشخيص، القدرات المعلنة) لا تظهر لصاحب المنزل على الموقع
+           العام؛ تظهر على localhost وفي وضع التصحيح فقط. -->
       <div id="statCount" class="note acs-u-13"></div>
       <script src="/app/boot/debug-toggle.js"></script>
 
@@ -245,8 +248,8 @@
            يستدعي init() ولا open() لأيٍّ منها، فكانت غير قابلة للوصول من
            الواجهة إطلاقاً. التوصيل في public/app/ui/panels-entry.js عبر
            addEventListener وحده: سياسة CSP تمنع المعالِج داخل العلامة. -->
-      <h2 id="acsPanelsH">لوحات العمل المتقدّمة</h2>
-      <div class="row" role="group" aria-labelledby="acsPanelsH">
+      <h2 id="acsPanelsH" class="acs-dev-only">لوحات العمل المتقدّمة</h2>
+      <div class="row acs-dev-only" role="group" aria-labelledby="acsPanelsH">
         <button class="ghost acs-u-11" type="button" id="acsOpenWorkspace"
                 aria-label="فتح مساحة العمل — Open the workspace"
                 title="مساحة العمل: الشجرة والمفتّش ومركز المسائل والمراجعات">☰ مساحة العمل</button>
@@ -257,7 +260,7 @@
                 aria-label="فتح لوحة تبادل BIM — Open the BIM exchange panel"
                 title="تبادل BIM">🏗 تبادل BIM</button>
       </div>
-      <div class="row" role="group" aria-labelledby="acsPanelsH">
+      <div class="row acs-dev-only" role="group" aria-labelledby="acsPanelsH">
         <button class="ghost acs-u-11" type="button" id="acsOpenDocs"
                 aria-label="فتح لوحة التوثيق — Open the documentation panel"
                 title="التوثيق: المساقط واللوحات والجداول">📐 التوثيق</button>
@@ -268,22 +271,22 @@
                 aria-label="فتح لوحة التفصيل المعماري — Open the architectural detail panel"
                 title="التفصيل المعماري">🧱 التفصيل</button>
       </div>
-      <div id="acsPanelsState" class="note" role="status" aria-live="polite"></div>
+      <div id="acsPanelsState" class="note acs-dev-only" role="status" aria-live="polite"></div>
 
       <!-- F-08 · معلومات النظام والتشخيص — عنصر DOM مكتوب يدوياً (غير مولَّد).
            الزرّ يجهّز ملفّ تشخيص محلياً ولا يرسله إلى أي جهة. -->
-      <h2>معلومات النظام والتشخيص</h2>
-      <div class="note">هوية البناء المشحون:
+      <h2 class="acs-dev-only">معلومات النظام والتشخيص</h2>
+      <div class="note acs-dev-only">هوية البناء المشحون:
         <b id="acsBuildId" data-acs="build-id">…</b></div>
-      <div class="row">
+      <div class="row acs-dev-only">
         <button class="ghost acs-u-11" id="acsDiagBtn" type="button"
                 aria-label="تنزيل التشخيص — Download diagnostics"
                 title="تنزيل التشخيص / Download diagnostics"
                 data-acs="download-diagnostics">⤓ تنزيل التشخيص</button>
       </div>
-      <div id="acsDiagState" class="note acs-u-14" role="status" aria-live="polite"
+      <div id="acsDiagState" class="note acs-u-14 acs-dev-only" role="status" aria-live="polite"
           ></div>
-      <div class="note">يُجهَّز الملفّ في متصفّحك ولا يُرفع إلى أيّ خادوم.</div>
+      <div class="note acs-dev-only">يُجهَّز الملفّ في متصفّحك ولا يُرفع إلى أيّ خادوم.</div>
 
       <!-- ===== ACS PRODUCTION TRUST DOM · PANEL (hand-written) =====
            F-15 الحفظ المحلي · F-16 إفصاح القدرات · البديل النصّي للعرض.
@@ -332,9 +335,9 @@
         and it is gone if you clear browser data or use another device.</span>
       </p>
 
-      <h2 id="acsCapH">قدرات معلَنة غير منفَّذة بعد
+      <h2 id="acsCapH" class="acs-dev-only">قدرات معلَنة غير منفَّذة بعد
         <span class="pill" lang="en" dir="ltr">Declared, not yet implemented</span></h2>
-      <p class="acs-local-note">
+      <p class="acs-local-note acs-dev-only">
         المحرّك يُعلن هذه العمليات في مفرداته ليذكر مالكها الهندسي صراحةً، ولا
         ينفّذها في هذه المرحلة. تُعرض هنا معطّلة ومُعلَّمة بدل أن تظهر كأزرار
         حيّة تُخيّب الظنّ.
@@ -342,7 +345,7 @@
         their engineering ownership is stated, and does not implement them in this phase.
         They are shown here disabled and labelled rather than as live buttons that fail.</span>
       </p>
-      <div id="acsCapList" role="group" aria-labelledby="acsCapH"></div>
+      <div id="acsCapList" class="acs-dev-only" role="group" aria-labelledby="acsCapH"></div>
 
       <h2 id="acsAltH">البديل النصّي للعرض ثلاثي الأبعاد
         <span class="pill" lang="en" dir="ltr">Text alternative</span></h2>

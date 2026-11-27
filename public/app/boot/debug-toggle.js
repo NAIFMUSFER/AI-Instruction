@@ -11,3 +11,8 @@
 (function(){try{var dbg=/[?&]debug=1/.test(location.search)||localStorage.getItem('acs_debug')==='1';
         if(dbg){var e=document.getElementById('statCount');
           if(e) e.classList.add('acs-debug-on');}}catch(e){}})();
+/* أدوات المطوّر (.acs-dev-only) لا تظهر لصاحب المنزل على الموقع العام: تظهر
+   على localhost — حيث تعمل الاختبارات وبيئة التطوير — أو في وضع التصحيح. */
+(function(){var dev=["127.0.0.1","localhost","::1","[::1]"].indexOf(location.hostname)>=0;
+  try{dev=dev||/[?&]debug=1/.test(location.search)||localStorage.getItem('acs_debug')==='1';}catch(e){}
+  if(dev)document.documentElement.classList.add('acs-dev');})();

@@ -40,6 +40,10 @@
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
     font-family:var(--ui-font);-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #app{position:fixed;inset:0}
+  /* Developer tools (server override, engineering panels, build identity and
+     diagnostics, declared capabilities) stay off the public site; localhost
+     and ?debug=1 show them (boot/debug-toggle.js sets html.acs-dev). */
+  html:not(.acs-dev) .acs-dev-only{display:none!important}
   /* ---- شاشة الدخول: Google أولاً، ثم «متابعة بدون حساب»؛ البريد خلف زرّ ---- */
   #login{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:safe center;
     overflow-y:auto;overscroll-behavior:contain;background:var(--ui-bg);color:var(--ui-text);
