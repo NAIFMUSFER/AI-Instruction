@@ -48,7 +48,7 @@ def model(site=(80, 120), rooms=None, wall_h=11.0):
 
 
 def rooms(building):
-    return {r['id']: r for r in building['floors']['ground']['rooms']}
+    return {r.get('id'): r for r in building['floors']['ground']['rooms']}
 
 
 def codes(notes):
@@ -106,6 +106,17 @@ class DockLayout(unittest.TestCase):
         out, notes = WP.layout_docks(b, [req('dock_count', 8)], [])
         self.assertFalse([r for r in rooms(out).values() if r.get('docks')])
         self.assertTrue(notes and notes[0].startswith('تنبيه:'))
+
+    def test_authored_or_malformed_dock_data_is_never_replaced(self):
+        b = model()
+        authored = {'id': 'mine', 'edge': 'N', 'offset': 5, 'width': 3, 'height': 3, 'count': 2, 'pitch': 4}
+        rooms(b)['receiving']['docks'] = [dict(authored)]
+        rooms(b)['shipping']['docks'] = 'not a list'
+        rooms(b)['storage'].pop('id')
+        out, notes = WP.layout_docks(b, [req('dock_count', 8)], [])
+        self.assertEqual(rooms(out)['receiving']['docks'], [authored])
+        self.assertEqual(rooms(out)['shipping']['docks'], 'not a list')
+        self.assertTrue(any(n.startswith('تنبيه:') for n in notes))
 
     def test_door_height_stays_below_a_low_wall(self):
         out, _ = WP.layout_docks(model(wall_h=3.0), [req('dock_count', 2)], [])

@@ -288,7 +288,8 @@ def layout_docks(building, requirements, intents):
         edge = item['edge'] if _longest_run(room, rooms, item['edge']) else _best_edge(room, rooms, site)[0]
         if edge is not None:
             wanted[(room['id'], edge)] = wanted.get((room['id'], edge), 0) + item['count']
-    zones = [r for r in rooms if _role(r) in DOCK_ROLES] or [r for r in rooms if _role(r) == 'staging']
+    named = list(by_id.values())
+    zones = [r for r in named if _role(r) in DOCK_ROLES] or [r for r in named if _role(r) == 'staging']
     slots = []
     for room in zones:
         edges = [e for (rid, e) in wanted if rid == room['id']] or [_best_edge(room, rooms, site)[0]]
@@ -326,13 +327,16 @@ def layout_docks(building, requirements, intents):
         if n <= 0:
             continue
         room = by_id[rid]
+        existing = room.setdefault('docks', [])
+        if not isinstance(existing, list) or any(isinstance(d, dict) and d.get('edge') == edge for d in existing):
+            continue  # authored dock data on this wall is never replaced
         run = _longest_run(room, rooms, edge)
         pitch, first = _group(run, n)
         height = DOCK_DOOR_H
         own_h = room.get('wall_h') if _num(room.get('wall_h')) else wall_h
         if _num(own_h) and own_h > 0:
             height = min(DOCK_DOOR_H, round(own_h * 0.9, 2))
-        room.setdefault('docks', []).append({
+        existing.append({
             'id': 'dock-' + edge.lower(), 'edge': edge, 'offset': first, 'width': DOCK_DOOR_W,
             'height': height, 'count': n, 'pitch': pitch})
         placed += n
