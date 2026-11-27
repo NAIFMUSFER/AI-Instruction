@@ -107,6 +107,10 @@ const quantityHints=[...patterns.map(p=>p[1]),...buildingSides.map(p=>p[1]),buil
 const ordinals=['اول','ثان','ثالث','رابع','خامس','سادس','سابع','ثامن','تاسع','عاشر'];
 const storey='(?:(?:ال)?(?:دور|طابق)\\s+)?(?:ال)?';
 const floorList=new RegExp(`(?<![\\p{L}])${storey}ارضي(?:\\s*(?:[،,+]\\s*)?و?\\s*${storey}(?:${ordinals.join('|')})(?:ي|[\\u064B-\\u0652])*(?![\\p{L}]))+`,'gu');
+// A sentence that names one floor («الدور الأول — أربع غرف نوم») counts that floor's rooms, not the building's.
+const floorNamed=new RegExp(`(?<![\\p{L}])(?:و)?(?:ال)?(?:دور|طابق)\\s+(?:ال)?(?:ارضي|${ordinals.join('|')})(?:ي|[\\u064B-\\u0652])*(?![\\p{L}])`,'u');
+// The highest floor the brief names anywhere: «الدور الثاني» means a third floor exists.
+const namedFloor=new RegExp(`(?<![\\p{L}])(?:و)?(?:ال)?(?:دور|طابق)\\s+(?:ال)?(?<o>${ordinals.join('|')})(?:ي|[\\u064B-\\u0652])*(?![\\p{L}])`,'gu');
 const groundPlus=/(?<![\p{L}])(?:ال)?ارضي\s*(?:\+|زائد)\s*(?<n>[0-9]+)(?![0-9]|\.[0-9]|\s*(?:ادوار|طوابق|دور|طابق))/gu;
 const listGuard=/(?:^|\s)و?(?:لا|ليس|بدون|اذا|او)(?:\s|$)|تقريب|حوالي|(?:في|على|عن|الى)\s*$/u;
 // Sentences inside one line: a full stop that is not a decimal point.
@@ -125,7 +129,7 @@ function qualifiedQuestion(text,quote){
 
 export function analyzeBrief(brief) {
   if(typeof brief!=='string'||cp(brief)>60000)throw new Error('الوصف يتجاوز الحد المسموح.');
-  const candidates=[],questions=[],seen=new Set(),areas=[];
+  const candidates=[],questions=[],seen=new Set(),areas=[],listed=new Set();
   const chunks=brief.matchAll(/[^\n؛;!?؟]+/gu);
   const add=(metric,n,unit,match,base,source='requested',role)=>{
     const numeric=typeof n==='string'?n.replace(/[,٬]/g,''):n;
@@ -147,7 +151,8 @@ export function analyzeBrief(brief) {
     for(const match of text.matchAll(floorList)){
       const named=Array.from(match[0].matchAll(new RegExp(ordinals.join('|'),'gu')),m=>m[0]);
       if(near(match)||!named.every((name,i)=>name===ordinals[i]))continue;
-      add('level_count',1+named.length,null,match,chunk.index);
+      const before=candidates.length;add('level_count',1+named.length,null,match,chunk.index);
+      if(candidates.length>before)listed.add(candidates[candidates.length-1]);
     }
     for(const match of text.matchAll(groundPlus))if(!near(match))add('level_count',Number(match.groups.n)+1,null,match,chunk.index);
   };
@@ -213,10 +218,12 @@ export function analyzeBrief(brief) {
           questions.push('راجع الحد الأدنى أو الأعلى في: «'+chunk[0].trim().slice(0,200)+'». حدّد نوع المتطلب وقيمته قبل التوليد.');continue;
         }
         if(metric==='level_count'){levelCount(match.groups.n,match);continue;}
+        if(metric==='room_count'&&floorNamed.test(text)){questions.push(qualifiedQuestion('في الدور',chunk[0]));continue;}
         add(minimum?'min_dock_count':metric,match.groups.n,match.groups.u,match,chunk.index,'requested',role);
       }
     }
     for(const {metric,role,n,match} of wordCounts){
+      if(floorNamed.test(text)&&metric==='room_count'){questions.push(qualifiedQuestion('في الدور',chunk[0]));continue;}
       if(ambiguous.test(text)||bounded.test(text)||compoundWordCount(text,match)){
         questions.push('راجع العدد المركّب أو الشرط في: «'+chunk[0].trim().slice(0,200)+'». أضف العدد الإجمالي المؤكد في الحقول.');continue;
       }
@@ -250,6 +257,10 @@ export function analyzeBrief(brief) {
     }
   };
   for(const chunk of chunks)scan(chunk,true);
+  // «اجعل الأرضي والأول مسكنًا واحدًا … وخصص الدور الثاني لشقة» lists the floors of
+  // one dwelling, not the building: a list below a floor named elsewhere is no count.
+  const highest=Math.max(-1,...Array.from(normal(brief).matchAll(namedFloor),m=>ordinals.indexOf(m.groups.o)));
+  for(const c of listed)if(c.expected<highest+2)candidates.splice(candidates.indexOf(c),1);
   // The plot's stated area checks width × depth, or supplies the one side not written.
   const stated=[...new Set(areas.map(a=>a.value))];
   let siteArea=null;
