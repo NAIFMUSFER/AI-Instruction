@@ -1,0 +1,1059 @@
+{
+ "site": {
+  "w": 24.0,
+  "d": 30.0
+ },
+ "floors": {
+  "level_0": {
+   "rooms": [
+    {
+     "id": "level_0_lobby",
+     "name": "بهو مدخل العمارة",
+     "rect": [
+      10.8,
+      6.0,
+      2.0,
+      2.8
+     ],
+     "role": "entrance",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_0_corridor",
+     "name": "ممر الشقة",
+     "rect": [
+      6.8,
+      8.6,
+      1.4,
+      11.0
+     ],
+     "role": "corridor",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_entrance_1",
+     "name": "ردهة العائلة",
+     "rect": [
+      4.3,
+      6.0,
+      3.9,
+      2.6
+     ],
+     "role": "entrance",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_majlis_1",
+     "name": "مجلس الضيوف",
+     "rect": [
+      12.8,
+      6.0,
+      5.7,
+      4.8
+     ],
+     "role": "majlis",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_entrance_2",
+     "name": "ردهة الضيوف والمغاسل",
+     "rect": [
+      12.8,
+      10.8,
+      5.7,
+      1.6
+     ],
+     "role": "entrance",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_1",
+     "name": "دورة مياه الضيوف",
+     "rect": [
+      16.5,
+      12.4,
+      2.0,
+      1.6
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_dining_1",
+     "name": "غرفة الطعام",
+     "rect": [
+      8.2,
+      11.0,
+      4.6,
+      4.0
+     ],
+     "role": "dining",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_living_1",
+     "name": "الصالة العائلية",
+     "rect": [
+      8.2,
+      15.0,
+      6.0,
+      5.0
+     ],
+     "role": "living",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_kitchen_1",
+     "name": "المطبخ الرئيسي",
+     "rect": [
+      2.5,
+      8.6,
+      4.3,
+      4.2
+     ],
+     "role": "kitchen",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_kitchen_2",
+     "name": "مطبخ تحضير وغسيل أواني",
+     "rect": [
+      2.5,
+      12.8,
+      2.8,
+      2.6
+     ],
+     "role": "kitchen",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_pantry_1",
+     "name": "مستودع المؤن",
+     "rect": [
+      2.5,
+      6.0,
+      1.8,
+      2.6
+     ],
+     "role": "pantry",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bedroom_1",
+     "name": "جناح كبير السن",
+     "rect": [
+      2.5,
+      15.4,
+      4.3,
+      4.2
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_2",
+     "name": "حمام جناح كبير السن",
+     "rect": [
+      2.5,
+      19.6,
+      2.5,
+      2.2
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_3",
+     "name": "دورة مياه العائلة",
+     "rect": [
+      5.3,
+      12.8,
+      1.5,
+      2.2
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_bathroom_4",
+     "name": "حمام المسبح",
+     "rect": [
+      2.5,
+      21.8,
+      2.1,
+      2.2
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_storage_1",
+     "name": "مستودع الحوش",
+     "rect": [
+      4.6,
+      21.8,
+      2.2,
+      2.2
+     ],
+     "role": "storage",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_0_stairs",
+     "name": "الدرج",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "role": "stairs",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_0_elevator",
+     "name": "المصعد",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "role": "elevator",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    }
+   ]
+  },
+  "level_1": {
+   "rooms": [
+    {
+     "id": "level_1_landing",
+     "name": "بسطة الدرج",
+     "rect": [
+      10.8,
+      6.0,
+      2.0,
+      2.8
+     ],
+     "role": "lobby",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_1_entrance",
+     "name": "مدخل الشقة",
+     "rect": [
+      12.8,
+      6.0,
+      1.6,
+      2.8
+     ],
+     "role": "entrance",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_corridor",
+     "name": "ممر الشقة",
+     "rect": [
+      12.8,
+      8.8,
+      1.4,
+      8.9
+     ],
+     "role": "corridor",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_living_1",
+     "name": "الصالة العلوية",
+     "rect": [
+      8.8,
+      17.7,
+      5.2,
+      4.5
+     ],
+     "role": "living",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_balcony_1",
+     "name": "شرفة غائرة",
+     "rect": [
+      9.4,
+      22.2,
+      4.0,
+      1.8
+     ],
+     "role": "balcony",
+     "walls": [
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_pantry_1",
+     "name": "ركن تحضير مشروبات",
+     "rect": [
+      10.4,
+      15.7,
+      2.4,
+      2.0
+     ],
+     "role": "pantry",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_1",
+     "name": "غرفة نوم الوالدين",
+     "rect": [
+      3.8,
+      19.4,
+      5.0,
+      4.6
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_dressing_1",
+     "name": "غرفة ملابس الوالدين",
+     "rect": [
+      5.4,
+      16.8,
+      3.4,
+      2.6
+     ],
+     "role": "dressing",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_1",
+     "name": "حمام الوالدين",
+     "rect": [
+      2.5,
+      16.2,
+      2.9,
+      3.2
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_2",
+     "name": "غرفة الابن أو البنت الكبرى",
+     "rect": [
+      14.2,
+      8.8,
+      4.3,
+      4.0
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_2",
+     "name": "حمام الغرفة الكبرى",
+     "rect": [
+      16.0,
+      6.4,
+      2.5,
+      2.4
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_3",
+     "name": "غرفة الأبناء 1",
+     "rect": [
+      14.2,
+      12.8,
+      4.3,
+      3.2
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bedroom_4",
+     "name": "غرفة الأبناء 2",
+     "rect": [
+      14.0,
+      17.7,
+      4.5,
+      3.1
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_bathroom_3",
+     "name": "حمام مشترك",
+     "rect": [
+      14.2,
+      16.0,
+      4.3,
+      1.7
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_office_1",
+     "name": "غرفة دراسة مشتركة",
+     "rect": [
+      9.2,
+      11.0,
+      3.6,
+      3.2
+     ],
+     "role": "office",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_laundry_1",
+     "name": "الغسيل والكي",
+     "rect": [
+      8.2,
+      14.2,
+      2.2,
+      3.5
+     ],
+     "role": "laundry",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_storage_1",
+     "name": "خزانة بياضات",
+     "rect": [
+      10.4,
+      14.2,
+      2.4,
+      1.5
+     ],
+     "role": "storage",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_1_stairs",
+     "name": "الدرج",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "role": "stairs",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_1_elevator",
+     "name": "المصعد",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "role": "elevator",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    }
+   ]
+  },
+  "level_2": {
+   "rooms": [
+    {
+     "id": "level_2_landing",
+     "name": "بسطة الدرج",
+     "rect": [
+      8.2,
+      11.0,
+      4.6,
+      2.4
+     ],
+     "role": "lobby",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_2_corridor",
+     "name": "ممر الشقة",
+     "rect": [
+      2.5,
+      19.6,
+      16.0,
+      1.2
+     ],
+     "role": "corridor",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_entrance_1",
+     "name": "بهو الشقة",
+     "rect": [
+      11.6,
+      13.4,
+      1.2,
+      6.2
+     ],
+     "role": "entrance",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_majlis_1",
+     "name": "مجلس مستقل",
+     "rect": [
+      7.6,
+      13.4,
+      4.0,
+      4.8
+     ],
+     "role": "majlis",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bathroom_1",
+     "name": "دورة مياه ضيوف",
+     "rect": [
+      9.6,
+      18.2,
+      2.0,
+      1.4
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_living_1",
+     "name": "الصالة والسفرة",
+     "rect": [
+      12.8,
+      10.8,
+      5.7,
+      5.4
+     ],
+     "role": "living",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_kitchen_1",
+     "name": "المطبخ",
+     "rect": [
+      12.8,
+      16.2,
+      4.0,
+      3.4
+     ],
+     "role": "kitchen",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_pantry_1",
+     "name": "خزانة مؤن",
+     "rect": [
+      16.8,
+      16.2,
+      1.7,
+      1.7
+     ],
+     "role": "pantry",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_1",
+     "name": "غرفة النوم الرئيسية",
+     "rect": [
+      10.5,
+      20.8,
+      5.7,
+      3.2
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bathroom_2",
+     "name": "حمام الغرفة الرئيسية",
+     "rect": [
+      16.2,
+      20.8,
+      2.3,
+      3.2
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_2",
+     "name": "غرفتا النوم 1",
+     "rect": [
+      2.5,
+      20.8,
+      4.0,
+      3.2
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bedroom_3",
+     "name": "غرفتا النوم 2",
+     "rect": [
+      6.5,
+      20.8,
+      4.0,
+      3.2
+     ],
+     "role": "bedroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_bathroom_3",
+     "name": "حمام مشترك",
+     "rect": [
+      4.8,
+      17.2,
+      2.8,
+      2.4
+     ],
+     "role": "bathroom",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_laundry_1",
+     "name": "غرفة غسيل",
+     "rect": [
+      2.5,
+      17.8,
+      2.3,
+      1.8
+     ],
+     "role": "laundry",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_terrace_1",
+     "name": "التراس",
+     "rect": [
+      12.8,
+      6.0,
+      5.7,
+      4.8
+     ],
+     "role": "terrace",
+     "walls": [
+      "S",
+      "W"
+     ],
+     "wall_h": 3.0,
+     "unit_id": "apartment_1"
+    },
+    {
+     "id": "level_2_stairs",
+     "name": "الدرج",
+     "rect": [
+      8.2,
+      6.0,
+      2.6,
+      5.0
+     ],
+     "role": "stairs",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "stairs_core"
+    },
+    {
+     "id": "level_2_elevator",
+     "name": "المصعد",
+     "rect": [
+      10.8,
+      8.8,
+      2.0,
+      2.2
+     ],
+     "role": "elevator",
+     "walls": [
+      "N",
+      "S",
+      "E",
+      "W"
+     ],
+     "core_id": "elevator_core"
+    }
+   ]
+  }
+ },
+ "levels": [
+  {
+   "id": "L0",
+   "name": "L0",
+   "index": 0,
+   "template": "level_0"
+  },
+  {
+   "id": "L1",
+   "name": "L1",
+   "index": 1,
+   "template": "level_1"
+  },
+  {
+   "id": "L2",
+   "name": "L2",
+   "index": 2,
+   "template": "level_2"
+  }
+ ],
+ "wall_h": 3.0,
+ "wall_t": 0.2,
+ "floor_height": 3.2
+}

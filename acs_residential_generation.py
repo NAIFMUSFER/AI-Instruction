@@ -342,6 +342,55 @@ def _overlaps(a, b):
             and min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]) > _OVERLAP_EPS)
 
 
+# A layout whose only hard finding is a sliver of overlap between two rooms
+# (live: a dressing room 0.6 m into the laundry on one floor) is trimmed here
+# for free instead of buying a repair call that may think its whole cap away.
+TRIM_MAX_M = 0.6           # the deepest overlap trimmed, in the shallower axis
+TRIM_MIN_SIDE_M = 1.2      # no room is left narrower than this
+CORE_ROLES = {'stairs', 'elevator', 'lift'}
+
+
+def _trim_overlaps(building, pairs):
+    """A copy with each (level, a, b) overlap trimmed off one room, or None.
+
+    The overlap is removed along its shallower axis, from the side that faces
+    the other room, on the room that keeps more of its size; cores never move
+    and no room ends narrower than TRIM_MIN_SIDE_M. None when any pair is
+    deeper than TRIM_MAX_M or cannot be trimmed: the repair call then decides."""
+    value = json.loads(canonical(building))
+    for level, a_id, b_id in pairs:
+        rooms = {r.get('id'): r for r in ((value.get('floors') or {}).get(level) or {}).get('rooms') or []}
+        a, b = rooms.get(a_id), rooms.get(b_id)
+        if a is None or b is None:
+            return None
+        ax, az, aw, ad = a['rect']; bx, bz, bw, bd = b['rect']
+        dx = min(ax + aw, bx + bw) - max(ax, bx)
+        dz = min(az + ad, bz + bd) - max(az, bz)
+        if dx <= 1e-6 or dz <= 1e-6:
+            continue
+        axis = 0 if dx <= dz else 1
+        depth = round(min(dx, dz), 3)
+        if depth > TRIM_MAX_M + 1e-6:
+            return None
+        options = []
+        for room, other in ((a, b), (b, a)):
+            if room.get('role') in CORE_ROLES or room.get('core_id'):
+                continue
+            size = room['rect'][2 + axis]
+            if size - depth < TRIM_MIN_SIDE_M - 1e-6:
+                continue
+            options.append((depth / size, room, other))
+        if not options:
+            return None
+        _, room, other = min(options, key=lambda o: o[0])
+        r = room['rect']; o = other['rect']
+        if r[axis] < o[axis]:            # room is before the other: pull its far side back
+            r[2 + axis] = round(r[2 + axis] - depth, 3)
+        else:                             # room is after: push its near side forward
+            r[axis] = round(r[axis] + depth, 3); r[2 + axis] = round(r[2 + axis] - depth, 3)
+    return value
+
+
 def _snap_stairs(building):
     """Copy the ground stair rectangle to upper storeys, or say why not.
 
@@ -467,8 +516,28 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
         if floors is not None and geometry_ok:
             soft += floor_findings(value, floors, requirements)
         return issues + program, soft
+    def trim(value, found):
+        """Trim sliver overlaps for free; keep it only if it clears them and adds nothing."""
+        issues, soft = found
+        pairs = [tuple(i['path'][:3]) for i in issues
+                 if i.get('code') == 'ROOM_OVERLAP' and isinstance(i.get('path'), list) and len(i['path']) >= 3]
+        if not pairs:
+            return value, found
+        trimmed = _trim_overlaps(value, pairs)
+        if trimmed is None:
+            return value, found
+        after = findings(trimmed)
+        known = {canonical(i) for i in issues + soft}
+        added = [i for i in after[0] + after[1] if canonical(i) not in known]
+        if added or any(i.get('code') == 'ROOM_OVERLAP' for i in after[0]):
+            return value, found
+        meta = trimmed.setdefault('meta', {})
+        meta.setdefault('assumptions', []).append(
+            'صُحّح تداخل صغير بين غرفتين (حتى %.1f م) بقصّ إحداهما؛ راجع المقاسين.' % TRIM_MAX_M)
+        return trimmed, after
     def settle(value, found):
-        """Try the deterministic stair alignment; keep it only if it adds no finding."""
+        """Try the deterministic fixes; keep each only if it adds no finding."""
+        value, found = trim(value, found)
         issues, soft = found
         core = next((i for i in issues if i.get('code') == 'RESIDENTIAL_CORE_MISSING'), None)
         if core is None or not core.get('misaligned') or dwelling_kind(value, brief, requirements) != SINGLE_DWELLING:
