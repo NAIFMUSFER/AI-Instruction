@@ -37,7 +37,7 @@ async function openGuestWorkspace() {
             <button id="guestInterior" type="button">من الداخل</button>
             <button id="guestDetail" type="button">تفاصيل المدخل</button>
           </div>
-          <button id="guestFloors" type="button">الطوابق والطبقات</button>
+          <button id="guestFloors" type="button">الأدوار والطبقات</button>
           <a id="guestNativeSample" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون" hidden><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>
           <button id="guestExport" type="button">تنزيل ملف المشروع</button>
           <a id="guestSignin" href="/?signin=1">تسجيل الدخول</a>
@@ -453,13 +453,13 @@ async function openGuestWorkspace() {
   const upload = $('impFile');
   upload.accept = '.json,.dxf,application/json';
   const uploadLabel = document.querySelector('label[for="impFile"]');
-  if (uploadLabel?.firstChild) uploadLabel.firstChild.textContent = '📎 استيراد محلي — JSON أو DXF ';
+  if (uploadLabel?.firstChild) uploadLabel.firstChild.textContent = '📎 أو افتح ملف مشروع (JSON أو DXF) ';
   const serverSettings = $('llmURL')?.closest('.fld');
   if (serverSettings) serverSettings.hidden = true;
   const sub = document.querySelector('#left header .sub');
-  if (sub) sub.textContent = 'وصف المبنى وملفات المشروع على جهازك';
+  if (sub) sub.textContent = 'يبقى كل شيء على جهازك';
   const firstNote = document.querySelector('#acsPanelMake > .note');
-  if (firstNote) firstNote.textContent = 'يحوّل المصمم المحلي الأبعاد والفراغات المدعومة إلى مخطط أولي. يبقى الوصف وملفات JSON وDXF على جهازك.';
+  if (firstNote) firstNote.textContent = 'اكتب وصف بيتك، ونرسم لك مخططًا أوليًا ومجسّمًا.';
 
   function sample(kind, initial = false) {
     hideConfirm();
