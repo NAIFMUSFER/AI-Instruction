@@ -46,6 +46,12 @@ class ResumeAfterTruncation(unittest.TestCase):
         self.assertFalse(H._job_view(row('ACS_TIMEOUT'))['job']['can_resume'], 'no checkpoint: no paid restart offered')
         self.assertFalse(H._job_view(row('ACS_TIMEOUT', {'kind': 'layout'}, resumed_by='x'))['job']['can_resume'])
 
+    def test_a_thinking_only_reply_after_a_saved_layout_offers_a_resume(self):
+        # Live job 6beb400b (the resume of e53cc4f7): its repair call spent the
+        # whole cap thinking; the layout it started from was saved.
+        self.assertTrue(H._job_view(row('ACS_UPSTREAM_NO_VISIBLE_OUTPUT', {'kind': 'layout', 'building': {}}))['job']['can_resume'])
+        self.assertFalse(H._job_view(row('ACS_UPSTREAM_NO_VISIBLE_OUTPUT'))['job']['can_resume'])
+
     def test_other_upstream_failures_stay_final_and_known_resumable_codes_are_unchanged(self):
         checkpoint = {'kind': 'details'}
         self.assertFalse(H._job_view(row('ACS_UPSTREAM_REFUSED', checkpoint))['job']['can_resume'])

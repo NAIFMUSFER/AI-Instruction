@@ -31,7 +31,10 @@ RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE"
 # a saved stage: resuming re-runs only the unfinished stages from the checkpoint.
 # Without a checkpoint it is not offered, because a restart would pay for every
 # stage again and meet the same cap or deadline.
-RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED", "ACS_TIMEOUT"})
+# A reply that spent the whole cap thinking (no visible text) is the same case:
+# the stage met its output cap, and the low-effort rung can answer it now.
+RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED", "ACS_TIMEOUT",
+                                       "ACS_UPSTREAM_NO_VISIBLE_OUTPUT"})
 
 
 def _resumable_failure(code, checkpoint=None):
