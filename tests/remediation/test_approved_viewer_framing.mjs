@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import * as THREE from 'three';
-import {frameBounds,detailGroupKey,floorFinishUVs,embeddedGLB} from '../../public/app/ui/approved-viewer.mjs';
+import {frameBounds,detailGroupKey,floorFinishUVs,embeddedGLB,labelLevel,declutterLabels} from '../../public/app/ui/approved-viewer.mjs';
 let checks=0;
 for(const [label,min,max] of [
  ['villa',[0,-.1,0],[10,7.4,9]],['warehouse',[0,-.1,0],[20,6,16]],['rack',[2,0,2],[18,4.4,3.2]],
@@ -140,5 +140,32 @@ const visibilityCode=viewerSource.slice(viewerSource.indexOf('  function setVisi
 for(const [floor,view,expected]of [['2','aerial',true],['2','cutaway',true],['all','aerial',false]]){
  const roofMesh={userData:{acsViewerIdentity:{level:2}},visible:false},context=vm.createContext({floors:{value:floor},roofOn:true,currentPreset:view,roofLevels:new Set([2]),meshes:[roofMesh],edgeLines:new Map(),clipPlane:{constant:0},clipOff:1000,chosenBounds:()=>({min:{y:8.4},getSize:()=>({y:.9})}),THREE:{Vector3:class{}},renderer:{shadowMap:{}},detailObjects:[],detailOn:true,figures:{},telemetry:{presentation:{}},roofPieces:0,roofNote:{hidden:true},selectionBox:null,selected:null});
  vm.runInContext(visibilityCode+'setVisibility();',context);assert.equal(roofMesh.visible,expected,'explicit roof selection overrides the all-floor default filter');assert.equal(context.telemetry.presentation.roofShown,expected,'roof disclosure agrees with actual canonical visibility');checks++;
+}
+// Room names over the 3D model (live review: a 3-storey building's names piled up in
+// the all-floor exterior/aerial view). One storey is named; names never overlap.
+{
+ const storeys=[{index:0,min:-.1,max:3.2},{index:1,min:3.2,max:6.4},{index:2,min:6.4,max:9.6}];
+ assert.equal(labelLevel(null,'exterior',storeys,1e9),2,'all floors from outside: the top storey');checks++;
+ assert.equal(labelLevel(null,'aerial',storeys,1e9),2,'all floors from above: the top storey');checks++;
+ assert.equal(labelLevel(null,'cutaway',storeys,1.4),0,'all floors cut: the storey the cut passes through');checks++;
+ assert.equal(labelLevel(null,'cutaway',storeys,4.7),1);checks++;
+ assert.equal(labelLevel(1,'exterior',storeys,1e9),1,'a chosen floor names its own rooms');checks++;
+ assert.equal(labelLevel(0,'cutaway',storeys,1.4),0);checks++;
+ assert.equal(labelLevel(null,'aerial',[],1e9),null);checks++;
+ // 19 rooms of one flat projected into a 1200 × 500 stage: none of the shown boxes overlap.
+ const rooms=Array.from({length:19},(_,i)=>({x:420+(i%5)*55,y:200+Math.floor(i/5)*16,w:96,h:20,area:30-i}));
+ const shown=declutterLabels(rooms),boxes=[...shown].map(i=>rooms[i]);
+ assert.ok(shown.size>1&&shown.size<rooms.length,'some names shown, the colliding ones left out');checks++;
+ for(const a of boxes)for(const b of boxes)if(a!==b)assert.ok(Math.abs(a.x-b.x)>=(a.w+b.w)/2||Math.abs(a.y-b.y)>=(a.h+b.h)/2,'shown names do not overlap');checks++;
+ assert.ok(shown.has(0),'the largest room is named first');checks++;
+ const kept=declutterLabels(rooms.map((row,i)=>({...row,keep:i===7})));
+ assert.ok(kept.has(7),'the selected room keeps its name');checks++;
+ assert.ok(![...kept].some(i=>i!==7&&Math.abs(rooms[i].x-rooms[7].x)<(rooms[i].w+rooms[7].w)/2&&Math.abs(rooms[i].y-rooms[7].y)<(rooms[i].h+rooms[7].h)/2),'and names that would cover it give way');checks++;
+ assert.deepEqual([...declutterLabels([{x:10,y:10,w:20,h:10,area:1},{x:200,y:10,w:20,h:10,area:2}])].sort(),[0,1],'apart: both named');checks++;
+ assert.equal(declutterLabels([]).size,0);checks++;
+ // The shipped placement uses both, and the old all-floor exterior exception is gone.
+ const placement=viewerSource.slice(viewerSource.indexOf('  function placeLabels(){'),viewerSource.indexOf('  const controls=new OrbitControls'));
+ assert.match(placement,/labelLevel\(floor,currentPreset,storeys,clipPlane\.constant\)/);assert.match(placement,/declutterLabels\(candidates\)/);
+ assert.doesNotMatch(placement,/currentPreset!=='exterior'/);checks++;
 }
 console.log(`APPROVED VIEWER FRAMING: ${checks} passed; aspect fit, useful scale, immutable bounds and derived assembly isolation.`);
