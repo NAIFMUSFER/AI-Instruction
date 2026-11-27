@@ -142,6 +142,8 @@ body.acs-guest #left #who { display: none; }
   #acsGuestBanner .guest-identity strong::after { content: "·"; margin-inline-start: 6px; color: var(--ui-text-2); font-weight: 400; }
   #acsGuestBanner #guestSaveStatus { min-width: 0; font-size: 12px; }
   #acsGuestBanner .guest-controls { gap: 4px; }
+  /* One line each, whatever the font: a wrapped label would push the bar past 80px. */
+  #acsGuestBanner .guest-controls > button { height: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #acsGuestBanner .guest-controls > button { flex: 1 1 0; min-width: 0; padding-inline: 6px; font-size: 14px; }
   #acsGuestBanner .guest-controls > #guestStart { flex-grow: 1.35; }
   #acsGuestBanner #guestTools { padding-inline: 8px; }
