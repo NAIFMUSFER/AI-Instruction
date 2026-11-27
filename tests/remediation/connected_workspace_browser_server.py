@@ -7,6 +7,7 @@ import argparse
 import copy
 import json
 from pathlib import Path
+import re
 import sqlite3
 import sys
 import time
@@ -28,6 +29,11 @@ import acs_generation_job as JOBS
 from acs_plan_store import SQLitePlanStore
 from acs_plan_store_port import SQLitePlanStoreAdapter
 from test_connected_workspace import PROJECT, ACTOR, model
+
+# The shipped page signs in only from the official site's origin, which is also
+# the only origin the deployed backend's CORS accepts. Read it from the page.
+OFFICIAL_ORIGIN = re.search(r'OFFICIAL_ORIGIN\s*=\s*"([^"]+)"', (
+    Path(__file__).resolve().parents[2] / 'public/app/boot/api-base.js').read_text(encoding='utf-8')).group(1)
 
 
 def fixture_building(brief, requirements, plot=None, option='A'):
@@ -193,7 +199,7 @@ def application(database):
     def health():return {'ok':True,'api_key_configured':True}
     app.add_middleware(P.PlanCommandMiddleware)
     app.add_middleware(H.WorkspaceMiddleware)
-    app.add_middleware(CORSMiddleware,allow_origins=['https://acs-ui.test'],allow_headers=['*'],allow_methods=['*'])
+    app.add_middleware(CORSMiddleware,allow_origins=[OFFICIAL_ORIGIN],allow_headers=['*'],allow_methods=['*'])
     return app
 
 

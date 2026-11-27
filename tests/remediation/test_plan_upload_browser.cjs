@@ -13,6 +13,8 @@ const {spawn,execFileSync}=require('node:child_process');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
+// Sign-in works only on the official site's origin (any other is a preview copy).
+const ORIGIN=/OFFICIAL_ORIGIN\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(PUB,'app','boot','api-base.js'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const PY=process.env.PYTHON||'python',PORT=Number(process.env.ACS_UPLOAD_UI_PORT||8893),SHOTS=process.env.ACS_UPLOAD_UI_SHOTS||'';
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
@@ -62,13 +64,13 @@ async function run(browser,dir,width){
       if(req.method()==='POST'&&url.pathname.endsWith('/workspace'))bodies.push(req.postDataJSON());
       return route.fulfill({response:await route.fetch({url:'http://127.0.0.1:'+PORT+url.pathname+url.search})});
     }
-    if(url.hostname!=='acs-ui.test')return route.abort();
+    if(url.origin!==ORIGIN)return route.abort();
     const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!f.startsWith(PUB+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile())return route.fulfill({status:404,body:''});
     return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream','content-security-policy':CSP},body:fs.readFileSync(f)});
   });
-  await page.goto('https://acs-ui.test/?signin=1');
-  await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
+  await page.goto(ORIGIN+'/?signin=1');
+  await page.locator('#acsAuthEmailToggle').click();await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
   await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
   await page.locator('#cwNewProject').click();await page.locator('#cwProjectName').fill('قراءة مخطط '+width);
   await Promise.all([page.waitForEvent('framenavigated',frame=>frame===page.mainFrame()),page.locator('#cwNewProjectForm button[type=submit]').click()]);

@@ -178,7 +178,7 @@ const settle = () => new Promise(r => setTimeout(r, 0));
 const card = $('cwProgramCard');
 
 await check('the paid read starts only after an explicit confirmation', async () => {
-  assert.equal($('cwSmartRead').textContent, 'قراءة ذكية للوصف بالذكاء الاصطناعي');
+  assert.equal($('cwSmartRead').textContent, 'قراءة ذكية (مدفوعة)', 'the button itself says the read is paid');
   assert.match($('cwSmartReadNote').textContent, /طلب واحد مدفوع.*من دقيقة إلى ثلاث دقائق/);
   approve = false; $('cwSmartRead').click(); await settle();
   assert.equal(confirms[0].title, 'قراءة الوصف بالذكاء الاصطناعي؟');
@@ -219,6 +219,9 @@ await check('one read, polled to a validated program shown in an editable card',
   assert.match($('cwProgramChecks').textContent, /عدد الحمامات في الوصف 3، والمدرج في البرنامج 2/);
   assert.match($('cwProgramUnsupported').textContent, /القطاع الرأسي غير متاح بعد/);
   assert.equal($('cwWidth').value, '', 'nothing is filled before confirmation');
+  // The owner first reads a short summary; the editable form is folded under «تعديل التفاصيل».
+  assert.match($('cwProgramSummary').textContent, /الأرض 20 × 25 م/);
+  assert.equal($('cwProgramEdit').tagName, 'DETAILS');
 });
 
 await check('editing the card stays in the card until confirmation', async () => {

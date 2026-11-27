@@ -192,9 +192,15 @@ function normalizedLocalModel(model){
  }
  return result;
 }
+// «مشروع جديد» opens the ways to begin (brief and examples); «•••» holds the rest.
+const START_SHEET = new Set(['guestCreate', 'guestExample', 'guestWarehouse']);
 async function chooseGuestOption(page, id) {
- const options = page.locator('#guestOptions');
- if (!await options.evaluate(element => element.open)) await page.locator('#guestTools').click();
+ if (START_SHEET.has(id)) {
+  if (!await page.locator('#guestStartDialog').evaluate(element => element.open)) await page.locator('#guestStart').click();
+ } else {
+  const options = page.locator('#guestOptions');
+  if (!await options.evaluate(element => element.open)) await page.locator('#guestTools').click();
+ }
  await page.locator('#' + id).click();
 }
 
@@ -240,16 +246,36 @@ async function runGuestWorkspaceTests(){
    assert.equal(await page.locator('#login').isVisible(),false);
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.equal(await page.locator('#guestSignin').isVisible(),false,'the cloud sign-in action is secondary');
-   for (const id of ['guestCreate','guestPlan','guestViewToggle','guestTools']) {
+   for (const id of ['guestStart','guestPlan','guestViewToggle','guestTools']) {
     const box = await page.locator('#'+id).boundingBox();
     assert.ok(box && box.width>=44 && box.height>=44,'44 CSS-pixel guest action '+id);
    }
    if(width===393) assert.ok((await page.locator('#acsGuestBanner').boundingBox()).height<=80,'keep the building visible at phone width');
    await page.locator('#guestTools').focus(); await page.keyboard.press('Enter');
    await page.locator('#guestSignin').waitFor({state:'visible'});
-   await page.locator('#guestWarehouse').focus(); await page.keyboard.press('Escape');
+   await page.locator('#guestProjects').focus(); await page.keyboard.press('Escape');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'guestTools');
    assert.equal(await page.locator('#guestSignin').isVisible(),false);
+   // One primary action: «مشروع جديد» opens the three ways to begin.
+   assert.equal((await page.locator('#guestStart').textContent()).trim(),'مشروع جديد');
+   assert.equal(await page.locator('#guestCreate').isVisible(),false,'ways to begin wait in the start sheet');
+   await page.locator('#guestStart').focus(); await page.keyboard.press('Enter');
+   await page.locator('#guestStartDialog').waitFor({state:'visible'});
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'guestCreate','the sheet focuses its first way to begin');
+   for (const id of ['guestCreate','guestUploadPlan','guestExample','guestWarehouse']) {
+    const box = await page.locator('#'+id).boundingBox();
+    assert.ok(box && box.width>=44 && box.height>=44,'44 CSS-pixel start action '+id);
+   }
+   assert.equal(await page.locator('#guestUploadPlan').getAttribute('href'),'/?signin=1','plan upload needs an account');
+   assert.equal(await page.locator('#guestRecent').isVisible(),false,'a first visit lists no projects of its own');
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#guestStartDialog').isVisible(),false);
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'guestStart');
+   // Developer tools (server override, engineering panels, build identity and
+   // diagnostics, declared capabilities) never reach a homeowner on the public site.
+   assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('acs-dev')),false);
+   assert.deepEqual(await page.evaluate(()=>['llmURL','acsOpenBim','acsBuildId','acsDiagBtn','acsCapList']
+    .map(id=>getComputedStyle(document.getElementById(id).closest('.acs-dev-only')).display)),['none','none','none','none','none']);
 
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.equal(await page.evaluate(()=>window.__guestAuthEvents),0);
@@ -267,7 +293,7 @@ async function runGuestWorkspaceTests(){
    assertDefaultRoof(warehouseSample,'warehouse sample switch');await assertOccupiedCounts(page,warehouseSample);
    assert.match(await page.locator('#acsGuestStatus').textContent(),/تجريبي/);
    diagnostic.phase('local-edit');
-   await page.locator('#guestCreate').click();
+   await chooseGuestOption(page,'guestCreate');
    await page.locator('#descText').fill('غرفة معيشة 5×4 ومطبخ 4×3 وغرفة نوم 4×4');
    await page.locator('#siteW').fill('24');await page.locator('#siteD').fill('18');await page.locator('#nFloors').fill('1');
    await page.locator('#genText').click();
@@ -282,7 +308,7 @@ async function runGuestWorkspaceTests(){
    assertExactRoof(await page.evaluate(()=>window.ACS.exportModel()),generatedLocal,'saved local draft reload');
    diagnostic.phase('local-roof-remove-edit-restore');
    const withRoofRecord=currentGuestRecord(await guestSnapshot(page));
-   await page.locator('#guestCreate').click();await page.locator('#acsTabModel').click();
+   await chooseGuestOption(page,'guestCreate');await page.locator('#acsTabModel').click();
    await page.locator('#localRoofToggle').waitFor({state:'visible'});
    const roofTarget=await page.locator('#localRoofToggle').boundingBox();
    assert.ok(roofTarget.width>=44&&roofTarget.height>=44,'contextual roof action is a real 44 CSS-pixel touch target');
@@ -326,7 +352,7 @@ async function runGuestWorkspaceTests(){
    await page.reload();
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.meta?.acs_roof?.removed_by_user===true);
    assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),removedLocal,'owner removal survives exact local recovery');
-   await page.locator('#guestCreate').click();
+   await chooseGuestOption(page,'guestCreate');
    await page.locator('#descText').fill('غرفة معيشة 5×4 ومطبخ 4×3 وغرفة نوم 4×4');
    await page.locator('#siteW').fill('25');await page.locator('#siteD').fill('18');await page.locator('#nFloors').fill('1');
    await page.locator('#genText').click();await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===25);
@@ -336,7 +362,7 @@ async function runGuestWorkspaceTests(){
    assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_ROOF_EDIT_WITHOUT'))).ok,true);
    const editedRecord=currentGuestRecord(await guestSnapshot(page));
    assert.notEqual(editedRecord.model_hash,removedRecord.model_hash,'the requested site edit changes its saved canonical model');
-   await page.locator('#guestCreate').click();await page.locator('#acsTabModel').click();
+   await chooseGuestOption(page,'guestCreate');await page.locator('#acsTabModel').click();
    assert.equal(await page.locator('#localRoofToggle').count(),0,'a roofless draft has nothing to hide');
    await page.locator('#localRoofRestore').focus();await page.locator('#localRoofRestore').press('Enter');
    await page.waitForFunction(()=>window.ACS.exportModel()?.levels?.some(level=>level.kind==='roof'&&level.auto===true));
@@ -370,7 +396,7 @@ async function runGuestWorkspaceTests(){
    assert.deepEqual(importedVisible.floors,importedModel.floors);
    assert.deepEqual(importedVisible.levels,importedModel.levels);
    assertExactRoof(importedVisible,importedModel,'import existing automatic roof without duplication');
-   await page.locator('#guestCreate').click();
+   await chooseGuestOption(page,'guestCreate');
    await page.locator('#acsTabShow').click();
    const exported=await downloadedJSON(page,'#bJson');
    const normalized=normalizedLocalModel(importedVisible);
@@ -472,9 +498,9 @@ async function runGuestWorkspaceTests(){
     assertDefaultRoof(await denied.evaluate(()=>window.ACS.exportModel()),'storage-denied temporary sample');
     assert.match(await denied.locator('#guestFeedback').textContent(), /تعذّرت/);
     assert.equal(await denied.locator('#guestDownload').isVisible(), true);
-    assert.match(await denied.locator('#guestDownload').textContent(), /تنزيل JSON/);
+    assert.match(await denied.locator('#guestDownload').textContent(), /تنزيل ملف المشروع/);
     assert.equal(await denied.evaluate(()=>window.ACS.guestAutosaveReady),false);
-    await denied.locator('#guestCreate').click();await denied.locator('#acsTabShow').click();
+    await chooseGuestOption(denied,'guestCreate');await denied.locator('#acsTabShow').click();
     await denied.locator('#acsSaveNow').click();
     await denied.waitForFunction(()=>document.getElementById('acsSaveState').dataset.acsSave==='FAILED');
     assert.notEqual(await denied.locator('#acsSaveState').getAttribute('data-acs-save'),'SAVED');

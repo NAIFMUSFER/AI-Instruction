@@ -2,62 +2,137 @@
    public/app/styles/app.css — مُستخرَج من public/index.html.
    وجود التنسيق داخل الصفحة كان يفرض style-src 'unsafe-inline'.
    ============================================================ */
-  :root{--bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc}
+/* ===== ACS DESIGN TOKENS (hand-written) =====
+   One colour system for the entry, the app shell and its dialogs, in light
+   and dark. Components read --ui-*; the older names below (--bg --panel --txt
+   --acc --acc2 --line --muted) stay defined for every rule that still reads
+   them. Arabic type: the platform UI face (SF Arabic on iPhone, Segoe UI on
+   Windows, Noto on Android). font-src 'self' rules out a hosted web font and
+   none is shipped, so nothing extra downloads before the first screen. */
+  :root{
+    color-scheme:light dark;
+    --ui-font:system-ui,-apple-system,"SF Arabic","Segoe UI","Noto Sans Arabic","Noto Naskh Arabic",Tahoma,sans-serif;
+    --ui-bg:#f4f3ee;--ui-surface:#ffffff;--ui-surface-2:#efede6;--ui-field:#ffffff;
+    --ui-text:#1b2420;--ui-text-2:#57635d;--ui-border:#dbd7cd;--ui-border-strong:#aaa497;
+    --ui-primary:#1f5c4a;--ui-primary-hover:#174a3b;--ui-on-primary:#ffffff;--ui-primary-soft:#e2eee8;
+    --ui-link:#17654e;--ui-focus:#1a6fa3;
+    --ui-info-bg:#eaf2ee;--ui-info-text:#1f362d;--ui-info-border:#c8dcd2;
+    --ui-warn-bg:#fbf3e2;--ui-warn-text:#5c420e;--ui-warn-border:#e9d5a6;
+    --ui-ok:#17703f;--ui-ok-bg:#e5f3ea;--ui-danger:#a3372a;--ui-danger-bg:#fbecea;
+    --ui-scrim:rgb(16 24 21/55%);
+    --ui-shadow:0 1px 2px rgb(20 30 25/6%),0 10px 30px rgb(20 30 25/10%);
+    --ui-radius:12px;--ui-radius-lg:20px;--ui-tap:48px;
+    --ui-space-1:4px;--ui-space-2:8px;--ui-space-3:12px;--ui-space-4:16px;--ui-space-5:24px;--ui-space-6:32px;
+    --bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ui-bg:#0f1513;--ui-surface:#171e1b;--ui-surface-2:#1f2824;--ui-field:#121815;
+      --ui-text:#e8edea;--ui-text-2:#a3afa9;--ui-border:#2b3531;--ui-border-strong:#46534d;
+      --ui-primary:#62c5a3;--ui-primary-hover:#7ed3b6;--ui-on-primary:#05211a;--ui-primary-soft:#1b3029;
+      --ui-link:#7fd3b5;--ui-focus:#82c9f0;
+      --ui-info-bg:#18241f;--ui-info-text:#d5e5dd;--ui-info-border:#2b3d35;
+      --ui-warn-bg:#2a2315;--ui-warn-text:#f0d7a2;--ui-warn-border:#4b3d21;
+      --ui-ok:#72d9a0;--ui-ok-bg:#14291d;--ui-danger:#f2a497;--ui-danger-bg:#2e1814;
+      --ui-scrim:rgb(0 0 0/62%);
+      --ui-shadow:0 1px 2px rgb(0 0 0/30%),0 12px 32px rgb(0 0 0/38%);
+    }
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
-    font-family:system-ui,"Segoe UI",Tahoma,sans-serif}
+  html,body{height:100%;overflow:hidden;background:var(--ui-bg);color:var(--txt);
+    font-family:var(--ui-font);-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #app{position:fixed;inset:0}
-  /* ---- شاشة الدخول ---- */
-  #login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(1200px 600px at 70% 10%,#12325a55,transparent),linear-gradient(160deg,#0b1220,#0e1a30)}
-  #login .card{width:min(420px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;
-    padding:26px 24px;box-shadow:0 30px 80px #000a}
-  #login h1{font-size:21px;margin-bottom:4px}
-  #login .tag{color:var(--muted);font-size:12.5px;margin-bottom:18px}
-  #login label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
-  #login input{width:100%;background:#0e1830;border:1px solid var(--line);color:var(--txt);
-    border-radius:10px;padding:11px 12px;font-size:14px}
-  #login button{width:100%;margin-top:18px;background:var(--acc);color:#04283b;border:none;
-    border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
-  #login .hint{font-size:11px;color:var(--muted);margin-top:12px;text-align:center}
-  #login{overflow-y:auto;overscroll-behavior:contain;padding:28px 16px;align-items:safe center;
-    background:radial-gradient(ellipse at 75% 15%,#16416770,transparent 65%),linear-gradient(145deg,#091321,#12243b)}
-  #login .card{flex:0 1 448px;max-width:448px;width:100%;padding:32px;box-shadow:0 24px 80px #0005;background:#112137f5}
+  /* Developer tools (server override, engineering panels, build identity and
+     diagnostics, declared capabilities) stay off the public site; localhost
+     and ?debug=1 show them (boot/debug-toggle.js sets html.acs-dev). */
+  html:not(.acs-dev) .acs-dev-only{display:none!important}
+  /* ---- شاشة الدخول: Google أولاً، ثم «متابعة بدون حساب»؛ البريد خلف زرّ ---- */
+  #login{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:safe center;
+    overflow-y:auto;overscroll-behavior:contain;background:var(--ui-bg);color:var(--ui-text);
+    padding:max(24px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
   #login [hidden]{display:none!important}
-  #login .auth-brand{display:flex;align-items:center;gap:9px;margin-bottom:14px;color:#bbcad9;font-size:14px;font-weight:600}
-  #login .auth-brand b{color:#6bd3ff;font-size:18px;font-weight:800;letter-spacing:1px}
-  #login .card{cursor:default;text-align:start}
-  #login .auth-access{margin:0 0 14px}
-  #login .auth-guest-option{text-align:center;margin-top:8px}
-  #login #acsAuthGuestLink{display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-weight:650;font-size:14px;color:#9fdcff}
-  #login #acsAuthGuestLink:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-  #login.auth-outage .auth-access{padding:14px;background:#203448;border:1px solid #52758b;border-radius:12px}
-  #login.auth-outage #acsAuthStatus{margin:0;padding:0;color:#ecf4fa;background:transparent;line-height:1.6}
-  #login h1{font-size:22px;line-height:1.4}
-  #login h2{font-size:18px;color:var(--txt);border:0;margin:22px 0 14px;padding:0}
-  #login .tag{font-size:14px;line-height:1.7}
-  #login input{min-height:48px;font-size:16px;background:#0c1a2d}
-  #login input:focus{outline:2px solid var(--acc);outline-offset:2px}
-  #login .auth-password{position:relative}
-  #login .auth-password input{padding-inline-end:70px}
-  #login .auth-text-button{position:absolute;inset-inline-end:4px;top:2px;min-height:44px;width:60px;margin:0;padding:5px;background:transparent;color:#9fdcff;font-size:12px}
-  #login .auth-secondary{background:transparent;color:#a5ddf7;border:1px solid #86b4dd4d;margin-top:10px;min-height:46px}
-  #login .auth-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#1f1f1f;border:1px solid #747775;border-radius:6px;min-height:48px;margin-top:0;font-size:16px}
+  #login .card{flex:0 1 420px;max-width:420px;width:100%;cursor:default;text-align:start;
+    background:var(--ui-surface);border:1px solid var(--ui-border);border-radius:var(--ui-radius-lg);
+    padding:36px 32px 28px;box-shadow:var(--ui-shadow);display:flex;flex-direction:column}
+  #login .auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;color:var(--ui-text);font-size:16px;font-weight:700}
+  #login .auth-brand span{color:inherit;font-size:inherit}
+  #login .auth-mark{flex:none;color:var(--ui-primary)}
+  #login h1{font-size:26px;line-height:1.35;font-weight:800;letter-spacing:0;color:var(--ui-text);margin:0}
+  #login .auth-lead{margin-top:6px;font-size:16px;line-height:1.6;color:var(--ui-text-2)}
+  #login .auth-lead:empty{display:none}
+  #login .auth-access{margin-top:20px}
+  #login .hint{font-size:15px;line-height:1.65;color:var(--ui-text-2)}
+  #login .hint:empty{display:none}
+  /* حالة هادئة: لا صندوق أحمر. الرسالة لوحة معلومات، والخطأ تنبيه كهرماني. */
+  #login #acsAuthStatus{padding:12px 14px;border-radius:var(--ui-radius);background:var(--ui-info-bg);
+    border:1px solid var(--ui-info-border);color:var(--ui-info-text);text-align:start}
+  #login #acsAuthStatus.bad,#login.auth-outage #acsAuthStatus{background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+  /* Preview copies send sign-in to the official site (claude/auth-official-origin
+     adds #acsAuthOfficial): the same calm info panel with one clear link. */
+  #login .auth-official{margin:20px 0 0;padding:14px;border-radius:var(--ui-radius);background:var(--ui-info-bg);
+    border:1px solid var(--ui-info-border);color:var(--ui-info-text);font-size:15px;line-height:1.65}
+  #login .auth-official a{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:10px 14px;
+    border-radius:var(--ui-radius);background:var(--ui-primary);color:var(--ui-on-primary);font-weight:700;text-decoration:none}
+  #login form{display:flex;flex-direction:column;margin-top:20px}
+  #login label{display:block;font-size:14px;font-weight:600;color:var(--ui-text);margin:16px 0 6px}
+  #login input{width:100%;min-height:var(--ui-tap);padding:12px 14px;font:inherit;font-size:16px;
+    color:var(--ui-text);background:var(--ui-field);border:1px solid var(--ui-border-strong);border-radius:var(--ui-radius)}
+  #login input::placeholder{color:var(--ui-text-2);opacity:.8}
+  #login input:focus{outline:3px solid var(--ui-focus);outline-offset:1px;border-color:transparent}
+  #login input:-webkit-autofill{-webkit-text-fill-color:var(--ui-text);-webkit-box-shadow:0 0 0 1000px var(--ui-field) inset;caret-color:var(--ui-text)}
+  #login button{font:inherit;cursor:pointer}
+  #login button:disabled{opacity:.6;cursor:wait}
+  #login :is(button,a):focus-visible{outline:3px solid var(--ui-focus);outline-offset:2px}
+  /* Google: الزرّ الرئيسي، بألوان علامتها كما تشترط (أبيض نهاراً، داكن ليلاً). */
+  #login .auth-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;
+    margin:0;padding:12px 16px;border-radius:var(--ui-radius);background:#fff;color:#1f1f1f;
+    border:1px solid #747775;font-size:17px;font-weight:600;box-shadow:0 1px 2px rgb(0 0 0/8%)}
   #login .auth-google svg{flex-shrink:0}
   #login .auth-google span{color:inherit;font-size:inherit}
-  #login .auth-google:hover{background:#f2f2f2}
-  #login .auth-google:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-  #login .auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0 8px;color:var(--muted);font-size:12px}
-  #login .auth-divider::before,#login .auth-divider::after{content:"";height:1px;background:var(--line);flex:1}
-  #login .hint{font-size:13px;line-height:1.65}
-  #login .hint:empty{display:none}
-  #login .hint.bad{color:#ffb9ad;text-align:start;background:#dc543315;padding:10px;border-radius:8px}
-  #login .auth-privacy{padding-top:16px;margin-top:24px;border-top:1px solid var(--line);font-size:12px}
-  #login a{color:#9fdcff;text-underline-offset:3px}
-  #login button:disabled{opacity:.6;cursor:wait}
+  #login .auth-google:hover{background:#f6f7f8}
+  #login .auth-email-toggle{align-self:center;min-height:44px;margin-top:12px;padding:8px 14px;border:0;border-radius:10px;
+    background:transparent;color:var(--ui-link);font-size:16px;font-weight:600}
+  #login .auth-email-toggle::after{content:"";display:inline-block;width:7px;height:7px;margin-inline-start:10px;
+    border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-3px) rotate(45deg)}
+  #login .auth-email-toggle:hover{background:var(--ui-surface-2)}
+  #login .auth-email{display:flex;flex-direction:column;margin-top:4px}
+  #login #acsAuthGoogleField:not([hidden])+.auth-email-toggle[hidden]+.auth-email{margin-top:12px;padding-top:4px;border-top:1px solid var(--ui-border)}
+  #login .auth-password{position:relative}
+  #login .auth-password input{padding-inline-end:76px}
+  #login .auth-text-button{background:transparent;border:0;color:var(--ui-link);font-size:15px;font-weight:600}
+  #login .auth-password .auth-text-button{position:absolute;inset-inline-end:2px;top:2px;min-height:44px;width:68px;margin:0;padding:4px;border-radius:10px}
+  #login #lgGo{width:100%;min-height:52px;margin-top:24px;padding:12px 16px;border:0;border-radius:var(--ui-radius);
+    background:var(--ui-primary);color:var(--ui-on-primary);font-size:17px;font-weight:700}
+  #login #lgGo:hover{background:var(--ui-primary-hover)}
+  #login .auth-help{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;margin-top:8px}
+  #login .auth-help button{min-height:44px;padding:8px 2px;border-radius:8px}
+  #login .auth-switch{align-self:center;min-height:44px;margin-top:4px;padding:8px 12px;border:0;border-radius:10px;
+    background:transparent;color:var(--ui-text-2);font-size:15px;text-decoration:underline;text-underline-offset:4px}
+  #login .auth-switch:hover{color:var(--ui-text)}
+  #login .auth-or{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--ui-text-2);font-size:14px}
+  #login .auth-or::before,#login .auth-or::after{content:"";height:1px;background:var(--ui-border);flex:1}
+  #login .auth-guest-option{margin:0}
+  /* Signed in and naming a project, or choosing a new password: no guest detour. */
+  #login:is([data-auth-mode=project],[data-auth-mode=update]) :is(.auth-or,.auth-guest-option){display:none}
+  #login #acsAuthGuestLink{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:12px 16px;
+    border:1px solid var(--ui-border-strong);border-radius:var(--ui-radius);background:var(--ui-surface);
+    color:var(--ui-text);font-size:17px;font-weight:600;text-decoration:none}
+  #login #acsAuthGuestLink:hover{background:var(--ui-surface-2)}
+  #login .auth-privacy{margin-top:24px;text-align:center;font-size:13px}
+  #login .auth-privacy a{display:inline-flex;align-items:center;min-height:44px;color:var(--ui-text-2);text-underline-offset:3px}
+  #login a{color:var(--ui-link)}
+  @media (prefers-color-scheme:dark){
+    #login .auth-google{background:#131314;color:#e3e3e3;border-color:#8e918f}
+    #login .auth-google:hover{background:#1d1e20}
+  }
+  @media (max-width:480px){
+    #login{align-items:flex-start;background:var(--ui-surface);padding:max(12px,env(safe-area-inset-top)) 0 max(16px,env(safe-area-inset-bottom))}
+    #login .card{flex-basis:auto;border:0;box-shadow:none;background:transparent;border-radius:0;padding:24px 20px 16px}
+    #login .auth-brand{margin-bottom:32px}
+    #login h1{font-size:28px}
+  }
   body:not(.acs-entered)>:not(#login):not(script):not(link):not(#acsLiveRegion){visibility:hidden}
   body:not(.acs-entered)>.acs-skip{display:none}
-  @media(max-width:480px){#login{padding:18px 12px}#login .card{padding:25px 21px;border-radius:16px}#login .auth-brand{margin-bottom:10px}}
   /* ---- الواجهة ---- */
   #left{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);
     backdrop-filter:blur(10px);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:10}
@@ -475,6 +550,115 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
   #camBar button.on{background:#163e57;border-color:#38bdf877}
   #camBar .cam-label{display:block;font:500 11px/1.35 system-ui,sans-serif}
 }
+
+/* ===== STUDIO SHELL ON THE SHARED TOKENS (hand-written) =====
+   The project panel, its phone dock, the view-tools bar and the small
+   overlays follow the same light/dark colours as the entry screens.
+   Scoped to those elements so the generated panels keep their own theme. */
+#left{background:var(--ui-surface);color:var(--ui-text);border-color:var(--ui-border);backdrop-filter:none;
+  font-size:15px;box-shadow:var(--ui-shadow)}
+#left>header{border-color:var(--ui-border);padding:16px 16px 10px}
+#left header h1{font-size:18px;font-weight:800;color:var(--ui-text)}
+#left header .sub{color:var(--ui-text-2);font-size:13px;line-height:1.6}
+#left .pill{background:var(--ui-surface-2);border-color:var(--ui-border);color:var(--ui-text-2);font-size:12px}
+#left>.tabs{padding:4px;margin:4px 12px 10px;gap:4px;border:1px solid var(--ui-border);border-radius:12px;background:var(--ui-surface-2)}
+#left>.tabs button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--ui-text-2);font:600 14px/1.4 var(--ui-font)}
+#left>.tabs button.active{background:var(--ui-surface);color:var(--ui-text);font-weight:700;box-shadow:0 1px 3px rgb(0 0 0/14%)}
+#left>.body{padding:4px 16px 16px}
+#left h2{color:var(--ui-text);font-size:15px;font-weight:700;border-top-color:var(--ui-border);margin:20px 0 8px;padding-top:14px}
+#left h2 .pill{vertical-align:middle}
+#left :is(.note,.hintline,.acs-local-note,.rqnote){color:var(--ui-text-2);font-size:13px;opacity:1}
+#left .description-label{color:var(--ui-text);font-size:14px;font-weight:700}
+#left :is(textarea,.fld input,.fld select,.mini,#trW){background:var(--ui-field);color:var(--ui-text);
+  border:1px solid var(--ui-border-strong);border-radius:12px;color-scheme:light dark}
+#left textarea{font-size:15px;padding:12px}
+#left :is(textarea,input,select):focus{outline:3px solid var(--ui-focus);outline-offset:1px}
+#left .fld label{color:var(--ui-text-2);font-size:13px}
+#left .btn,#left .btn.g{background:var(--ui-primary);color:var(--ui-on-primary);border-radius:12px;font-size:16px;font-weight:700;min-height:48px}
+#left .btn:hover{background:var(--ui-primary-hover)}
+#left .ghost{background:var(--ui-surface);color:var(--ui-text);border:1px solid var(--ui-border-strong);border-radius:10px;font-size:14px}
+#left .ghost:hover{background:var(--ui-surface-2)}
+#left #floors button.active{background:var(--ui-primary);color:var(--ui-on-primary);border-color:var(--ui-primary)}
+#left .filebtn{border-color:var(--ui-border-strong);color:var(--ui-link);font-size:14px}
+#left .filebtn:hover{border-color:var(--ui-primary);background:var(--ui-primary-soft)}
+#left .cards .card{background:var(--ui-surface-2);border-color:var(--ui-border);color:var(--ui-text)}
+#left .cards .card:hover{border-color:var(--ui-primary);background:var(--ui-primary-soft)}
+#left .card b{color:var(--ui-text)}
+#left .card span{color:var(--ui-text-2)}
+#left .adv{border-top-color:var(--ui-border)}
+#left .adv summary{color:var(--ui-text-2);font-size:14px}
+#left .srv{background:var(--ui-surface-2);border-color:var(--ui-border);color:var(--ui-text-2)}
+#left .srv.ok{background:var(--ui-ok-bg);border-color:transparent;color:var(--ui-ok)}
+#left .srv.bad{background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+#left .report h3,#left .rq b{color:var(--ui-ok)}
+#left .rq{background:var(--ui-ok-bg);border-color:transparent;color:var(--ui-text)}
+#left .rq .w{color:var(--ui-text-2)}
+#left .rq:is(.x,.warn,.rule){background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+#left .rq:is(.x,.warn,.rule) b{color:var(--ui-warn-text)}
+#left .rq.neg{background:var(--ui-danger-bg);border-color:transparent}
+#left .rq.neg .w{color:var(--ui-danger)}
+#left .rq:is(.add,.ai){background:var(--ui-info-bg);border-color:var(--ui-info-border)}
+#left .rq:is(.add,.ai) :is(b,.w){color:var(--ui-info-text)}
+#left :is(.acs-err,.acs-errbox){background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+#left :is(.acs-err-h,.acs-errtitle){color:var(--ui-warn-text)}
+#left .acs-err-act button{background:var(--ui-surface);border-color:var(--ui-border-strong);color:var(--ui-text)}
+#left .acs-warn{color:var(--ui-warn-text)}
+#left .acs-ok{color:var(--ui-ok)}
+#left .lay .ct{color:var(--ui-text-2)}
+#left :is(.doorbox,#acsTabState){border-color:var(--ui-border-strong);color:var(--ui-text-2)}
+#left label.file{color:var(--ui-link)}
+#left .clipRow span{color:var(--ui-primary)}
+#left .clipRow i{color:var(--ui-text-2)}
+#left .noteItem{border-color:var(--ui-border)}
+#left .noteItem b{color:var(--ui-link)}
+#left .vrbox{background:var(--ui-surface-2);border-color:var(--ui-border)}
+#left #vrbox button{background:var(--ui-surface)!important;border-color:var(--ui-border-strong)!important;color:var(--ui-link)!important}
+#left #acsSaveState{border-color:var(--ui-border)}
+#left #acsSaveState[data-tone=ok]{background:var(--ui-ok-bg);border-color:transparent;color:var(--ui-ok)}
+#left #acsSaveState[data-tone=busy]{background:var(--ui-info-bg);border-color:var(--ui-info-border);color:var(--ui-info-text)}
+#left #acsSaveState[data-tone=error]{background:var(--ui-warn-bg);border-color:var(--ui-warn-border);color:var(--ui-warn-text)}
+#left #acsSaveState[data-tone=neutral]{color:var(--ui-text-2)}
+#left #acsRecoverBox{background:var(--ui-info-bg);border-color:var(--ui-info-border);color:var(--ui-info-text)}
+#left #acsRecoverBox .acs-rec-line b{color:var(--ui-text)}
+#left>#status{color:var(--ui-text-2);border-top-color:var(--ui-border);font-size:13px;background:var(--ui-surface)}
+#projectPanelClose{background:var(--ui-surface-2)!important;color:var(--ui-text)!important;border-color:var(--ui-border)!important}
+/* The local guest's «فهمنا» card is a calm summary in the same panel. */
+#left .guest-confirm{background:var(--ui-info-bg);border-color:var(--ui-info-border);color:var(--ui-text)}
+#left .guest-confirm :is(h3,li){color:var(--ui-text)}
+#left .guest-confirm li small{color:var(--ui-text-2)}
+#left #guestConfirmDraw{background:var(--ui-primary);color:var(--ui-on-primary)}
+#left #guestConfirmEdit,#left .guest-confirm-choices button{background:var(--ui-surface);color:var(--ui-text);border-color:var(--ui-border-strong)}
+#left .guest-confirm-unsupported{background:var(--ui-warn-bg);color:var(--ui-warn-text)}
+/* View tools: a light floating bar on desktop, a sheet of labelled tiles on a phone. */
+#camBar{background:var(--ui-surface);border-color:var(--ui-border);box-shadow:var(--ui-shadow);backdrop-filter:none}
+#camBar button{color:var(--ui-text)}
+#camBar button:hover{background:var(--ui-surface-2)}
+#camBar button.on{background:var(--ui-primary-soft);border-color:var(--ui-primary)}
+#camBar .sep{background:var(--ui-border)}
+#camBar .cam-heading{color:var(--ui-text)}
+:is(#measHUD,#info){background:var(--ui-surface);color:var(--ui-text);border-color:var(--ui-border);box-shadow:var(--ui-shadow)}
+#measHUD b{color:var(--ui-primary)}
+:is(#measHUD span,#info .qcl,#tip){color:var(--ui-text-2)}
+/* A calm notice, not a red alarm bar. */
+#engineWarn{background:var(--ui-warn-bg);color:var(--ui-warn-text);border-bottom:1px solid var(--ui-warn-border);font-size:14px}
+#engineWarn .acs-u-01{background:var(--ui-surface);color:var(--ui-text);border:1px solid var(--ui-border-strong)}
+@media (max-width:820px){
+  #left{background:var(--ui-surface);border-color:var(--ui-border);border-radius:20px}
+  #left>.tabs{margin:0 12px 10px}
+  #left>.tabs button{min-height:44px;font-size:14px}
+  #left>.tabs button.active{background:var(--ui-surface);color:var(--ui-text)}
+  #left>.body{padding:0 14px 14px}
+  #projectPanelClose{border-radius:12px}
+  body.acs-entered::after{background:var(--ui-surface);border-top-color:var(--ui-border);box-shadow:0 -4px 16px rgb(0 0 0/6%)}
+  #panelToggle,#mobileToolsToggle{background:var(--ui-surface-2);color:var(--ui-text);border-color:var(--ui-border);
+    font:700 15px/1.4 var(--ui-font);box-shadow:none}
+  #panelToggle[aria-expanded=true],#mobileToolsToggle[aria-expanded=true]{background:var(--ui-primary);color:var(--ui-on-primary);border-color:var(--ui-primary)}
+  #camBar{background:var(--ui-surface)}
+  #camBar button{background:var(--ui-surface-2);border-color:var(--ui-border)}
+  #camBar button.on{background:var(--ui-primary-soft);border-color:var(--ui-primary)}
+  #camBar .cam-label{font:600 12px/1.35 var(--ui-font);color:var(--ui-text)}
+}
+/* ===== END STUDIO SHELL ON THE SHARED TOKENS ===== */
 
 /* ===== ACS WORKSPACE STYLES (generated) ===== */
 :root{
@@ -954,7 +1138,3 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
 .acs-errbody{opacity:.85;margin-top:6px}
 .acs-errhint{opacity:.7;margin-top:8px;font-size:12px}
 .acs-errrow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-/* Account recovery remains readable with Safari's saved-password autofill. */
-#login .auth-help { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-top:12px; }
-#login .auth-help button { position:static; width:auto; flex:1; min-height:44px; padding:8px 0; color:#9bdcff; background:transparent; border:0; font:inherit; cursor:pointer; }
-#login input:-webkit-autofill { -webkit-text-fill-color:#e9f0fc; -webkit-box-shadow:0 0 0 1000px #0c1b2b inset; caret-color:#e9f0fc; }

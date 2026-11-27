@@ -353,8 +353,8 @@ function ensurePanel() {
   if (!review) return false;
   panel = document.createElement('section');
   panel.id = 'cwSemanticLocks';
-  panel.className = 'cw-card';
-  const title = document.createElement('h2');
+  panel.className = 'cw-semantic-locks';
+  const title = document.createElement('h3');
   title.textContent = 'أقفال العناصر الدقيقة';
   const help = document.createElement('p');
   help.className = 'cw-muted';
@@ -380,7 +380,8 @@ function ensurePanel() {
   message.className = 'cw-muted';
   message.setAttribute('role', 'status');
   panel.append(title, help, label, select, scopeLabel, scopeSelect, button, message);
-  review.append(panel);
+  // An engineer tool: it lives under the review's «أدوات متقدمة», folded by default.
+  (globalThis.document.getElementById('cwMoreBody') || review).append(panel);
   select.addEventListener('change', render);
   scopeSelect.addEventListener('change', render);
   button.addEventListener('click', () => { toggleSelected().catch(showError); });

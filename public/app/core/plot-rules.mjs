@@ -153,11 +153,17 @@ export const PLOT_ISSUE_NAMES = {
 
 // Drawing data for the plan: the dashed buildable envelope and, on the ground
 // floor, the stalls the server derived. No authority: display only.
+// The drawing shows the requested stalls, never the estimated capacity; a
+// summary from an older server listed every stall that fits, so cap it here.
+export function drawnStalls(parking) {
+  const stalls = Array.isArray(parking?.stalls) ? parking.stalls : [];
+  return Number.isInteger(parking?.required) && parking.required >= 0 ? stalls.slice(0, parking.required) : stalls;
+}
 export function overlay(summary, levelIndex) {
   if (!summary || !Array.isArray(summary.envelope)) return [];
   const [x, z, w, d] = summary.envelope;
   const shapes = [{tag:'rect', attrs:{x, y:z, width:w, height:d, fill:'none', stroke:'#2a9d8f', 'stroke-width':.08, 'stroke-dasharray':'.45 .3', 'data-plot':'envelope'}}];
-  if (levelIndex === 0) for (const [sx, sz, sw, sd] of summary.parking?.stalls || [])
+  if (levelIndex === 0) for (const [sx, sz, sw, sd] of drawnStalls(summary.parking))
     shapes.push({tag:'rect', attrs:{x:sx, y:sz, width:sw, height:sd, fill:'rgba(233,196,106,.25)', stroke:'#b08a2e', 'stroke-width':.04, 'data-plot':'stall'}});
   return shapes;
 }

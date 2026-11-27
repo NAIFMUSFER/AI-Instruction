@@ -1,7 +1,7 @@
 // Step 01 smart reading: one paid, confirmed provider read of the brief, shown in
 // an editable Arabic «فهمنا» card. Nothing reaches the step-01 fields until the
 // owner confirms the card. When the read fails or is unavailable, the free
-// local reader («قراءة المتطلبات من الوصف») runs instead with a clear message.
+// local reader («اقرأ الأرقام من وصفي») runs instead with a clear message.
 // All program text is shown with textContent/value only.
 import {SCHEMA,SIDE_AR,POSITION_AR,ROLE_AR,OUTDOOR_AR,STAIR_AR,OUTPUT_AR,OUTPUT_READY,programChecks,checkProgram,programFields,levelSummary,programKey,clone} from '../core/brief-reader.mjs';
 import {normalizeNumberText} from '../core/brief-program.mjs';
@@ -26,8 +26,8 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
     set(key, value) {try {localStorage.setItem(key, JSON.stringify(value));} catch (e) {}},
     drop(key) {try {localStorage.removeItem(key);} catch (e) {}},
   };
-  const smart = el('button', 'قراءة ذكية للوصف بالذكاء الاصطناعي', null, 'cw-smart-read'); smart.type = 'button'; smart.id = 'cwSmartRead';
-  const note = el('p', 'طلب واحد مدفوع، يستغرق عادةً من دقيقة إلى ثلاث دقائق. تظهر النتيجة في بطاقة تراجعها وتعدّلها، ولا تُعبّأ الحقول قبل تأكيدك.', null, 'cw-muted cw-smart-note'); note.id = 'cwSmartReadNote';
+  const smart = el('button', 'قراءة ذكية (مدفوعة)', null, 'cw-smart-read'); smart.type = 'button'; smart.id = 'cwSmartRead';
+  const note = el('p', 'طلب واحد مدفوع، من دقيقة إلى ثلاث دقائق. تراجع النتيجة قبل أن نعبّئ الحقول.', null, 'cw-muted cw-smart-note'); note.id = 'cwSmartReadNote';
   const progress = el('p', null, null, 'cw-program-status'); progress.id = 'cwProgramStatus';
   progress.setAttribute('role', 'status'); progress.setAttribute('aria-live', 'polite'); progress.hidden = true;
   $('cwReadBrief').after(smart, note, progress);
@@ -192,24 +192,39 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
     }
   }
 
+  // A plain summary of what was read: land, building block, floors, parking.
+  function renderSummary(box) {
+    const site = program.site, rows = [];
+    if (site.width_m != null && site.depth_m != null) rows.push('الأرض ' + site.width_m + ' × ' + site.depth_m + ' م' + (site.street_sides.length ? '، الشارع من ' + site.street_sides.map(s => SIDE_AR[s]).join(' و') : ''));
+    if (site.footprint.width_m != null && site.footprint.depth_m != null) rows.push('المبنى ' + site.footprint.width_m + ' × ' + site.footprint.depth_m + ' م');
+    for (const level of program.levels) rows.push(level.name + ': ' + levelSummary(level));
+    if (program.parking.count != null) rows.push('المواقف: ' + program.parking.count);
+    if (!rows.length) return;
+    const list = el('ul', null, box, 'cw-program-summary'); list.id = 'cwProgramSummary';
+    for (const text of rows) el('li', text, list);
+  }
+
   function render() {
     card.replaceChildren(); sync();
     if (!program) return;
     const head = el('div', null, card, 'cw-program-head');
     el('h3', 'فهمنا من وصفك:', head).id = 'cwProgramTitle';
-    tag(head, confirmed ? (source === 'cloud' ? 'مؤكد ومحفوظ مع النسخة' : 'مؤكد وعُبّئت الحقول') : 'قراءة بالذكاء الاصطناعي — راجعها');
-    el('p', confirmed ? 'هذا البرنامج المؤكد يُرسل مع التوليد. عدّله ثم أكّده من جديد إن تغيّر شيء.'
-      : (source === 'device' ? 'قراءة محفوظة من جهاز آخر. ' : '') + 'راجع القيم وعدّلها. لا تتغير حقول المتطلبات قبل أن تضغط «تأكيد البرنامج وتعبئة الحقول».', card, 'cw-muted');
+    tag(head, confirmed ? (source === 'cloud' ? 'مؤكد ومحفوظ مع النسخة' : 'مؤكد') : 'راجعها قبل التأكيد');
+    if (source === 'device' && !confirmed) el('p', 'قراءة محفوظة من جهاز آخر.', card, 'cw-muted');
     if (readBrief && readBrief !== value('cwBrief').trim())
       el('p', 'تغيّر وصفك بعد هذه القراءة. أعد القراءة الذكية إن أردت أن تعكس البطاقة التعديل.', card, 'cw-program-warning');
-    renderSite(card); renderLevels(card); renderRest(card);
+    renderSummary(card);
     checksBox = el('div', null, card, 'cw-program-checks'); checksBox.id = 'cwProgramChecks'; refreshChecks();
     const later = [...(program.cannot_do || []).map(c => c.message), ...program.other_requests.map(t => 'طلب يُرسل وصفًا: ' + t)];
     if (later.length) {
-      const box = el('div', null, card, 'cw-program-unsupported'); box.id = 'cwProgramUnsupported';
-      el('h4', 'ما لا ينفذه ACS بعد:', box);
+      const box = el('details', null, card, 'cw-program-unsupported'); box.id = 'cwProgramUnsupported';
+      el('summary', 'ما لا ينفذه ACS بعد (' + later.length + ')', box);
       const list = el('ul', null, box); for (const text of later) el('li', text, list);
     }
+    const edit = el('details', null, card, 'cw-program-edit'); edit.id = 'cwProgramEdit';
+    el('summary', 'تعديل التفاصيل', edit);
+    el('p', confirmed ? 'عدّل ثم أكّد من جديد.' : 'لا تتغير حقولك قبل أن تؤكد.', edit, 'cw-muted');
+    renderSite(edit); renderLevels(edit); renderRest(edit);
     const actions = el('div', null, card, 'cw-actions');
     const go = el('button', confirmed ? 'تأكيد التعديلات وتعبئة الحقول' : 'تأكيد البرنامج وتعبئة الحقول', actions, 'cw-primary'); go.type = 'button'; go.id = 'cwProgramConfirm';
     const hide = el('button', 'إلغاء البطاقة', actions); hide.type = 'button'; hide.id = 'cwProgramDismiss';
@@ -308,7 +323,7 @@ export function createBriefReader(root, {api, confirmPaid, briefEditor, storageK
   async function start() {
     const brief = value('cwBrief').trim();
     if (jobId) return poll();
-    if (value('cwType') !== 'residential') throw new Error('القراءة الذكية متاحة حاليًا للمشاريع السكنية. للمستودعات استخدم «قراءة المتطلبات من الوصف».');
+    if (value('cwType') !== 'residential') throw new Error('القراءة الذكية متاحة حاليًا للمشاريع السكنية. للمستودعات استخدم «اقرأ الأرقام من وصفي».');
     if (brief.length < 20) throw new Error('اكتب وصفًا أطول (20 حرفًا على الأقل) قبل القراءة الذكية.');
     if (!await confirmPaid('سنرسل وصفك إلى الذكاء الاصطناعي في طلب واحد ليستخرج برنامج المشروع: الأرض والارتدادات والأدوار والغرف والمواقف والعناصر الخارجية. يستغرق عادةً من دقيقة إلى ثلاث دقائق، ويستهلك طلبًا واحدًا من رصيد الذكاء الاصطناعي. لن تتغير حقولك قبل أن تراجع البطاقة وتؤكدها.',
       'ابدأ القراءة', 'قراءة الوصف بالذكاء الاصطناعي؟')) {say('لم تبدأ القراءة الذكية، ولم يُستهلك أي رصيد.'); return;}

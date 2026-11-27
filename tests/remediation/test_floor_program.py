@@ -467,6 +467,21 @@ class PlotRules(unittest.TestCase):
         legacy = dict(r, parking={k: v for k, v in r['parking'].items() if k != 'stall_m'})
         self.assertTrue(all(s[2:] == [2.5, 5.5] for s in P.stalls(owner_model(), legacy)), 'old revisions: the default')
 
+    def test_two_requested_stalls_are_drawn_as_two_not_the_capacity(self):
+        # Live review: «المواقف المطلوبة 2؛ السعة التقديرية 6» drew six stall rectangles.
+        r, model = rules(), owner_model()
+        self.assertGreater(len(P.stalls(model, r)), 2, 'more stalls fit than were asked for')
+        parking = P.summary(model, r)['parking']
+        self.assertEqual(parking['required'], 2)
+        self.assertEqual(len(parking['stalls']), 2)
+        self.assertTrue(all(s[2:] == [2.7, 5.2] for s in parking['stalls']), 'the stated stall size')
+        self.assertEqual(parking['stall_m'], [2.7, 5.2])
+        self.assertEqual(parking['capacity'], len(P.stalls(model, r)))
+        self.assertNotIn('PLOT_PARKING_SHORTFALL', {f['code'] for f in P.check(model, r)[0]})
+        # Inside the front setback, beside the path to the building door, never on the building.
+        front = r['building_footprint'][1]
+        self.assertTrue(all(s[1] == 0.0 and s[1] + s[3] <= front + 1e-9 for s in parking['stalls']))
+
     def test_the_block_sits_west_with_the_stated_lane(self):
         r = rules()
         self.assertEqual(r['building_footprint'], [1.5, 5.5, 13.0, 16.0])
