@@ -427,6 +427,37 @@ def status(session_id, client=None):
     }
 
 
+CONTINUE_TASK = (
+    "Continue the same design. Everything you wrote so far is still in %s: keep it, check what "
+    "is missing or failing against your workflow and the rubric (for example report.md, a render, "
+    "a check that was not run), complete it, and finish every deliverable. Do not start over."
+    % OUTPUTS_DIR)
+
+
+def resume(session_id, client=None):
+    """Start a new outcome on an idle pilot session, keeping its sandbox, files and history.
+
+    For work cut short (live 2026-11-28: the account's credit ran out mid-run).
+    The session's own budget still caps it; the pilot total is checked against
+    what the session may still spend up to that budget."""
+    client = client or Client()
+    now = status(session_id, client)
+    if now["status"] != "idle":
+        raise DesignerError("DESIGNER_SESSION_BUSY", 409)
+    headroom = max(0, now["budget_cents"] - now["cost_cents"])
+    if headroom < 50:
+        raise DesignerError("DESIGNER_SESSION_BUDGET_SPENT", 409)
+    if committed_cents(client) + headroom > total_cap_cents():
+        raise DesignerError("DESIGNER_PILOT_CAP_REACHED", 409)
+    client.call("POST", "/v1/sessions/" + session_id + "/events", body={"events": [{
+        "type": "user.define_outcome",
+        "description": CONTINUE_TASK,
+        "rubric": {"type": "text", "content": RUBRIC},
+        "max_iterations": MAX_ITERATIONS,
+    }]})
+    return {"session_id": session_id, "status": "running", "headroom_cents": headroom}
+
+
 def outputs(session_id, client=None):
     client = client or Client()
     status(session_id, client)          # refuses a session that is not the pilot's
