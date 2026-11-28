@@ -855,6 +855,33 @@ def _majlis_far_findings(value, plot):
     return out
 
 
+def _size_candidates(rect, target_m2, target_m=None):
+    """Rectangles that bring ``rect`` to about ``target_m2`` by moving one or
+    two of its sides, smallest change first. Free space and every other
+    check are the caller's to verify."""
+    x, z, w, d = rect
+    out = []
+    if w > 0 and d > 0 and target_m2 > 0:
+        nd, nw = target_m2 / w, target_m2 / d
+        if nd >= 1.0:
+            out += [[x, z, w, nd], [x, z - (nd - d), w, nd]]          # move S, then N
+        if nw >= 1.0:
+            out += [[x, z, nw, d], [x - (nw - w), z, nw, d]]          # move E, then W
+    if isinstance(target_m, (list, tuple)) and len(target_m) == 2 and all(
+            isinstance(v, (int, float)) and v >= 1.0 for v in target_m):
+        for tw, td in {(target_m[0], target_m[1]), (target_m[1], target_m[0])}:
+            for ax in (x, x + w - tw):
+                for az in (z, z + d - td):
+                    out.append([ax, az, tw, td])
+    seen, rects = set(), []
+    for r in sorted(out, key=lambda r: abs(r[2] * r[3] - w * d) + abs(r[0] - x) + abs(r[1] - z)):
+        r = [round(v, 3) for v in r]
+        if tuple(r) not in seen and min(r[2], r[3]) >= 1.0:
+            seen.add(tuple(r))
+            rects.append(r)
+    return rects
+
+
 def prepare_layout(building, brief, requirements, budget, plot=None, program=None):
     """Bounded correction before openings; every result is checked again.
 
@@ -981,9 +1008,42 @@ def prepare_layout(building, brief, requirements, budget, plot=None, program=Non
                 continue
             kept, now = kept + [chain], after
         return (_with_supports(value, kept), now) if kept else (value, found)
+    def fit(value, found):
+        """A room drawn far from its confirmed size (PROGRAM_ROOM_SIZE_OFF) moves
+        one or two sides toward it, for free. Live (job 624d60f2): the flat's
+        laundry was drawn 1.7 x 1.4 m against 2.2 x 1.8 m with free floor beside
+        it, and that one finding blocked approval. A change is kept only if it
+        clears that room's finding and adds no other finding."""
+        offs = [i for i in found[1] if i.get('code') == 'PROGRAM_ROOM_SIZE_OFF'
+                and isinstance(i.get('room_ref'), list) and len(i['room_ref']) == 2
+                and isinstance(i.get('target_m2'), (int, float))]
+        notes = []
+        for off in offs:
+            template, rid = off['room_ref']
+            room = next((r for r in ((value.get('floors') or {}).get(template) or {}).get('rooms') or []
+                         if isinstance(r, dict) and r.get('id') == rid and _numeric_rect(r.get('rect'))), None)
+            if room is None:
+                continue
+            for rect in _size_candidates(room['rect'], off['target_m2'], off.get('target_m'))[:16]:
+                candidate = json.loads(canonical(value))
+                moved = next(r for r in candidate['floors'][template]['rooms'] if r.get('id') == rid)
+                moved['rect'] = rect
+                after = findings(candidate)
+                if added(found, after) or any(i.get('code') == 'PROGRAM_ROOM_SIZE_OFF'
+                                              and i.get('room_ref') == [template, rid] for i in after[1]):
+                    continue
+                notes.append('«%s» من %.1f إلى %.1f م²' % (str(room.get('name') or rid)[:40],
+                                                         room['rect'][2] * room['rect'][3], rect[2] * rect[3]))
+                value, found = candidate, after
+                break
+        if notes:
+            meta = value.setdefault('meta', {})
+            meta.setdefault('assumptions', []).append(
+                'عُدّل مقاس ' + '، و'.join(notes) + ' ليقترب من المقاس المؤكد في برنامجك، في فراغ حر من الدور نفسه؛ راجعه.')
+        return value, found
     def settle(value, found):
         """Try the deterministic fixes; keep each only if it adds no finding."""
-        value, found = stack(*support(*trim(value, found)))
+        value, found = fit(*stack(*support(*trim(value, found))))
         issues, soft = found
         core = next((i for i in issues if i.get('code') == 'RESIDENTIAL_CORE_MISSING'), None)
         if core is None or not core.get('misaligned') or dwelling_kind(value, brief, requirements) != SINGLE_DWELLING:
