@@ -23,6 +23,7 @@ sys.path.insert(0, str(HERE))
 import acs_agent_designer as D  # noqa: E402
 import acs_designer_workspace as DW  # noqa: E402
 import acs_workspace_service as S  # noqa: E402
+from acs_plan_review import PlanError  # noqa: E402
 from acs_plan_store import SQLitePlanStore  # noqa: E402
 from acs_plan_store_port import SQLitePlanStoreAdapter  # noqa: E402
 from test_agent_designer import FakeAPI, KEY  # noqa: E402
@@ -78,6 +79,22 @@ class Normalise(unittest.TestCase):
         self.assertTrue(review["can_approve"], review.get("issues"))
         self.assertTrue(history[-1]["note"].endswith("task:" + JOB))
 
+    def test_a_design_saved_by_a_poll_that_could_not_mark_its_job_is_found_not_saved_twice(self):
+        building = D.normalise_building(json.loads(VILLA))
+        with tempfile.TemporaryDirectory() as tmp:
+            db = SQLitePlanStore(Path(tmp) / "p.sqlite3")
+            db.create_project(PROJECT, owner_id=ACTOR)
+            store = SQLitePlanStoreAdapter(db)
+            row = {"id": JOB, "expected_head": None, "resume_command": {"brief": "فيلا دورين"}}
+            first = DW.admit(store, PROJECT, ACTOR, row, building)
+            again = DW.admit(store, PROJECT, ACTOR, row, building)
+            other = dict(row, id="66666666-6666-4666-8666-666666666666")
+            with self.assertRaises(PlanError) as stale:
+                DW.admit(store, PROJECT, ACTOR, other, building)
+            count = len(S.workspace(store, PROJECT, ACTOR).history())
+        self.assertEqual((again, count), (first, 1), "the next poll reports the saved design")
+        self.assertEqual(stale.exception.code, "STALE_REVISION", "another job never saves over a moved head")
+
     def test_existing_core_ids_and_lists_are_kept(self):
         building = {"floors": {"a": {"rooms": [
             {"id": "s", "role": "stairs", "rect": [0, 0, 2, 4], "core_id": "mine", "doors": [{"edge": "N"}]},
@@ -104,6 +121,7 @@ class Http(unittest.IsolatedAsyncioTestCase):
         self.limiter = Allow()
         self.middleware = H.WorkspaceMiddleware(None)
         self.admitted = []
+        self.loads = 0
 
         def admit(store, project_id, actor_id, row, building):
             self.admitted.append(building)
@@ -111,13 +129,17 @@ class Http(unittest.IsolatedAsyncioTestCase):
         real = D.Client
         for p in (patch.object(H.AUTH, "authorize_asgi", authorize),
                   patch.object(H.SESSION, "authenticated_supabase_plan_store", lambda scope: self.table),
-                  patch.object(H.SERVICE, "workspace", lambda *a: self.workspace),
+                  patch.object(H.SERVICE, "workspace", self.load),
                   patch.object(H.RL, "default_limiter", lambda: self.limiter),
                   patch.object(D, "Client", lambda *a, **k: real(key=KEY, transport=httpx.MockTransport(self.api))),
                   patch.object(DW, "admit", admit),
                   patch.dict("os.environ", {"ACS_DESIGNER_USER_IDS": ACTOR})):
             p.start()
             self.addCleanup(p.stop)
+
+    def load(self, *args):
+        self.loads += 1
+        return self.workspace
 
     async def design(self, **extra):
         body = {"action": "design", "job_id": JOB, "brief": "فيلا دورين على أرض ٢٠×٣٠", "expected_head": None,
@@ -159,9 +181,13 @@ class Http(unittest.IsolatedAsyncioTestCase):
         sid = self.table.rows[JOB]["checkpoint"]["session_id"]
         self.api.sessions[sid]["usage"] = {"active_seconds": 610}
         self.table.rows[JOB]["created_at"] = "2020-01-01T00:00:00+00:00"   # long past any worker deadline
+        self.loads = 0
         status, body = await self.poll()
         self.assertEqual((body["job"]["state"], body["job"]["phase"], body["job"]["progress"]),
                          ("RUNNING", "LAYOUT", {"completed": 10, "total": 30}), "never INTERRUPTED while it runs")
+        status, body = await call(self.middleware, {"action": "job", "job_id": JOB})    # within 15 s
+        self.assertEqual((body["job"]["state"], self.loads), ("RUNNING", 0),
+                         "a running design's polls never load the project")
         self.api.finish(sid)
         status, body = await self.poll()
         self.assertEqual((body["job"]["state"], body["job"]["revision_id"]), ("SUCCEEDED", "plan_designed"))

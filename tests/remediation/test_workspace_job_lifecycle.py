@@ -157,6 +157,16 @@ class OrphanedReceipts(Harness):
         job = await self.poll()
         self.assertEqual((job["state"], job["revision_id"]), ("SUCCEEDED", "plan_saved"))
 
+    async def test_a_job_whose_worker_runs_here_is_not_looked_up_in_history_on_every_poll(self):
+        self.running(age_s=10, worker=H.WORKER_ID)
+        self.workspace = Workspace("plan_saved", [{"revision_id": "plan_saved", "note": "البديل A · task:" + JOB}])
+        H.ACTIVE_JOBS.add(JOB)
+        try:
+            self.assertEqual((await self.poll())["state"], "RUNNING", "its live worker marks it")
+        finally:
+            H.ACTIVE_JOBS.discard(JOB)
+        self.assertEqual((await self.poll())["state"], "SUCCEEDED", "a worker that could not mark it is still covered")
+
     async def test_receipt_without_start_time_keeps_previous_behaviour(self):
         self.running(age_s=10 ** 6)
         del self.table.rows[JOB]["created_at"]
