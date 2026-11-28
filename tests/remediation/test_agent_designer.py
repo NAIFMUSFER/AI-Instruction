@@ -62,6 +62,10 @@ class FakeAPI:
             sid = "sesn_%010d" % (len(self.sessions) + 1)
             self.sessions[sid] = dict(body, id=sid, status="running", usage={})
             return httpx.Response(200, json=self.sessions[sid])
+        if path.startswith("/v1/sessions/") and path.endswith("/events") and method == "POST":
+            sid = path.split("/")[3]
+            self.sessions[sid]["status"] = "running"
+            return httpx.Response(200, json={"data": []})
         if path.startswith("/v1/sessions/") and method == "GET":
             s = self.sessions.get(path.rsplit("/", 1)[1])
             return httpx.Response(200, json=s) if s else httpx.Response(404, json={"error": {}})
@@ -192,6 +196,36 @@ class Results(unittest.TestCase):
         with self.assertRaises(D.DesignerError) as refused:
             D.status("sesn_b000000001", client=D.Client(key=KEY, transport=api))
         self.assertEqual(str(refused.exception), "DESIGNER_UPSTREAM_400")
+
+
+class Resume(unittest.TestCase):
+    """Live 2026-11-28: the account's credit ran out and five pilot sessions
+    stopped mid-work. A new outcome on the same session keeps its files."""
+
+    def test_an_idle_session_gets_a_continue_outcome_within_its_own_budget(self):
+        api = FakeAPI(sessions=[spent("sesn_d000000001", 369)])
+        out = D.resume("sesn_d000000001", client=api.client())
+        self.assertEqual(out, {"session_id": "sesn_d000000001", "status": "running", "headroom_cents": 431})
+        [sent] = api.posted("/v1/sessions/sesn_d000000001/events")
+        [event] = sent["events"]
+        self.assertEqual(event["type"], "user.define_outcome")
+        self.assertIn("Do not start over", event["description"])
+        self.assertEqual(event["rubric"]["content"], D.RUBRIC)
+
+    def test_busy_spent_foreign_or_over_the_pilot_total_is_refused(self):
+        cases = ((spent("sesn_d000000001", 100, "running"), "DESIGNER_SESSION_BUSY"),
+                 (spent("sesn_d000000001", 790), "DESIGNER_SESSION_BUDGET_SPENT"),
+                 (dict(spent("sesn_d000000001", 100), metadata={}), "DESIGNER_NOT_FOUND"))
+        for session, code in cases:
+            api = FakeAPI(sessions=[session])
+            with self.assertRaises(D.DesignerError) as refused:
+                D.resume("sesn_d000000001", client=api.client())
+            self.assertEqual(refused.exception.code, code)
+            self.assertEqual(api.posted("/v1/sessions/sesn_d000000001/events"), [])
+        api = FakeAPI(sessions=[spent("sesn_d000000001", 100), spent("sesn_d000000002", 3500)])
+        with self.assertRaises(D.DesignerError) as refused:   # 3600 spent + 700 headroom > 4000
+            D.resume("sesn_d000000001", client=api.client())
+        self.assertEqual(refused.exception.code, "DESIGNER_PILOT_CAP_REACHED")
 
 
 class Checks(unittest.TestCase):

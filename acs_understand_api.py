@@ -1038,6 +1038,11 @@ def designer_status(request: Request, session_id: str):
     return _designer(request, lambda D: D.status(session_id))
 
 
+@app.post("/admin/designer/sessions/{session_id}/resume")
+def designer_resume(request: Request, session_id: str):
+    return _designer(request, lambda D: D.resume(session_id))
+
+
 @app.get("/admin/designer/sessions/{session_id}/files")
 def designer_files(request: Request, session_id: str):
     return _designer(request, lambda D: {"files": D.outputs(session_id)})
