@@ -35,8 +35,6 @@ import os
 import re
 from pathlib import Path
 
-import httpx
-
 API = "https://api.anthropic.com"
 API_VERSION = "2026-10-21"
 BETA = "managed-agents-2026-04-01"
@@ -258,6 +256,10 @@ class Client:
     """A minimal Managed Agents client. ``transport`` lets tests answer offline."""
 
     def __init__(self, key=None, transport=None):
+        # Imported here: the workspace layer imports this module, and slim
+        # workers that never call the designer do not install httpx.
+        import httpx
+        self._error = httpx.HTTPError
         self._http = httpx.Client(base_url=API, timeout=TIMEOUT_S, transport=transport,
                                   headers={"x-api-key": key or api_key(), "anthropic-version": API_VERSION})
 
@@ -265,7 +267,7 @@ class Client:
         headers = {"anthropic-beta": BETA} if beta else {}
         try:
             r = self._http.request(method, path, json=body, params=params, files=files, headers=headers)
-        except httpx.HTTPError:
+        except self._error:
             raise DesignerError("DESIGNER_UPSTREAM_UNREACHABLE", 502) from None
         if r.status_code == 404:
             raise DesignerError("DESIGNER_NOT_FOUND", 404)
