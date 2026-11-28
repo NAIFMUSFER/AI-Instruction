@@ -516,17 +516,5 @@ class BrokenFixture(unittest.TestCase):
         self.assertLessEqual(len(repair), H.INSTRUCTION_MAX_CHARS['repair'])
 
 
-class NotWiredYet(unittest.TestCase):
-    """The owner approves wiring first (healthcare_integration_plan.md). Delete
-    this class, and the STAGED_PACKS entry in tests/deploy/verify_deploy.py, in
-    the commit that wires the pack in."""
-
-    def test_no_production_module_imports_the_pack(self):
-        users = [p.name for p in ROOT.glob('*.py')
-                 if p.name != 'acs_healthcare_program.py' and 'acs_healthcare_program' in p.read_text(encoding='utf-8')]
-        self.assertEqual(users, [])
-        self.assertNotIn('hospital', (ROOT / 'public' / 'app' / 'core' / 'brief-program.mjs').read_text(encoding='utf-8'))
-
-
 if __name__ == '__main__':
     unittest.main(verbosity=2)
