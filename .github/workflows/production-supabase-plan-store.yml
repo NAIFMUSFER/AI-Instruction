@@ -6,6 +6,7 @@ on:
       - 'supabase/migrations/**'
       - 'tests/remediation/test_supabase_plan_store_schema.py'
       - 'tests/remediation/test_plan_rpc_membership_postgres.py'
+      - 'tests/remediation/test_one_running_job_postgres.py'
       - '.github/workflows/production-supabase-plan-store.yml'
 
 permissions:
@@ -37,5 +38,6 @@ jobs:
             sudo apt-get install -y --no-install-recommends postgresql-16
           fi
           python tests/remediation/test_plan_rpc_membership_postgres.py
+          python tests/remediation/test_one_running_job_postgres.py
       - name: No generated diff
         run: git diff --exit-code

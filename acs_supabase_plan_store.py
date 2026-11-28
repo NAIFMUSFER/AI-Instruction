@@ -30,6 +30,7 @@ from acs_plan_store_port import SNAPSHOT_SCHEMA
 SCHEMA = "acs.plan-store/1.0"
 _MAX_RESPONSE_BYTES = 3_000_000
 
+RUNNING_JOB_INDEX = "acs_workspace_jobs_one_running"
 _ERROR_MAP = {
     "ACS_PROJECT_NOT_FOUND": ("PROJECT_NOT_FOUND", "Project does not exist or is not accessible"),
     "ACS_PROJECT_ACCESS_DENIED": ("PROJECT_ACCESS_DENIED", "Authenticated actor lacks the required project role"),
@@ -158,6 +159,10 @@ class SupabasePlanStore:
             mapped = _ERROR_MAP.get(marker)
             if mapped:
                 raise PlanError(mapped[0], mapped[1])
+            if status == 409 and marker and RUNNING_JOB_INDEX in marker:
+                # Audit P0-3: the database holds one RUNNING job per project for
+                # every server instance; a second one is refused here.
+                raise PlanError("GENERATION_IN_PROGRESS", "Another job is already running for this project")
             raise PlanError("STORE_UNAVAILABLE", "Supabase plan-store request failed closed")
         if not raw:
             return None
