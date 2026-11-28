@@ -47,6 +47,10 @@ COPY acs_residential_manifest.py acs_residential_access.py acs_residential_layou
 COPY acs_plot_rules.py acs_plot_layout.py ./
 # Smart brief reading: one bounded provider call, strictly validated program.
 COPY acs_brief_reader.py ./
+# ACS Designer (Managed Agents): the typology and healthcare packs ship as
+# read-only checks the designer agent runs on its own design in its sandbox.
+COPY acs_agent_designer.py acs_typology_common.py acs_typology_office.py acs_typology_retail.py ./
+COPY acs_typology_school.py acs_typology_mosque.py acs_typology_hotel.py acs_healthcare_program.py ./
 # One villa or house: its confirmed program and livability checks (review and layout repair).
 COPY acs_villa_program.py ./
 # A confirmed per-floor program: its manifest, per-floor checks and target sizes, and its fallback.

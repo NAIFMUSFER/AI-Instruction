@@ -12,6 +12,10 @@ services:
       # ── سرّي: أدخله يدوياً في لوحة Render، ولا يوضع في أي ملف ──
       - key: ANTHROPIC_API_KEY
         sync: false
+      # ACS Designer pilot (acs_agent_designer): 32+ random characters; unset = the
+      # /admin/designer routes answer 404. Never sent to a browser.
+      - key: ACS_DESIGNER_ADMIN_TOKEN
+        sync: false
 
       # F-25: بلا هذا يبقى ACS_ENV = "development" على الخادم الحيّ، فتُطبَع
       # آثار الاستدعاء كاملةً في السجلّ عند كل عطل غير معالَج (acs_logging

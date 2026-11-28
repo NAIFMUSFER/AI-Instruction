@@ -16,6 +16,7 @@
 
 import os
 import json
+import re
 import time
 import asyncio
 import threading
@@ -991,6 +992,69 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
     payload["chars"] = len(text)
     payload["pdf_pages"] = checked["pages"]
     return payload
+
+
+# ---------------------------------------------------------------------------
+# ACS Designer pilot (Claude Managed Agents, acs_agent_designer). Operated by
+# the owner's team only: every route answers 404 unless ACS_DESIGNER_ADMIN_TOKEN
+# is set (32+ characters) and presented in X-ACS-Admin-Token. Errors carry a
+# fixed code only, never provider text or the brief.
+# ---------------------------------------------------------------------------
+DESIGNER_TOKEN_HEADER = "X-ACS-Admin-Token"
+
+
+class DesignerStart(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    brief: str = Field(min_length=1, max_length=8000)
+    title: str | None = Field(default=None, max_length=80)
+    budget_cents: int = 800
+
+
+def _designer_guard(request: Request):
+    import hmac
+    token = os.environ.get("ACS_DESIGNER_ADMIN_TOKEN", "")
+    given = request.headers.get(DESIGNER_TOKEN_HEADER) or ""
+    if len(token) < 32 or not hmac.compare_digest(token.encode("utf-8"), given.encode("utf-8")):
+        raise HTTPException(status_code=404)
+
+
+def _designer(request: Request, work):
+    _designer_guard(request)
+    import acs_agent_designer as DESIGNER
+    try:
+        return work(DESIGNER)
+    except DESIGNER.DesignerError as exc:
+        LOG.error("designer_refused", request_id=request_id_of(request), error_code=exc.code)
+        return JSONResponse(status_code=exc.status, content={"error": {"code": exc.code}})
+
+
+@app.post("/admin/designer/sessions")
+def designer_start(request: Request, body: DesignerStart):
+    return _designer(request, lambda D: D.start(body.brief, body.title, body.budget_cents))
+
+
+@app.get("/admin/designer/sessions/{session_id}")
+def designer_status(request: Request, session_id: str):
+    return _designer(request, lambda D: D.status(session_id))
+
+
+@app.get("/admin/designer/sessions/{session_id}/files")
+def designer_files(request: Request, session_id: str):
+    return _designer(request, lambda D: {"files": D.outputs(session_id)})
+
+
+@app.get("/admin/designer/sessions/{session_id}/files/{file_id}")
+def designer_file(request: Request, session_id: str, file_id: str):
+    import mimetypes
+    from fastapi.responses import Response
+
+    def work(D):
+        name, data = D.download(session_id, file_id)
+        safe = re.sub(r"[^A-Za-z0-9._-]", "_", name or "file")[:120]
+        kind = mimetypes.guess_type(safe)[0] or "application/octet-stream"
+        return Response(content=data, media_type=kind,
+                        headers={"Content-Disposition": 'attachment; filename="%s"' % safe})
+    return _designer(request, work)
 
 
 # ---------------------------------------------------------------------------

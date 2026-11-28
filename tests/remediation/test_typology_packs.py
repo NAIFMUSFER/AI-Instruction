@@ -707,12 +707,21 @@ class Instructions(unittest.TestCase):
                 self.assertIn('meta.assumptions', pack.ROOM_PROGRAM)
                 self.assertIn('المطابقة', pack.ROOM_PROGRAM)
 
-    def test_packs_are_not_wired_into_the_live_path(self):
+    def test_packs_reach_production_only_as_the_designers_sandbox_checks(self):
+        # Wired in 2026-11-28 (owner): acs_agent_designer uploads the packs into
+        # the ACS Designer's sandbox, where the agent runs them on its own design.
+        # No server module imports them; generation and review are unchanged.
+        import acs_agent_designer as DESIGNER
+        for name in PACKS:
+            self.assertIn('acs_typology_%s.py' % name, DESIGNER.CHECK_FILES)
         for path in ROOT.glob('*.py'):
             if path.name.startswith('acs_typology_'):
                 continue
             with self.subTest(module=path.name):
-                self.assertNotIn('acs_typology_', path.read_text(encoding='utf-8'))
+                text = path.read_text(encoding='utf-8')
+                self.assertNotRegex(text, r'(?m)^\s*(?:import|from)\s+acs_typology_')
+                if path.name != 'acs_agent_designer.py':
+                    self.assertNotIn('acs_typology_', text)
 
 
 if __name__ == '__main__':
