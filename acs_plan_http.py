@@ -55,7 +55,7 @@ def _request_id(scope: dict[str, Any]) -> str:
 
 
 def _error_status(code: str) -> int:
-    if code in {"AUTH_REQUIRED", "ACS_PROJECT_ACCESS_DENIED", "PROJECT_ACCESS_DENIED"}:
+    if code in {"AUTH_REQUIRED", "ACS_PROJECT_ACCESS_DENIED", "PROJECT_ACCESS_DENIED", "DESIGNER_NOT_ENABLED"}:
         return 403
     if code in {
         "ACS_PROJECT_NOT_FOUND", "PROJECT_NOT_FOUND",
@@ -68,7 +68,7 @@ def _error_status(code: str) -> int:
         "ACS_STALE_REVISION",
         "ACS_REVISION_EXISTS",
         "ACS_APPROVAL_EXISTS", "JOB_LEASE_LOST", "REVISION_EXISTS", "APPROVAL_EXISTS",
-        "GENERATION_IN_PROGRESS",
+        "GENERATION_IN_PROGRESS", "DESIGNER_IN_PROGRESS", "DESIGNER_DAILY_CAP_REACHED",
     }:
         return 409
     if code in {"GENERATION_BUSY", "STORE_UNAVAILABLE"}:

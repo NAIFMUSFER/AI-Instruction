@@ -14,6 +14,7 @@ import acs_rate_limit as RL
 import acs_workspace_service as SERVICE
 import acs_brief_reader as BRIEF
 import acs_plan_sources as SOURCES
+import acs_designer_workspace as DESIGNER
 from acs_logging import LOG
 from acs_workspace_progress import PHASES
 from acs_plan_review import PlanError, digest
@@ -67,6 +68,8 @@ def _started_at(row):
 def _orphaned(row, now=None):
     if row.get("state") != "RUNNING" or row.get("id") in ACTIVE_JOBS:
         return False
+    if DESIGNER.is_designer(row):
+        return False   # the run lives in its Managed Agents session; polls advance it
     started = _started_at(row)
     if started is None:
         return False
@@ -122,6 +125,7 @@ def _job_view(row):
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
         "error_message": ((BRIEF.failure_message(row.get("error_code")) if reading else None)
+                          or DESIGNER.message(row.get("error_code"))
                           or SERVICE.geometry_failure_message(row.get("error_code"))) if failed else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
@@ -134,6 +138,9 @@ def _job_view(row):
         checkpoint = row.get("checkpoint") if isinstance(row.get("checkpoint"), dict) else {}
         if state == "SUCCEEDED" and checkpoint.get("kind") == "brief_program":
             view["job"]["program"] = BRIEF.usable(checkpoint.get("program"))
+    if DESIGNER.is_designer(row):
+        view["job"]["kind"] = "design"
+        view["job"]["can_resume"] = False
     if view["job"]["choice"] and view["job"]["choice"]["adopted_revision_id"]:
         view["job"]["error_message"] = "اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته."
     return view
@@ -259,6 +266,62 @@ class WorkspaceMiddleware:
             if job_id not in ACTIVE_JOBS and ACTIVE_PROJECTS.get(project_id) == job_id:
                 ACTIVE_PROJECTS.pop(project_id, None)
 
+    async def _start_design(self, store, project_id, actor_id, command):
+        """Open an ACS Designer run for this project (beta accounts only).
+
+        The job row is written first, then the session is opened and recorded in
+        the row's checkpoint; polls of the job advance it (acs_designer_workspace)."""
+        if not DESIGNER.enabled(actor_id):
+            raise PlanError("DESIGNER_NOT_ENABLED", DESIGNER.message("DESIGNER_NOT_ENABLED"))
+        command = DESIGNER.design_command(command)
+        job_id = _id(command.get("job_id"))
+        fingerprint = digest(dict(command, action="design"))
+        prior = await asyncio.to_thread(_read_job, store, project_id, job_id)
+        if prior:
+            if prior.get("input_hash") != fingerprint:
+                raise PlanError("STALE_REVISION", "معرّف المهمة مستخدم لطلب مختلف؛ لم يبدأ تصميم آخر.")
+            return _job_view(prior)
+        before = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+        if before.head != command.get("expected_head"):
+            raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التصميم.")
+        if ACTIVE_PROJECTS.setdefault(project_id, job_id) != job_id:
+            raise PlanError("GENERATION_IN_PROGRESS", "توجد مهمة جارية لهذا المشروع. تابعها حتى تنتهي.")
+        try:
+            running = await asyncio.to_thread(store._request, "GET",
+                "/rest/v1/acs_workspace_jobs?project_id=eq." + project_id
+                + "&state=eq.RUNNING&checkpoint->>kind=eq." + DESIGNER.KIND + "&select=id&limit=1")
+            if not isinstance(running, list):
+                raise PlanError("STORE_UNAVAILABLE", "تعذّر التحقق من المهام الجارية.")
+            if running:
+                raise PlanError("DESIGNER_IN_PROGRESS", DESIGNER.message("DESIGNER_IN_PROGRESS"))
+            decision = await asyncio.to_thread(RL.default_limiter().check, "actor:" + actor_id, "gen")
+            if decision.get("degraded"):
+                raise PlanError("STORE_UNAVAILABLE", "تعذّر التحقق من حصة التوليد. حاول لاحقًا.")
+            if not decision.get("allowed"):
+                raise E.AcsApiError(E.ACS_RATE_LIMITED, "تجاوزت حد التوليد. حاول لاحقًا.", retryable=True,
+                                    retry_after=decision.get("retry_after", 60))
+            row = {"id": job_id, "project_id": project_id, "created_by": actor_id, "input_hash": fingerprint,
+                   "expected_head": command.get("expected_head"), "worker_id": WORKER_ID, "state": "RUNNING",
+                   "resume_command": dict(command, action="design"), "phase": "UNDERSTANDING",
+                   "checkpoint": {"kind": DESIGNER.KIND, "session_id": None}, "provider_calls": 0}
+            inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
+                                               prefer="resolution=ignore-duplicates,return=representation")
+            if not isinstance(inserted, list) or not inserted:
+                raise PlanError("STORE_UNAVAILABLE", "لم يصل تأكيد حفظ المهمة.")
+            try:
+                checkpoint = await asyncio.to_thread(DESIGNER.begin, project_id, job_id, command["brief"])
+            except PlanError as exc:
+                failed = {"state": "FAILED", "error_code": str(exc.code)[:80],
+                          "finished_at": datetime.now(timezone.utc).isoformat()}
+                await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, job_id), failed)
+                raise
+            await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, job_id), {"checkpoint": checkpoint})
+            LOG.info("designer_job_started", request_id=job_id)
+            return _job_view(dict(row, checkpoint=checkpoint))
+        finally:
+            if ACTIVE_PROJECTS.get(project_id) == job_id:
+                ACTIVE_PROJECTS.pop(project_id, None)
+
     async def _admit(self, store, project_id, actor_id, command, job_id, fingerprint):
         if command.get("source_id"):
             for floor in SOURCES.read_options(command)["floors"]:
@@ -348,6 +411,20 @@ class WorkspaceMiddleware:
                     raise PlanError("PLAN_COMMAND_NOT_SUPPORTED", "الأمر غير مدعوم لملفات المخطط.")
             elif action in {"generate", "chat_edit", "read_brief"}:
                 result = await self._start(scope, store, project_id, actor_id, command)
+            elif action == "design":
+                result = await self._start_design(store, project_id, actor_id, command)
+            elif action in {"designer_files", "designer_file"}:
+                SERVICE.checked_command(command, {"job_id", "file_id"} if action == "designer_file" else {"job_id"})
+                await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
+                if not row:
+                    raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
+                if action == "designer_files":
+                    result = {"ok": True, "files": await asyncio.to_thread(DESIGNER.files, project_id, row)}
+                else:
+                    import base64
+                    name, data = await asyncio.to_thread(DESIGNER.file, project_id, row, command.get("file_id"))
+                    result = {"ok": True, "name": name, "data_base64": base64.b64encode(data).decode("ascii")}
             elif action == "brief_read_latest":
                 # The newest validated read of this project by this account, for
                 # another device before any revision exists. No provider request.
@@ -378,6 +455,7 @@ class WorkspaceMiddleware:
             elif action == "state":
                 SERVICE.checked_command(command, {"revision_id"})
                 result = await asyncio.to_thread(SERVICE.view, store, project_id, actor_id, command.get("revision_id"))
+                result["designer_enabled"] = DESIGNER.enabled(actor_id)
             elif action == "research":
                 SERVICE.checked_command(command, {"city", "building_type"})
                 await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
@@ -388,6 +466,8 @@ class WorkspaceMiddleware:
                 row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
                 if not row:
                     raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
+                if row["state"] == "RUNNING" and DESIGNER.is_designer(row) and row["checkpoint"].get("session_id"):
+                    row = await asyncio.to_thread(DESIGNER.advance, store, project_id, actor_id, row)
                 if row["state"] == "RUNNING":
                     ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
                     for revision in ws.history():
@@ -438,4 +518,4 @@ class WorkspaceMiddleware:
             return await HTTP._send_json(scope, send, exc.status, exc.envelope(HTTP._request_id(scope)))
         except Exception:
             return await HTTP._send_json(scope, send, 503, {"ok": False, "error": {"code": "WORKSPACE_UNAVAILABLE", "message": "تعذّر فتح مساحة المشروع. حاول مجددًا؛ نسخك المحفوظة لم تُحذف."}})
-        return await HTTP._send_json(scope, send, 202 if action in {"generate", "chat_edit", "resume", "read_brief"} else 200, result)
+        return await HTTP._send_json(scope, send, 202 if action in {"generate", "chat_edit", "resume", "read_brief", "design"} else 200, result)

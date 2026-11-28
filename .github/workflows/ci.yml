@@ -90,6 +90,7 @@ jobs:
                    tests/remediation/test_door_match.py \
                    tests/remediation/test_room_size_fit.py \
                    tests/remediation/test_agent_designer.py \
+                   tests/remediation/test_designer_workspace.py \
                    tests/remediation/test_autofix_propose_boundary.py \
                    tests/remediation/test_doc_claims.py \
                    tests/remediation/test_ci_apt_mirror.py

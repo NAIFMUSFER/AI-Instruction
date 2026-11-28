@@ -547,8 +547,12 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         raise GeneratedVersionConflict(proposal, None) from None
 
 
-def _admit_generated(store, project_id, actor_id, command, building, ws, *, source_receipt, on_progress, note):
-    """Admit one provider building on top of ``ws.head`` and append it (no provider call)."""
+def _admit_generated(store, project_id, actor_id, command, building, ws, *, source_receipt, on_progress, note,
+                     fresh_defaults=True):
+    """Admit one provider building on top of ``ws.head`` and append it (no provider call).
+
+    ``fresh_defaults=False`` keeps an authored building's own stairs and context
+    (the ACS Designer draws and checks its cores itself); the roof rules apply."""
     expected = ws.head
     result = {"building": building}
     # The parent re-derives the plot rules from the validated command: the
@@ -565,7 +569,7 @@ def _admit_generated(store, project_id, actor_id, command, building, ws, *, sour
     # Imports, resumed work and every existing revision keep their authored
     # objects and lock context. This runs after stale-head detection and before
     # canonical proposal/approval; it makes no provider request.
-    fresh_describe = (expected is None and command.get("expected_head") is None
+    fresh_describe = (fresh_defaults and expected is None and command.get("expected_head") is None
                      and "source_id" not in command and "resume_job_id" not in command)
     if fresh_describe:
         from acs_stairs import with_default_stairs
