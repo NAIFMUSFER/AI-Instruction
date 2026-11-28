@@ -149,6 +149,10 @@ def admit(store, project_id, actor_id, row, building):
     command = row.get("resume_command") or {}
     ws = SERVICE.workspace(store, project_id, actor_id)
     if ws.head != row.get("expected_head"):
+        marker = SERVICE.adoption_marker(row["id"])
+        for revision in ws.history():
+            if (revision.get("note") or "").endswith(marker):
+                return revision["revision_id"]       # saved by an earlier poll that could not mark the job
         raise PlanError("STALE_REVISION", "تغيّرت النسخة الحالية أثناء التصميم؛ لم تُحفظ نسخة فوقها.")
     admitted = {"brief": command.get("brief") or "", "requirements": D.requirements_for(building),
                 "expected_head": row.get("expected_head")}

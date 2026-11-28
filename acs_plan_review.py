@@ -14,6 +14,7 @@ import threading
 import uuid
 from collections import Counter
 from dataclasses import dataclass
+from functools import cached_property
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -722,8 +723,11 @@ class Revision:
     def model_hash(self) -> str:
         return hashlib.sha256(self.model_json.encode("utf-8")).hexdigest()
 
-    @property
+    @cached_property
     def content_hash(self) -> str:
+        # Every field is an immutable string or tuple of this frozen revision, so
+        # the hash is computed once per object, not on each of the ~20 reads of
+        # one workspace view. A revision that fails canonical() raises each time.
         return digest({"model": self.model, "requirements": json.loads(self.requirements_json),
                        "brief": self.brief, "locks": [list(x) for x in self.locked_rooms]})
 

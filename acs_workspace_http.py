@@ -493,9 +493,14 @@ class WorkspaceMiddleware:
                 row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
                 if not row:
                     raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
-                if row["state"] == "RUNNING" and DESIGNER.is_designer(row) and row["checkpoint"].get("session_id"):
+                designer = DESIGNER.is_designer(row)
+                if row["state"] == "RUNNING" and designer and row["checkpoint"].get("session_id"):
                     row = await asyncio.to_thread(DESIGNER.advance, store, project_id, actor_id, row)
-                if row["state"] == "RUNNING":
+                # A finished worker that could not mark its job left its revision in
+                # history. A design is saved and marked by advance() alone, and a job
+                # whose worker runs in this process is marked by it: neither loads
+                # the project on every poll.
+                if row["state"] == "RUNNING" and not designer and row["id"] not in ACTIVE_JOBS:
                     ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
                     for revision in ws.history():
                         if (revision.get("note") or "").endswith("task:" + row["id"]):
