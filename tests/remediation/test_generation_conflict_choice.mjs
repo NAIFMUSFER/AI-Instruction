@@ -113,6 +113,29 @@ const paid=requests=>requests.filter(r=>['generate','chat_edit','resume'].includ
   console.log('PASS: a failed job releases the workspace and names one next step');
 }
 {
+  // The owner's warehouse (2026-11-28): 8 of 24 zones in 8 calls. No resume can
+  // finish it under the 12-call cap, so the page offers the full designer instead.
+  const beyond={id:JOB,state:'FAILED',error_code:'ACS_PROVIDER_BUDGET_EXHAUSTED',provider_calls:8,can_resume:false,beyond_quick:true,choice:null,
+    error_message:'هذا المشروع أكبر مما يرسمه التوليد السريع ضمن حده الأعلى (12 طلبًا)، فتوقف قبل اكتمال المخطط.'};
+  const t=setup();
+  t.context.state={head:null,designer_enabled:true};
+  await t.context.handleJob(beyond);
+  assert.equal(t.node('cwResumeJob').hidden,true,'no resume that could never finish');
+  assert.equal(t.node('cwToDesigner').hidden,false,'the full designer is offered');
+  assert.equal(t.context.failedJob,null,'no job id is kept for a resume');assert.equal(t.context.failedCalls,8);
+  const shown=t.statuses.at(-1)[1];
+  assert.ok(shown.includes('تصميم كامل بالذكاء')&&shown.includes('لم تُحفظ نسخة جديدة'),shown);
+  assert.equal(shown.split('لم تُحفظ نسخة جديدة').length,2,'the outcome is said once');
+  assert.ok(!rawCode.test(shown),'no raw code: '+shown);
+  assert.deepEqual(paid(t.requests),[],'nothing is requested');
+  const u=setup();
+  u.context.state={head:null,designer_enabled:false};
+  await u.context.handleJob(beyond);
+  assert.equal(u.node('cwToDesigner').hidden,true,'an account without the designer is not offered it');
+  assert.ok(!u.statuses.at(-1)[1].includes('تصميم كامل بالذكاء'));
+  console.log('PASS: a project beyond the quick generator offers the full designer, not a dead-end resume');
+}
+{
   const t=setup();
   await t.context.handleJob({id:JOB,state:'FAILED',error_code:'PLAN_DETAIL_INCOMPLETE',can_resume:true,choice:null});
   assert.equal(t.context.pendingJob,null);assert.equal(t.context.failedJob,JOB,'a resumable failure keeps its id for the paid resume');
