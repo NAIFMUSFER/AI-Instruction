@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from datetime import datetime, timezone
 import re
 import uuid
@@ -36,6 +37,35 @@ RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE"
 # the stage met its output cap, and the low-effort rung can answer it now.
 RESUMABLE_WITH_CHECKPOINT = frozenset({"ACS_UPSTREAM_TRUNCATED", "ACS_TIMEOUT",
                                        "ACS_UPSTREAM_NO_VISIBLE_OUTPUT"})
+
+
+MAX_PROVIDER_CALLS = 12        # the most one quick generation may use, resumes included
+BEYOND_QUICK_MESSAGE = "هذا المشروع أكبر مما يرسمه التوليد السريع ضمن حده الأعلى (12 طلبًا)، فتوقف قبل اكتمال المخطط."
+
+
+def _calls_to_finish(row):
+    """Calls a resume would still need, read from the layout progress it saved.
+
+    The first call wrote the zone outline; each later call placed zones. At the
+    rate measured so far, the rest of the zones and at least one call for doors
+    and windows remain. None when the job saved no layout progress."""
+    progress = row.get("progress") if isinstance(row.get("progress"), dict) else {}
+    checkpoint = row.get("checkpoint") if isinstance(row.get("checkpoint"), dict) else {}
+    done, total, used = progress.get("completed"), progress.get("total"), row.get("provider_calls")
+    if checkpoint.get("kind") != "outline" or not all(type(x) is int for x in (done, total, used)):
+        return None
+    if not 0 < done < total or used < 2:
+        return None
+    return math.ceil((total - done) * (used - 1) / done) + 1
+
+
+def _beyond_quick(row):
+    """A quick generation that ran out of calls and cannot finish within the cap."""
+    if row.get("error_code") != "ACS_PROVIDER_BUDGET_EXHAUSTED":
+        return False
+    used = row.get("provider_calls") if type(row.get("provider_calls")) is int else 0
+    need = _calls_to_finish(row)
+    return used >= MAX_PROVIDER_CALLS or (need is not None and used + need > MAX_PROVIDER_CALLS)
 
 
 def _resumable_failure(code, checkpoint=None):
@@ -170,6 +200,10 @@ def _job_view(row):
     if DESIGNER.is_designer(row):
         view["job"]["kind"] = "design"
         view["job"]["can_resume"] = False
+    elif not reading and state == "FAILED" and _beyond_quick(row):
+        # A resume could only add the calls left under the cap: never enough
+        # to finish, so it is not offered. The full designer is (where enabled).
+        view["job"].update(can_resume=False, beyond_quick=True, error_message=BEYOND_QUICK_MESSAGE)
     if view["job"]["choice"] and view["job"]["choice"]["adopted_revision_id"]:
         view["job"]["error_message"] = "اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته."
     return view
@@ -477,7 +511,16 @@ class WorkspaceMiddleware:
                 old = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("resume_job_id")))
                 if not old or not isinstance(old.get("resume_command"), dict) or old["resume_command"].get("action") != "generate":
                     raise PlanError("INVALID_RESUME", "هذه المهمة القديمة لا تحتوي بيانات استئناف. ابدأ طلبًا جديدًا من وصفك المحفوظ.")
-                resumed = dict(old["resume_command"], job_id=_id(command.get("job_id")), resume_job_id=old["id"], max_provider_calls=command.get("max_provider_calls"))
+                # The owner chooses how many more calls to spend; the earlier ones
+                # count against the same cap, so the resumed job may use them all.
+                extra = command.get("max_provider_calls")
+                if type(extra) is not int or not 1 <= extra <= MAX_PROVIDER_CALLS:
+                    raise PlanError("INVALID_BUDGET", "اختر سقف استدعاءات من 1 إلى 12.")
+                if _beyond_quick(old):
+                    raise PlanError("INVALID_RESUME", BEYOND_QUICK_MESSAGE)
+                used = old.get("provider_calls") if type(old.get("provider_calls")) is int else 0
+                resumed = dict(old["resume_command"], job_id=_id(command.get("job_id")), resume_job_id=old["id"],
+                               max_provider_calls=min(MAX_PROVIDER_CALLS, used + extra))
                 result = await self._start(scope, store, project_id, actor_id, resumed)
             elif action == "state":
                 SERVICE.checked_command(command, {"revision_id"})
