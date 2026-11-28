@@ -140,7 +140,14 @@ class Manifest(unittest.TestCase):
 
 # ── offline generation: the model is stubbed ────────────────────────────────
 class Provider:
-    """Answers from the hand-drawn owner model: plan chunks, one repair, openings."""
+    """Answers from the hand-drawn owner model: plan chunks, one repair, openings.
+
+    Its plan-chunk ids are not the owner model's ids, so its openings answers
+    need the repair to put the model's rooms in place. The free size fit would
+    grow the short majlis back without that repair, so it is held off here
+    (free_fit); FreeSizeFit below runs the same chunks with it on."""
+    free_fit = False
+
     def __init__(self):
         self.model, self.calls = owner_model(), []
         self.rooms = {(t, r['name']): r for t, f in self.model['floors'].items() for r in f['rooms']}
@@ -175,7 +182,8 @@ class Provider:
 
 
 def generate(provider, budget=12, prog=None, requirements=None, plot=PLOT):
-    with patch.object(U, 'call_llm', side_effect=provider):
+    fit = G._size_candidates if getattr(provider, 'free_fit', True) else (lambda *a, **k: [])
+    with patch.object(U, 'call_llm', side_effect=provider), patch.object(G, '_size_candidates', fit):
         return S.generate_plan_candidate(BRIEF, requirements or rows(), 'C', budget, plot=plot, program=prog or program())
 
 
@@ -255,7 +263,8 @@ class Generation(unittest.TestCase):
 
         class InProcess:
             def run(self, target, kwargs, **controls):
-                with patch.object(U, 'call_llm', side_effect=provider):
+                with patch.object(U, 'call_llm', side_effect=provider), \
+                        patch.object(G, '_size_candidates', lambda *a, **k: []):
                     return S.generate_plan_candidate(**kwargs)
         command = {'action': 'generate', 'job_id': '77777777-7777-4777-8777-777777777777', 'brief': BRIEF,
                    'requirements': rows(), 'expected_head': None, 'option': 'C', 'confirmed': True,
@@ -271,6 +280,29 @@ class Generation(unittest.TestCase):
         self.assertEqual([c[0] for c in provider.calls], ['plan_chunk'] * 3 + ['repair'] + ['detail'] * 3)
         blocking = [f for f in view['review_findings'] if f.get('severity') != 'advisory']
         self.assertEqual(blocking, [])
+
+
+class FreeSizeFit(unittest.TestCase):
+    """The plan chunk leaves the majlis 30% short with free floor beside it:
+    the layout stage grows it back for free, so no repair call is spent."""
+
+    class Chunks(Provider):
+        free_fit = True
+
+        def __call__(self, text, **kw):
+            if kw['stage'] == 'detail':
+                self.calls.append(('detail', text, None))
+                self.detail = json.loads(text)
+                raise StopIteration('openings are covered by Generation')
+            return super().__call__(text, **kw)
+
+    def test_the_short_majlis_is_fitted_before_any_paid_repair(self):
+        provider = self.Chunks()
+        with self.assertRaises(Exception):
+            generate(provider)
+        self.assertEqual([c[0] for c in provider.calls], ['plan_chunk'] * 3 + ['detail'])
+        majlis = next(r for r in provider.detail['all_rooms'] if r['id'] == 'level_0_majlis_1')
+        self.assertEqual(majlis['rect'], provider.rooms[('level_0', 'مجلس الضيوف')]['rect'])
 
 
 class KeptDraft(unittest.TestCase):
