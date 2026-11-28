@@ -24,6 +24,8 @@ OLD = "66666666-6666-4666-8666-666666666666"
 NEW = "77777777-7777-4777-8777-777777777777"
 OUTLINE = {"kind": "outline", "zones": [], "envelope": {}, "issues": [], "results": [], "pending": [],
            "rate": None, "index": 7}
+ZONES = [{"id": "zone_%02d" % n, "role": "storage", "order": n, "template": "t%d" % n} for n in range(24)]
+WAREHOUSE = dict(OUTLINE, zones=ZONES, pending=ZONES[8:])      # as saved: 24 zones, 16 still to place
 
 
 class QuickLimit(Harness):
@@ -49,7 +51,7 @@ class QuickLimit(Harness):
                                             "confirmed": True, "max_provider_calls": extra})
 
     async def test_the_owners_warehouse_offers_no_resume_that_could_never_finish(self):
-        self.failed(calls=8, progress={"total": 24, "completed": 8})
+        self.failed(calls=8, progress={"total": 24, "completed": 8}, checkpoint=WAREHOUSE)
         self.assertEqual(H._calls_to_finish(self.table.rows[OLD]), 15, "16 zones at 8 per 7 calls, then openings")
         job = await self.poll(OLD)
         self.assertEqual((job["can_resume"], job["beyond_quick"], job["error_message"]),
@@ -58,6 +60,11 @@ class QuickLimit(Harness):
         self.assertEqual((status >= 400, body["error"]["code"]), (True, "INVALID_RESUME"))
         self.assertIn("أكبر مما يرسمه التوليد السريع", body["error"]["message"])
         self.assertEqual((sorted(self.table.rows), self.started), ([OLD], []), "nothing written, nothing paid")
+
+    async def test_its_failed_resume_without_progress_is_read_from_the_saved_layout(self):
+        self.failed(calls=8, progress=None, checkpoint=WAREHOUSE)
+        job = await self.poll(OLD)
+        self.assertEqual((job["can_resume"], job["beyond_quick"]), (False, True))
 
     async def test_a_job_that_used_every_call_is_beyond_the_quick_generator(self):
         self.failed(calls=12, checkpoint={"kind": "start"})

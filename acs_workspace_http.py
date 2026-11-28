@@ -44,15 +44,22 @@ BEYOND_QUICK_MESSAGE = "هذا المشروع أكبر مما يرسمه الت�
 
 
 def _calls_to_finish(row):
-    """Calls a resume would still need, read from the layout progress it saved.
+    """Calls a resume would still need, read from the layout the job saved.
 
     The first call wrote the zone outline; each later call placed zones. At the
     rate measured so far, the rest of the zones and at least one call for doors
     and windows remain. None when the job saved no layout progress."""
     progress = row.get("progress") if isinstance(row.get("progress"), dict) else {}
     checkpoint = row.get("checkpoint") if isinstance(row.get("checkpoint"), dict) else {}
-    done, total, used = progress.get("completed"), progress.get("total"), row.get("provider_calls")
-    if checkpoint.get("kind") != "outline" or not all(type(x) is int for x in (done, total, used)):
+    if checkpoint.get("kind") != "outline":
+        return None
+    zones, pending = checkpoint.get("zones"), checkpoint.get("pending")
+    if isinstance(zones, list) and isinstance(pending, list) and zones:
+        total, done = len(zones), len(zones) - len(pending)     # a resumed job keeps these, not the progress
+    else:
+        done, total = progress.get("completed"), progress.get("total")
+    used = row.get("provider_calls")
+    if not all(type(x) is int for x in (done, total, used)):
         return None
     if not 0 < done < total or used < 2:
         return None
