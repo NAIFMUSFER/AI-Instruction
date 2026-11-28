@@ -95,6 +95,35 @@ def _failure_fields(exc):
     return {"error_at": _origin(exc)}
 
 
+IN_PROGRESS_MESSAGE = ("توجد مهمة توليد أو تعديل جارية لهذا المشروع. تابعها حتى تنتهي ثم افتح آخر نسخة؛ "
+                       "لم يُرسل أي طلب إلى مزود النموذج.")
+
+
+def _release_stale(store, project_id):
+    """Expire this project's RUNNING job if no worker can still finish it (audit P0-3).
+    Returns how many were released; a store that cannot say releases none."""
+    try:
+        released = store._request("POST", "/rest/v1/rpc/acs_release_stale_job", {"p_project": project_id})
+    except PlanError:
+        return 0
+    return released if type(released) is int else 0
+
+
+def _insert_job(store, project_id, row):
+    """Write a RUNNING job row. The database admits one RUNNING row per project
+    across every server instance; a row left by a dead worker is released once
+    and the write retried, otherwise the project is busy."""
+    for attempt in (0, 1):
+        try:
+            return store._request("POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
+                                  prefer="resolution=ignore-duplicates,return=representation")
+        except PlanError as exc:
+            if exc.code != "GENERATION_IN_PROGRESS":
+                raise
+            if attempt or not _release_stale(store, project_id):
+                raise PlanError("GENERATION_IN_PROGRESS", IN_PROGRESS_MESSAGE) from None
+
+
 def _id(value):
     try:
         if not isinstance(value, str) or str(uuid.UUID(value)) != value:
@@ -304,8 +333,7 @@ class WorkspaceMiddleware:
                    "expected_head": command.get("expected_head"), "worker_id": WORKER_ID, "state": "RUNNING",
                    "resume_command": dict(command, action="design"), "phase": "UNDERSTANDING",
                    "checkpoint": {"kind": DESIGNER.KIND, "session_id": None}, "provider_calls": 0}
-            inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
-                                               prefer="resolution=ignore-duplicates,return=representation")
+            inserted = await asyncio.to_thread(_insert_job, store, project_id, row)
             if not isinstance(inserted, list) or not inserted:
                 raise PlanError("STORE_UNAVAILABLE", "لم يصل تأكيد حفظ المهمة.")
             try:
@@ -345,8 +373,7 @@ class WorkspaceMiddleware:
             if not source or not _job_view(source)["job"]["can_resume"]:
                 raise PlanError("INVALID_RESUME", "لا توجد مرحلة محفوظة قابلة للاستئناف.")
             row.update(checkpoint=source.get("checkpoint") or {"kind":"start"}, provider_calls=source.get("provider_calls",0), phase=source.get("phase"))
-        inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
-                                           prefer="resolution=ignore-duplicates,return=representation")
+        inserted = await asyncio.to_thread(_insert_job, store, project_id, row)
         if not isinstance(inserted, list):
             raise PlanError("STORE_UNAVAILABLE", "لم يصل تأكيد حفظ المهمة.")
         if not inserted:
