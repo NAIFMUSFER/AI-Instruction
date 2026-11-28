@@ -44,6 +44,7 @@ MODEL = "claude-opus-5-5"
 AGENT_NAME = "ACS Designer"
 ENV_NAME = "acs-designer"
 PILOT_TAG = "designer-pilot"
+PRODUCT_TAG = "designer"           # sessions a signed-in owner starts from the workspace
 MAX_ITERATIONS = 3
 SESSION_BUDGET_CENTS = 800          # $8 per project
 SESSION_BUDGET_MAX_CENTS = 1000     # no single project may be given more than $10
@@ -171,6 +172,10 @@ opens outside. Roles: use the role names of the matching ACS pack (bedroom,
 bathroom, living, majlis, dining, kitchen, corridor, entrance, lobby, stairs,
 elevator, office, open_office, meeting, classroom, prayer_hall, ward, consult,
 storage, parking, terrace, ...). Every repeated floor may share a template.
+Every room carries a "doors" list and a "windows" list (empty when it has none).
+A stair or lift room carries "core_id": the same id and the same rect on every
+floor it serves. Leave out scorecard, metrics, validation, review, approval,
+baseline and authority keys: ACS sets those itself.
 
 All deliverables go in %(out)s. Finish only when every file exists, the checks
 pass, and the drawings and the model show the same building.
@@ -342,16 +347,18 @@ def _cents(cost):
         return 0
 
 
-def pilot_sessions(client):
+def pilot_sessions(client, tag=PILOT_TAG, since=None):
+    """Sessions carrying ``tag``; with ``since`` (ISO-8601 UTC), only those created at or after it."""
     return [s for s in client.pages("/v1/sessions")
-            if (s.get("metadata") or {}).get("acs") == PILOT_TAG]
+            if (s.get("metadata") or {}).get("acs") == tag
+            and (since is None or str(s.get("created_at") or "") >= since)]
 
 
-def committed_cents(client):
-    """What the pilot has spent, plus what still-running sessions may spend up to
+def committed_cents(client, tag=PILOT_TAG, since=None):
+    """What the sessions have spent, plus what still-running ones may spend up to
     their caps: a new session is refused if this plus its own cap passes the total."""
     total = 0
-    for s in pilot_sessions(client):
+    for s in pilot_sessions(client, tag, since):
         spent = _cents((s.get("usage") or {}).get("list_cost"))
         cap = _cents(((s.get("budget") or {}).get("max_list_cost")))
         total += max(spent, cap) if s.get("status") in ("running", "rescheduling") else spent
@@ -377,14 +384,22 @@ def clean_brief(text):
     return text
 
 
-def start(brief, title=None, budget_cents=SESSION_BUDGET_CENTS, client=None):
-    """Open one designer session for ``brief``; returns its id and cap."""
+def start(brief, title=None, budget_cents=SESSION_BUDGET_CENTS, client=None, *,
+          tag=PILOT_TAG, metadata=None, cap_cents=None, since=None):
+    """Open one designer session for ``brief``; returns its id and cap.
+
+    ``tag`` separates the admin pilot from workspace sessions; ``cap_cents`` and
+    ``since`` bound what sessions of that tag may commit (the pilot total by
+    default, a rolling window for the workspace)."""
     brief = clean_brief(brief)
     if type(budget_cents) is not int or not 100 <= budget_cents <= SESSION_BUDGET_MAX_CENTS:
         raise DesignerError("DESIGNER_BUDGET_INVALID")
     client = client or Client()
-    if committed_cents(client) + budget_cents > total_cap_cents():
-        raise DesignerError("DESIGNER_PILOT_CAP_REACHED", 409)
+    cap = total_cap_cents() if cap_cents is None else cap_cents
+    if committed_cents(client, tag, since) + budget_cents > cap:
+        raise DesignerError("DESIGNER_PILOT_CAP_REACHED" if tag == PILOT_TAG else "DESIGNER_DAILY_CAP_REACHED", 409)
+    meta = {"acs": tag}
+    meta.update({k: str(v)[:64] for k, v in (metadata or {}).items() if k != "acs"})
     title = (title if isinstance(title, str) else "")[:80].strip() or "ACS design"
     session = client.call("POST", "/v1/sessions", body={
         "agent": ensure_agent(client),
@@ -392,7 +407,7 @@ def start(brief, title=None, budget_cents=SESSION_BUDGET_CENTS, client=None):
         "title": title,
         "resources": upload_checks(client),
         "budget": {"type": "limit", "max_list_cost": {"amount": str(budget_cents), "currency": "USD"}},
-        "metadata": {"acs": PILOT_TAG},
+        "metadata": meta,
         "initial_events": [{
             "type": "user.define_outcome",
             "description": _task(brief),
@@ -409,11 +424,15 @@ def _session_id(value):
     return value
 
 
-def status(session_id, client=None):
-    """What the owner's team needs to follow a run: state, cost, time, grading."""
+def status(session_id, client=None, *, tag=PILOT_TAG, project_id=None):
+    """What the owner's team needs to follow a run: state, cost, time, grading.
+
+    A session of another tag, or of another project when ``project_id`` is
+    given, is refused as not found."""
     client = client or Client()
     s = client.call("GET", "/v1/sessions/" + _session_id(session_id))
-    if (s.get("metadata") or {}).get("acs") != PILOT_TAG:
+    meta = s.get("metadata") or {}
+    if meta.get("acs") != tag or (project_id is not None and meta.get("project") != project_id):
         raise DesignerError("DESIGNER_NOT_FOUND", 404)
     usage = s.get("usage") or {}
     return {
@@ -458,19 +477,79 @@ def resume(session_id, client=None):
     return {"session_id": session_id, "status": "running", "headroom_cents": headroom}
 
 
-def outputs(session_id, client=None):
+DELIVERABLE_SUFFIXES = (".pdf", ".dxf", ".glb", ".png", ".md", ".json")
+
+
+def outputs(session_id, client=None, *, tag=PILOT_TAG, project_id=None, deliverables=False):
+    """Files of the session. ``deliverables`` keeps what the owner downloads:
+    drawings, model, renders, report and JSON, without ACS's own uploaded checks
+    or the agent's working scripts."""
     client = client or Client()
-    status(session_id, client)          # refuses a session that is not the pilot's
-    return [{"file_id": f["id"], "filename": f.get("filename"), "size_bytes": f.get("size_bytes")}
-            for f in client.pages("/v1/files", params={"scope_id": session_id})]
+    status(session_id, client, tag=tag, project_id=project_id)   # refuses a foreign session
+    files = [{"file_id": f["id"], "filename": f.get("filename"), "size_bytes": f.get("size_bytes")}
+             for f in client.pages("/v1/files", params={"scope_id": session_id})]
+    if deliverables:
+        mounted = {"README.md", *CHECK_FILES}
+        files = [f for f in files if isinstance(f["filename"], str) and f["filename"] not in mounted
+                 and f["filename"].lower().endswith(DELIVERABLE_SUFFIXES)]
+    return files
 
 
-def download(session_id, file_id, client=None):
+def download(session_id, file_id, client=None, *, tag=PILOT_TAG, project_id=None):
     """A file the session wrote; any other file id is refused."""
     if not isinstance(file_id, str) or not FILE_ID.match(file_id):
         raise DesignerError("DESIGNER_FILE_INVALID")
     client = client or Client()
-    names = {f["file_id"]: f["filename"] for f in outputs(session_id, client)}
+    names = {f["file_id"]: f["filename"] for f in outputs(session_id, client, tag=tag, project_id=project_id)}
     if file_id not in names:
         raise DesignerError("DESIGNER_NOT_FOUND", 404)
     return names[file_id], client.call("GET", "/v1/files/" + file_id + "/content", beta=False, raw=True)
+
+
+# ── into the workspace: the designer's building as an ACS revision ───────────
+CORE_KINDS = {"stairs": "stairs", "stair": "stairs", "elevator": "lift", "lift": "lift",
+              "service_elevator": "lift"}
+
+
+def normalise_building(building):
+    """Make an agent's building.json meet the workspace review's explicit forms, for free.
+
+    Pilot 2026-11-28: all five designs passed every ACS check, yet two could not
+    be approved: corridors and lifts carried no door/window lists, and the
+    stairs and lifts had no core_id tying them across floors. Missing lists
+    become explicit empty lists (the review then judges reach and daylight as
+    drawn); a stair or lift without core_id gets one shared by every floor
+    where the same rectangle repeats. Nothing else changes."""
+    seen = {}
+    floors = building.get("floors") if isinstance(building, dict) else None
+    for floor in (floors or {}).values():
+        for room in (floor or {}).get("rooms") or []:
+            if not isinstance(room, dict):
+                continue
+            if room.get("walls") != "none":
+                room.setdefault("doors", [])
+                room.setdefault("windows", [])
+            kind = CORE_KINDS.get(room.get("role"))
+            rect = room.get("rect")
+            if kind and not room.get("core_id") and isinstance(rect, list) and len(rect) == 4 \
+                    and all(isinstance(v, (int, float)) for v in rect):
+                key = (kind, tuple(round(float(v), 2) for v in rect))
+                if key not in seen:
+                    seen[key] = "core_%s_%d" % (kind, sum(1 for k in seen if k[0] == kind) + 1)
+                room["core_id"] = seen[key]
+    return building
+
+
+def requirements_for(building):
+    """Requirement rows the review checks the design against: the plot and the
+    occupied floor count the designer settled (stated or assumed in its report)."""
+    site = building.get("site") if isinstance(building.get("site"), dict) else {}
+    levels = [l for l in building.get("levels") or [] if isinstance(l, dict) and l.get("kind") != "roof"]
+    rows = []
+    for metric, value in (("site_width_m", site.get("w")), ("site_depth_m", site.get("d")),
+                          ("level_count", len(levels) or None)):
+        if isinstance(value, (int, float)) and value > 0:
+            rows.append({"id": metric, "metric": metric, "expected": value, "confirmed": True,
+                         "source": "inferred", "source_id": "designer:building",
+                         "evidence": "%s: %s" % (metric, value)})
+    return rows

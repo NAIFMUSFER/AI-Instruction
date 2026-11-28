@@ -1,0 +1,1978 @@
+{
+ "meta": {
+  "type": "residential",
+  "typology": "villa",
+  "units": 1,
+  "brief_ref": "فيلا دورين وملحق على أرض 20×30 م"
+ },
+ "site": {
+  "w": 20.0,
+  "d": 30.0,
+  "north": "-z (top of plan)",
+  "streets": [
+   {
+    "side": "N",
+    "width": 15.0,
+    "status": "assumed"
+   }
+  ],
+  "setbacks_regulatory": {
+   "N": 3.0,
+   "E": 2.0,
+   "W": 2.0,
+   "S": 2.0
+  },
+  "building_offset_outer_face": {
+   "N": 5.9,
+   "E": 2.0,
+   "W": 2.0,
+   "S": 8.9
+  },
+  "features": [
+   {
+    "id": "pool",
+    "name": "مسبح",
+    "role": "pool",
+    "rect": [
+     6.0,
+     23.0,
+     8.0,
+     4.0
+    ],
+    "depth": 1.5
+   },
+   {
+    "id": "pool_deck",
+    "name": "سطح المسبح",
+    "role": "deck",
+    "rect": [
+     4.5,
+     22.0,
+     11.0,
+     6.0
+    ]
+   },
+   {
+    "id": "parking",
+    "name": "موقف سيارتين (مظلة)",
+    "role": "parking",
+    "rect": [
+     12.6,
+     0.4,
+     5.2,
+     5.3
+    ]
+   },
+   {
+    "id": "gate_car",
+    "name": "بوابة سيارات",
+    "role": "gate",
+    "edge": "N",
+    "x": 15.2,
+    "width": 4.5
+   },
+   {
+    "id": "gate_main",
+    "name": "بوابة رئيسية",
+    "role": "gate",
+    "edge": "N",
+    "x": 10.2,
+    "width": 1.2
+   },
+   {
+    "id": "gate_men",
+    "name": "بوابة الرجال",
+    "role": "gate",
+    "edge": "N",
+    "x": 5.4,
+    "width": 1.2
+   }
+  ]
+ },
+ "floor_height": 3.2,
+ "wall_h": 3.0,
+ "wall_t": 0.2,
+ "levels": [
+  {
+   "id": "L0",
+   "index": 0,
+   "name": "الدور الأرضي",
+   "template": "level_0"
+  },
+  {
+   "id": "L1",
+   "index": 1,
+   "name": "الدور الأول",
+   "template": "level_1"
+  },
+  {
+   "id": "L2",
+   "index": 2,
+   "name": "الملحق العلوي",
+   "template": "level_2"
+  }
+ ],
+ "floors": {
+  "level_0": {
+   "rooms": [
+    {
+     "id": "level_0_majlis_men",
+     "name": "مجلس الرجال",
+     "role": "majlis",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      6,
+      6.7,
+      5.6
+     ],
+     "doors": [
+      {
+       "id": "d01",
+       "edge": "N",
+       "offset": 3.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "exterior"
+      },
+      {
+       "id": "d02",
+       "edge": "S",
+       "offset": 4.4,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_men"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w01",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 1.5,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w02",
+       "edge": "N",
+       "offset": 5.4,
+       "width": 1.5,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w03",
+       "edge": "W",
+       "offset": 2.8,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 3.35,
+       "z": 2.8
+      }
+     ]
+    },
+    {
+     "id": "level_0_wc_men",
+     "name": "دورة مياه الرجال",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      11.6,
+      2.1,
+      2
+     ],
+     "doors": [
+      {
+       "id": "d03",
+       "edge": "E",
+       "offset": 1.0,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_men"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w04",
+       "edge": "W",
+       "offset": 1.0,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.05,
+       "z": 1.0
+      }
+     ]
+    },
+    {
+     "id": "level_0_vest_men",
+     "name": "مغاسل وممر المجلس",
+     "role": "corridor",
+     "unit_id": "villa",
+     "rect": [
+      4.2,
+      11.6,
+      4.6,
+      2
+     ],
+     "doors": [
+      {
+       "id": "d02",
+       "edge": "N",
+       "offset": 2.3,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_majlis_men"
+      },
+      {
+       "id": "d03",
+       "edge": "W",
+       "offset": 1.0,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_wc_men"
+      },
+      {
+       "id": "d04",
+       "edge": "E",
+       "offset": 1.0,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_entrance"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.3,
+       "z": 1.0
+      }
+     ]
+    },
+    {
+     "id": "level_0_entrance",
+     "name": "بهو المدخل",
+     "role": "entrance",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      6,
+      2.8,
+      7.6
+     ],
+     "doors": [
+      {
+       "id": "d04",
+       "edge": "W",
+       "offset": 6.6,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_men"
+      },
+      {
+       "id": "d05",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.4,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "exterior"
+      },
+      {
+       "id": "d06",
+       "edge": "E",
+       "offset": 6.6,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_women"
+      },
+      {
+       "id": "d09",
+       "edge": "S",
+       "offset": 1.4,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_corridor"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.4,
+       "z": 3.8
+      }
+     ]
+    },
+    {
+     "id": "level_0_majlis_women",
+     "name": "مجلس النساء",
+     "role": "majlis",
+     "unit_id": "villa",
+     "rect": [
+      11.6,
+      6,
+      6.3,
+      5.6
+     ],
+     "doors": [
+      {
+       "id": "d07",
+       "edge": "S",
+       "offset": 1.4,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_women"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w06",
+       "edge": "N",
+       "offset": 1.8,
+       "width": 1.5,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w07",
+       "edge": "N",
+       "offset": 4.8,
+       "width": 1.5,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w08",
+       "edge": "E",
+       "offset": 2.8,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 3.15,
+       "z": 2.8
+      }
+     ]
+    },
+    {
+     "id": "level_0_vest_women",
+     "name": "مغاسل وممر مجلس النساء",
+     "role": "corridor",
+     "unit_id": "villa",
+     "rect": [
+      11.6,
+      11.6,
+      4.2,
+      2
+     ],
+     "doors": [
+      {
+       "id": "d06",
+       "edge": "W",
+       "offset": 1.0,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_entrance"
+      },
+      {
+       "id": "d07",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_majlis_women"
+      },
+      {
+       "id": "d08",
+       "edge": "E",
+       "offset": 1.0,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_wc_women"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.1,
+       "z": 1.0
+      }
+     ]
+    },
+    {
+     "id": "level_0_wc_women",
+     "name": "دورة مياه النساء",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      15.8,
+      11.6,
+      2.1,
+      2
+     ],
+     "doors": [
+      {
+       "id": "d08",
+       "edge": "W",
+       "offset": 1.0,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_vest_women"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w05",
+       "edge": "E",
+       "offset": 1.0,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.05,
+       "z": 1.0
+      }
+     ]
+    },
+    {
+     "id": "level_0_corridor",
+     "name": "ممر العائلة",
+     "role": "corridor",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      13.6,
+      9.1,
+      1.4
+     ],
+     "doors": [
+      {
+       "id": "d09",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_entrance"
+      },
+      {
+       "id": "d10",
+       "edge": "W",
+       "offset": 0.7,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_living"
+      },
+      {
+       "id": "d12",
+       "edge": "S",
+       "offset": 1.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "stair_1_l0"
+      },
+      {
+       "id": "d13",
+       "edge": "S",
+       "offset": 3.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "lift_1_l0"
+      },
+      {
+       "id": "d14",
+       "edge": "S",
+       "offset": 5.4,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_kitchen"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w09",
+       "edge": "E",
+       "offset": 0.7,
+       "width": 0.9,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 4.55,
+       "z": 0.7
+      }
+     ]
+    },
+    {
+     "id": "level_0_living",
+     "name": "الصالة والطعام",
+     "role": "living",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      13.6,
+      6.7,
+      7.4
+     ],
+     "doors": [
+      {
+       "id": "d10",
+       "edge": "E",
+       "offset": 0.7,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_corridor"
+      },
+      {
+       "id": "d11",
+       "edge": "S",
+       "offset": 1.9,
+       "width": 1.8,
+       "height": 2.4,
+       "kind": "sliding",
+       "to": "exterior"
+      },
+      {
+       "id": "d15",
+       "edge": "E",
+       "offset": 6.7,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_wc_family"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w10",
+       "edge": "W",
+       "offset": 2.2,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w11",
+       "edge": "W",
+       "offset": 5.6,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w12",
+       "edge": "S",
+       "offset": 5.2,
+       "width": 1.5,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 3.35,
+       "z": 3.7
+      }
+     ]
+    },
+    {
+     "id": "stair_1_l0",
+     "name": "الدرج",
+     "role": "stairs",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      15,
+      2.6,
+      4.6
+     ],
+     "doors": [
+      {
+       "id": "d12",
+       "edge": "N",
+       "offset": 1.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "level_0_corridor"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.3,
+       "z": 2.3
+      }
+     ]
+    },
+    {
+     "id": "level_0_wc_family",
+     "name": "دورة مياه",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      19.6,
+      2.6,
+      1.4
+     ],
+     "doors": [
+      {
+       "id": "d15",
+       "edge": "W",
+       "offset": 0.7,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_living"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w13",
+       "edge": "S",
+       "offset": 1.8,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.3,
+       "z": 0.7
+      }
+     ]
+    },
+    {
+     "id": "lift_1_l0",
+     "name": "مصعد",
+     "role": "elevator",
+     "unit_id": "villa",
+     "rect": [
+      11.4,
+      15,
+      1.6,
+      1.8
+     ],
+     "doors": [
+      {
+       "id": "d13",
+       "edge": "N",
+       "offset": 0.8,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "level_0_corridor"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.8,
+       "z": 0.9
+      }
+     ]
+    },
+    {
+     "id": "level_0_laundry",
+     "name": "غسيل وخدمة",
+     "role": "laundry",
+     "unit_id": "villa",
+     "rect": [
+      11.4,
+      16.8,
+      1.6,
+      4.2
+     ],
+     "doors": [
+      {
+       "id": "d16",
+       "edge": "E",
+       "offset": 0.8,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_kitchen"
+      },
+      {
+       "id": "d17",
+       "edge": "S",
+       "offset": 0.8,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "exterior"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.8,
+       "z": 2.1
+      }
+     ]
+    },
+    {
+     "id": "level_0_kitchen",
+     "name": "المطبخ",
+     "role": "kitchen",
+     "unit_id": "villa",
+     "rect": [
+      13,
+      15,
+      4.9,
+      3.4
+     ],
+     "doors": [
+      {
+       "id": "d14",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_corridor"
+      },
+      {
+       "id": "d16",
+       "edge": "W",
+       "offset": 2.6,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_laundry"
+      },
+      {
+       "id": "d18",
+       "edge": "E",
+       "offset": 0.9,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "exterior"
+      },
+      {
+       "id": "d19",
+       "edge": "S",
+       "offset": 1.0,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_maid"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w14",
+       "edge": "E",
+       "offset": 2.5,
+       "width": 1.2,
+       "height": 1.2,
+       "sill": 1.1
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.45,
+       "z": 1.7
+      }
+     ]
+    },
+    {
+     "id": "level_0_maid",
+     "name": "غرفة الخادمة",
+     "role": "maid_room",
+     "unit_id": "villa",
+     "rect": [
+      13,
+      18.4,
+      3.2,
+      2.6
+     ],
+     "doors": [
+      {
+       "id": "d19",
+       "edge": "N",
+       "offset": 1.0,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_kitchen"
+      },
+      {
+       "id": "d20",
+       "edge": "E",
+       "offset": 1.3,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_maid_bath"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w15",
+       "edge": "S",
+       "offset": 1.8,
+       "width": 1.2,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.6,
+       "z": 1.3
+      }
+     ]
+    },
+    {
+     "id": "level_0_maid_bath",
+     "name": "حمام الخادمة",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      16.2,
+      18.4,
+      1.7,
+      2.6
+     ],
+     "doors": [
+      {
+       "id": "d20",
+       "edge": "W",
+       "offset": 1.3,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_0_maid"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w16",
+       "edge": "S",
+       "offset": 0.9,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.85,
+       "z": 1.3
+      }
+     ]
+    }
+   ]
+  },
+  "level_1": {
+   "rooms": [
+    {
+     "id": "level_1_bath_2",
+     "name": "حمام 2",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      6,
+      2.3,
+      3
+     ],
+     "doors": [
+      {
+       "id": "d22",
+       "edge": "S",
+       "offset": 1.1,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_2"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w18",
+       "edge": "W",
+       "offset": 1.5,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.15,
+       "z": 1.5
+      }
+     ]
+    },
+    {
+     "id": "level_1_dress_2",
+     "name": "ملابس 2",
+     "role": "dressing",
+     "unit_id": "villa",
+     "rect": [
+      4.4,
+      6,
+      2.8,
+      3
+     ],
+     "doors": [
+      {
+       "id": "d23",
+       "edge": "S",
+       "offset": 1.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_2"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w19",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.0,
+       "height": 1.0,
+       "sill": 1.2
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.4,
+       "z": 1.5
+      }
+     ]
+    },
+    {
+     "id": "level_1_bed_2",
+     "name": "غرفة نوم 2",
+     "role": "bedroom",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      9,
+      5.1,
+      4.6
+     ],
+     "doors": [
+      {
+       "id": "d21",
+       "edge": "S",
+       "offset": 4.1,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_corridor"
+      },
+      {
+       "id": "d22",
+       "edge": "N",
+       "offset": 1.1,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bath_2"
+      },
+      {
+       "id": "d23",
+       "edge": "N",
+       "offset": 3.7,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_dress_2"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w17",
+       "edge": "W",
+       "offset": 2.3,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.55,
+       "z": 2.3
+      }
+     ]
+    },
+    {
+     "id": "level_1_living",
+     "name": "الصالة العلوية",
+     "role": "living",
+     "unit_id": "villa",
+     "rect": [
+      7.2,
+      6,
+      5.6,
+      7.6
+     ],
+     "doors": [
+      {
+       "id": "d24",
+       "edge": "S",
+       "offset": 2.8,
+       "width": 1.6,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_corridor"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w20",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w21",
+       "edge": "N",
+       "offset": 4.2,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.8,
+       "z": 3.8
+      }
+     ]
+    },
+    {
+     "id": "level_1_dress_3",
+     "name": "ملابس 3",
+     "role": "dressing",
+     "unit_id": "villa",
+     "rect": [
+      12.8,
+      6,
+      2.8,
+      3
+     ],
+     "doors": [
+      {
+       "id": "d26",
+       "edge": "S",
+       "offset": 1.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_3"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w23",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 1.0,
+       "height": 1.0,
+       "sill": 1.2
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.4,
+       "z": 1.5
+      }
+     ]
+    },
+    {
+     "id": "level_1_bath_3",
+     "name": "حمام 3",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      15.6,
+      6,
+      2.3,
+      3
+     ],
+     "doors": [
+      {
+       "id": "d27",
+       "edge": "S",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_3"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w24",
+       "edge": "E",
+       "offset": 1.5,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.15,
+       "z": 1.5
+      }
+     ]
+    },
+    {
+     "id": "level_1_bed_3",
+     "name": "غرفة نوم 3",
+     "role": "bedroom",
+     "unit_id": "villa",
+     "rect": [
+      12.8,
+      9,
+      5.1,
+      4.6
+     ],
+     "doors": [
+      {
+       "id": "d25",
+       "edge": "S",
+       "offset": 1.0,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_corridor"
+      },
+      {
+       "id": "d26",
+       "edge": "N",
+       "offset": 1.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_dress_3"
+      },
+      {
+       "id": "d27",
+       "edge": "N",
+       "offset": 4.0,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bath_3"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w22",
+       "edge": "E",
+       "offset": 2.3,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.55,
+       "z": 2.3
+      }
+     ]
+    },
+    {
+     "id": "level_1_corridor",
+     "name": "الممر",
+     "role": "corridor",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      13.6,
+      15.8,
+      1.4
+     ],
+     "doors": [
+      {
+       "id": "d21",
+       "edge": "N",
+       "offset": 4.1,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_2"
+      },
+      {
+       "id": "d24",
+       "edge": "N",
+       "offset": 7.9,
+       "width": 1.6,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_living"
+      },
+      {
+       "id": "d25",
+       "edge": "N",
+       "offset": 11.7,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_3"
+      },
+      {
+       "id": "d28",
+       "edge": "S",
+       "offset": 3.5,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_bed"
+      },
+      {
+       "id": "d32",
+       "edge": "S",
+       "offset": 8.0,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "stair_1_l1"
+      },
+      {
+       "id": "d33",
+       "edge": "S",
+       "offset": 10.1,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "lift_1_l1"
+      },
+      {
+       "id": "d34",
+       "edge": "S",
+       "offset": 12.1,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_4"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w25",
+       "edge": "W",
+       "offset": 0.7,
+       "width": 0.9,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w26",
+       "edge": "E",
+       "offset": 0.7,
+       "width": 0.9,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 7.9,
+       "z": 0.7
+      }
+     ]
+    },
+    {
+     "id": "level_1_master_bed",
+     "name": "غرفة النوم الرئيسية",
+     "role": "bedroom",
+     "unit_id": "villa",
+     "rect": [
+      2.1,
+      15,
+      4.3,
+      6
+     ],
+     "doors": [
+      {
+       "id": "d28",
+       "edge": "N",
+       "offset": 3.5,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_corridor"
+      },
+      {
+       "id": "d29",
+       "edge": "E",
+       "offset": 2.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_dress"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w27",
+       "edge": "W",
+       "offset": 3.0,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w28",
+       "edge": "S",
+       "offset": 2.1,
+       "width": 1.8,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.15,
+       "z": 3.0
+      }
+     ]
+    },
+    {
+     "id": "level_1_master_dress",
+     "name": "ملابس الجناح",
+     "role": "dressing",
+     "unit_id": "villa",
+     "rect": [
+      6.4,
+      15,
+      2.4,
+      2.8
+     ],
+     "doors": [
+      {
+       "id": "d29",
+       "edge": "W",
+       "offset": 2.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_bed"
+      },
+      {
+       "id": "d30",
+       "edge": "S",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_bath"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.2,
+       "z": 1.4
+      }
+     ]
+    },
+    {
+     "id": "level_1_master_bath",
+     "name": "حمام الجناح",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      6.4,
+      17.8,
+      2.4,
+      3.2
+     ],
+     "doors": [
+      {
+       "id": "d30",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_dress"
+      },
+      {
+       "id": "d31",
+       "edge": "E",
+       "offset": 2.5,
+       "width": 0.8,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_linen"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w29",
+       "edge": "S",
+       "offset": 1.2,
+       "width": 0.8,
+       "height": 0.8,
+       "sill": 1.5
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.2,
+       "z": 1.6
+      }
+     ]
+    },
+    {
+     "id": "stair_1_l1",
+     "name": "الدرج",
+     "role": "stairs",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      15,
+      2.6,
+      4.6
+     ],
+     "doors": [
+      {
+       "id": "d32",
+       "edge": "N",
+       "offset": 1.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "level_1_corridor"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.3,
+       "z": 2.3
+      }
+     ]
+    },
+    {
+     "id": "level_1_linen",
+     "name": "خزانة الجناح",
+     "role": "storage",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      19.6,
+      2.6,
+      1.4
+     ],
+     "doors": [
+      {
+       "id": "d31",
+       "edge": "W",
+       "offset": 0.7,
+       "width": 0.8,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_master_bath"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.3,
+       "z": 0.7
+      }
+     ]
+    },
+    {
+     "id": "lift_1_l1",
+     "name": "مصعد",
+     "role": "elevator",
+     "unit_id": "villa",
+     "rect": [
+      11.4,
+      15,
+      1.6,
+      1.8
+     ],
+     "doors": [
+      {
+       "id": "d33",
+       "edge": "N",
+       "offset": 0.8,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "level_1_corridor"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.8,
+       "z": 0.9
+      }
+     ]
+    },
+    {
+     "id": "level_1_bath_4",
+     "name": "حمام 4",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      11.4,
+      16.8,
+      1.6,
+      4.2
+     ],
+     "doors": [
+      {
+       "id": "d35",
+       "edge": "E",
+       "offset": 3.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bed_4"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w30",
+       "edge": "S",
+       "offset": 0.8,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.8,
+       "z": 2.1
+      }
+     ]
+    },
+    {
+     "id": "level_1_bed_4",
+     "name": "غرفة نوم 4",
+     "role": "bedroom",
+     "unit_id": "villa",
+     "rect": [
+      13,
+      15,
+      4.9,
+      6
+     ],
+     "doors": [
+      {
+       "id": "d34",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_corridor"
+      },
+      {
+       "id": "d35",
+       "edge": "W",
+       "offset": 5.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_1_bath_4"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w31",
+       "edge": "E",
+       "offset": 2.5,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w32",
+       "edge": "S",
+       "offset": 2.5,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.45,
+       "z": 3.0
+      }
+     ]
+    }
+   ]
+  },
+  "level_2": {
+   "rooms": [
+    {
+     "id": "level_2_landing",
+     "name": "بسطة الملحق",
+     "role": "corridor",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      13.6,
+      6.6,
+      1.4
+     ],
+     "doors": [
+      {
+       "id": "d36",
+       "edge": "N",
+       "offset": 2.2,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_annex_room"
+      },
+      {
+       "id": "d38",
+       "edge": "S",
+       "offset": 5.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_laundry"
+      },
+      {
+       "id": "d39",
+       "edge": "E",
+       "offset": 0.7,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "exterior"
+      },
+      {
+       "id": "d40",
+       "edge": "S",
+       "offset": 1.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "stair_1_l2"
+      },
+      {
+       "id": "d41",
+       "edge": "S",
+       "offset": 3.4,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "lift_1_l2"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 3.3,
+       "z": 0.7
+      }
+     ]
+    },
+    {
+     "id": "level_2_annex_room",
+     "name": "غرفة متعددة الاستخدام",
+     "role": "living",
+     "unit_id": "villa",
+     "rect": [
+      7.2,
+      8.6,
+      5.8,
+      5
+     ],
+     "doors": [
+      {
+       "id": "d36",
+       "edge": "S",
+       "offset": 3.8,
+       "width": 1.0,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_landing"
+      },
+      {
+       "id": "d37",
+       "edge": "W",
+       "offset": 3.9,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_annex_bath"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w33",
+       "edge": "N",
+       "offset": 1.5,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w34",
+       "edge": "N",
+       "offset": 4.3,
+       "width": 1.6,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w35",
+       "edge": "W",
+       "offset": 1.4,
+       "width": 1.2,
+       "height": 1.4,
+       "sill": 0.9
+      },
+      {
+       "id": "w36",
+       "edge": "E",
+       "offset": 2.4,
+       "width": 1.2,
+       "height": 1.4,
+       "sill": 0.9
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 2.9,
+       "z": 2.5
+      }
+     ]
+    },
+    {
+     "id": "level_2_annex_bath",
+     "name": "دورة مياه الملحق",
+     "role": "bathroom",
+     "unit_id": "villa",
+     "rect": [
+      5,
+      11.4,
+      2.2,
+      2.2
+     ],
+     "doors": [
+      {
+       "id": "d37",
+       "edge": "E",
+       "offset": 1.1,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_annex_room"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w37",
+       "edge": "W",
+       "offset": 1.1,
+       "width": 0.6,
+       "height": 0.6,
+       "sill": 1.6
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.1,
+       "z": 1.1
+      }
+     ]
+    },
+    {
+     "id": "level_2_laundry",
+     "name": "غرفة غسيل",
+     "role": "laundry",
+     "unit_id": "villa",
+     "rect": [
+      13,
+      15,
+      2.4,
+      2.6
+     ],
+     "doors": [
+      {
+       "id": "d38",
+       "edge": "N",
+       "offset": 1.2,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "hinged",
+       "to": "level_2_landing"
+      }
+     ],
+     "windows": [
+      {
+       "id": "w38",
+       "edge": "E",
+       "offset": 1.3,
+       "width": 0.9,
+       "height": 0.9,
+       "sill": 1.3
+      }
+     ],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.2,
+       "z": 1.3
+      }
+     ]
+    },
+    {
+     "id": "stair_1_l2",
+     "name": "الدرج",
+     "role": "stairs",
+     "unit_id": "villa",
+     "rect": [
+      8.8,
+      15,
+      2.6,
+      4.6
+     ],
+     "doors": [
+      {
+       "id": "d40",
+       "edge": "N",
+       "offset": 1.3,
+       "width": 1.2,
+       "height": 2.1,
+       "kind": "opening",
+       "to": "level_2_landing"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 1.3,
+       "z": 2.3
+      }
+     ]
+    },
+    {
+     "id": "lift_1_l2",
+     "name": "مصعد",
+     "role": "elevator",
+     "unit_id": "villa",
+     "rect": [
+      11.4,
+      15,
+      1.6,
+      1.8
+     ],
+     "doors": [
+      {
+       "id": "d41",
+       "edge": "N",
+       "offset": 0.8,
+       "width": 0.9,
+       "height": 2.1,
+       "kind": "sliding",
+       "to": "level_2_landing"
+      }
+     ],
+     "windows": [],
+     "points": [
+      {
+       "type": "light",
+       "x": 0.8,
+       "z": 0.9
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

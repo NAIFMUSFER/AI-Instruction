@@ -16,6 +16,10 @@ services:
       # /admin/designer routes answer 404. Never sent to a browser.
       - key: ACS_DESIGNER_ADMIN_TOKEN
         sync: false
+      # ACS Designer in the workspace (beta): comma-separated account ids that may
+      # start a full design; empty = nobody. Not secret, but set per deployment.
+      - key: ACS_DESIGNER_USER_IDS
+        sync: false
 
       # F-25: بلا هذا يبقى ACS_ENV = "development" على الخادم الحيّ، فتُطبَع
       # آثار الاستدعاء كاملةً في السجلّ عند كل عطل غير معالَج (acs_logging

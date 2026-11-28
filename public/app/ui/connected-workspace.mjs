@@ -116,7 +116,7 @@ function progressTick(){
 }
 function progressPhase(phase,confirmed=false){
   if(!progressState)return;
-  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:progressState.read?'قراءة المخطط':'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
+  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:progressState.design?'المصمم يفهم وصفك ويصمم ويرسم ويفحص':progressState.read?'قراءة المخطط':'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:progressState.design?'مقيّم مستقل يراجع التصميم وقد يعيده للتحسين':'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
   const text=labels[phase]||labels.CHECKING;
   if($('cwJobPhase').textContent!==text)$('cwJobPhase').textContent=text;
   $('cwJobProgress').dataset.phase=phase;
@@ -124,11 +124,11 @@ function progressPhase(phase,confirmed=false){
   if(confirmed)progressState.lastSeenAt=Date.now();
   progressTick();
 }
-function beginJob(id,saved=null,read=!!saved?.read){
+function beginJob(id,saved=null,read=!!saved?.read,design=!!saved?.design){
   clearInterval(progressTimer);pendingJob=id;failedJob=null;if($('cwResumeJob'))$('cwResumeJob').hidden=true;
   const valid=typeof saved?.startedAt==='number'&&Number.isFinite(saved.startedAt)&&saved.startedAt>0&&saved.startedAt<=Date.now();
-  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0,read};
-  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission,read}));}catch(e){}
+  progressState={startedAt:valid?saved.startedAt:Date.now(),fromSubmission:saved===null||(valid&&saved.fromSubmission!==false),lastSeenAt:0,read,design};
+  try{localStorage.setItem(jobKey(),JSON.stringify({jobId:id,startedAt:progressState.startedAt,fromSubmission:progressState.fromSubmission,read,design}));}catch(e){}
   $('cwJobProgress').hidden=false;$('cwJobProgress').dataset.startedAt=String(progressState.startedAt);$('cwJobProgress').scrollIntoView?.({block:'center',behavior:'smooth'});
   progressPhase(saved?'CHECKING':'SUBMITTING');progressTimer=setInterval(progressTick,1000);
 }
@@ -155,7 +155,7 @@ async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
   if(!session)throw Object.assign(new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.'),{code:'AUTH_REQUIRED',status:401}); // nothing was sent
   const path='/v1/projects/'+projectId+(commands?'/plan/commands':'/workspace');
-  const response=await window.ACS_AUTH.acsFetchJSON(path,body,session.access_token,body.action==='artifact'?90000:20000);
+  const response=await window.ACS_AUTH.acsFetchJSON(path,body,session.access_token,body.action==='artifact'||body.action==='designer_file'?90000:20000);
   if(commands){
     if(!response.result||typeof response.result!=='object')throw new Error('لم يصل تأكيد مكتمل من خدمة المراجعة. افتح آخر نسخة محفوظة.');
     return response.result;
@@ -283,6 +283,8 @@ async function renderState(data, {keepStep=false}={}) {
   const parsed=data.review_packet?await parseReviewFile(JSON.stringify(data.review_packet)):null;
   if(epoch!==revisionEpoch)return;
   state=data;packet=parsed;selected=null;
+  if($('cwDesigner'))$('cwDesigner').hidden=data.designer_enabled!==true;
+  renderDesignFiles(data).catch(()=>{});
   renderVersions(data);
   $('cwRevision').value=data.revision_id||'';
   const position=(data.history||[]).findIndex(v=>v.revision_id===data.revision_id);
@@ -479,6 +481,46 @@ async function generation(option) {
   catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
   finally{setBusy(false);}
 }
+// ACS Designer (beta): one Managed Agents run understands the brief as written,
+// designs, checks with ACS's rules, draws and models; its result is saved as a
+// normal revision, so review, approval and 3D work as for any plan.
+const DESIGN_NOTE=/^تصميم ACS Designer · task:([0-9a-f-]{36})$/;
+const DESIGN_FILES={'plans.pdf':'المخططات PDF','plans.dxf':'ملف AutoCAD ‏DXF','model.glb':'المجسم GLB','report.md':'تقرير التصميم','program.json':'برنامج المشروع JSON','building.json':'نموذج المبنى JSON'};
+async function designFull(){
+  if(pendingJob)throw new Error('توجد مهمة معلّقة. استعد حالتها أولًا.');
+  const brief=$('cwBrief').value.trim();
+  if(!brief)throw new Error('اكتب وصف مشروعك أولًا.');
+  if(!await confirmPaid('يفهم المصمم وصفك كما كتبته، ويصمم المبنى ويفحصه بمعايير ACS، ويرسم المخططات وملف AutoCAD والمجسم ويكتب تقريرًا بكل افتراض. يستغرق عادةً من ١٥ إلى ٣٠ دقيقة، وتكلفته من رصيد الذكاء الاصطناعي بحد أعلى ١٠ دولارات. يمكنك مغادرة الصفحة والعودة لمتابعته.','ابدأ التصميم الكامل','بدء التصميم الكامل؟')){status('لم يبدأ التصميم، ولم يُستهلك أي رصيد.');return;}
+  const body={action:'design',job_id:crypto.randomUUID(),brief,expected_head:state?.head||null,confirmed:true};
+  beginJob(body.job_id,null,false,true);
+  setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ بدء التصميم الكامل وحفظ رقم المهمة…');
+  try{
+    let result;
+    try{result=await api(body);}catch(e){if(refusedByServer(e)){refusedGeneration(e,'التصميم');return;}throw e;}
+    await handleJob(result.job);
+  }
+  catch(e){progressPhase('UNKNOWN');status('لم يصل تأكيد الطلب. استخدم متابعة المهمة للتحقق قبل أي طلب جديد. '+ownerMessage(e?.code,e?.message,''),true);}
+  finally{setBusy(false);}
+}
+function designJobOf(data){
+  const row=(Array.isArray(data?.history)?data.history:[]).find(h=>h?.revision_id===data?.revision_id);
+  return DESIGN_NOTE.exec(typeof row?.note==='string'?row.note:'')?.[1]||null;
+}
+async function renderDesignFiles(data){
+  const host=$('cwDesignFiles');if(!host)return;
+  const job=designJobOf(data);host.hidden=!job;host.dataset.job=job||'';
+  const list=$('cwDesignFileList');list.replaceChildren();
+  if(!job)return;
+  let files=[];try{files=(await api({action:'designer_files',job_id:job})).files||[];}catch(e){el('p','تعذّر جلب ملفات التصميم الآن. حاول لاحقًا.',list,'cw-muted');return;}
+  if(host.dataset.job!==job)return;
+  const named=files.filter(f=>DESIGN_FILES[f.filename]).sort((a,b)=>Object.keys(DESIGN_FILES).indexOf(a.filename)-Object.keys(DESIGN_FILES).indexOf(b.filename));
+  const images=files.filter(f=>/\.png$/i.test(f.filename||''));
+  for(const f of [...named,...images]){
+    const b=el('button',DESIGN_FILES[f.filename]||('صورة '+f.filename.replace(/\.png$/i,'')),list);b.type='button';
+    b.addEventListener('click',()=>run(async()=>{const d=await api({action:'designer_file',job_id:job,file_id:f.file_id});const type=/\.pdf$/i.test(d.name)?'application/pdf':/\.png$/i.test(d.name)?'image/png':'application/octet-stream';download(bytes64(d.data_base64),d.name,type);status('نُزّل الملف '+d.name+'.');}));
+  }
+  if(!list.childElementCount)el('p','لا توجد ملفات لهذا التصميم.',list,'cw-muted');
+}
 async function handleJob(job) {
   if(!job||job.id!==pendingJob)throw new Error('لم تصل حالة المهمة المطلوبة.');
   if(job.state==='SUCCEEDED'){
@@ -496,7 +538,7 @@ async function handleJob(job) {
         comparisonShown=true;
       }catch(e){}
     }
-    status((comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.')+used);setBusy(false);return;
+    status(job.kind==='design'?'اكتمل التصميم الكامل وحُفظ كنسخة جديدة. راجعه واعتمده، وملفاته (PDF وAutoCAD والمجسم والتقرير) في «ملفات التصميم».':(comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.')+used);setBusy(false);return;
   }
   if(job.choice&&job.choice.kind==='generated_version'){
     // A newer revision landed while this paid job ran. Its result is kept apart:
@@ -518,7 +560,7 @@ async function handleJob(job) {
     const next=failedJob?' يمكنك استئناف المراحل المحفوظة (استدعاء مدفوع) أو تعديل طلبك.':'';
     status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. راجع قائمة النسخ؛ يمكنك إرسال الطلب مرة أخرى إن لم تظهر نسخة جديدة.':reason+' لم تُحفظ نسخة جديدة، ونسخك السابقة كما هي.'+next,true);setBusy(false);return;
   }
-  progressPhase(job.phase||job.state,true);if(job.progress?.total)$('cwJobHeartbeat').textContent+=' اكتملت '+job.progress.completed+' من '+job.progress.total+' مجموعات في هذه المرحلة.';status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
+  progressPhase(job.phase||job.state,true);if(job.progress?.total)$('cwJobHeartbeat').textContent+=job.kind==='design'?' مضت '+job.progress.completed+' دقيقة من عمل المصمم، والمعتاد ١٥ إلى ٣٠ دقيقة.':' اكتملت '+job.progress.completed+' من '+job.progress.total+' مجموعات في هذه المرحلة.';status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
   clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll().catch(e=>{status('انقطع الاتصال. اضغط متابعة المهمة عند عودة الشبكة.',true);}),4000);
 }
 const CHOICE_ADOPTED='اعتُمدت النسخة المولّدة كنسخة جديدة. تعديلك السابق محفوظ في سجل النسخ ويمكن استعادته.';
@@ -680,6 +722,14 @@ function mount(){
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));
   $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded){residentialOptions.validate();residentialOptions.prepare(confirmedProgram);}root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;planUpload.step2(uploaded);status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر تصميمًا لنبدأ؛ ستراجعه قبل الاعتماد.');step(2,{record:true});}catch(err){safeError(err);}});
+  const designer=el('section',null,null,'cw-card cw-designer');designer.id='cwDesigner';designer.hidden=true;designer.setAttribute('aria-labelledby','cwDesignerTitle');
+  designer.innerHTML='<h2 id="cwDesignerTitle">تصميم كامل بالذكاء <span class="cw-muted">(تجريبي)</span></h2><p class="cw-muted">يفهم المصمم وصفك كما كتبته لأي نوع مبنى، ويصمم ويفحص بمعايير ACS، ويرسم المخططات وملف AutoCAD والمجسم، ويكتب تقريرًا بكل افتراض. النتيجة نسخة عادية تراجعها وتعتمدها.</p>';
+  const designButton=el('button','صمّم المشروع بالكامل',designer,'cw-primary');designButton.id='cwDesignFull';designButton.type='button';designButton.dataset.mutate='';
+  designButton.addEventListener('click',()=>run(designFull));
+  $('cwBriefForm').after(designer);
+  const designFiles=el('section',null,null,'cw-card');designFiles.id='cwDesignFiles';designFiles.hidden=true;designFiles.setAttribute('aria-labelledby','cwDesignFilesTitle');
+  designFiles.innerHTML='<h2 id="cwDesignFilesTitle">ملفات التصميم</h2><p class="cw-muted">ما رسمه المصمم لهذه النسخة: المخططات وملف AutoCAD والمجسم والتقرير والصور.</p><div id="cwDesignFileList" class="cw-actions" role="group" aria-label="ملفات التصميم"></div>';
+  $('cwReviewContent').prepend(designFiles);
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('فتحنا آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwKeepEdit').addEventListener('click',()=>run(keepEdit));
